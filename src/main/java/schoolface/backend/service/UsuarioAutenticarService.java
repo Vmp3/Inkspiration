@@ -1,13 +1,13 @@
-package schoolface.backend.service;
+package inkspiration.backend.service;
 
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import schoolface.backend.entities.UsuarioAutenticar;
-import schoolface.backend.repository.UsuarioAutenticarRepository;
-import schoolface.backend.util.Hashing;
+import inkspiration.backend.entities.UsuarioAutenticar;
+import inkspiration.backend.repository.UsuarioAutenticarRepository;
+import inkspiration.backend.util.Hashing;
 
 @Service
 public class UsuarioAutenticarService {

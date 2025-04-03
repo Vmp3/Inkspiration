@@ -1,4 +1,4 @@
-package schoolface.backend.security;
+package inkspiration.backend.security;
 
 import java.util.Collection;
 import java.util.List;
@@ -7,7 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import schoolface.backend.entities.UsuarioAutenticar;
+import inkspiration.backend.entities.UsuarioAutenticar;
 
 public class UserAuthenticated implements UserDetails {
 

@@ -1,4 +1,4 @@
-package schoolface.backend.entities;
+package inkspiration.backend.entities;
 
 import java.time.LocalDateTime;
 

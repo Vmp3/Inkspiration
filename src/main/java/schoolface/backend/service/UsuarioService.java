@@ -1,4 +1,4 @@
-package schoolface.backend.service;
+package inkspiration.backend.service;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,17 +12,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import schoolface.backend.dto.UsuarioDTO;
-import schoolface.backend.dto.UsuarioResponseDTO;
-import schoolface.backend.entities.Usuario;
-import schoolface.backend.entities.UsuarioAutenticar;
-import schoolface.backend.entities.TokenRevogado;
-import schoolface.backend.exception.UsuarioException;
-import schoolface.backend.exception.UsuarioValidationException;
-import schoolface.backend.repository.UsuarioAutenticarRepository;
-import schoolface.backend.repository.UsuarioRepository;
-import schoolface.backend.repository.TokenRevogadoRepository;
-import schoolface.backend.security.JwtService;
+import inkspiration.backend.dto.UsuarioDTO;
+import inkspiration.backend.dto.UsuarioResponseDTO;
+import inkspiration.backend.entities.Usuario;
+import inkspiration.backend.entities.UsuarioAutenticar;
+import inkspiration.backend.entities.TokenRevogado;
+import inkspiration.backend.exception.UsuarioException;
+import inkspiration.backend.exception.UsuarioValidationException;
+import inkspiration.backend.repository.UsuarioAutenticarRepository;
+import inkspiration.backend.repository.UsuarioRepository;
+import inkspiration.backend.repository.TokenRevogadoRepository;
+import inkspiration.backend.security.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Service

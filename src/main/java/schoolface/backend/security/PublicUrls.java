@@ -1,4 +1,4 @@
-package schoolface.backend.security;
+package inkspiration.backend.security;
 
 public class PublicUrls {
     public static final String[] URLS = {

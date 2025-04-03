@@ -1,4 +1,4 @@
-package schoolface.backend.security;
+package inkspiration.backend.security;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -15,9 +15,9 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
-import schoolface.backend.entities.TokenRevogado;
-import schoolface.backend.repository.TokenRevogadoRepository;
-import schoolface.backend.config.JwtConfig;
+import inkspiration.backend.entities.TokenRevogado;
+import inkspiration.backend.repository.TokenRevogadoRepository;
+import inkspiration.backend.config.JwtConfig;
 
 @Service
 public class JwtService {
@@ -44,7 +44,7 @@ public class JwtService {
                 .collect(Collectors.joining(" "));
     
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("schoolface")
+                .issuer("inkspiration")
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(expiry))
                 .subject(authentication.getName())

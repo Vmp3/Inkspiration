@@ -1,4 +1,4 @@
-package schoolface.backend.repository;
+package inkspiration.backend.repository;
 
 import java.time.LocalDateTime;
 
@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import schoolface.backend.entities.TokenRevogado;
+import inkspiration.backend.entities.TokenRevogado;
 
 
 @Repository

@@ -1,4 +1,4 @@
-package schoolface.backend.exception;
+package inkspiration.backend.exception;
 
 public class UsuarioException extends RuntimeException {
     
