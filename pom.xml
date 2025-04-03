@@ -9,9 +9,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
-    <artifactId>schoolface</artifactId>
+    <artifactId>inkspiration</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>schoolface</name>
+    <name>inkspiration</name>
     <description>Backend</description>
     <url/>
     <licenses>
