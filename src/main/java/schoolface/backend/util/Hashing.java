@@ -1,4 +1,4 @@
-package schoolface.backend.util;
+package inkspiration.backend.util;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 

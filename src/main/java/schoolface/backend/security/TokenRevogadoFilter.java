@@ -1,4 +1,4 @@
-package schoolface.backend.security;
+package inkspiration.backend.security;
 
 import java.io.IOException;
 

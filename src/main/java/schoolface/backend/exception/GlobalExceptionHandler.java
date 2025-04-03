@@ -1,4 +1,4 @@
-package schoolface.backend.exception;
+package inkspiration.backend.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,11 +1,11 @@
-package schoolface.backend.repository;
+package inkspiration.backend.repository;
 
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import schoolface.backend.entities.UsuarioAutenticar;
+import inkspiration.backend.entities.UsuarioAutenticar;
 
 @Repository
 public interface UsuarioAutenticarRepository extends JpaRepository<UsuarioAutenticar, Long> {

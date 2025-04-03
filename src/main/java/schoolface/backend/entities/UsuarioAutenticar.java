@@ -1,7 +1,7 @@
-package schoolface.backend.entities;
+package inkspiration.backend.entities;
 
-import schoolface.backend.dto.UsuarioAutenticarDTO;
-import schoolface.backend.util.Hashing;
+import inkspiration.backend.dto.UsuarioAutenticarDTO;
+import inkspiration.backend.util.Hashing;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

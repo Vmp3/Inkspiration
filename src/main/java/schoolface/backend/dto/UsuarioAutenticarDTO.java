@@ -1,4 +1,4 @@
-package schoolface.backend.dto;
+package inkspiration.backend.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

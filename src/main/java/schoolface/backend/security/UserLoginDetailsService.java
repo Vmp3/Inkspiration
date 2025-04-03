@@ -1,11 +1,11 @@
-package schoolface.backend.security;
+package inkspiration.backend.security;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import schoolface.backend.repository.UsuarioAutenticarRepository;
+import inkspiration.backend.repository.UsuarioAutenticarRepository;
 
 @Service
 public class UserLoginDetailsService implements UserDetailsService {

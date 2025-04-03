@@ -1,4 +1,4 @@
-package schoolface.backend.controller;
+package inkspiration.backend.controller;
 
 import java.util.List;
 
@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import schoolface.backend.dto.UsuarioDTO;
-import schoolface.backend.dto.UsuarioResponseDTO;
-import schoolface.backend.entities.Usuario;
-import schoolface.backend.service.UsuarioService;
-import schoolface.backend.exception.UsuarioException;
+import inkspiration.backend.dto.UsuarioDTO;
+import inkspiration.backend.dto.UsuarioResponseDTO;
+import inkspiration.backend.entities.Usuario;
+import inkspiration.backend.service.UsuarioService;
+import inkspiration.backend.exception.UsuarioException;
 
 import jakarta.validation.Valid;
 
