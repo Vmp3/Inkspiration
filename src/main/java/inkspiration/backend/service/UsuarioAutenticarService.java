@@ -19,16 +19,16 @@ public class UsuarioAutenticarService {
         this.usuarioAutenticarRepository = usuarioAutenticarRepository;
     }
 
-    public boolean authenticate(String email, String senha) {
-        UsuarioAutenticar usuarioAutenticar = usuarioAutenticarRepository.findByEmail(email).orElse(null);
+    public boolean authenticate(String cpf, String senha) {
+        UsuarioAutenticar usuarioAutenticar = usuarioAutenticarRepository.findByCpf(cpf).orElse(null);
         if (usuarioAutenticar != null) {
             return Hashing.matches(senha, usuarioAutenticar.getSenha());
         }
         return false;
     }
 
-    public Optional<UsuarioAutenticar> buscarPorEmail(String email) {
-        return usuarioAutenticarRepository.findByEmail(email);
+    public Optional<UsuarioAutenticar> buscarPorCpf(String cpf) {
+        return usuarioAutenticarRepository.findByCpf(cpf);
     }
 
     public void salvar(UsuarioAutenticar usuarioAutenticar) {
