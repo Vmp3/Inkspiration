@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -15,21 +16,23 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
-import inkspiration.backend.entities.TokenRevogado;
-import inkspiration.backend.repository.TokenRevogadoRepository;
 import inkspiration.backend.config.JwtConfig;
+import inkspiration.backend.repository.TokenRevogadoRepository;
 
 @Service
 public class JwtService {
 
-    private final JwtEncoder jwtEncoder;
+    private final JwtEncoder encoder;
     private final JwtDecoder jwtDecoder;
     private final TokenRevogadoRepository tokenRevogadoRepository;
     private final JwtConfig jwtConfig;
+    
+    @Value("${api.security.token.expiration:720}")
+    private int expiration;
 
     @Autowired
-    public JwtService(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder, TokenRevogadoRepository tokenRevogadoRepository, JwtConfig jwtConfig) {
-        this.jwtEncoder = jwtEncoder;
+    public JwtService(JwtEncoder encoder, JwtDecoder jwtDecoder, TokenRevogadoRepository tokenRevogadoRepository, JwtConfig jwtConfig) {
+        this.encoder = encoder;
         this.jwtDecoder = jwtDecoder;
         this.tokenRevogadoRepository = tokenRevogadoRepository;
         this.jwtConfig = jwtConfig;
@@ -38,11 +41,11 @@ public class JwtService {
     public String generateToken(Authentication authentication) {
         Instant now = ZonedDateTime.now(ZoneId.of("America/Sao_Paulo")).toInstant();
         long expiry = jwtConfig.getExpirySeconds();
-    
+        
         String scope = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));
-    
+                
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("inkspiration")
                 .issuedAt(now)
@@ -50,8 +53,8 @@ public class JwtService {
                 .subject(authentication.getName())
                 .claim("scope", scope)
                 .build();
-    
-        return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+        
+        return encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
 
     public Long getUserIdFromToken(String token) {

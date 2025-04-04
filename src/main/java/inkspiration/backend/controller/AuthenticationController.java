@@ -16,7 +16,6 @@ import inkspiration.backend.dto.UsuarioDTO;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.security.AuthenticationService;
 import inkspiration.backend.service.UsuarioService;
-
 import jakarta.validation.Valid;
 
 @RestController
@@ -35,27 +34,27 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody @Valid UsuarioAutenticarDTO loginDTO) {
-        System.out.println("Tentativa de login para usuário: " + loginDTO.getEmail());
+        System.out.println("Tentativa de login para usuário com CPF: " + loginDTO.getCpf());
         
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(loginDTO.getEmail(), loginDTO.getSenha())
+            new UsernamePasswordAuthenticationToken(loginDTO.getCpf(), loginDTO.getSenha())
         );
     
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         if (userDetails.getAuthorities().stream().anyMatch(auth -> auth.getAuthority().equals("ROLE_DELETED"))) {
-            System.out.println("Tentativa de login de usuário inativo: " + loginDTO.getEmail());
+            System.out.println("Tentativa de login de usuário inativo com CPF: " + loginDTO.getCpf());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuário inativo ou deletado");
         }
     
         String token = authService.authenticate(authentication);
-        System.out.println("Token gerado para usuário: " + loginDTO.getEmail());
+        System.out.println("Token gerado para usuário com CPF: " + loginDTO.getCpf());
         
         // Salva o novo token no usuário
-        Usuario usuario = usuarioService.buscarPorEmail(loginDTO.getEmail());
+        Usuario usuario = usuarioService.buscarPorCpf(loginDTO.getCpf());
         if (usuario != null) {
             usuario.setTokenAtual(token);
             usuarioService.salvar(usuario);
-            System.out.println("Token salvo para usuário: " + loginDTO.getEmail());
+            System.out.println("Token salvo para usuário com CPF: " + loginDTO.getCpf());
         }
     
         return ResponseEntity.ok(token);
@@ -63,6 +62,12 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<Usuario> register(@RequestBody @Valid UsuarioDTO usuarioDTO) {
+        Usuario novoUsuario = usuarioService.criar(usuarioDTO);
+        return ResponseEntity.status(201).body(novoUsuario);
+    }
+    
+    @PostMapping("/register/usuario")
+    public ResponseEntity<Usuario> registerUsuario(@RequestBody @Valid UsuarioDTO usuarioDTO) {
         Usuario novoUsuario = usuarioService.criar(usuarioDTO);
         return ResponseEntity.status(201).body(novoUsuario);
     }

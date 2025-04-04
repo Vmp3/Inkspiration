@@ -9,5 +9,5 @@ import inkspiration.backend.entities.UsuarioAutenticar;
 
 @Repository
 public interface UsuarioAutenticarRepository extends JpaRepository<UsuarioAutenticar, Long> {
-    Optional<UsuarioAutenticar> findByEmail(String email);
+    Optional<UsuarioAutenticar> findByCpf(String cpf);
 }

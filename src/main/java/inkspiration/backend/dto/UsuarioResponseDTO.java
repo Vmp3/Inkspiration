@@ -1,26 +1,38 @@
 package inkspiration.backend.dto;
 
+import inkspiration.backend.entities.Endereco;
+
 public class UsuarioResponseDTO {
-    private Long id;
+    private Long idUsuario;
     private String nome;
+    private String cpf;
     private String email;
     private String dataNascimento;
+    private String telefone;
+    private String imagemPerfil;
+    private Endereco endereco;
     private String role;
 
-    public UsuarioResponseDTO(Long id, String nome, String email, String dataNascimento, String role) {
-        this.id = id;
+    public UsuarioResponseDTO(Long idUsuario, String nome, String cpf, String email, 
+                             String dataNascimento, String telefone, String imagemPerfil, 
+                             Endereco endereco, String role) {
+        this.idUsuario = idUsuario;
         this.nome = nome;
+        this.cpf = cpf;
         this.email = email;
         this.dataNascimento = dataNascimento;
+        this.telefone = telefone;
+        this.imagemPerfil = imagemPerfil;
+        this.endereco = endereco;
         this.role = role;
     }
 
-    public Long getId() {
-        return id;
+    public Long getIdUsuario() {
+        return idUsuario;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setIdUsuario(Long idUsuario) {
+        this.idUsuario = idUsuario;
     }
 
     public String getNome() {
@@ -29,6 +41,14 @@ public class UsuarioResponseDTO {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+    
+    public String getCpf() {
+        return cpf;
+    }
+    
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
     }
 
     public String getEmail() {
@@ -45,6 +65,30 @@ public class UsuarioResponseDTO {
 
     public void setDataNascimento(String dataNascimento) {
         this.dataNascimento = dataNascimento;
+    }
+    
+    public String getTelefone() {
+        return telefone;
+    }
+    
+    public void setTelefone(String telefone) {
+        this.telefone = telefone;
+    }
+    
+    public String getImagemPerfil() {
+        return imagemPerfil;
+    }
+    
+    public void setImagemPerfil(String imagemPerfil) {
+        this.imagemPerfil = imagemPerfil;
+    }
+    
+    public Endereco getEndereco() {
+        return endereco;
+    }
+    
+    public void setEndereco(Endereco endereco) {
+        this.endereco = endereco;
     }
 
     public String getRole() {
