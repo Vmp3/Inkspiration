@@ -4,10 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 
 public class UsuarioAutenticarDTO {
 
-    private Long id;
+    private Long idUsuarioAutenticar;
 
     @NotBlank
-    private String email;
+    private String cpf;
     private String senha;
 
     private String role;
@@ -15,27 +15,27 @@ public class UsuarioAutenticarDTO {
     public UsuarioAutenticarDTO() {
     }
 
-    public UsuarioAutenticarDTO(Long id, String email, String senha, String role) {
-        this.id = id;
-        this.email = email;
+    public UsuarioAutenticarDTO(Long idUsuarioAutenticar, String cpf, String senha, String role) {
+        this.idUsuarioAutenticar = idUsuarioAutenticar;
+        this.cpf = cpf;
         this.senha = senha;
         this.role = role;
     }
 
-    public Long getId() {
-        return id;
+    public Long getIdUsuarioAutenticar() {
+        return idUsuarioAutenticar;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setIdUsuarioAutenticar(Long idUsuarioAutenticar) {
+        this.idUsuarioAutenticar = idUsuarioAutenticar;
     }
 
-    public String getEmail() {
-        return email;
+    public String getCpf() {
+        return cpf;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
     }
 
     public String getSenha() {

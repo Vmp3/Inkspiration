@@ -2,7 +2,6 @@ package inkspiration.backend.entities;
 
 import inkspiration.backend.dto.UsuarioAutenticarDTO;
 import inkspiration.backend.util.Hashing;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,22 +12,22 @@ public class UsuarioAutenticar {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long idUsuarioAutenticar;
 
-    private String email;
+    private String cpf;
     private String senha;
     private String role;
 
-    public UsuarioAutenticar(Long id, String email, String senha, String role) {
-        this.id = id;
-        this.email = email;
+    public UsuarioAutenticar(Long idUsuarioAutenticar, String cpf, String senha, String role) {
+        this.idUsuarioAutenticar = idUsuarioAutenticar;
+        this.cpf = cpf;
         this.senha = Hashing.hash(senha);
         this.role = role;
     }
 
     public UsuarioAutenticar(UsuarioAutenticarDTO dto) {
-        this.id = dto.getId();
-        this.email = dto.getEmail();
+        this.idUsuarioAutenticar = dto.getIdUsuarioAutenticar();
+        this.cpf = dto.getCpf();
         this.senha = Hashing.hash(dto.getSenha());
         this.role = dto.getRole();
     }
@@ -36,17 +35,17 @@ public class UsuarioAutenticar {
     public UsuarioAutenticar() {
     }
 
-    public Long getId() {
-        return id;
+    public Long getIdUsuarioAutenticar() {
+        return idUsuarioAutenticar;
     }
-    public void setId(Long id) {
-        this.id = id;
+    public void setIdUsuarioAutenticar(Long idUsuarioAutenticar) {
+        this.idUsuarioAutenticar = idUsuarioAutenticar;
     }
-    public String getEmail() {
-        return email;
+    public String getCpf() {
+        return cpf;
     }
-    public void setEmail(String email) {
-        this.email = email;
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
     }
     public String getSenha() {
         return senha;

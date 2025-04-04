@@ -33,7 +33,7 @@ public class UserAuthenticated implements UserDetails {
 
     @Override
     public String getUsername() {
-        return usuario.getEmail();
+        return usuario.getCpf();
     }
 
     @Override
