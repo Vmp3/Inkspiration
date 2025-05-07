@@ -493,10 +493,10 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   pageHeaderContainer: {
-    marginBottom: 30,
+    marginBottom: 20,
     alignItems: 'center',
     zIndex: 2,
-    marginTop: 30,
+    marginTop: 15,
   },
   pageTitle: {
     fontSize: 28,

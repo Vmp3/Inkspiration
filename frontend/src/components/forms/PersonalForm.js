@@ -83,14 +83,6 @@ const PersonalForm = ({
           style={styles.inputField}
         />
       </View>
-
-      <View style={styles.checkboxWrapper}>
-        <Checkbox
-          checked={isArtist}
-          onPress={() => setIsArtist(!isArtist)}
-          label="Cadastrar-se como artista/profissional"
-        />
-      </View>
     </View>
   );
 };

@@ -14,12 +14,15 @@ const Header = () => {
           style={styles.logoContainer}
           onPress={() => navigation.navigate('Home')}
         >
-          <Text style={styles.logoText}>Inkspiração</Text>
+          <Text style={styles.logoText}>Inkspiration</Text>
         </TouchableOpacity>
         
         {/* Navegação no centro */}
         <View style={styles.navContainer}>
-          <TouchableOpacity style={styles.navItem}>
+          <TouchableOpacity 
+            style={styles.navItem}
+            onPress={() => navigation.navigate('Home')}
+          >
             <Text style={styles.navText}>Início</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
@@ -27,9 +30,6 @@ const Header = () => {
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
             <Text style={styles.navText}>Sobre</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
-            <Text style={styles.navText}>Contato</Text>
           </TouchableOpacity>
         </View>
 

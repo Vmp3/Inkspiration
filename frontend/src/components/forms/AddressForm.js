@@ -37,9 +37,9 @@ const AddressForm = ({
       </View>
       
       <View style={styles.formFullWidth}>
-        <Text style={styles.formLabel}>Rua</Text>
+        <Text style={styles.formLabel}>Logradouro</Text>
         <Input
-          placeholder="Sua rua"
+          placeholder="Seu logradouro"
           value={formData.rua}
           onChangeText={(text) => handleChange('rua', text)}
           style={styles.inputField}
