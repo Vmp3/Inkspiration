@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
 import SearchInput from '../components/SearchInput';
 import FilterButton from '../components/FilterButton';
+import FilterDropdown from '../components/FilterDropdown';
 import ArtistCard from '../components/ArtistCard';
 import Header from '../components/Header';
 import { artists as originalArtists } from '../data/artists';
@@ -22,6 +23,9 @@ const HomeScreen = ({ navigation }) => {
   const [viewType, setViewType] = useState('artists');
   const [minRating, setMinRating] = useState(0);
   const [selectedSpecialties, setSelectedSpecialties] = useState([]);
+  const [isFilterDropdownVisible, setIsFilterDropdownVisible] = useState(false);
+  const [filterButtonPosition, setFilterButtonPosition] = useState({ top: 0, left: 0 });
+  const filterButtonRef = useRef(null);
   
   // Estado para resultados filtrados
   const [filteredArtists, setFilteredArtists] = useState(originalArtists);
@@ -125,6 +129,17 @@ const HomeScreen = ({ navigation }) => {
     return stars;
   };
 
+  const handleFilterPress = () => {
+    if (filterButtonRef.current) {
+      filterButtonRef.current.measureInWindow((x, y, width, height) => {
+        setFilterButtonPosition({ top: y, left: x });
+        setIsFilterDropdownVisible(true);
+      });
+    } else {
+      setIsFilterDropdownVisible(true);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -164,11 +179,13 @@ const HomeScreen = ({ navigation }) => {
               </View>
 
               <View style={styles.filterRow}>
-                <FilterButton 
-                  onPress={() => navigation.navigate('Filters')} 
-                  filterCount={(minRating > 0 || selectedSpecialties.length > 0) ? 
-                    (minRating > 0 && selectedSpecialties.length > 0 ? 2 : 1) : 0} 
-                />
+                <View ref={filterButtonRef}>
+                  <FilterButton 
+                    onPress={handleFilterPress} 
+                    filterCount={(minRating > 0 || selectedSpecialties.length > 0) ? 
+                      (minRating > 0 && selectedSpecialties.length > 0 ? 2 : 1) : 0} 
+                  />
+                </View>
                 
                 {minRating > 0 && (
                   <View style={styles.filterBadge}>
@@ -219,6 +236,18 @@ const HomeScreen = ({ navigation }) => {
           )}
         </View>
       </ScrollView>
+
+      <FilterDropdown
+        visible={isFilterDropdownVisible}
+        onClose={() => setIsFilterDropdownVisible(false)}
+        minRating={minRating}
+        setMinRating={setMinRating}
+        selectedSpecialties={selectedSpecialties}
+        toggleSpecialty={toggleSpecialty}
+        resetFilters={resetFilters}
+        applyFilters={applyFilters}
+        anchorPosition={filterButtonPosition}
+      />
     </SafeAreaView>
   );
 };
