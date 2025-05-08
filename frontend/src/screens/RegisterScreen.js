@@ -19,7 +19,15 @@ const RegisterScreen = () => {
   const [isArtist, setIsArtist] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [nomeError, setNomeError] = useState('');
+  const [sobrenomeError, setSobrenomeError] = useState('');
+  const [fullNameError, setFullNameError] = useState('');
   const [cpfError, setCpfError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [birthDateError, setBirthDateError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   
   const [formData, setFormData] = useState({
     // Dados pessoais
@@ -50,6 +58,26 @@ const RegisterScreen = () => {
     
     // Apply appropriate formatter based on field type
     switch (field) {
+      case 'nome':
+        setNomeError('');
+        if (formData.sobrenome) {
+          if (!formatters.validateFullNameLength(value, formData.sobrenome)) {
+            setFullNameError('Nome e sobrenome não podem ultrapassar 255 caracteres');
+          } else {
+            setFullNameError('');
+          }
+        }
+        break;
+      case 'sobrenome':
+        setSobrenomeError('');
+        if (formData.nome) {
+          if (!formatters.validateFullNameLength(formData.nome, value)) {
+            setFullNameError('Nome e sobrenome não podem ultrapassar 255 caracteres');
+          } else {
+            setFullNameError('');
+          }
+        }
+        break;
       case 'cpf':
         formattedValue = formatters.formatCPF(value);
         // Clear error when typing
@@ -60,12 +88,29 @@ const RegisterScreen = () => {
         break;
       case 'telefone':
         formattedValue = formatters.formatPhone(value);
+        setPhoneError('');
         break;
       case 'dataNascimento':
         formattedValue = formatters.formatBirthDate(value);
+        setBirthDateError('');
         break;
       case 'email':
-        // Removido o toast de validação de email
+        setEmailError('');
+        break;
+      case 'senha':
+        setPasswordError('');
+        if (formData.confirmarSenha && formData.confirmarSenha !== value) {
+          setConfirmPasswordError('As senhas não coincidem');
+        } else {
+          setConfirmPasswordError('');
+        }
+        break;
+      case 'confirmarSenha':
+        if (formData.senha === value) {
+          setConfirmPasswordError('');
+        } else if (value) {
+          setConfirmPasswordError('As senhas não coincidem');
+        }
         break;
     }
 
@@ -81,11 +126,79 @@ const RegisterScreen = () => {
   };
 
   const handleBlur = (field) => {
+    if (field === 'nome' && formData.nome) {
+      if (!formatters.validateFirstName(formData.nome)) {
+        setNomeError('Nome inválido');
+      } else {
+        setNomeError('');
+      }
+    }
+    
+    if (field === 'sobrenome' && formData.sobrenome) {
+      if (!formatters.validateSurname(formData.sobrenome)) {
+        setSobrenomeError('Sobrenome inválido');
+      } else {
+        setSobrenomeError('');
+      }
+    }
+    
+    if ((field === 'nome' || field === 'sobrenome') && formData.nome && formData.sobrenome) {
+      if (!formatters.validateFullNameLength(formData.nome, formData.sobrenome)) {
+        setFullNameError('Nome e sobrenome não podem ultrapassar 255 caracteres');
+      } else {
+        setFullNameError('');
+      }
+    }
+    
     if (field === 'cpf' && formData.cpf) {
       if (!formatters.validateCPF(formData.cpf)) {
         setCpfError('CPF inválido');
       } else {
         setCpfError('');
+      }
+    }
+    
+    if (field === 'email' && formData.email) {
+      if (!formatters.validateEmail(formData.email)) {
+        setEmailError('Email inválido');
+      } else {
+        setEmailError('');
+      }
+    }
+
+    if (field === 'telefone' && formData.telefone) {
+      if (!formatters.validatePhone(formData.telefone)) {
+        setPhoneError('Telefone inválido');
+      } else {
+        setPhoneError('');
+      }
+    }
+
+    if (field === 'dataNascimento' && formData.dataNascimento) {
+      if (!formatters.validateBirthDate(formData.dataNascimento)) {
+        setBirthDateError('Você deve ter pelo menos 18 anos para se registrar');
+      } else {
+        setBirthDateError('');
+      }
+    }
+
+    if (field === 'senha') {
+      if (!formData.senha) {
+        setPasswordError('Senha é obrigatória');
+      } else if (formData.senha.length < 6) {
+        setPasswordError('A senha deve ter pelo menos 6 caracteres');
+      } else {
+        setPasswordError('');
+      }
+    }
+
+    if (field === 'confirmarSenha') {
+      if (!formData.confirmarSenha) {
+        setConfirmPasswordError('Confirmação de senha é obrigatória');
+      } else if (formData.senha !== formData.confirmarSenha) {
+        setConfirmPasswordError('As senhas não coincidem');
+      } else {
+        setConfirmPasswordError('');
       }
     }
   };
@@ -117,39 +230,61 @@ const RegisterScreen = () => {
     }
   };
 
-  const handleNextTab = () => {
-    if (activeTab === 'personal') {
-      setActiveTab('address');
-    } else if (activeTab === 'address') {
-      setActiveTab('security');
-    }
-  };
+  const validatePersonalTab = () => {
+    let isValid = true;
 
-  const handlePrevTab = () => {
-    if (activeTab === 'security') {
-      setActiveTab('address');
-    } else if (activeTab === 'address') {
-      setActiveTab('personal');
-    }
-  };
-
-  const validateForm = () => {
-    if (!formData.termsAccepted) {
+    if (!formData.nome) {
       Toast.show({
         type: 'error',
         text1: 'Erro',
-        text2: 'Você precisa aceitar os termos de uso para continuar',
+        text2: 'Nome é obrigatório',
         position: 'top',
         visibilityTime: 3000,
       });
       return false;
     }
-
-    if (!formData.nome || !formData.sobrenome) {
+    
+    if (!formatters.validateFirstName(formData.nome)) {
+      setNomeError('Nome inválido');
       Toast.show({
         type: 'error',
         text1: 'Erro',
-        text2: 'Nome e sobrenome são obrigatórios',
+        text2: 'Nome inválido',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+    
+    if (!formData.sobrenome) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Sobrenome é obrigatório',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+    
+    if (!formatters.validateSurname(formData.sobrenome)) {
+      setSobrenomeError('Sobrenome inválido');
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Sobrenome inválido',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+    
+    if (!formatters.validateFullNameLength(formData.nome, formData.sobrenome)) {
+      setFullNameError('Nome e sobrenome não podem ultrapassar 255 caracteres');
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Nome e sobrenome não podem ultrapassar 255 caracteres',
         position: 'top',
         visibilityTime: 3000,
       });
@@ -168,6 +303,7 @@ const RegisterScreen = () => {
     }
 
     if (!formatters.validateCPF(formData.cpf)) {
+      setCpfError('CPF inválido');
       Toast.show({
         type: 'error',
         text1: 'Erro',
@@ -190,10 +326,34 @@ const RegisterScreen = () => {
     }
 
     if (!formatters.validateEmail(formData.email)) {
+      setEmailError('Email inválido');
       Toast.show({
         type: 'error',
         text1: 'Erro',
         text2: 'Email inválido',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+    
+    if (!formData.telefone) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Telefone é obrigatório',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+
+    if (!formatters.validatePhone(formData.telefone)) {
+      setPhoneError('Telefone inválido');
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Telefone inválido',
         position: 'top',
         visibilityTime: 3000,
       });
@@ -210,19 +370,105 @@ const RegisterScreen = () => {
       });
       return false;
     }
-    
-    if (!formData.cep || !formData.rua || !formData.numero || !formData.bairro || !formData.cidade || !formData.estado) {
+
+    if (!formatters.validateBirthDate(formData.dataNascimento)) {
+      setBirthDateError('Você deve ter pelo menos 18 anos para se registrar');
       Toast.show({
         type: 'error',
         text1: 'Erro',
-        text2: 'Todos os campos de endereço são obrigatórios',
+        text2: 'Você deve ter pelo menos 18 anos para se registrar',
         position: 'top',
         visibilityTime: 3000,
       });
       return false;
     }
     
-    if (!formData.senha || formData.senha.length < 6) {
+    return true;
+  };
+
+  const validateAddressTab = () => {
+    if (!formData.cep) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'CEP é obrigatório',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+    
+    if (!formData.rua) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Rua é obrigatória',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+    
+    if (!formData.numero) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Número é obrigatório',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+    
+    if (!formData.bairro) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Bairro é obrigatório',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+    
+    if (!formData.cidade) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Cidade é obrigatória',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+    
+    if (!formData.estado) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Estado é obrigatório',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+    
+    return true;
+  };
+
+  const validateSecurityTab = () => {
+    if (!formData.senha) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Senha é obrigatória',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+    
+    if (formData.senha.length < 6) {
       Toast.show({
         type: 'error',
         text1: 'Erro',
@@ -233,6 +479,17 @@ const RegisterScreen = () => {
       return false;
     }
 
+    if (!formData.confirmarSenha) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Confirmação de senha é obrigatória',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+    
     if (formData.senha !== formData.confirmarSenha) {
       Toast.show({
         type: 'error',
@@ -244,7 +501,42 @@ const RegisterScreen = () => {
       return false;
     }
     
+    if (!formData.termsAccepted) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Você precisa aceitar os termos de uso para continuar',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      return false;
+    }
+    
     return true;
+  };
+
+  const handleNextTab = () => {
+    if (activeTab === 'personal') {
+      if (validatePersonalTab()) {
+        setActiveTab('address');
+      }
+    } else if (activeTab === 'address') {
+      if (validateAddressTab()) {
+        setActiveTab('security');
+      }
+    }
+  };
+
+  const handlePrevTab = () => {
+    if (activeTab === 'security') {
+      setActiveTab('address');
+    } else if (activeTab === 'address') {
+      setActiveTab('personal');
+    }
+  };
+
+  const validateForm = () => {
+    return validateSecurityTab();
   };
 
   const formatDateToBackend = (dateString) => {
@@ -421,8 +713,14 @@ const RegisterScreen = () => {
                       handleChange={handleChange}
                       handleBlur={handleBlur}
                       cpfError={cpfError}
+                      emailError={emailError}
+                      phoneError={phoneError}
+                      birthDateError={birthDateError}
                       isArtist={isArtist}
                       setIsArtist={setIsArtist}
+                      nomeError={nomeError}
+                      sobrenomeError={sobrenomeError}
+                      fullNameError={fullNameError}
                     />
                     <FormNavigation
                       onNext={handleNextTab}
@@ -449,10 +747,12 @@ const RegisterScreen = () => {
                   <SecurityForm
                     formData={formData}
                     handleChange={handleChange}
+                    handleBlur={handleBlur}
                     handleRegister={handleRegister}
                     handlePrevTab={handlePrevTab}
                     isLoading={isLoading}
-                    errorMessage={errorMessage}
+                    passwordError={passwordError}
+                    confirmPasswordError={confirmPasswordError}
                   />
                 )}
               </View>

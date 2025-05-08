@@ -115,7 +115,7 @@ const LoginScreen = () => {
       // Navegar para a tela principal
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Main' }],
+        routes: [{ name: 'Home' }],
       });
     } catch (error) {
       Toast.show({

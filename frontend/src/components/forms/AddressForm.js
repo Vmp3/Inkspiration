@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Input from '../ui/Input';
 import theme from '../../themes/theme';
@@ -8,6 +8,18 @@ const AddressForm = ({
   handleChange, 
   buscarCep 
 }) => {
+  const [numeroError, setNumeroError] = useState('');
+
+  const handleNumeroChange = (text) => {
+    if (text !== '' && !/^\d+$/.test(text)) {
+      setNumeroError('Apenas números são permitidos');
+      return;
+    }
+    
+    setNumeroError('');
+    handleChange('numero', text);
+  };
+
   return (
     <View style={styles.tabContent}>
       <View style={styles.formRow}>
@@ -53,9 +65,10 @@ const AddressForm = ({
             placeholder="123"
             keyboardType="numeric"
             value={formData.numero}
-            onChangeText={(text) => handleChange('numero', text)}
-            style={styles.inputField}
+            onChangeText={handleNumeroChange}
+            style={[styles.inputField, numeroError ? styles.inputError : null]}
           />
+          {numeroError ? <Text style={styles.errorText}>{numeroError}</Text> : null}
         </View>
         
         <View style={styles.formGroup}>
@@ -129,6 +142,14 @@ const styles = StyleSheet.create({
   helperText: {
     fontSize: 12,
     color: '#777',
+    marginTop: 4,
+  },
+  inputError: {
+    borderColor: '#ff0000',
+  },
+  errorText: {
+    color: '#ff0000',
+    fontSize: 12,
     marginTop: 4,
   },
 });

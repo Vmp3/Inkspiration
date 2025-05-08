@@ -9,6 +9,12 @@ const PersonalForm = ({
   handleChange, 
   handleBlur, 
   cpfError, 
+  emailError,
+  phoneError,
+  birthDateError,
+  nomeError,
+  sobrenomeError,
+  fullNameError,
   isArtist, 
   setIsArtist 
 }) => {
@@ -21,8 +27,10 @@ const PersonalForm = ({
             placeholder="Seu nome"
             value={formData.nome}
             onChangeText={(text) => handleChange('nome', text)}
-            style={styles.inputField}
+            onBlur={() => handleBlur('nome')}
+            style={[styles.inputField, nomeError && styles.inputError]}
           />
+          {nomeError ? <Text style={styles.errorText}>{nomeError}</Text> : null}
         </View>
         
         <View style={styles.formGroup}>
@@ -31,10 +39,18 @@ const PersonalForm = ({
             placeholder="Seu sobrenome"
             value={formData.sobrenome}
             onChangeText={(text) => handleChange('sobrenome', text)}
-            style={styles.inputField}
+            onBlur={() => handleBlur('sobrenome')}
+            style={[styles.inputField, sobrenomeError && styles.inputError]}
           />
+          {sobrenomeError ? <Text style={styles.errorText}>{sobrenomeError}</Text> : null}
         </View>
       </View>
+
+      {fullNameError ? (
+        <View style={styles.fullNameErrorContainer}>
+          <Text style={styles.errorText}>{fullNameError}</Text>
+        </View>
+      ) : null}
       
       <View style={styles.formFullWidth}>
         <Text style={styles.formLabel}>CPF</Text>
@@ -57,8 +73,10 @@ const PersonalForm = ({
             keyboardType="email-address"
             value={formData.email}
             onChangeText={(text) => handleChange('email', text)}
-            style={styles.inputField}
+            onBlur={() => handleBlur('email')}
+            style={[styles.inputField, emailError && styles.inputError]}
           />
+          {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
         </View>
         
         <View style={styles.formGroup}>
@@ -68,8 +86,10 @@ const PersonalForm = ({
             keyboardType="phone-pad"
             value={formData.telefone}
             onChangeText={(text) => handleChange('telefone', text)}
-            style={styles.inputField}
+            onBlur={() => handleBlur('telefone')}
+            style={[styles.inputField, phoneError && styles.inputError]}
           />
+          {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
         </View>
       </View>
 
@@ -79,9 +99,11 @@ const PersonalForm = ({
           placeholder="DD/MM/AAAA"
           value={formData.dataNascimento}
           onChangeText={(text) => handleChange('dataNascimento', text)}
+          onBlur={() => handleBlur('dataNascimento')}
           keyboardType="numeric"
-          style={styles.inputField}
+          style={[styles.inputField, birthDateError && styles.inputError]}
         />
+        {birthDateError ? <Text style={styles.errorText}>{birthDateError}</Text> : null}
       </View>
     </View>
   );
@@ -103,6 +125,10 @@ const styles = StyleSheet.create({
   },
   formFullWidth: {
     marginBottom: 24,
+  },
+  fullNameErrorContainer: {
+    marginBottom: 16,
+    paddingHorizontal: 10,
   },
   formLabel: {
     marginBottom: 8,
