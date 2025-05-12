@@ -9,7 +9,7 @@ import {
   ScrollView
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import Checkbox from './ui/Checkbox';
+import Checkbox from '../ui/Checkbox';
 
 const FilterDropdown = ({ 
   visible, 
