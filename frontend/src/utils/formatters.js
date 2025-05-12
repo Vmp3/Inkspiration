@@ -90,11 +90,73 @@ const validateCPF = (cpf) => {
   return true;
 };
 
+const validatePhone = (phone) => {
+  const numbers = phone.replace(/\D/g, '');
+  
+  return numbers.length === 11;
+};
+
+const validateBirthDate = (birthDate) => {
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(birthDate)) {
+    return false;
+  }
+  
+  const [day, month, year] = birthDate.split('/').map(Number);
+  
+  const birthDateObj = new Date(year, month - 1, day);
+  
+  if (
+    birthDateObj.getFullYear() !== year ||
+    birthDateObj.getMonth() !== month - 1 ||
+    birthDateObj.getDate() !== day
+  ) {
+    return false;
+  }
+  
+  const today = new Date();
+  let age = today.getFullYear() - birthDateObj.getFullYear();
+  const m = today.getMonth() - birthDateObj.getMonth();
+  
+  if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
+    age--;
+  }
+  
+  return age >= 18;
+};
+
+const validateFirstName = (firstName) => {
+  if (!firstName) return false;
+  
+  if (firstName.trim().length < 2) return false;
+  
+  if (firstName.trim().includes(' ')) return false;
+  
+  return true;
+};
+
+const validateSurname = (surname) => {
+  if (!surname) return false;
+  
+  if (surname.trim().length < 2) return false;
+  
+  return true;
+};
+
+const validateFullNameLength = (firstName, surname) => {
+  const fullName = `${firstName} ${surname}`.trim();
+  return fullName.length <= 255;
+};
+
 export {
   formatCPF,
   formatCEP,
   formatPhone,
   formatBirthDate,
   validateEmail,
-  validateCPF
+  validateCPF,
+  validatePhone,
+  validateBirthDate,
+  validateFirstName,
+  validateSurname,
+  validateFullNameLength
 }; 

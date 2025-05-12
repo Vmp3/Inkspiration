@@ -6,10 +6,13 @@ import FormNavigation from '../ui/FormNavigation';
 
 const SecurityForm = ({ 
   formData, 
-  handleChange, 
+  handleChange,
+  handleBlur, 
   handleRegister, 
   handlePrevTab, 
-  isLoading
+  isLoading,
+  passwordError,
+  confirmPasswordError
 }) => {
   const handleTermsPress = () => {
     Linking.openURL('http://localhost:8081/termos-de-uso');
@@ -29,11 +32,13 @@ const SecurityForm = ({
             secureTextEntry
             value={formData.senha}
             onChangeText={(text) => handleChange('senha', text)}
+            onBlur={() => handleBlur('senha')}
             style={[
               styles.inputField,
-              formData.senha && formData.senha.length < 6 && styles.inputError
+              passwordError && styles.inputError
             ]}
           />
+          {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
         </View>
         
         <View style={styles.formGroup}>
@@ -43,11 +48,13 @@ const SecurityForm = ({
             secureTextEntry
             value={formData.confirmarSenha}
             onChangeText={(text) => handleChange('confirmarSenha', text)}
+            onBlur={() => handleBlur('confirmarSenha')}
             style={[
               styles.inputField,
-              formData.senha !== formData.confirmarSenha && formData.confirmarSenha && styles.inputError
+              confirmPasswordError && styles.inputError
             ]}
           />
+          {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
         </View>
       </View>
 
@@ -112,6 +119,11 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: '#ef5350',
+  },
+  errorText: {
+    color: '#ef5350',
+    fontSize: 12,
+    marginTop: 4,
   },
   checkboxContainer: {
     flexDirection: 'row',
