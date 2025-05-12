@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -13,6 +13,8 @@ import { StatusBar } from 'expo-status-bar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Input from '../components/ui/Input';
+import SearchInput from '../components/SearchInput';
+import FilterButton from '../components/FilterButton';
 import { artists as originalArtists } from '../data/artists';
 
 // Componentes de exploração
@@ -22,6 +24,7 @@ import RelevanceDropdown from '../components/explore/RelevanceDropdown';
 import ArtistsGrid from '../components/explore/ArtistsGrid';
 import Pagination from '../components/common/Pagination';
 import MobileFiltersModal from '../components/common/MobileFiltersModal';
+import FilterDropdown from '../components/common/FilterDropdown';
 
 const ExploreScreen = ({ navigation }) => {
   // Estados
@@ -35,6 +38,9 @@ const ExploreScreen = ({ navigation }) => {
   const [activeFilters, setActiveFilters] = useState([]);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
   const [showRelevanceDropdown, setShowRelevanceDropdown] = useState(false);
+  const [isFilterDropdownVisible, setIsFilterDropdownVisible] = useState(false);
+  const [filterButtonPosition, setFilterButtonPosition] = useState({ top: 0, left: 0 });
+  const filterButtonRef = useRef(null);
   
   // Estado para resultados filtrados
   const [filteredArtists, setFilteredArtists] = useState(originalArtists);
@@ -94,7 +100,10 @@ const ExploreScreen = ({ navigation }) => {
       return matchesRating && matchesSpecialties;
     });
 
-    setDisplayedArtists(artistResults);
+    // Aplicar ordenação aos resultados filtrados
+    const sortedResults = sortArtists(artistResults);
+    
+    setDisplayedArtists(sortedResults);
     updateActiveFilters();
   };
 
@@ -149,6 +158,39 @@ const ExploreScreen = ({ navigation }) => {
     applyFilters();
   }, [minRating, selectedSpecialties]);
 
+  // Função para ordenar os artistas com base no critério de ordenação
+  const sortArtists = (artists) => {
+    const sortedArtists = [...artists];
+    
+    if (sortBy === 'melhorAvaliacao') {
+      // Ordenar por avaliação (maior para menor)
+      sortedArtists.sort((a, b) => b.rating - a.rating);
+    } else if (sortBy === 'maisRecente') {
+      // Como não temos um campo createdAt, vamos usar o ID como referência
+      // Assumindo que IDs maiores são artistas mais recentes
+      sortedArtists.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+    } else {
+      // Ordenação padrão por relevância
+      // Como não temos um algoritmo complexo de relevância,
+      // vamos usar uma combinação de avaliação e alfabética
+      sortedArtists.sort((a, b) => {
+        // Primeiro por avaliação
+        const ratingDiff = b.rating - a.rating;
+        if (ratingDiff !== 0) return ratingDiff;
+        
+        // Em caso de empate, ordenar por nome
+        return a.name.localeCompare(b.name);
+      });
+    }
+    
+    return sortedArtists;
+  };
+  
+  // Efeito para reordenar artistas quando o critério de ordenação muda
+  useEffect(() => {
+    setDisplayedArtists(sortArtists(displayedArtists));
+  }, [sortBy]);
+
   // Efeito para fechar o dropdown quando o usuário clicar fora dele
   useEffect(() => {
     const handlePressOutside = () => {
@@ -170,6 +212,22 @@ const ExploreScreen = ({ navigation }) => {
     // No React Native nativo, usamos o componente Pressable
     return () => {};
   }, [showRelevanceDropdown]);
+
+  // Função para lidar com o clique no botão de filtros
+  const handleFilterPress = () => {
+    if (isMobile) {
+      setShowFiltersModal(true);
+    } else {
+      if (filterButtonRef.current) {
+        filterButtonRef.current.measureInWindow((x, y, width, height) => {
+          setFilterButtonPosition({ top: y, left: x });
+          setIsFilterDropdownVisible(true);
+        });
+      } else {
+        setIsFilterDropdownVisible(true);
+      }
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -209,40 +267,78 @@ const ExploreScreen = ({ navigation }) => {
               {/* Linha separadora para dispositivos móveis */}
               {isMobile && <View style={styles.separator} />}
               
-              {/* Filtros móveis (só aparece em dispositivos móveis) */}
+              {/* Adicionar inputs de busca para dispositivos móveis */}
               {isMobile && (
-                <TouchableOpacity 
-                  style={styles.mobileFiltersButton}
-                  onPress={() => setShowFiltersModal(true)}
-                >
-                  <MaterialIcons name="filter-list" size={20} color="#FFFFFF" />
-                  <Text style={styles.mobileFiltersButtonText}>
-                    Filtros {activeFilters.length > 0 && `(${activeFilters.length})`}
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.mobileSearchContainer}>
+                  <View style={styles.mobileInputWrapper}>
+                    <SearchInput
+                      icon="search"
+                      placeholder="Buscar artistas"
+                      value={searchTerm}
+                      onChangeText={setSearchTerm}
+                    />
+                  </View>
+                  
+                  <View style={styles.mobileInputWrapper}>
+                    <SearchInput
+                      icon="location-on"
+                      placeholder="Sua localização"
+                      value={locationTerm}
+                      onChangeText={setLocationTerm}
+                    />
+                  </View>
+                  
+                  <TouchableOpacity 
+                    style={styles.mobileSearchButton} 
+                    onPress={handleSearch}
+                  >
+                    <Text style={styles.searchButtonText}>Buscar</Text>
+                  </TouchableOpacity>
+                </View>
               )}
-
-              {/* Filtros ativos */}
-              <ActiveFilters 
-                activeFilters={activeFilters} 
-                removeFilter={removeFilter} 
-                resetFilters={resetFilters} 
-              />
-
-              {/* Dropdown de relevância para a lista de artistas */}
-              <RelevanceDropdown 
-                sortBy={sortBy} 
-                setSortBy={setSortBy} 
-                showDropdown={showRelevanceDropdown} 
-                setShowDropdown={setShowRelevanceDropdown} 
-              />
+              
+              {/* Filtros e dropdown de relevância */}
+              <View style={styles.filtersAndRelevanceRow}>
+                {/* Lado esquerdo - Filtros */}
+                <View style={styles.filtersContainer}>
+                  {isMobile && (
+                    <View ref={filterButtonRef}>
+                      <FilterButton 
+                        onPress={handleFilterPress} 
+                        filterCount={activeFilters.length} 
+                      />
+                    </View>
+                  )}
+                  
+                  {/* Filtros ativos (sempre visíveis) */}
+                  <View style={styles.activeFiltersContainer}>
+                    <ActiveFilters 
+                      activeFilters={activeFilters} 
+                      removeFilter={removeFilter} 
+                      resetFilters={resetFilters} 
+                    />
+                  </View>
+                </View>
+                
+                {/* Lado direito - Dropdown de relevância */}
+                <View style={styles.relevanceContainer}>
+                  <RelevanceDropdown 
+                    sortBy={sortBy} 
+                    setSortBy={setSortBy} 
+                    showDropdown={showRelevanceDropdown} 
+                    setShowDropdown={setShowRelevanceDropdown} 
+                  />
+                </View>
+              </View>
               
               {/* Grid de artistas */}
-              <ArtistsGrid 
-                artists={displayedArtists} 
-                numColumns={numColumns} 
-                navigation={navigation} 
-              />
+              <View style={styles.artistsGridContainer}>
+                <ArtistsGrid 
+                  artists={displayedArtists} 
+                  numColumns={numColumns} 
+                  navigation={navigation} 
+                />
+              </View>
               
               {/* Paginação */}
               {displayedArtists.length > 0 && (
@@ -277,6 +373,19 @@ const ExploreScreen = ({ navigation }) => {
         applyFilters={applyFilters}
         updateActiveFilters={updateActiveFilters}
       />
+
+      {/* FilterDropdown para desktop/tablet */}
+      <FilterDropdown
+        visible={isFilterDropdownVisible}
+        onClose={() => setIsFilterDropdownVisible(false)}
+        minRating={minRating}
+        setMinRating={setMinRating}
+        selectedSpecialties={selectedSpecialties}
+        toggleSpecialty={toggleSpecialty}
+        resetFilters={resetFilters}
+        applyFilters={applyFilters}
+        anchorPosition={filterButtonPosition}
+      />
     </View>
   );
 };
@@ -310,7 +419,8 @@ const styles = StyleSheet.create({
   },
   pageHeaderMobile: {
     flexDirection: 'column',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    width: '100%',
   },
   
   // Layout principal
@@ -353,6 +463,63 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
     marginLeft: 8,
+  },
+  
+  // Adicionar inputs de busca para dispositivos móveis
+  mobileSearchContainer: {
+    flexDirection: 'column',
+    width: '100%',
+    gap: 16,
+    marginBottom: 16,
+  },
+  mobileInputWrapper: {
+    width: '100%',
+  },
+  mobileSearchButton: {
+    backgroundColor: '#111827',
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  searchButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  
+  // Filtros e dropdown de relevância
+  filtersAndRelevanceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 16,
+    zIndex: 100, // Garantir que fique acima de outros elementos
+    position: 'relative', // Importante para estabelecer um novo contexto de empilhamento
+  },
+  filtersContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    flex: 1,
+    zIndex: 101, // Garantir que os filtros apareçam acima
+  },
+  relevanceContainer: {
+    alignItems: 'flex-end',
+    zIndex: 101, // Mesmo nível que os filtros
+  },
+  activeFiltersContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginLeft: 8,
+  },
+  artistsGridContainer: {
+    width: '100%',
+    position: 'relative',
+    zIndex: 1, // Menor que os elementos acima
   },
 });
 
