@@ -5,7 +5,7 @@ export const artists = [
     rating: 4.9,
     specialties: ["Tradicional", "Japonês", "Tatuagem"],
     location: "São Paulo, SP",
-    coverImage: "https://images.unsplash.com/photo-1529688530647-93a6e1916f5f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=80",
+    coverImage: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png",
   },
   {
     id: "2",
@@ -13,7 +13,7 @@ export const artists = [
     rating: 4.8,
     specialties: ["Aquarela", "Minimalista", "Tatuagem"],
     location: "Rio de Janeiro, RJ",
-    coverImage: "https://images.unsplash.com/photo-1576426863848-c21f53c60b19?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=80",
+    coverImage: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Stu6YsDsY0uncZ7QaUG2VUEBeqHOka.png",
   },
   {
     id: "3",
@@ -21,7 +21,7 @@ export const artists = [
     rating: 4.7,
     specialties: ["Blackwork", "Geométrico", "Tatuagem"],
     location: "Belo Horizonte, MG",
-    coverImage: "https://images.unsplash.com/photo-1529688530647-93a6e1916f5f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=80",
+    coverImage: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png",
   },
   {
     id: "4",
@@ -29,7 +29,7 @@ export const artists = [
     rating: 4.6,
     specialties: ["Realista", "Retratos", "Tatuagem"],
     location: "São Paulo, SP",
-    coverImage: "https://images.unsplash.com/photo-1576426863848-c21f53c60b19?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=80",
+    coverImage: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Stu6YsDsY0uncZ7QaUG2VUEBeqHOka.png",
   },
   {
     id: "5",
@@ -37,7 +37,7 @@ export const artists = [
     rating: 4.9,
     specialties: ["Neo-Tradicional", "Old School", "Tatuagem"],
     location: "Curitiba, PR",
-    coverImage: "https://images.unsplash.com/photo-1529688530647-93a6e1916f5f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=80",
+    coverImage: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png",
   },
   {
     id: "6",
@@ -45,6 +45,6 @@ export const artists = [
     rating: 4.9,
     specialties: ["Neo-Tradicional", "Old School", "Tatuagem"],
     location: "Curitiba, PR",
-    coverImage: "https://images.unsplash.com/photo-1576426863848-c21f53c60b19?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=80",
+    coverImage: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Stu6YsDsY0uncZ7QaUG2VUEBeqHOka.png",
   },
 ]; 

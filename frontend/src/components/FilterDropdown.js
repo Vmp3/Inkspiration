@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Dimensions,
-  Modal
+  ScrollView
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Checkbox from './ui/Checkbox';
@@ -40,94 +40,101 @@ const FilterDropdown = ({
   const windowWidth = Dimensions.get('window').width;
 
   return (
-    <View style={styles.dropdownWrapper} pointerEvents="box-none">
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.touchableOverlay} />
-      </TouchableWithoutFeedback>
+    <>
+      {visible && (
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={styles.backdrop} />
+        </TouchableWithoutFeedback>
+      )}
       
-      <View 
-        style={[
-          styles.container, 
-          { 
-            top: anchorPosition.top + 50, 
-            left: windowWidth < 768 ? 16 : anchorPosition.left,
-            right: windowWidth < 768 ? 16 : undefined,
-          }
-        ]}
-      >
-        <View style={styles.arrowUp} />
-        <View style={styles.header}>
-          <Text style={styles.heading}>Filtros</Text>
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={resetFilters}
-          >
-            <Text style={styles.resetButtonText}>Limpar todos</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Avaliação Mínima</Text>
-          <View style={styles.ratingContainer}>
-            <View style={styles.starsContainer}>
-              {[1, 2, 3, 4, 5].map((rating) => (
-                <TouchableOpacity
-                  key={rating}
-                  onPress={() => setMinRating(rating)}
-                >
-                  <MaterialIcons
-                    name="star"
-                    size={24}
-                    color={rating <= minRating ? "#FFD700" : "#E5E7EB"}
-                    style={rating <= minRating ? styles.starFilled : {}}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-            <Text style={styles.ratingText}>
-              {minRating} estrela{minRating !== 1 ? "s" : ""}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Especialidades</Text>
-          <View style={styles.specialtiesGrid}>
-            {allSpecialties.map((specialty) => (
-              <View key={specialty} style={styles.checkboxContainer}>
-                <Checkbox
-                  checked={selectedSpecialties.includes(specialty)}
-                  onPress={() => toggleSpecialty(specialty)}
-                />
-                <Text style={styles.checkboxLabel}>{specialty}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <TouchableOpacity 
-          style={styles.applyButton}
-          onPress={() => {
-            applyFilters();
-            onClose();
-          }}
+      {visible && (
+        <View 
+          style={[
+            styles.container, 
+            { 
+              top: anchorPosition.top + 50, 
+              left: windowWidth < 768 ? 16 : anchorPosition.left,
+              right: windowWidth < 768 ? 16 : undefined,
+            }
+          ]}
         >
-          <Text style={styles.applyButtonText}>Aplicar Filtros</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          <View style={styles.arrowUp} />
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <View style={styles.header}>
+              <Text style={styles.heading}>Filtros</Text>
+              <TouchableOpacity
+                style={styles.resetButton}
+                onPress={resetFilters}
+              >
+                <Text style={styles.resetButtonText}>Limpar todos</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Avaliação Mínima</Text>
+              <View style={styles.ratingContainer}>
+                <View style={styles.starsContainer}>
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <TouchableOpacity
+                      key={rating}
+                      onPress={() => setMinRating(rating)}
+                    >
+                      <MaterialIcons
+                        name="star"
+                        size={24}
+                        color={rating <= minRating ? "#FFD700" : "#E5E7EB"}
+                        style={rating <= minRating ? styles.starFilled : {}}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={styles.ratingText}>
+                  {minRating} estrela{minRating !== 1 ? "s" : ""}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Especialidades</Text>
+              <View style={styles.specialtiesGrid}>
+                {allSpecialties.map((specialty) => (
+                  <View key={specialty} style={styles.checkboxContainer}>
+                    <Checkbox
+                      checked={selectedSpecialties.includes(specialty)}
+                      onPress={() => toggleSpecialty(specialty)}
+                    />
+                    <Text style={styles.checkboxLabel}>{specialty}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.applyButton}
+              onPress={() => {
+                applyFilters();
+                onClose();
+              }}
+            >
+              <Text style={styles.applyButtonText}>Aplicar Filtros</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      )}
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  dropdownWrapper: {
-    ...StyleSheet.absoluteFillObject,
-    pointerEvents: 'box-none',
-    zIndex: 1000,
-  },
-  touchableOverlay: {
-    ...StyleSheet.absoluteFillObject,
+  backdrop: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    zIndex: 1000,
+    pointerEvents: 'auto',
   },
   container: {
     position: 'absolute',
@@ -136,6 +143,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     padding: 20,
+    maxHeight: '80%',
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -145,6 +153,9 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     zIndex: 1001,
+  },
+  scrollView: {
+    maxHeight: 500,
   },
   arrowUp: {
     position: 'absolute',
@@ -160,6 +171,7 @@ const styles = StyleSheet.create({
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderBottomColor: 'white',
+    zIndex: 1002,
   },
   header: {
     flexDirection: 'row',
@@ -177,7 +189,7 @@ const styles = StyleSheet.create({
   },
   resetButtonText: {
     fontSize: 14,
-    color: '#6366F1',
+    color: '#000000',
     fontWeight: '500',
   },
   section: {
@@ -228,6 +240,7 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: 'center',
     marginTop: 8,
+    marginBottom: 8,
   },
   applyButtonText: {
     color: 'white',
