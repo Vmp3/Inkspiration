@@ -13,10 +13,12 @@ import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
 import SearchInput from '../components/SearchInput';
 import FilterButton from '../components/FilterButton';
-import FilterDropdown from '../components/FilterDropdown';
+import FilterDropdown from '../components/common/FilterDropdown';
 import ArtistCard from '../components/ArtistCard';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import ActiveFilters from '../components/common/ActiveFilters';
+import MobileFiltersModal from '../components/common/MobileFiltersModal';
 import { artists as originalArtists } from '../data/artists';
 
 const HomeScreen = ({ navigation }) => {
@@ -29,6 +31,8 @@ const HomeScreen = ({ navigation }) => {
   const [filterButtonPosition, setFilterButtonPosition] = useState({ top: 0, left: 0 });
   const filterButtonRef = useRef(null);
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const [activeFilters, setActiveFilters] = useState([]);
+  const [showFiltersModal, setShowFiltersModal] = useState(false);
   
   // Estado para resultados filtrados
   const [filteredArtists, setFilteredArtists] = useState(originalArtists);
@@ -114,6 +118,7 @@ const HomeScreen = ({ navigation }) => {
     });
 
     updateDisplayedResults(viewType, artistResults);
+    updateActiveFilters();
   };
 
   // Atualizar resultados exibidos com base no tipo de visualização
@@ -132,6 +137,32 @@ const HomeScreen = ({ navigation }) => {
   const resetFilters = () => {
     setMinRating(0);
     setSelectedSpecialties([]);
+    setActiveFilters([]);
+  };
+
+  // Atualizar filtros ativos
+  const updateActiveFilters = () => {
+    const filters = [];
+    
+    if (minRating > 0) {
+      filters.push({ type: 'rating', value: `${minRating}★` });
+    }
+    
+    selectedSpecialties.forEach(specialty => {
+      filters.push({ type: 'specialty', value: specialty });
+    });
+    
+    setActiveFilters(filters);
+  };
+
+  // Remover filtro específico
+  const removeFilter = (filter) => {
+    if (filter.type === 'rating') {
+      setMinRating(0);
+    } else if (filter.type === 'specialty') {
+      setSelectedSpecialties(prev => prev.filter(s => s !== filter.value));
+    }
+    updateActiveFilters();
   };
 
   // Efeito para aplicar filtros quando eles mudam
@@ -175,13 +206,17 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const handleFilterPress = () => {
-    if (filterButtonRef.current) {
-      filterButtonRef.current.measureInWindow((x, y, width, height) => {
-        setFilterButtonPosition({ top: y, left: x });
-        setIsFilterDropdownVisible(true);
-      });
+    if (isMobile) {
+      setShowFiltersModal(true);
     } else {
-      setIsFilterDropdownVisible(true);
+      if (filterButtonRef.current) {
+        filterButtonRef.current.measureInWindow((x, y, width, height) => {
+          setFilterButtonPosition({ top: y, left: x });
+          setIsFilterDropdownVisible(true);
+        });
+      } else {
+        setIsFilterDropdownVisible(true);
+      }
     }
   };
 
@@ -200,53 +235,79 @@ const HomeScreen = ({ navigation }) => {
               </Text>
 
               <View style={styles.searchContainer}>
-                <View style={styles.searchInputRow}>
-                  <View style={styles.searchInputContainer}>
-                    <SearchInput
-                      icon="search"
-                      placeholder="Buscar artistas"
-                      value={searchTerm}
-                      onChangeText={setSearchTerm}
-                    />
+                {isMobile ? (
+                  // Layout para dispositivos móveis
+                  <View style={styles.mobileSearchContainer}>
+                    <View style={styles.mobileInputWrapper}>
+                      <SearchInput
+                        icon="search"
+                        placeholder="Buscar artistas"
+                        value={searchTerm}
+                        onChangeText={setSearchTerm}
+                      />
+                    </View>
+                    
+                    <View style={styles.mobileInputWrapper}>
+                      <SearchInput
+                        icon="location-on"
+                        placeholder="Sua localização"
+                        value={locationTerm}
+                        onChangeText={setLocationTerm}
+                      />
+                    </View>
+                    
+                    <TouchableOpacity 
+                      style={styles.mobileSearchButton} 
+                      onPress={handleSearch}
+                    >
+                      <Text style={styles.searchButtonText}>Buscar</Text>
+                    </TouchableOpacity>
                   </View>
-                  
-                  <View style={styles.searchInputContainer}>
-                    <SearchInput
-                      icon="location-on"
-                      placeholder="Sua localização"
-                      value={locationTerm}
-                      onChangeText={setLocationTerm}
-                    />
+                ) : (
+                  // Layout para desktop/tablet
+                  <View style={styles.searchInputRow}>
+                    <View style={styles.searchInputContainer}>
+                      <SearchInput
+                        icon="search"
+                        placeholder="Buscar artistas"
+                        value={searchTerm}
+                        onChangeText={setSearchTerm}
+                      />
+                    </View>
+                    
+                    <View style={styles.searchInputContainer}>
+                      <SearchInput
+                        icon="location-on"
+                        placeholder="Sua localização"
+                        value={locationTerm}
+                        onChangeText={setLocationTerm}
+                      />
+                    </View>
+                    
+                    <TouchableOpacity 
+                      style={styles.searchButton} 
+                      onPress={handleSearch}
+                    >
+                      <Text style={styles.searchButtonText}>Buscar</Text>
+                    </TouchableOpacity>
                   </View>
-                  
-                  <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                    <Text style={styles.searchButtonText}>Buscar</Text>
-                  </TouchableOpacity>
-                </View>
+                )}
 
                 <View style={styles.filterRow}>
                   <View ref={filterButtonRef}>
                     <FilterButton 
                       onPress={handleFilterPress} 
-                      filterCount={(minRating > 0 || selectedSpecialties.length > 0) ? 
-                        (minRating > 0 && selectedSpecialties.length > 0 ? 2 : 1) : 0} 
+                      filterCount={activeFilters.length} 
                     />
                   </View>
                   
-                  {minRating > 0 && (
-                    <View style={styles.filterBadge}>
-                      <Text style={styles.filterBadgeText}>{minRating}+ </Text>
-                      <MaterialIcons name="star" size={12} color="#111" />
-                    </View>
-                  )}
-
-                  {selectedSpecialties.length > 0 && (
-                    <View style={styles.filterBadge}>
-                      <Text style={styles.filterBadgeText}>
-                        {selectedSpecialties.length} especialidade{selectedSpecialties.length !== 1 ? "s" : ""}
-                      </Text>
-                    </View>
-                  )}
+                  <View style={styles.activeFiltersContainer}>
+                    <ActiveFilters 
+                      activeFilters={activeFilters}
+                      removeFilter={removeFilter}
+                      resetFilters={resetFilters}
+                    />
+                  </View>
                 </View>
               </View>
             </View>
@@ -290,6 +351,7 @@ const HomeScreen = ({ navigation }) => {
         </ScrollView>
       </View>
 
+      {/* FilterDropdown para desktop/tablet */}
       <FilterDropdown
         visible={isFilterDropdownVisible}
         onClose={() => setIsFilterDropdownVisible(false)}
@@ -300,6 +362,26 @@ const HomeScreen = ({ navigation }) => {
         resetFilters={resetFilters}
         applyFilters={applyFilters}
         anchorPosition={filterButtonPosition}
+      />
+
+      {/* Modal de filtros para dispositivos móveis */}
+      <MobileFiltersModal
+        visible={showFiltersModal}
+        onClose={() => setShowFiltersModal(false)}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        locationTerm={locationTerm}
+        setLocationTerm={setLocationTerm}
+        minRating={minRating}
+        setMinRating={setMinRating}
+        maxDistance={0}
+        setMaxDistance={() => {}}
+        selectedSpecialties={selectedSpecialties}
+        toggleSpecialty={toggleSpecialty}
+        handleSearch={handleSearch}
+        resetFilters={resetFilters}
+        applyFilters={applyFilters}
+        updateActiveFilters={updateActiveFilters}
       />
     </SafeAreaView>
   );
@@ -348,26 +430,26 @@ const styles = StyleSheet.create({
   searchContainer: {
     width: '100%',
     maxWidth: 768,
+    paddingHorizontal: 4,
   },
   searchInputRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
     gap: 8,
   },
   searchInputContainer: {
     flex: 1,
-    minWidth: 200,
+    minWidth: 150,
   },
   searchButton: {
     backgroundColor: '#111827',
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    minWidth: 100,
     justifyContent: 'center',
     alignItems: 'center',
+    minWidth: 100,
   },
   searchButtonText: {
     color: '#FFFFFF',
@@ -376,23 +458,16 @@ const styles = StyleSheet.create({
   },
   filterRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flexWrap: 'wrap',
     gap: 8,
+    width: '100%',
+    marginTop: 8,
   },
-  filterBadge: {
+  activeFiltersContainer: {
+    flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  filterBadgeText: {
-    fontSize: 12,
-    color: '#111827',
+    flexWrap: 'wrap',
   },
   artistsSection: {
     marginBottom: 48,
@@ -455,7 +530,25 @@ const styles = StyleSheet.create({
   footerSpacer: {
     flex: 1, // Isso irá empurrar o footer para baixo
     minHeight: 20, // Altura mínima para garantir algum espaço
-  }
+  },
+  mobileSearchContainer: {
+    flexDirection: 'column',
+    width: '100%',
+    gap: 16,
+    marginBottom: 16,
+  },
+  mobileInputWrapper: {
+    width: '100%',
+  },
+  mobileSearchButton: {
+    backgroundColor: '#111827',
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
 });
 
 export default HomeScreen; 

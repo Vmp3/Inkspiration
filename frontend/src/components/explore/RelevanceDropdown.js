@@ -121,6 +121,7 @@ const styles = StyleSheet.create({
     zIndex: 100,
     alignSelf: 'flex-end',
     marginBottom: 16,
+    width: 140,
   },
   relevanceButton: {
     flexDirection: 'row',
@@ -146,7 +147,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 10,
+    zIndex: 1000,
   },
   relevanceDropdownOverlay: {
     position: 'absolute',
@@ -168,7 +169,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    zIndex: 20,
+    zIndex: 2000,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     overflow: 'hidden',
