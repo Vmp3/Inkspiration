@@ -16,6 +16,7 @@ import Input from '../components/ui/Input';
 import SearchInput from '../components/SearchInput';
 import FilterButton from '../components/FilterButton';
 import { artists as originalArtists } from '../data/artists';
+import Button from '../components/ui/Button';
 
 // Componentes de exploração
 import FiltersPanel from '../components/explore/FiltersPanel';
@@ -288,12 +289,13 @@ const ExploreScreen = ({ navigation }) => {
                     />
                   </View>
                   
-                  <TouchableOpacity 
-                    style={styles.mobileSearchButton} 
+                  <Button 
+                    variant="primary"
+                    label="Buscar"
                     onPress={handleSearch}
-                  >
-                    <Text style={styles.searchButtonText}>Buscar</Text>
-                  </TouchableOpacity>
+                    style={styles.mobileSearchButton}
+                    fullWidth={true}
+                  />
                 </View>
               )}
               
@@ -476,18 +478,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   mobileSearchButton: {
-    backgroundColor: '#111827',
-    borderRadius: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-  },
-  searchButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 16,
+    marginTop: 8,
   },
   
   // Filtros e dropdown de relevância
