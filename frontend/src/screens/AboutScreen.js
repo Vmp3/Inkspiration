@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
 import HeroSection from '../components/about/HeroSection';
 import MissionSection from '../components/about/MissionSection';
@@ -53,7 +52,6 @@ const AboutScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <Header />
       
       <View style={styles.pageWrapper}>
         <ScrollView contentContainerStyle={styles.scrollContent}>

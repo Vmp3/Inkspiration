@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Input from '../components/ui/Input';
 import SearchInput from '../components/ui/SearchInput';
@@ -164,16 +163,10 @@ const ExploreScreen = ({ navigation }) => {
     const sortedArtists = [...artists];
     
     if (sortBy === 'melhorAvaliacao') {
-      // Ordenar por avaliação (maior para menor)
       sortedArtists.sort((a, b) => b.rating - a.rating);
     } else if (sortBy === 'maisRecente') {
-      // Como não temos um campo createdAt, vamos usar o ID como referência
-      // Assumindo que IDs maiores são artistas mais recentes
       sortedArtists.sort((a, b) => parseInt(b.id) - parseInt(a.id));
     } else {
-      // Ordenação padrão por relevância
-      // Como não temos um algoritmo complexo de relevância,
-      // vamos usar uma combinação de avaliação e alfabética
       sortedArtists.sort((a, b) => {
         // Primeiro por avaliação
         const ratingDiff = b.rating - a.rating;
@@ -209,8 +202,7 @@ const ExploreScreen = ({ navigation }) => {
         document.removeEventListener('mousedown', handlePressOutside);
       };
     }
-    
-    // No React Native nativo, usamos o componente Pressable
+
     return () => {};
   }, [showRelevanceDropdown]);
 
@@ -232,7 +224,6 @@ const ExploreScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Header />
       <StatusBar style="dark" />
       
       <ScrollView style={styles.scrollView}>
@@ -491,19 +482,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     marginBottom: 16,
-    zIndex: 100, // Garantir que fique acima de outros elementos
-    position: 'relative', // Importante para estabelecer um novo contexto de empilhamento
+    zIndex: 100,
+    position: 'relative',
   },
   filtersContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
     flex: 1,
-    zIndex: 101, // Garantir que os filtros apareçam acima
+    zIndex: 101,
   },
   relevanceContainer: {
     alignItems: 'flex-end',
-    zIndex: 101, // Mesmo nível que os filtros
+    zIndex: 101,
   },
   activeFiltersContainer: {
     flexDirection: 'row',
@@ -513,7 +504,7 @@ const styles = StyleSheet.create({
   artistsGridContainer: {
     width: '100%',
     position: 'relative',
-    zIndex: 1, // Menor que os elementos acima
+    zIndex: 1,
   },
 });
 

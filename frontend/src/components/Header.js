@@ -16,6 +16,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 const Header = () => {
   const navigation = useNavigation();
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
   const [menuOpen, setMenuOpen] = useState(false);
   
   // Valor para animação do menu offcanvas
@@ -23,8 +24,9 @@ const Header = () => {
   
   // Detectar tamanho da tela para responsividade
   const updateLayout = () => {
-    const { width } = Dimensions.get('window');
+    const { width, height } = Dimensions.get('window');
     setScreenWidth(width);
+    setScreenHeight(height);
   };
   
   const isMobile = screenWidth < 768;
@@ -55,6 +57,33 @@ const Header = () => {
     setMenuOpen(!menuOpen);
   };
 
+  // Get dynamic styles for overlay and menu
+  const dynamicOverlayStyles = {
+    height: Platform.OS === 'web' ? '100vh' : screenHeight,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 9998, // Very high z-index but below the menu
+  };
+
+  const dynamicMenuStyles = {
+    height: Platform.OS === 'web' ? '100vh' : screenHeight,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 280,
+    backgroundColor: '#fff',
+    zIndex: 9999, // Highest z-index for components (only Toast should be higher)
+    elevation: 24, // Higher Android elevation
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+  };
+
   return (
     <View style={styles.headerContainer}>
       <StatusBar backgroundColor="white" barStyle="dark-content" />
@@ -62,14 +91,14 @@ const Header = () => {
       {/* Overlay para fechar o menu quando clicar fora */}
       {menuOpen && (
         <TouchableWithoutFeedback onPress={() => setMenuOpen(false)}>
-          <View style={styles.overlay} />
+          <View style={dynamicOverlayStyles} />
         </TouchableWithoutFeedback>
       )}
       
       {/* Menu Offcanvas */}
       <Animated.View 
         style={[
-          styles.offcanvasMenu,
+          dynamicMenuStyles,
           { transform: [{ translateX: slideAnim }] }
         ]}
       >
@@ -219,7 +248,8 @@ const Header = () => {
 const styles = StyleSheet.create({
   headerContainer: {
     position: 'relative',
-    zIndex: 100,
+    zIndex: 1000,
+    width: '100%',
   },
   header: {
     backgroundColor: '#fff',
@@ -249,28 +279,26 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   logoText: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#111',
+    color: '#333',
   },
   navContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
     flex: 1,
   },
   navItem: {
-    paddingHorizontal: 16,
+    marginHorizontal: 16,
     paddingVertical: 8,
   },
   navText: {
     fontSize: 16,
-    color: '#666',
+    color: '#333',
   },
   authContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
   },
   loginButton: {
     paddingVertical: 8,
@@ -278,49 +306,28 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   loginText: {
-    fontSize: 14,
-    color: '#111',
+    fontSize: 16,
+    color: '#333',
   },
   registerButton: {
+    backgroundColor: '#000',
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#111',
     borderRadius: 4,
-    alignItems: 'center',
   },
   registerText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#fff',
     fontWeight: '500',
   },
   
-  // Estilos do menu offcanvas
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    zIndex: 100,
-  },
-  offcanvasMenu: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 280,
-    backgroundColor: '#fff',
-    zIndex: 101,
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-    height: '100vh',
-  },
+  // Offcanvas menu styles (static styles only - dynamic styles applied directly)
   menuHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
@@ -330,7 +337,7 @@ const styles = StyleSheet.create({
     color: '#111',
   },
   menuContent: {
-    padding: 20,
+    padding: 16,
   },
   menuItem: {
     flexDirection: 'row',

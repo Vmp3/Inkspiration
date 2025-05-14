@@ -6,7 +6,6 @@ import Toast from 'react-native-toast-message';
 import axios from 'axios';
 import * as formatters from '../utils/formatters';
 
-import Header from '../components/Header';
 import TabHeader from '../components/ui/TabHeader';
 import PersonalForm from '../components/forms/PersonalForm';
 import AddressForm from '../components/forms/AddressForm';
@@ -686,8 +685,6 @@ const RegisterScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header />
-      
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.contentContainer}>
           <View style={styles.pageHeaderContainer}>

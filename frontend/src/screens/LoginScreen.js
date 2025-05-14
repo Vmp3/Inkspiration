@@ -5,7 +5,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import * as formatters from '../utils/formatters';
 
-import Header from '../components/Header';
 import LoginForm from '../components/forms/LoginForm';
 
 const API_URL = 'http://localhost:8080';
@@ -99,7 +98,6 @@ const LoginScreen = () => {
         return;
       }
 
-      // A resposta é apenas o token como string
       const token = await response.text();
 
       // Salvar token e dados do usuário
@@ -135,8 +133,6 @@ const LoginScreen = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
       >
-        <Header />
-        
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.formContainer}>
             <View style={styles.titleContainer}>
