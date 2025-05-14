@@ -8,15 +8,18 @@ import {
   Dimensions, 
   Platform,
   Animated,
-  TouchableWithoutFeedback 
+  TouchableWithoutFeedback
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useAuth } from '../context/AuthContext';
 
 const Header = () => {
   const navigation = useNavigation();
+  const { isAuthenticated, userData, logout } = useAuth();
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   
   // Valor para animação do menu offcanvas
   const slideAnim = new Animated.Value(-300); // Começa fora da tela
@@ -53,6 +56,20 @@ const Header = () => {
   
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
+  };
+  
+  const toggleUserDropdown = () => {
+    setUserDropdownOpen(!userDropdownOpen);
+  };
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setUserDropdownOpen(false);
+      navigation.navigate('Home');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
   };
 
   return (
@@ -116,26 +133,41 @@ const Header = () => {
           
           <View style={styles.menuDivider} />
           
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => {
-              navigation.navigate('Login');
-              setMenuOpen(false);
-            }}
-          >
-            <MaterialIcons name="login" size={20} color="#666" style={styles.menuIcon} />
-            <Text style={styles.menuText}>Entrar</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.registerButton}
-            onPress={() => {
-              navigation.navigate('Register');
-              setMenuOpen(false);
-            }}
-          >
-            <Text style={styles.registerText}>Registrar</Text>
-          </TouchableOpacity>
+          {!isAuthenticated ? (
+            <>
+              <TouchableOpacity 
+                style={styles.menuItem}
+                onPress={() => {
+                  navigation.navigate('Login');
+                  setMenuOpen(false);
+                }}
+              >
+                <MaterialIcons name="login" size={20} color="#666" style={styles.menuIcon} />
+                <Text style={styles.menuText}>Entrar</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.registerButton}
+                onPress={() => {
+                  navigation.navigate('Register');
+                  setMenuOpen(false);
+                }}
+              >
+                <Text style={styles.registerText}>Registrar</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => {
+                handleLogout();
+                setMenuOpen(false);
+              }}
+            >
+              <MaterialIcons name="logout" size={20} color="#666" style={styles.menuIcon} />
+              <Text style={styles.menuText}>Sair</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </Animated.View>
       
@@ -189,29 +221,74 @@ const Header = () => {
           {/* Botões à direita (sempre visíveis) */}
           <View style={styles.authContainer}>
             {isMobile ? (
-              // Em mobile, não mostrar botões de autenticação
               <View />
             ) : (
-              // Em desktop, mostrar ambos os botões
               <>
-                <TouchableOpacity 
-                  style={styles.loginButton}
-                  onPress={() => navigation.navigate('Login')}
-                >
-                  <Text style={styles.loginText}>Entrar</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.registerButton}
-                  onPress={() => navigation.navigate('Register')}
-                >
-                  <Text style={styles.registerText}>Registrar</Text>
-                </TouchableOpacity>
+                {!isAuthenticated ? (
+                  <>
+                    <TouchableOpacity 
+                      style={styles.loginButton}
+                      onPress={() => navigation.navigate('Login')}
+                    >
+                      <Text style={styles.loginText}>Entrar</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                      style={styles.registerButton}
+                      onPress={() => navigation.navigate('Register')}
+                    >
+                      <Text style={styles.registerText}>Registrar</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <View style={styles.userDropdownContainer}>
+                    <TouchableOpacity 
+                      style={styles.userButton}
+                      onPress={toggleUserDropdown}
+                    >
+                      <MaterialIcons name="account-circle" size={28} color="#111" />
+                      {userData?.nome && (
+                        <Text style={styles.userName}>
+                          {userData.nome.split(' ')[0]}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                    
+                    {userDropdownOpen && (
+                      <View style={styles.userDropdown}>
+                        <TouchableOpacity 
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            navigation.navigate('Profile');
+                            setUserDropdownOpen(false);
+                          }}
+                        >
+                          <MaterialIcons name="person" size={20} color="#666" style={styles.dropdownIcon} />
+                          <Text style={styles.dropdownText}>Perfil</Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity 
+                          style={styles.dropdownItem}
+                          onPress={handleLogout}
+                        >
+                          <MaterialIcons name="logout" size={20} color="#666" style={styles.dropdownIcon} />
+                          <Text style={styles.dropdownText}>Sair</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                )}
               </>
             )}
           </View>
         </View>
       </View>
+      
+      {userDropdownOpen && (
+        <TouchableWithoutFeedback onPress={() => setUserDropdownOpen(false)}>
+          <View style={styles.dropdownOverlay} />
+        </TouchableWithoutFeedback>
+      )}
     </View>
   );
 };
@@ -348,6 +425,55 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#f0f0f0',
     marginVertical: 16,
+  },
+  
+  userDropdownContainer: {
+    position: 'relative',
+  },
+  userButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+  },
+  userName: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  userDropdown: {
+    position: 'absolute',
+    top: 45,
+    right: 0,
+    backgroundColor: '#fff',
+    borderRadius: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+    width: 150,
+    zIndex: 102,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  dropdownIcon: {
+    marginRight: 12,
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  dropdownOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
+    zIndex: 101,
   },
 });
 
