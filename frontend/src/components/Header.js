@@ -190,12 +190,7 @@ const Header = () => {
           <View style={styles.authContainer}>
             {isMobile ? (
               // Em mobile, não mostrar botões de autenticação
-              <TouchableOpacity 
-                style={styles.loginButton}
-                onPress={() => navigation.navigate('Login')}
-              >
-                <Text style={styles.loginText}>Entrar</Text>
-              </TouchableOpacity>
+              <View />
             ) : (
               // Em desktop, mostrar ambos os botões
               <>

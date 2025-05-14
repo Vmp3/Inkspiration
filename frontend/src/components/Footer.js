@@ -21,7 +21,7 @@ const Footer = () => {
       <View style={styles.container}>
         <View style={[styles.columnsContainer, !isMobile && styles.desktopColumns]}>
           <View style={[styles.column, !isMobile && styles.desktopColumn]}>
-            <Text style={styles.title}>Inkspiração</Text>
+            <Text style={styles.title}>Inkspiration</Text>
             <Text style={styles.description}>
               Conectando entusiastas de tatuagem com artistas talentosos desde 2023.
             </Text>
@@ -54,7 +54,7 @@ const Footer = () => {
 
         <View style={styles.divider} />
         <Text style={styles.copyright}>
-          © 2023 Inkspiração. Todos os direitos reservados.
+          © 2023 Inkspiration. Todos os direitos reservados.
         </Text>
       </View>
     </View>

@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
-import SearchInput from '../components/SearchInput';
+import SearchInput from '../components/ui/SearchInput';
 import FilterButton from '../components/FilterButton';
 import FilterDropdown from '../components/common/FilterDropdown';
 import ArtistCard from '../components/ArtistCard';
@@ -20,6 +20,7 @@ import Footer from '../components/Footer';
 import ActiveFilters from '../components/common/ActiveFilters';
 import MobileFiltersModal from '../components/common/MobileFiltersModal';
 import { artists as originalArtists } from '../data/artists';
+import Button from '../components/ui/Button';
 
 const HomeScreen = ({ navigation }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -256,12 +257,14 @@ const HomeScreen = ({ navigation }) => {
                       />
                     </View>
                     
-                    <TouchableOpacity 
-                      style={styles.mobileSearchButton} 
+                    <Button
+                      variant="primary"
+                      label="Buscar"
                       onPress={handleSearch}
-                    >
-                      <Text style={styles.searchButtonText}>Buscar</Text>
-                    </TouchableOpacity>
+                      style={styles.mobileSearchButton}
+                      size="search"
+                      fullWidth={true}
+                    />
                   </View>
                 ) : (
                   // Layout para desktop/tablet
@@ -284,12 +287,13 @@ const HomeScreen = ({ navigation }) => {
                       />
                     </View>
                     
-                    <TouchableOpacity 
-                      style={styles.searchButton} 
+                    <Button
+                      variant="primary"
+                      label="Buscar"
                       onPress={handleSearch}
-                    >
-                      <Text style={styles.searchButtonText}>Buscar</Text>
-                    </TouchableOpacity>
+                      style={styles.searchButton}
+                      size="search"
+                    />
                   </View>
                 )}
 
@@ -443,18 +447,8 @@ const styles = StyleSheet.create({
     minWidth: 150,
   },
   searchButton: {
-    backgroundColor: '#111827',
-    borderRadius: 8,
-    paddingVertical: 14,
     paddingHorizontal: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minWidth: 100,
-  },
-  searchButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 16,
+    minWidth: 120,
   },
   filterRow: {
     flexDirection: 'row',
@@ -538,16 +532,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   mobileInputWrapper: {
+    flex: 1,
     width: '100%',
   },
   mobileSearchButton: {
-    backgroundColor: '#111827',
-    borderRadius: 8,
-    paddingVertical: 14,
     paddingHorizontal: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
+    alignSelf: 'stretch',
   },
 });
 

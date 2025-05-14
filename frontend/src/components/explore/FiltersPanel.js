@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import Input from '../ui/Input';
+import SearchInput from '../ui/SearchInput';
 import RatingFilter from './RatingFilter';
 import SpecialtiesFilter from './SpecialtiesFilter';
 import DistanceSlider from './DistanceSlider';
 import FilterSection from './FilterSection';
+import Button from '../ui/Button';
 
 const FiltersPanel = ({
   searchTerm,
@@ -21,17 +23,53 @@ const FiltersPanel = ({
   resetFilters,
   updateActiveFilters,
 }) => {
+  // Check if we're in tablet view (768px-1024px)
+  const screenWidth = Dimensions.get('window').width;
+  const isTablet = screenWidth >= 768 && screenWidth < 1024;
+  
   return (
     <View style={styles.filtersColumn}>
-      {/* Campo de busca dentro da coluna de filtros */}
-      <Input
-        icon="search"
-        placeholder="Buscar artistas"
-        value={searchTerm}
-        onChangeText={setSearchTerm}
-        showSearchButton={true}
-        onSearch={handleSearch}
-      />
+      {/* Campo de busca com botão */}
+      {isTablet ? (
+        // Layout para tablet
+        <View style={styles.searchColumn}>
+          <View style={styles.searchInputContainer}>
+            <SearchInput
+              icon="search"
+              placeholder="Buscar artistas"
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+            />
+          </View>
+          <Button
+            variant="primary"
+            label="Buscar"
+            onPress={handleSearch}
+            style={styles.searchButton}
+            size="search"
+            fullWidth={true}
+          />
+        </View>
+      ) : (
+        // Layout para desktop
+        <View style={styles.searchRow}>
+          <View style={styles.searchInputContainer}>
+            <SearchInput
+              icon="search"
+              placeholder="Buscar artistas"
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+            />
+          </View>
+          <Button
+            variant="primary"
+            label="Buscar"
+            onPress={handleSearch}
+            style={styles.searchButton}
+            size="search"
+          />
+        </View>
+      )}
 
       <View style={styles.filtersHeader}>
         <Text style={styles.filtersTitle}>Filtros</Text>
@@ -42,7 +80,7 @@ const FiltersPanel = ({
       
       {/* Localização */}
       <FilterSection title="Localização">
-        <Input
+        <SearchInput
           icon="location-on"
           placeholder="Sua localização"
           value={locationTerm}
@@ -74,6 +112,28 @@ const styles = StyleSheet.create({
     width: '25%',
     paddingRight: 16,
   },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  searchColumn: {
+    flexDirection: 'column',
+    marginBottom: 16,
+    gap: 8,
+    width: '100%',
+  },
+  searchInputContainer: {
+    flex: 1,
+    width: '100%',
+  },
+  searchButton: {
+    paddingHorizontal: 16,
+    minWidth: 0,
+    height: 40,
+    alignSelf: 'stretch',
+  },
   filtersHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -82,7 +142,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
     paddingBottom: 16,
-    marginTop: 16,
   },
   filtersTitle: {
     fontSize: 18,

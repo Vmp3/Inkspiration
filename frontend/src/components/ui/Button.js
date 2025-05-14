@@ -10,7 +10,7 @@ import { TouchableOpacity, Text, StyleSheet } from 'react-native';
  * @param {Object} props.style Additional styles to apply to the button
  * @param {Object} props.labelStyle Additional styles to apply to the label
  * @param {boolean} props.fullWidth Whether the button should take full width
- * @param {string} props.size 'sm', 'md', or 'lg' for different button sizes
+ * @param {string} props.size 'sm', 'md', 'lg', or 'search' for different button sizes
  */
 const Button = ({ 
   variant = 'primary', 
@@ -27,7 +27,8 @@ const Button = ({
     styles.button,
     variant === 'primary' ? styles.primaryButton : styles.secondaryButton,
     size === 'sm' ? styles.smallButton : 
-    size === 'lg' ? styles.largeButton : styles.mediumButton,
+    size === 'lg' ? styles.largeButton : 
+    size === 'search' ? styles.searchButton : styles.mediumButton,
     fullWidth && styles.fullWidth,
     style
   ];
@@ -37,7 +38,8 @@ const Button = ({
     styles.buttonText,
     variant === 'primary' ? styles.primaryText : styles.secondaryText,
     size === 'sm' ? styles.smallText : 
-    size === 'lg' ? styles.largeText : styles.mediumText,
+    size === 'lg' ? styles.largeText : 
+    size === 'search' ? styles.searchText : styles.mediumText,
     labelStyle
   ];
 
@@ -71,7 +73,7 @@ const styles = StyleSheet.create({
   fullWidth: {
     width: '100%',
   },
-  // Size variations - removed min-width constraints
+  // Size variations
   smallButton: {
     paddingVertical: 8,
   },
@@ -80,6 +82,13 @@ const styles = StyleSheet.create({
   },
   largeButton: {
     paddingVertical: 16,
+  },
+  searchButton: {
+    height: 40, // Match the SearchInput height
+    paddingVertical: 0, // Remove vertical padding to maintain the exact height
+    paddingHorizontal: 16, // Smaller horizontal padding
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Text styles
   buttonText: {
@@ -100,6 +109,9 @@ const styles = StyleSheet.create({
   },
   largeText: {
     fontSize: 18,
+  },
+  searchText: {
+    fontSize: 14, // Smaller text for search buttons
   }
 });
 

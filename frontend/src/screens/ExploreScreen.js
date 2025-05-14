@@ -13,7 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Input from '../components/ui/Input';
-import SearchInput from '../components/SearchInput';
+import SearchInput from '../components/ui/SearchInput';
 import FilterButton from '../components/FilterButton';
 import { artists as originalArtists } from '../data/artists';
 import Button from '../components/ui/Button';
@@ -294,6 +294,7 @@ const ExploreScreen = ({ navigation }) => {
                     label="Buscar"
                     onPress={handleSearch}
                     style={styles.mobileSearchButton}
+                    size="search"
                     fullWidth={true}
                   />
                 </View>
@@ -475,10 +476,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   mobileInputWrapper: {
+    flex: 1,
     width: '100%',
   },
   mobileSearchButton: {
-    marginTop: 8,
+    paddingHorizontal: 16,
+    alignSelf: 'stretch',
   },
   
   // Filtros e dropdown de relevância
