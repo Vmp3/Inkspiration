@@ -32,7 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 
-# Arquivos de configuração do projeto
-src/main/resources/app.key
-src/main/resources/app.pub
-src/main/resources/application.properties
+# Arquivos de chaves e propriedades sensíveis
+backend/src/main/resources/app.pub
+backend/src/main/resources/app.key
+backend/src/main/resources/application.properties
