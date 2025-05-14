@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-gesture-handler';
 import Toast from 'react-native-toast-message';
+import { Platform } from 'react-native';
 
 import HomeScreen from './src/screens/HomeScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -16,10 +17,24 @@ import toastConfig from './src/config/toastConfig';
 
 const Stack = createNativeStackNavigator();
 
+const linking = {
+  prefixes: [],
+  config: {
+    screens: {
+      Home: 'home',
+      Login: 'login',
+      Register: 'register',
+      Main: 'main',
+      Explore: 'explore',
+      About: 'about',
+    },
+  },
+};
+
 export default function App() {
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
+      <NavigationContainer linking={linking}>
         <StatusBar style="auto" />
         <Stack.Navigator 
           initialRouteName="Home"
