@@ -13,9 +13,10 @@ import { StatusBar } from 'expo-status-bar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Input from '../components/ui/Input';
-import SearchInput from '../components/SearchInput';
+import SearchInput from '../components/ui/SearchInput';
 import FilterButton from '../components/FilterButton';
 import { artists as originalArtists } from '../data/artists';
+import Button from '../components/ui/Button';
 
 // Componentes de exploração
 import FiltersPanel from '../components/explore/FiltersPanel';
@@ -288,12 +289,14 @@ const ExploreScreen = ({ navigation }) => {
                     />
                   </View>
                   
-                  <TouchableOpacity 
-                    style={styles.mobileSearchButton} 
+                  <Button 
+                    variant="primary"
+                    label="Buscar"
                     onPress={handleSearch}
-                  >
-                    <Text style={styles.searchButtonText}>Buscar</Text>
-                  </TouchableOpacity>
+                    style={styles.mobileSearchButton}
+                    size="search"
+                    fullWidth={true}
+                  />
                 </View>
               )}
               
@@ -473,21 +476,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   mobileInputWrapper: {
+    flex: 1,
     width: '100%',
   },
   mobileSearchButton: {
-    backgroundColor: '#111827',
-    borderRadius: 8,
-    paddingVertical: 14,
     paddingHorizontal: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-  },
-  searchButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 16,
+    alignSelf: 'stretch',
   },
   
   // Filtros e dropdown de relevância

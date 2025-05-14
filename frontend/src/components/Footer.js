@@ -21,7 +21,7 @@ const Footer = () => {
       <View style={styles.container}>
         <View style={[styles.columnsContainer, !isMobile && styles.desktopColumns]}>
           <View style={[styles.column, !isMobile && styles.desktopColumn]}>
-            <Text style={styles.title}>Inkspiração</Text>
+            <Text style={styles.title}>Inkspiration</Text>
             <Text style={styles.description}>
               Conectando entusiastas de tatuagem com artistas talentosos desde 2023.
             </Text>
@@ -33,14 +33,11 @@ const Footer = () => {
               <TouchableOpacity onPress={() => handleLinkPress('Home')}>
                 <Text style={styles.link}>Início</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleLinkPress('ExplorarArtistas')}>
+              <TouchableOpacity onPress={() => handleLinkPress('Explore')}>
                 <Text style={styles.link}>Explorar Artistas</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleLinkPress('SobreNos')}>
+              <TouchableOpacity onPress={() => handleLinkPress('About')}>
                 <Text style={styles.link}>Sobre Nós</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleLinkPress('Contato')}>
-                <Text style={styles.link}>Contato</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -57,7 +54,7 @@ const Footer = () => {
 
         <View style={styles.divider} />
         <Text style={styles.copyright}>
-          © 2023 Inkspiração. Todos os direitos reservados.
+          © 2023 Inkspiration. Todos os direitos reservados.
         </Text>
       </View>
     </View>
@@ -67,10 +64,9 @@ const Footer = () => {
 const styles = StyleSheet.create({
   footer: {
     backgroundColor: '#f3f4f6',
-    paddingTop: 48,
-    paddingBottom: 24,
+    paddingTop: 24,
+    paddingBottom: 16,
     width: '100%',
-    alignSelf: 'flex-end',
   },
   container: {
     paddingHorizontal: 16,

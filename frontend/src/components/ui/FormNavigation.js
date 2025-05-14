@@ -17,24 +17,19 @@ const FormNavigation = ({
       {showPrev && (
         <Button 
           onPress={onPrev}
-          variant="outline"
+          variant="secondary"
+          label={prevText}
           style={styles.button}
-        >
-          {prevText}
-        </Button>
+        />
       )}
       {showNext && (
         <Button 
           onPress={onNext}
-          style={[
-            styles.button, 
-            styles.nextButton,
-            nextDisabled && styles.disabledButton
-          ]}
+          variant="primary"
+          label={isLoading ? 'Criando...' : nextText}
+          style={styles.button}
           disabled={isLoading || nextDisabled}
-        >
-          {isLoading ? 'Criando...' : nextText}
-        </Button>
+        />
       )}
     </View>
   );
@@ -48,17 +43,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   button: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 6,
     minWidth: 120,
-  },
-  nextButton: {
-    backgroundColor: '#000',
-  },
-  disabledButton: {
-    backgroundColor: '#ccc',
-    opacity: 0.7,
   }
 });
 

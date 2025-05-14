@@ -53,11 +53,6 @@ const MobileFiltersModal = ({
               placeholder="Buscar artistas"
               value={searchTerm}
               onChangeText={setSearchTerm}
-              showSearchButton={true}
-              onSearch={() => {
-                handleSearch();
-                onClose();
-              }}
             />
             
             {/* Localização */}
@@ -103,6 +98,7 @@ const MobileFiltersModal = ({
               style={styles.modalApplyButton}
               onPress={() => {
                 applyFilters();
+                handleSearch();
                 onClose();
               }}
             >

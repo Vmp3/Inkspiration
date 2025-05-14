@@ -55,15 +55,13 @@ const LoginForm = ({
       </View>
 
       <Button 
+        variant="primary"
+        label={loading ? "" : "Entrar"}
         onPress={handleSubmit} 
         style={styles.primaryButton}
-        disabled={loading}
+        fullWidth={true}
       >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.primaryButtonText}>Entrar</Text>
-        )}
+        {loading && <ActivityIndicator color="#fff" />}
       </Button>
     </View>
   );
@@ -106,16 +104,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   primaryButton: {
-    backgroundColor: '#000',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
+    // Any additional custom styles for the button
   },
   inputError: {
     borderColor: '#ff0000',
