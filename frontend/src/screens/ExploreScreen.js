@@ -66,8 +66,15 @@ const ExploreScreen = ({ navigation }) => {
   // Valores derivados baseados na largura da tela
   const isMobile = screenWidth < 768;
   
-  // Determina o número de colunas com base na largura da tela
-  const numColumns = screenWidth >= 768 ? 3 : (screenWidth >= 480 ? 2 : 1);
+  // Update the numColumns calculation to work better on Android
+  const numColumns = (() => {
+    // Explicitly handle Android differently as it may need wider breakpoints
+    if (Platform.OS === 'android') {
+      return screenWidth >= 768 ? 3 : (screenWidth >= 360 ? 2 : 1);
+    }
+    // For web and iOS
+    return screenWidth >= 768 ? 3 : (screenWidth >= 480 ? 2 : 1);
+  })();
 
   // Função de busca
   const handleSearch = () => {
