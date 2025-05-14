@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Toast from 'react-native-toast-message';
 import * as formatters from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
+import toastHelper from '../utils/toastHelper';
 
 import Header from '../components/Header';
 import LoginForm from '../components/forms/LoginForm';
@@ -45,20 +45,12 @@ const LoginScreen = () => {
 
   const handleSubmit = async () => {
     if (!formData.cpf || !formData.password) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Por favor, preencha todos os campos',
-      });
+      toastHelper.showError('Por favor, preencha todos os campos');
       return;
     }
 
     if (!formatters.validateCPF(formData.cpf)) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'CPF inválido',
-      });
+      toastHelper.showError('CPF inválido');
       return;
     }
 
@@ -70,19 +62,11 @@ const LoginScreen = () => {
       );
 
       if (!result.success) {
-        Toast.show({
-          type: 'error',
-          text1: 'Erro',
-          text2: result.error || 'Falha ao fazer login. Verifique suas credenciais.',
-        });
+        toastHelper.showError('Falha ao fazer login. Verifique suas credenciais.');
         return;
       }
 
-      Toast.show({
-        type: 'success',
-        text1: 'Sucesso',
-        text2: 'Login realizado com sucesso!',
-      });
+      toastHelper.showSuccess('Login realizado com sucesso!');
 
       // Navegar para a tela principal
       navigation.reset({
@@ -90,11 +74,7 @@ const LoginScreen = () => {
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Ocorreu um erro ao fazer login. Tente novamente.',
-      });
+      toastHelper.showError('Ocorreu um erro ao fazer login. Tente novamente.');
     } finally {
       setLoading(false);
     }
