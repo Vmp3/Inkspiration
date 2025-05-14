@@ -15,7 +15,6 @@ import SearchInput from '../components/ui/SearchInput';
 import FilterButton from '../components/FilterButton';
 import FilterDropdown from '../components/common/FilterDropdown';
 import ArtistCard from '../components/ArtistCard';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ActiveFilters from '../components/common/ActiveFilters';
 import MobileFiltersModal from '../components/common/MobileFiltersModal';
@@ -51,9 +50,9 @@ const HomeScreen = ({ navigation }) => {
   
   // Determina o número de colunas com base na largura da tela
   const numColumns = useMemo(() => {
-    if (screenWidth >= 768) return 3; // Desktop: 3 colunas
-    if (screenWidth >= 480) return 2; // Tablet/Mobile médio: 2 colunas
-    return 1; // Mobile pequeno: 1 coluna
+    if (screenWidth >= 768) return 3;
+    if (screenWidth >= 480) return 2;
+    return 1;
   }, [screenWidth]);
   
   // Key única para o FlatList quando numColumns muda
@@ -224,7 +223,6 @@ const HomeScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <Header />
 
       <View style={styles.pageWrapper}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -326,7 +324,7 @@ const HomeScreen = ({ navigation }) => {
                 </View>
 
                 <FlatList
-                  key={flatListKey} // Key única quando numColumns muda
+                  key={flatListKey}
                   data={displayedArtists}
                   renderItem={renderArtistItem}
                   keyExtractor={item => item.id}
@@ -400,7 +398,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1, // Importante para que o conteúdo possa crescer e empurrar o footer para baixo
+    flexGrow: 1,
     flexDirection: 'column',
   },
   main: {
@@ -422,7 +420,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   heroTitleMobile: {
-    fontSize: 28, // Tamanho menor para mobile
+    fontSize: 28,
   },
   heroSubtitle: {
     fontSize: 16,
@@ -522,8 +520,8 @@ const styles = StyleSheet.create({
     maxWidth: 400,
   },
   footerSpacer: {
-    flex: 1, // Isso irá empurrar o footer para baixo
-    minHeight: 20, // Altura mínima para garantir algum espaço
+    flex: 1,
+    minHeight: 20,
   },
   mobileSearchContainer: {
     flexDirection: 'column',
