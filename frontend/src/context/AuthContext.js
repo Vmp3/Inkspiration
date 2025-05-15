@@ -11,15 +11,21 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
+        setLoading(true);
         const isAuth = await AuthService.isAuthenticated();
         setIsAuthenticated(isAuth);
         
         if (isAuth) {
           const userInfo = await AuthService.getUserData();
-          setUserData(userInfo);
+          if (userInfo) {
+            setUserData(userInfo);
+          } else {
+            console.error('Usuário autenticado, mas não foi possível obter os dados');
+          }
         }
       } catch (error) {
         console.error('Erro ao verificar autenticação:', error);
+        setIsAuthenticated(false);
       } finally {
         setLoading(false);
       }
@@ -35,7 +41,11 @@ export const AuthProvider = ({ children }) => {
       
       setIsAuthenticated(true);
       const userInfo = await AuthService.getUserData();
-      setUserData(userInfo);
+      if (userInfo) {
+        setUserData(userInfo);
+      } else {
+        console.error('Não foi possível obter os dados do usuário após o login');
+      }
       
       return { success: true };
     } catch (error) {
@@ -66,10 +76,15 @@ export const AuthProvider = ({ children }) => {
   const updateUserData = async () => {
     if (isAuthenticated) {
       try {
+        setLoading(true);
         const userInfo = await AuthService.getUserData();
-        setUserData(userInfo);
+        if (userInfo) {
+          setUserData(userInfo);
+        }
       } catch (error) {
         console.error('Erro ao atualizar dados do usuário:', error);
+      } finally {
+        setLoading(false);
       }
     }
   };

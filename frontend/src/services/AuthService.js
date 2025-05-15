@@ -107,17 +107,50 @@ class AuthService {
       
       const tokenData = this.parseJwt(token);
       
-      const cpf = tokenData ? tokenData.sub : null;
-      
-      if (cpf) {
-        return {
-          cpf,
-          nome: 'Usuário',
-          email: ''
-        };
+      if (!tokenData) {
+        return null;
       }
       
-      return null;
+      const userId = tokenData.userId;
+      
+      const scope = tokenData.scope || '';
+      let role = 'ROLE_USER';
+      
+      if (scope.includes('ROLE_ADMIN')) {
+        role = 'ROLE_ADMIN';
+      } else if (scope.includes('ROLE_DELETED')) {
+        role = 'ROLE_DELETED';
+      } else if (scope.includes('ROLE_PROF')) {
+        role = 'ROLE_PROF';
+      } else if (scope.includes('ROLE_USER')) {
+        role = 'ROLE_USER';
+      }
+      
+      if (!userId) {
+        console.error('ID do usuário não encontrado no token');
+        return { nome: 'Usuário', role: role };
+      }
+      
+      try {
+        const userResponse = await fetch(`${API_URL}/usuario/${userId}`, {
+          method: 'GET',
+          headers: await this.getAuthHeaders()
+        });
+        
+        if (!userResponse.ok) {
+          console.error('Erro ao buscar dados do usuário');
+          return { nome: 'Usuário', role: role };
+        }
+        
+        const userData = await userResponse.json();
+        
+        userData.role = role;
+        
+        return userData;
+      } catch (error) {
+        console.error('Erro ao buscar dados do usuário:', error);
+        return { nome: 'Usuário', role: role };
+      }
     } catch (error) {
       console.error('Erro ao obter dados do usuário:', error);
       return null;

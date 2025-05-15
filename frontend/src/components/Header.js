@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -8,10 +8,11 @@ import {
   Dimensions, 
   Platform,
   Animated,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  Image
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 
 const Header = () => {
@@ -21,10 +22,12 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   
-  // Valor para animação do menu offcanvas
-  const slideAnim = new Animated.Value(-300); // Começa fora da tela
+  const dropdownRef = useRef(null);
+  const dropdownButtonRef = useRef(null);
   
-  // Detectar tamanho da tela para responsividade
+  const slideAnim = new Animated.Value(-300); 
+  
+  
   const updateLayout = () => {
     const { width } = Dimensions.get('window');
     setScreenWidth(width);
@@ -34,18 +37,52 @@ const Header = () => {
   
   useEffect(() => {
     updateLayout();
-    // Listener para mudanças no tamanho da tela
+    
     const dimensionsHandler = Dimensions.addEventListener('change', updateLayout);
     
     return () => {
-      // Cleanup listener
+      
       if (dimensionsHandler?.remove) {
         dimensionsHandler.remove();
       }
     };
   }, []);
   
-  // Animar abertura/fechamento do menu
+  useEffect(() => {
+    if (userData) {
+      const availableRoles = ['ROLE_USER', 'ROLE_ADMIN', 'ROLE_PROF', 'ROLE_DELETED'];
+    }
+  }, [userData]);
+  
+  
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      
+      if (Platform.OS === 'web' && userDropdownOpen) {
+        
+        const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(event.target);
+        const isOutsideButton = dropdownButtonRef.current && !dropdownButtonRef.current.contains(event.target);
+        
+        if (isOutsideDropdown && isOutsideButton) {
+          setUserDropdownOpen(false);
+        }
+      }
+    };
+
+    
+    if (Platform.OS === 'web') {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    
+    return () => {
+      if (Platform.OS === 'web') {
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
+    };
+  }, [userDropdownOpen]);
+  
+  
   useEffect(() => {
     Animated.timing(slideAnim, {
       toValue: menuOpen ? 0 : -300,
@@ -72,18 +109,30 @@ const Header = () => {
     }
   };
 
+  
+  const isActive = (routeName) => {
+    const currentRoute = navigation?.getCurrentRoute?.()?.name || '';
+    
+    if (routeName === 'Home' && currentRoute === 'Home') return true;
+    if (routeName !== 'Home' && currentRoute.startsWith(routeName)) return true;
+    return false;
+  };
+
+  
+  const getInitial = (name) => {
+    return name && typeof name === 'string' ? name.charAt(0).toUpperCase() : '?';
+  };
+
   return (
     <View style={styles.headerContainer}>
       <StatusBar backgroundColor="white" barStyle="dark-content" />
       
-      {/* Overlay para fechar o menu quando clicar fora */}
       {menuOpen && (
         <TouchableWithoutFeedback onPress={() => setMenuOpen(false)}>
           <View style={styles.overlay} />
         </TouchableWithoutFeedback>
       )}
       
-      {/* Menu Offcanvas */}
       <Animated.View 
         style={[
           styles.offcanvasMenu,
@@ -93,7 +142,7 @@ const Header = () => {
         <View style={styles.menuHeader}>
           <Text style={styles.menuTitle}>Menu</Text>
           <TouchableOpacity onPress={() => setMenuOpen(false)}>
-            <MaterialIcons name="close" size={24} color="#111" />
+            <Feather name="x" size={24} color="#000" />
           </TouchableOpacity>
         </View>
         
@@ -105,8 +154,7 @@ const Header = () => {
               setMenuOpen(false);
             }}
           >
-            <MaterialIcons name="home" size={20} color="#666" style={styles.menuIcon} />
-            <Text style={styles.menuText}>Início</Text>
+            <Text style={[styles.menuText, isActive('Home') && styles.activeMenuText]}>Início</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -116,8 +164,7 @@ const Header = () => {
               setMenuOpen(false);
             }}
           >
-            <MaterialIcons name="search" size={20} color="#666" style={styles.menuIcon} />
-            <Text style={styles.menuText}>Explorar</Text>
+            <Text style={[styles.menuText, isActive('Explore') && styles.activeMenuText]}>Explorar</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -127,65 +174,23 @@ const Header = () => {
               setMenuOpen(false);
             }}
           >
-            <MaterialIcons name="info" size={20} color="#666" style={styles.menuIcon} />
-            <Text style={styles.menuText}>Sobre</Text>
+            <Text style={[styles.menuText, isActive('About') && styles.activeMenuText]}>Sobre</Text>
           </TouchableOpacity>
-          
-          <View style={styles.menuDivider} />
-          
-          {!isAuthenticated ? (
-            <>
-              <TouchableOpacity 
-                style={styles.menuItem}
-                onPress={() => {
-                  navigation.navigate('Login');
-                  setMenuOpen(false);
-                }}
-              >
-                <MaterialIcons name="login" size={20} color="#666" style={styles.menuIcon} />
-                <Text style={styles.menuText}>Entrar</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.registerButton}
-                onPress={() => {
-                  navigation.navigate('Register');
-                  setMenuOpen(false);
-                }}
-              >
-                <Text style={styles.registerText}>Registrar</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => {
-                handleLogout();
-                setMenuOpen(false);
-              }}
-            >
-              <MaterialIcons name="logout" size={20} color="#666" style={styles.menuIcon} />
-              <Text style={styles.menuText}>Sair</Text>
-            </TouchableOpacity>
-          )}
         </View>
       </Animated.View>
       
-      {/* Header principal */}
       <View style={styles.header}>
         <View style={styles.container}>
           <View style={styles.leftSection}>
-            {/* Menu Hambúrguer (visível apenas em dispositivos móveis) */}
             {isMobile && (
               <TouchableOpacity 
                 style={styles.menuButton}
                 onPress={toggleMenu}
               >
-                <MaterialIcons name="menu" size={24} color="#111" />
+                <Feather name="menu" size={24} color="#000" />
               </TouchableOpacity>
             )}
-            
-            {/* Logo à esquerda */}
+
             <TouchableOpacity 
               style={styles.logoContainer}
               onPress={() => navigation.navigate('Home')}
@@ -194,101 +199,185 @@ const Header = () => {
             </TouchableOpacity>
           </View>
           
-          {/* Navegação no centro (oculta em dispositivos móveis) */}
           {!isMobile && (
             <View style={styles.navContainer}>
               <TouchableOpacity 
                 style={styles.navItem}
                 onPress={() => navigation.navigate('Home')}
               >
-                <Text style={styles.navText}>Início</Text>
+                <Text style={[
+                  styles.navText, 
+                  isActive('Home') ? styles.activeNavText : styles.inactiveNavText
+                ]}>Início</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.navItem}
                 onPress={() => navigation.navigate('Explore')}
               >
-                <Text style={styles.navText}>Explorar</Text>
+                <Text style={[
+                  styles.navText, 
+                  isActive('Explore') ? styles.activeNavText : styles.inactiveNavText
+                ]}>Explorar</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.navItem}
                 onPress={() => navigation.navigate('About')}
               >
-                <Text style={styles.navText}>Sobre</Text>
+                <Text style={[
+                  styles.navText, 
+                  isActive('About') ? styles.activeNavText : styles.inactiveNavText
+                ]}>Sobre</Text>
               </TouchableOpacity>
             </View>
           )}
 
-          {/* Botões à direita (sempre visíveis) */}
           <View style={styles.authContainer}>
-            {isMobile ? (
-              <View />
+            {!isAuthenticated ? (
+              <View style={styles.authButtons}>
+                <TouchableOpacity 
+                  style={styles.loginButton}
+                  onPress={() => navigation.navigate('Login')}
+                >
+                  <Text style={styles.loginText}>Entrar</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.registerButton}
+                  onPress={() => navigation.navigate('Register')}
+                >
+                  <Text style={styles.registerText}>Registrar</Text>
+                </TouchableOpacity>
+              </View>
             ) : (
-              <>
-                {!isAuthenticated ? (
-                  <>
-                    <TouchableOpacity 
-                      style={styles.loginButton}
-                      onPress={() => navigation.navigate('Login')}
-                    >
-                      <Text style={styles.loginText}>Entrar</Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity 
-                      style={styles.registerButton}
-                      onPress={() => navigation.navigate('Register')}
-                    >
-                      <Text style={styles.registerText}>Registrar</Text>
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <View style={styles.userDropdownContainer}>
-                    <TouchableOpacity 
-                      style={styles.userButton}
-                      onPress={toggleUserDropdown}
-                    >
-                      <MaterialIcons name="account-circle" size={28} color="#111" />
-                      {userData?.nome && (
-                        <Text style={styles.userName}>
-                          {userData.nome.split(' ')[0]}
+              <View style={styles.userDropdownContainer}>
+                <TouchableOpacity 
+                  style={styles.userButton}
+                  onPress={toggleUserDropdown}
+                  ref={dropdownButtonRef}
+                >
+                  <View style={styles.avatar}>
+                    {userData?.imagemPerfil ? (
+                      <Image 
+                        source={{ uri: userData.imagemPerfil }} 
+                        style={styles.avatarImage} 
+                      />
+                    ) : (
+                      <View style={styles.avatarFallback}>
+                        <Text style={styles.avatarText}>
+                          {getInitial(userData?.nome)}
                         </Text>
-                      )}
+                      </View>
+                    )}
+                  </View>
+                  
+                  {!isMobile && (
+                    <Text style={styles.userName}>
+                      {userData?.nome ? userData.nome.split(' ')[0] : 'Carregando...'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+                
+                {userDropdownOpen && (
+                  <View 
+                    style={styles.userDropdown}
+                    ref={dropdownRef}
+                  >
+                    <View style={styles.dropdownHeader}>
+                      <Text style={styles.dropdownLabel}>Minha Conta</Text>
+                    </View>
+                    
+                    <View style={styles.dropdownDivider} />
+                    
+                    <TouchableOpacity 
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        navigation.navigate('Profile');
+                        setUserDropdownOpen(false);
+                      }}
+                    >
+                      <Feather name="user" size={16} color="#666" style={styles.dropdownIcon} />
+                      <Text style={styles.dropdownText}>Perfil</Text>
                     </TouchableOpacity>
                     
-                    {userDropdownOpen && (
-                      <View style={styles.userDropdown}>
+                    {userData?.role === 'ROLE_ADMIN' ? (
+                      
+                      <TouchableOpacity 
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          navigation.navigate('Users');
+                          setUserDropdownOpen(false);
+                        }}
+                      >
+                        <Feather name="users" size={16} color="#666" style={styles.dropdownIcon} />
+                        <Text style={styles.dropdownText}>Usuários</Text>
+                      </TouchableOpacity>
+                    ) : userData?.role === 'ROLE_PROF' ? (
+                      
+                      <>
                         <TouchableOpacity 
                           style={styles.dropdownItem}
                           onPress={() => {
-                            navigation.navigate('Profile');
+                            navigation.navigate('Appointments');
                             setUserDropdownOpen(false);
                           }}
                         >
-                          <MaterialIcons name="person" size={20} color="#666" style={styles.dropdownIcon} />
-                          <Text style={styles.dropdownText}>Perfil</Text>
+                          <Feather name="calendar" size={16} color="#666" style={styles.dropdownIcon} />
+                          <Text style={styles.dropdownText}>Meus agendamentos</Text>
                         </TouchableOpacity>
                         
                         <TouchableOpacity 
                           style={styles.dropdownItem}
-                          onPress={handleLogout}
+                          onPress={() => {
+                            navigation.navigate('ProfessionalAppointments');
+                            setUserDropdownOpen(false);
+                          }}
                         >
-                          <MaterialIcons name="logout" size={20} color="#666" style={styles.dropdownIcon} />
-                          <Text style={styles.dropdownText}>Sair</Text>
+                          <Feather name="clock" size={16} color="#666" style={styles.dropdownIcon} />
+                          <Text style={styles.dropdownText}>Meus atendimentos</Text>
                         </TouchableOpacity>
-                      </View>
-                    )}
+                      </>
+                    ) : userData?.role === 'ROLE_USER' ? (
+                      <>
+                        <TouchableOpacity 
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            navigation.navigate('Appointments');
+                            setUserDropdownOpen(false);
+                          }}
+                        >
+                          <Feather name="calendar" size={16} color="#666" style={styles.dropdownIcon} />
+                          <Text style={styles.dropdownText}>Meus agendamentos</Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity 
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            navigation.navigate('BecomeProfessional');
+                            setUserDropdownOpen(false);
+                          }}
+                        >
+                          <Feather name="edit-3" size={16} color="#666" style={styles.dropdownIcon} />
+                          <Text style={styles.dropdownText}>Tornar-se profissional</Text>
+                        </TouchableOpacity>
+                      </>
+                    ) : null}
+                    
+                    <View style={styles.dropdownDivider} />
+                    
+                    <TouchableOpacity 
+                      style={styles.dropdownItem}
+                      onPress={handleLogout}
+                    >
+                      <Feather name="log-out" size={16} color="#666" style={styles.dropdownIcon} />
+                      <Text style={styles.dropdownText}>Sair</Text>
+                    </TouchableOpacity>
                   </View>
                 )}
-              </>
+              </View>
             )}
           </View>
         </View>
       </View>
-      
-      {userDropdownOpen && (
-        <TouchableWithoutFeedback onPress={() => setUserDropdownOpen(false)}>
-          <View style={styles.dropdownOverlay} />
-        </TouchableWithoutFeedback>
-      )}
     </View>
   );
 };
@@ -301,7 +390,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#e5e5e5',
     width: '100%',
   },
   container: {
@@ -311,7 +400,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     maxWidth: 1200,
     width: '100%',
-    height: 60,
+    height: 64, 
     alignSelf: 'center',
   },
   leftSection: {
@@ -328,7 +417,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#111',
+    color: '#000',
   },
   navContainer: {
     flexDirection: 'row',
@@ -342,6 +431,12 @@ const styles = StyleSheet.create({
   },
   navText: {
     fontSize: 16,
+  },
+  activeNavText: {
+    fontWeight: '500',
+    color: '#000',
+  },
+  inactiveNavText: {
     color: '#666',
   },
   authContainer: {
@@ -349,21 +444,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
+  authButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   loginButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
     marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+    borderRadius: 4,
   },
   loginText: {
     fontSize: 14,
-    color: '#111',
+    color: '#000',
   },
   registerButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#111',
+    backgroundColor: '#000',
     borderRadius: 4,
-    alignItems: 'center',
   },
   registerText: {
     fontSize: 14,
@@ -371,7 +472,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   
-  // Estilos do menu offcanvas
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
@@ -399,34 +499,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#e5e5e5',
   },
   menuTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111',
+    color: '#000',
   },
   menuContent: {
     padding: 20,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: 12,
   },
-  menuIcon: {
-    marginRight: 12,
-  },
   menuText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 18,
+    color: '#666',
   },
-  menuDivider: {
-    height: 1,
-    backgroundColor: '#f0f0f0',
-    marginVertical: 16,
+  activeMenuText: {
+    fontWeight: '500',
+    color: '#000',
   },
-  
+
   userDropdownContainer: {
     position: 'relative',
   },
@@ -434,12 +528,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 8,
+    borderRadius: 4,
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#e5e5e5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarFallback: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#e5e5e5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000',
   },
   userName: {
     marginLeft: 8,
     fontSize: 14,
-    color: '#333',
-    fontWeight: '500',
+    color: '#000',
   },
   userDropdown: {
     position: 'absolute',
@@ -452,28 +571,39 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4,
-    width: 150,
+    width: 220,
     zIndex: 102,
     borderWidth: 1,
-    borderColor: '#f0f0f0',
+    borderColor: '#e5e5e5',
+    padding: 4,
+  },
+  dropdownHeader: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  dropdownLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+  },
+  dropdownDivider: {
+    height: 1,
+    backgroundColor: '#e5e5e5',
+    marginVertical: 4,
   },
   dropdownItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 2,
   },
   dropdownIcon: {
-    marginRight: 12,
+    marginRight: 8,
   },
   dropdownText: {
     fontSize: 14,
     color: '#333',
-  },
-  dropdownOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
-    zIndex: 101,
   },
 });
 
