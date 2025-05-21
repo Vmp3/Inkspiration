@@ -5,7 +5,6 @@ import * as formatters from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import toastHelper from '../utils/toastHelper';
 
-import Header from '../components/Header';
 import LoginForm from '../components/forms/LoginForm';
 
 const LoginScreen = () => {
@@ -87,8 +86,6 @@ const LoginScreen = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
       >
-        <Header />
-        
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.formContainer}>
             <View style={styles.titleContainer}>

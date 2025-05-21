@@ -19,6 +19,7 @@ const Header = () => {
   const navigation = useNavigation();
   const { isAuthenticated, userData, logout } = useAuth();
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   
@@ -29,8 +30,9 @@ const Header = () => {
   
   
   const updateLayout = () => {
-    const { width } = Dimensions.get('window');
+    const { width, height } = Dimensions.get('window');
     setScreenWidth(width);
+    setScreenHeight(height);
   };
   
   const isMobile = screenWidth < 768;
@@ -123,19 +125,46 @@ const Header = () => {
     return name && typeof name === 'string' ? name.charAt(0).toUpperCase() : '?';
   };
 
+  // Get dynamic styles for overlay and menu
+  const dynamicOverlayStyles = {
+    height: Platform.OS === 'web' ? '100vh' : screenHeight,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 9998, // Very high z-index but below the menu
+  };
+
+  const dynamicMenuStyles = {
+    height: Platform.OS === 'web' ? '100vh' : screenHeight,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 280,
+    backgroundColor: '#fff',
+    zIndex: 9999, // Highest z-index for components (only Toast should be higher)
+    elevation: 24, // Higher Android elevation
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+  };
+
   return (
     <View style={styles.headerContainer}>
       <StatusBar backgroundColor="white" barStyle="dark-content" />
       
       {menuOpen && (
         <TouchableWithoutFeedback onPress={() => setMenuOpen(false)}>
-          <View style={styles.overlay} />
+          <View style={dynamicOverlayStyles} />
         </TouchableWithoutFeedback>
       )}
       
       <Animated.View 
         style={[
-          styles.offcanvasMenu,
+          dynamicMenuStyles,
           { transform: [{ translateX: slideAnim }] }
         ]}
       >
@@ -385,7 +414,8 @@ const Header = () => {
 const styles = StyleSheet.create({
   headerContainer: {
     position: 'relative',
-    zIndex: 100,
+    zIndex: 1000,
+    width: '100%',
   },
   header: {
     backgroundColor: '#fff',
@@ -415,18 +445,17 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   logoText: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#333',
   },
   navContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
     flex: 1,
   },
   navItem: {
-    paddingHorizontal: 16,
+    marginHorizontal: 16,
     paddingVertical: 8,
   },
   navText: {
@@ -442,7 +471,6 @@ const styles = StyleSheet.create({
   authContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
   },
   authButtons: {
     flexDirection: 'row',
@@ -457,17 +485,17 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   loginText: {
-    fontSize: 14,
-    color: '#000',
+    fontSize: 16,
+    color: '#333',
   },
   registerButton: {
+    backgroundColor: '#000',
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#000',
     borderRadius: 4,
   },
   registerText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#fff',
     fontWeight: '500',
   },
@@ -496,8 +524,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e5e5',
   },
@@ -507,7 +535,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   menuContent: {
-    padding: 20,
+    padding: 16,
   },
   menuItem: {
     paddingVertical: 12,
