@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Toast from 'react-native-toast-message';
 import * as formatters from '../utils/formatters';
+import { useAuth } from '../context/AuthContext';
+import toastHelper from '../utils/toastHelper';
 
 import LoginForm from '../components/forms/LoginForm';
 
-const API_URL = 'http://localhost:8080';
-
 const LoginScreen = () => {
   const navigation = useNavigation();
+  const { login, loading: authLoading } = useAuth();
+  
   const [formData, setFormData] = useState({
     cpf: '',
     password: '',
@@ -44,71 +44,28 @@ const LoginScreen = () => {
 
   const handleSubmit = async () => {
     if (!formData.cpf || !formData.password) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Por favor, preencha todos os campos',
-      });
+      toastHelper.showError('Por favor, preencha todos os campos');
       return;
     }
 
     if (!formatters.validateCPF(formData.cpf)) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'CPF inválido',
-      });
+      toastHelper.showError('CPF inválido');
       return;
     }
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cpf: formData.cpf.replace(/\D/g, ''),
-          senha: formData.password,
-        }),
-      });
+      const result = await login(
+        formData.cpf.replace(/\D/g, ''),
+        formData.password
+      );
 
-      if (!response.ok) {
-        const data = await response.json();
-        if (response.status === 400 && data.message.includes('CPF')) {
-          Toast.show({
-            type: 'error',
-            text1: 'Erro',
-            text2: 'CPF inválido',
-          });
-        } else if (response.status === 401) {
-          Toast.show({
-            type: 'error',
-            text1: 'Erro',
-            text2: 'CPF ou senha inválidos',
-          });
-        } else {
-          Toast.show({
-            type: 'error',
-            text1: 'Erro',
-            text2: data.message || 'Ocorreu um erro ao fazer login',
-          });
-        }
+      if (!result.success) {
+        toastHelper.showError('Falha ao fazer login. Verifique suas credenciais.');
         return;
       }
 
-      const token = await response.text();
-
-      // Salvar token e dados do usuário
-      await AsyncStorage.setItem('token', token);
-      await AsyncStorage.setItem('user', JSON.stringify({ cpf: formData.cpf }));
-
-      Toast.show({
-        type: 'success',
-        text1: 'Sucesso',
-        text2: 'Login realizado com sucesso!',
-      });
+      toastHelper.showSuccess('Login realizado com sucesso!');
 
       // Navegar para a tela principal
       navigation.reset({
@@ -116,11 +73,7 @@ const LoginScreen = () => {
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Ocorreu um erro ao fazer login. Tente novamente.',
-      });
+      toastHelper.showError('Ocorreu um erro ao fazer login. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -148,7 +101,7 @@ const LoginScreen = () => {
               cpfError={cpfError}
               rememberMe={rememberMe}
               setRememberMe={setRememberMe}
-              loading={loading}
+              loading={loading || authLoading}
             />
 
             <View style={styles.registerContainer}>

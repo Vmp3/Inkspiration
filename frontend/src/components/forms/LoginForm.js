@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Input from '../ui/Input';
 import Checkbox from '../ui/Checkbox';
 import Button from '../ui/Button';
@@ -15,6 +16,8 @@ const LoginForm = ({
   setRememberMe, 
   loading 
 }) => {
+  const navigation = useNavigation();
+  
   return (
     <View style={styles.form}>
       <View style={styles.formFieldGroup}>
