@@ -13,7 +13,9 @@ import RegisterScreen from './src/screens/RegisterScreen';
 import ExploreScreen from './src/screens/ExploreScreen';
 import AboutScreen from './src/screens/AboutScreen';
 import Header from './src/components/Header';
+import ProfileScreen from './src/screens/ProfileScreen';
 import toastConfig from './src/config/toastConfig';
+import { AuthProvider } from './src/context/AuthContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -33,41 +35,42 @@ const linking = {
 
 export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <NavigationContainer linking={linking}>
-          <StatusBar 
-            backgroundColor="white" 
-            barStyle="dark-content" 
-            translucent={Platform.OS === 'android'}
-          />
-          
-          <View style={{ flex: 1 }}>
-            <SafeAreaView style={{ zIndex: 1000 }}>
-              <Header />
-            </SafeAreaView>
-            
-            <Stack.Navigator 
-              initialRouteName="Home"
-              screenOptions={{
-                headerShown: false,
-              }}
-            >
-              <Stack.Screen name="Home" component={HomeScreen} />
-              <Stack.Screen name="Login" component={LoginScreen} />
-              <Stack.Screen name="Register" component={RegisterScreen} />
-              <Stack.Screen name="Explore" component={ExploreScreen} />
-              <Stack.Screen name="About" component={AboutScreen} />
-            </Stack.Navigator>
-          </View>
-        </NavigationContainer>
-        <View style={styles.toastContainer}>
-          <Toast config={toastConfig} />
+<GestureHandlerRootView style={{ flex: 1 }}>
+  <SafeAreaProvider>
+    <AuthProvider>
+      <NavigationContainer linking={linking}>
+        <StatusBar 
+          backgroundColor="white" 
+          barStyle="dark-content" 
+          translucent={Platform.OS === 'android'} 
+        />
+
+        <View style={{ flex: 1 }}>
+          <SafeAreaView style={{ zIndex: 1000 }}>
+            <Header />
+          </SafeAreaView>
+
+          <Stack.Navigator
+            initialRouteName="Home"
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="Explore" component={ExploreScreen} />
+            <Stack.Screen name="About" component={AboutScreen} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
+          </Stack.Navigator>
         </View>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
-  );
-}
+      </NavigationContainer>
+
+      <Toast ref={(ref) => Toast.setRef(ref)} config={toastConfig} />
+    </AuthProvider>
+  </SafeAreaProvider>
+</GestureHandlerRootView>
+)}
 
 const styles = StyleSheet.create({
   toastContainer: {
