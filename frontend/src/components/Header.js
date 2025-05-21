@@ -14,6 +14,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import toastHelper from '../utils/toastHelper';
 
 const Header = () => {
   const navigation = useNavigation();
@@ -105,9 +106,11 @@ const Header = () => {
     try {
       await logout();
       setUserDropdownOpen(false);
+      toastHelper.showSuccess('Logout realizado com sucesso!');
       navigation.navigate('Home');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
+      toastHelper.showError('Erro ao fazer logout. Tente novamente.');
     }
   };
 
