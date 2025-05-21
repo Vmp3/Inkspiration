@@ -1,14 +1,23 @@
 package inkspiration.backend.service;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import inkspiration.backend.dto.EnderecoDTO;
+import inkspiration.backend.dto.PortifolioDTO;
+import inkspiration.backend.dto.ProfissionalCriacaoDTO;
 import inkspiration.backend.dto.ProfissionalDTO;
 import inkspiration.backend.entities.Endereco;
+import inkspiration.backend.entities.Portifolio;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.exception.ResourceNotFoundException;
@@ -25,18 +34,21 @@ public class ProfissionalService {
     private final EnderecoRepository enderecoRepository;
     private final PortifolioService portifolioService;
     private final UsuarioService usuarioService;
+    private final DisponibilidadeService disponibilidadeService;
 
     @Autowired
     public ProfissionalService(ProfissionalRepository profissionalRepository, 
                               UsuarioRepository usuarioRepository,
                               EnderecoRepository enderecoRepository,
                               PortifolioService portifolioService,
-                              UsuarioService usuarioService) {
+                              UsuarioService usuarioService,
+                              DisponibilidadeService disponibilidadeService) {
         this.profissionalRepository = profissionalRepository;
         this.usuarioRepository = usuarioRepository;
         this.enderecoRepository = enderecoRepository;
         this.portifolioService = portifolioService;
         this.usuarioService = usuarioService;
+        this.disponibilidadeService = disponibilidadeService;
     }
 
     @Transactional
@@ -59,7 +71,12 @@ public class ProfissionalService {
         profissional.setUsuario(usuario);
         profissional.setEndereco(endereco);
         
-        profissional.setNota(dto.getNota());
+        // Define nota inicial como 0 para novos profissionais
+        if (dto.getNota() == null) {
+            profissional.setNota(new BigDecimal("0.0"));
+        } else {
+            profissional.setNota(dto.getNota());
+        }
         
         return profissionalRepository.save(profissional);
     }
@@ -81,6 +98,71 @@ public class ProfissionalService {
         }
         
         return profissionalRepository.save(profissional);
+    }
+    
+    /**
+     * Cria um profissional completo, com portifólio e disponibilidade em uma única transação.
+     * Se qualquer parte do processo falhar, toda a transação é revertida.
+     * 
+     * @param dto O DTO contendo todas as informações para criar o profissional e suas entidades relacionadas
+     * @return O profissional criado
+     * @throws JsonProcessingException Caso ocorra um erro no processamento do JSON de disponibilidade
+     */
+    @Transactional
+    public Profissional criarProfissionalCompleto(ProfissionalCriacaoDTO dto) throws JsonProcessingException {
+        // 1. Criar o profissional
+        ProfissionalDTO profissionalDTO = new ProfissionalDTO();
+        profissionalDTO.setIdUsuario(dto.getIdUsuario());
+        profissionalDTO.setIdEndereco(dto.getIdEndereco());
+        profissionalDTO.setNota(new BigDecimal("0.0")); // Nota inicial sempre zero
+        
+        Profissional profissional = criar(profissionalDTO);
+        
+        // 2. Criar o portifólio
+        PortifolioDTO portifolioDTO = new PortifolioDTO();
+        portifolioDTO.setIdProfissional(profissional.getIdProfissional());
+        portifolioDTO.setDescricao(dto.getDescricao());
+        portifolioDTO.setEspecialidade(dto.getEspecialidade());
+        portifolioDTO.setExperiencia(dto.getExperiencia());
+        portifolioDTO.setWebsite(dto.getWebsite());
+        portifolioDTO.setTiktok(dto.getTiktok());
+        portifolioDTO.setInstagram(dto.getInstagram());
+        portifolioDTO.setFacebook(dto.getFacebook());
+        portifolioDTO.setTwitter(dto.getTwitter());
+        
+        // Adicionar redes sociais se fornecidas
+        if (dto.getEstilosTatuagem() != null && !dto.getEstilosTatuagem().isEmpty()) {
+            // TODO: Adicionar estilos de tatuagem ao portifólio
+        }
+        
+        Portifolio portifolio = portifolioService.criar(portifolioDTO);
+        
+        // 3. Criar as disponibilidades
+        if (dto.getDisponibilidades() != null && !dto.getDisponibilidades().isEmpty()) {
+            Map<String, Map<String, String>> horarios = new HashMap<>();
+            
+            // Converter do formato da API para o formato esperado pelo serviço
+            dto.getDisponibilidades().forEach(dispDTO -> {
+                // Implemente a lógica de conversão de DisponibilidadeDTO para o formato de mapa
+                // que o DisponibilidadeService espera
+                String[] partes = dispDTO.getHrAtendimento().split("-");
+                if (partes.length == 3) {
+                    String diaSemana = partes[0];
+                    String inicio = partes[1];
+                    String fim = partes[2];
+                    
+                    Map<String, String> horario = new HashMap<>();
+                    horario.put("inicio", inicio);
+                    horario.put("fim", fim);
+                    
+                    horarios.put(diaSemana, horario);
+                }
+            });
+            
+            disponibilidadeService.cadastrarDisponibilidade(profissional.getIdProfissional(), horarios);
+        }
+        
+        return profissional;
     }
 
     public Profissional buscarPorId(Long id) {

@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import inkspiration.backend.dto.ProfissionalCriacaoDTO;
 import inkspiration.backend.dto.ProfissionalDTO;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.service.ProfissionalService;
@@ -73,6 +76,18 @@ public class ProfissionalController {
     public ResponseEntity<ProfissionalDTO> criar(@RequestBody @Valid ProfissionalDTO dto) {
         Profissional profissional = profissionalService.criar(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(profissionalService.converterParaDto(profissional));
+    }
+
+    @PostMapping("/auth/register/profissional-completo")
+    public ResponseEntity<?> criarProfissionalCompleto(@RequestBody @Valid ProfissionalCriacaoDTO dto) {
+        try {
+            Profissional profissional = profissionalService.criarProfissionalCompleto(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(profissionalService.converterParaDto(profissional));
+        } catch (JsonProcessingException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao processar disponibilidades: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @PutMapping("/profissional/atualizar/{id}")
