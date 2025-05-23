@@ -170,6 +170,46 @@ const ProfessionalRegisterScreen = () => {
   
   const dropdownRef = useRef(null);
   
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      // Função para remover o z-index:0 dos elementos com a classe .css-view-175oi2r
+      const removeZIndexFromViews = () => {
+        const cssViewElements = document.querySelectorAll('.css-view-175oi2r');
+        cssViewElements.forEach(element => {
+          if (element.style.zIndex === '0') {
+            element.style.zIndex = 'auto';
+          }
+        });
+
+        if (dropdownRef.current) {
+          const parentElements = [];
+          let currentParent = dropdownRef.current.parentElement;
+          
+          // Percorre os elementos pais até encontrar o body
+          while (currentParent && currentParent !== document.body) {
+            parentElements.push(currentParent);
+            currentParent = currentParent.parentElement;
+          }
+          
+          parentElements.forEach(el => {
+            const currentZIndex = window.getComputedStyle(el).zIndex;
+            if (currentZIndex === 'auto' || currentZIndex === '0') {
+              el.style.zIndex = 'auto';
+            }
+          });
+        }
+      };
+      
+      removeZIndexFromViews();
+      
+      setTimeout(removeZIndexFromViews, 100);
+      
+      if (experienceDropdownOpen) {
+        removeZIndexFromViews();
+      }
+    }
+  }, [experienceDropdownOpen]);
+  
   // Verificar se o usuário está logado
   useEffect(() => {
     if (!userData) {
@@ -720,7 +760,7 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     position: 'relative',
-    zIndex: 1000,
+    zIndex: 9999,
   },
   selectField: {
     borderWidth: 1,
@@ -731,6 +771,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#fff',
+    zIndex: 9999,
   },
   dropdownList: {
     position: 'absolute',
@@ -743,11 +784,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginTop: 2,
     maxHeight: 300,
-    zIndex: 1001,
-    elevation: 3,
+    zIndex: 10000,
+    elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     ...(Platform.OS === 'web' ? { 
       position: 'absolute', 
