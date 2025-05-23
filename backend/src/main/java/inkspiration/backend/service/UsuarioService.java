@@ -276,6 +276,8 @@ public class UsuarioService {
                 return "ROLE_ADMIN";
             } else if (role.equalsIgnoreCase("deleted")) {
                 return "ROLE_DELETED";
+            } else if (role.equalsIgnoreCase("prof")) {
+                return "ROLE_PROF";
             }
         }
         return "ROLE_USER";

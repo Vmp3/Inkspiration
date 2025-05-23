@@ -384,7 +384,7 @@ const Header = () => {
                         <TouchableOpacity 
                           style={styles.dropdownItem}
                           onPress={() => {
-                            navigation.navigate('BecomeProfessional');
+                            navigation.navigate('ProfessionalRegister');
                             setUserDropdownOpen(false);
                           }}
                         >

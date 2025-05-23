@@ -14,7 +14,7 @@ public class SessionFilter {
     public boolean isValidSession(String token) {
         try {
             Jwt jwt = jwtDecoder.decode(token);
-            Long userId = jwt.getClaim("userId"); 
+            String userId = jwt.getSubject(); 
             return userId != null;
         } catch (Exception e) {
             return false;

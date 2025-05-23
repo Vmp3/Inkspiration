@@ -66,6 +66,13 @@ public class ProfissionalService {
         Endereco endereco = enderecoRepository.findById(dto.getIdEndereco())
             .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado com ID: " + dto.getIdEndereco()));
         
+        // Atualiza o papel (role) do usuário para ROLE_PROF
+        usuario.setRole("ROLE_PROF");
+        if (usuario.getUsuarioAutenticar() != null) {
+            usuario.getUsuarioAutenticar().setRole("ROLE_PROF");
+        }
+        usuarioRepository.save(usuario);
+        
         // Cria o profissional
         Profissional profissional = new Profissional();
         profissional.setUsuario(usuario);
