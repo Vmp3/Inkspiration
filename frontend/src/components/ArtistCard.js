@@ -1,12 +1,18 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const ArtistCard = ({ artist }) => {
-  const { name, rating, specialties, location, coverImage } = artist;
+  const { id, name, rating, specialties, location, coverImage } = artist;
+  const navigation = useNavigation();
+
+  const handlePress = () => {
+    navigation.navigate('Artist', { id: id });
+  };
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.9}>
       <View style={styles.imageContainer}>
         <Image 
           source={coverImage ? { uri: coverImage } : { uri: 'https://via.placeholder.com/400x200/e0e0e0/8c8c8c?text=No+Image' }}
@@ -36,7 +42,7 @@ const ArtistCard = ({ artist }) => {
           <Text style={styles.locationText}>{location}</Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

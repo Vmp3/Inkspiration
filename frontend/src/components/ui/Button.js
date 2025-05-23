@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 
 /**
  * Reusable Button component with primary (black) and secondary (white) variants
@@ -20,6 +20,7 @@ const Button = ({
   labelStyle,
   fullWidth = false,
   size = 'md',
+  leftIcon,
   ...props 
 }) => {
   // Determine button style based on variant and size
@@ -50,7 +51,10 @@ const Button = ({
       activeOpacity={0.8}
       {...props}
     >
-      <Text style={textStyles}>{label}</Text>
+      <View style={styles.contentContainer}>
+        {leftIcon && <View style={styles.iconContainer}>{leftIcon}</View>}
+        <Text style={textStyles}>{label}</Text>
+      </View>
     </TouchableOpacity>
   );
 };
@@ -72,6 +76,14 @@ const styles = StyleSheet.create({
   },
   fullWidth: {
     width: '100%',
+  },
+  contentContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconContainer: {
+    marginRight: 8,
   },
   // Size variations
   smallButton: {
