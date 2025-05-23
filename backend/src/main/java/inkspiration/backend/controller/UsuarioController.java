@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import inkspiration.backend.dto.UsuarioDTO;
 import inkspiration.backend.dto.UsuarioResponseDTO;
+import inkspiration.backend.dto.UsuarioSeguroDTO;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.exception.UsuarioException;
 import inkspiration.backend.service.UsuarioService;
@@ -41,16 +42,28 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<UsuarioSeguroDTO> buscarPorId(@PathVariable Long id) {
         Usuario usuario = service.buscarPorId(id);
-        return ResponseEntity.ok(usuario);
+        UsuarioSeguroDTO dto = UsuarioSeguroDTO.fromUsuario(usuario);
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/buscar-por-cpf/{cpf}")
+    public ResponseEntity<UsuarioSeguroDTO> buscarPorCpf(@PathVariable String cpf) {
+        try {
+            Usuario usuario = service.buscarPorCpf(cpf);
+            UsuarioSeguroDTO dto = UsuarioSeguroDTO.fromUsuario(usuario);
+            return ResponseEntity.ok(dto);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PutMapping("/atualizar/{id}")
     public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody @Valid UsuarioDTO dto) {
         try {
             Usuario usuario = service.atualizar(id, dto);
-            return ResponseEntity.ok(usuario);
+            return ResponseEntity.ok(UsuarioSeguroDTO.fromUsuario(usuario));
         } catch (UsuarioException.PermissaoNegadaException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Apenas administradores podem alterar roles");
         }
