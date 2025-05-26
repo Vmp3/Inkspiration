@@ -72,12 +72,10 @@ export const AuthProvider = ({ children }) => {
         };
       }
       
-      console.log('Login bem-sucedido, token armazenado corretamente');
       setIsAuthenticated(true);
       
       const userInfo = await AuthService.getUserData();
       if (userInfo) {
-        console.log('Dados do usuário obtidos com sucesso, role:', userInfo.role);
         setUserData(userInfo);
       } else {
         console.error('Não foi possível obter os dados do usuário após o login');
@@ -118,22 +116,16 @@ export const AuthProvider = ({ children }) => {
         if (userInfo) {
           // Verificar se a role mudou
           if (userData && userData.role !== userInfo.role) {
-            console.log(`Role alterada de ${userData.role} para ${userInfo.role}`);
-            
             // Usar apenas o método de reautenticação para atualizar o token
             try {
               const tokenUpdated = await AuthService.reautenticar(userInfo.idUsuario);
               if (tokenUpdated) {
-                console.log('Token atualizado com sucesso após mudança de role');
-                
                 // Obter dados novamente após atualizar o token
                 const refreshedUserInfo = await AuthService.getUserData();
                 if (refreshedUserInfo) {
-                  console.log('Dados do usuário atualizados após reautenticação:', refreshedUserInfo.role);
                   setUserData(refreshedUserInfo);
                 }
               } else {
-                console.error('Falha ao atualizar token após mudança de role');
                 // Forçar logout em caso de falha
                 await logout();
                 return;

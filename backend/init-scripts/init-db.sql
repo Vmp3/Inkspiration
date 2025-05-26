@@ -1,12 +1,14 @@
--- Conecta ao banco de dados padrão 'postgres'
-\c postgres;
+-- Drop the database if it exists
+DROP DATABASE IF EXISTS inkspiration;
 
--- Cria o banco de dados 'inkspiration' se não existir
-SELECT 'CREATE DATABASE inkspiration'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'inkspiration');
+-- Create the database
+CREATE DATABASE inkspiration;
 
--- Conecta ao banco de dados 'inkspiration'
+-- Connect to the inkspiration database
 \c inkspiration;
 
--- Adicione aqui comandos adicionais para inicializar o banco de dados, se necessário
--- como criar tabelas, índices, etc. 
+-- Create extension for UUID if not exists
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Add any additional database initialization commands here
+-- such as creating tables, indexes, etc. 

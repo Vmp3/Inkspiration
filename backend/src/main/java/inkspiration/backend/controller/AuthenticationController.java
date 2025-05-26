@@ -8,15 +8,14 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import inkspiration.backend.dto.UsuarioAutenticarDTO;
 import inkspiration.backend.dto.UsuarioDTO;
-import inkspiration.backend.entities.TokenRevogado;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.security.AuthenticationService;
 import inkspiration.backend.service.UsuarioService;
@@ -124,11 +123,22 @@ public class AuthenticationController {
                 )
             );
             
-            // Atualizar o token usando o serviço de usuário
-            String token = usuarioService.atualizarTokenUsuario(userId);
+            // Gerar novo token com a role atualizada
+            String novoToken = authService.authenticate(authentication);
             System.out.println("Novo token gerado para usuário ID: " + userId);
             
-            return ResponseEntity.ok(token);
+            // Revogar o token antigo se existir e for diferente do novo
+            String tokenAntigo = usuario.getTokenAtual();
+            if (tokenAntigo != null && !tokenAntigo.equals(novoToken)) {
+                System.out.println("Revogando token antigo para usuário ID: " + userId);
+                authService.revogarToken(tokenAntigo);
+            }
+            
+            // Atualizar o token no usuário
+            usuario.setTokenAtual(novoToken);
+            usuarioService.salvar(usuario);
+            
+            return ResponseEntity.ok(novoToken);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

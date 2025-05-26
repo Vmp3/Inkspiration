@@ -335,12 +335,7 @@ public class UsuarioService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String novoToken = jwtService.generateToken(auth);
         
-        String tokenAntigo = usuario.getTokenAtual();
-        if (tokenAntigo != null) {
-            TokenRevogado tokenRevogado = new TokenRevogado(tokenAntigo);
-            tokenRevogadoRepository.save(tokenRevogado);
-        }
-        
+        // Atualizar o token no usuário sem revogar o antigo
         usuario.setTokenAtual(novoToken);
         repository.save(usuario);
         

@@ -319,7 +319,6 @@ const ProfessionalRegisterScreen = () => {
         }
       }
     } catch (error) {
-      console.error('Erro ao selecionar imagem:', error);
       toastHelper.showError('Falha ao selecionar imagem. Tente novamente.');
     }
   };
@@ -329,15 +328,8 @@ const ProfessionalRegisterScreen = () => {
     try {
       // Upload da imagem de perfil
       if (profileImage && profileImage.base64) {
-        console.log('Enviando imagem de perfil em base64...');
-        
-        // Certifique-se de que a imagem base64 esteja no formato correto
-        const base64Data = profileImage.base64;
-        const imagemBase64 = base64Data.startsWith('data:') ? base64Data : `data:image/jpeg;base64,${base64Data}`;
-        
         try {
-          await ApiService.put(`/usuario/${userData.idUsuario}/foto-perfil`, { imagemBase64 });
-          console.log('Imagem de perfil enviada com sucesso!');
+          await ApiService.put(`/usuario/${userData.idUsuario}/foto-perfil`, { imagemBase64: profileImage.base64 });
         } catch (error) {
           console.error('Falha ao enviar imagem de perfil:', error);
         }
@@ -356,7 +348,6 @@ const ProfessionalRegisterScreen = () => {
           
           try {
             await ApiService.post('/imagens', imagemDTO);
-            console.log('Imagem do portfólio enviada com sucesso!');
           } catch (error) {
             console.error('Falha ao enviar imagem do portfólio:', error);
           }
@@ -462,8 +453,6 @@ const ProfessionalRegisterScreen = () => {
           disponibilidades: disponibilidades
         };
         
-        console.log('Dados a serem enviados:', professionalData);
-        
         // Enviar dados para o backend
         const profissionalCadastrado = await ApiService.post('/auth/register/profissional-completo', professionalData);
         
@@ -485,14 +474,10 @@ const ProfessionalRegisterScreen = () => {
         
         // Atualizar o token para refletir a nova role (ROLE_PROF)
         try {
-          console.log('Atualizando token para refletir a role ROLE_PROF...');
-          
           // Usar apenas o método de reautenticação que gera um token com a role atual
           const tokenUpdated = await AuthService.reautenticar(userData.idUsuario);
           
           if (tokenUpdated) {
-            console.log('Token atualizado com sucesso para role ROLE_PROF');
-            
             // Atualizar dados do usuário para refletir o novo papel
             await updateUserData();
             

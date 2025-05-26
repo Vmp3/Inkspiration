@@ -36,7 +36,6 @@ class AuthService {
         if (!tokenData) {
           throw new Error('Token inválido retornado pelo servidor');
         }
-        console.log('Login bem-sucedido, role no token:', tokenData.scope);
       } catch (tokenError) {
         console.error('Erro ao validar token recebido:', tokenError);
         throw new Error('Erro ao validar token recebido do servidor');
@@ -52,7 +51,6 @@ class AuthService {
         throw new Error('Falha ao armazenar token de autenticação');
       }
       
-      console.log('Token armazenado com sucesso após login');
       return { token };
     } catch (error) {
       console.error('Erro no login:', error);
@@ -72,8 +70,6 @@ class AuthService {
         
         // Tenta remover sem o path e SameSite também (caso tenha sido salvo de forma diferente)
         document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
-        
-        console.log('Token removido dos cookies e AsyncStorage');
       }
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
@@ -376,8 +372,6 @@ class AuthService {
 
   async reautenticar(userId) {
     try {
-      console.log('Reautenticando usuário:', userId);
-      
       // Limpar tokens anteriores
       await this.logout();
       
@@ -394,14 +388,15 @@ class AuthService {
       }
       
       const token = await response.text();
-      console.log('Novo token recebido da reautenticação');
       
       // Salvar o novo token
       await this.setToken(token);
       
-      // Verificar se o token tem a role correta
+      // Parse o token para verificar a role
       const tokenData = this.parseJwt(token);
-      console.log('Token de reautenticação com role:', tokenData.scope);
+      if (!tokenData) {
+        throw new Error('Token inválido recebido na reautenticação');
+      }
       
       return tokenData.scope.includes('ROLE_PROF');
     } catch (error) {
