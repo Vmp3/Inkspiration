@@ -15,6 +15,7 @@ import AboutScreen from './src/screens/AboutScreen';
 import ArtistScreen from './src/screens/ArtistScreen';
 import Header from './src/components/Header';
 import ProfileScreen from './src/screens/ProfileScreen';
+import AdminUsersScreen from './src/screens/AdminUsersScreen';
 import toastConfig from './src/config/toastConfig';
 import { AuthProvider } from './src/context/AuthContext';
 
@@ -30,6 +31,7 @@ const linking = {
       Main: 'main',
       Explore: 'explore',
       About: 'about',
+      AdminUsers: 'admin/usuarios',
       Artist: 'artist/:id',
     },
   },
@@ -65,11 +67,12 @@ export default function App() {
             <Stack.Screen name="About" component={AboutScreen} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="Artist" component={ArtistScreen} />
+            <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
           </Stack.Navigator>
         </View>
       </NavigationContainer>
 
-      <Toast config={toastConfig} />
+      <Toast ref={(ref) => Toast.setRef(ref)} config={toastConfig} />
     </AuthProvider>
   </SafeAreaProvider>
 </GestureHandlerRootView>

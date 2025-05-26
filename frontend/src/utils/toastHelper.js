@@ -12,5 +12,6 @@ export const showToast = (type, title, message) => {
 
 export default {
   showSuccess: (message) => showToast('success', 'Sucesso', message),
-  showError: (message) => showToast('error', 'Erro', message)
+  showError: (message) => showToast('error', 'Erro', message),
+  showInfo: (message) => showToast('info', 'Informação', message)
 }; 

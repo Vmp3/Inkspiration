@@ -336,12 +336,12 @@ const Header = () => {
                       <TouchableOpacity 
                         style={styles.dropdownItem}
                         onPress={() => {
-                          navigation.navigate('Users');
+                          navigation.navigate('AdminUsers');
                           setUserDropdownOpen(false);
                         }}
                       >
                         <Feather name="users" size={16} color="#666" style={styles.dropdownIcon} />
-                        <Text style={styles.dropdownText}>Usuários</Text>
+                        <Text style={styles.dropdownText}>Gerenciar Usuários</Text>
                       </TouchableOpacity>
                     ) : userData?.role === 'ROLE_PROF' ? (
                       
