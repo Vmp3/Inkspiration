@@ -322,4 +322,28 @@ public class UsuarioService {
     public void salvar(Usuario usuario) {
         repository.save(usuario);
     }
+    
+    @Transactional
+    public void atualizarFotoPerfil(Long id, String imagemBase64) {
+        Usuario usuario = buscarPorId(id);
+        usuario.setImagemPerfil(imagemBase64);
+        repository.save(usuario);
+    }
+
+    public String atualizarTokenUsuario(Long idUsuario) {
+        Usuario usuario = buscarPorId(idUsuario);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String novoToken = jwtService.generateToken(auth);
+        
+        String tokenAntigo = usuario.getTokenAtual();
+        if (tokenAntigo != null) {
+            TokenRevogado tokenRevogado = new TokenRevogado(tokenAntigo);
+            tokenRevogadoRepository.save(tokenRevogado);
+        }
+        
+        usuario.setTokenAtual(novoToken);
+        repository.save(usuario);
+        
+        return novoToken;
+    }
 }

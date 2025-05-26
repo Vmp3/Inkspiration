@@ -1,6 +1,7 @@
 package inkspiration.backend.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -79,5 +80,60 @@ public class UsuarioController {
     public ResponseEntity<String> excluirUsuario(@PathVariable Long id) {
         service.deletar(id);
         return ResponseEntity.ok("Usuário excluído com sucesso.");
+    }
+
+    @PutMapping("/{id}/foto-perfil")
+    public ResponseEntity<Void> atualizarFotoPerfil(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        String imagemBase64 = request.get("imagemBase64");
+        if (imagemBase64 == null || imagemBase64.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        service.atualizarFotoPerfil(id, imagemBase64);
+        return ResponseEntity.ok().build();
+    }
+    
+    @PostMapping("/{id}/validate-token")
+    public ResponseEntity<Map<String, Object>> validateToken(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        try {
+            String token = request.get("token");
+            if (token == null) {
+                return ResponseEntity.badRequest().body(
+                    Map.of("valid", false, "message", "Token não fornecido")
+                );
+            }
+            
+            Usuario usuario = service.buscarPorId(id);
+            String tokenAtual = usuario.getTokenAtual();
+            
+            if (tokenAtual == null) {
+                return ResponseEntity.ok(
+                    Map.of("valid", false, "message", "Usuário não possui token ativo")
+                );
+            }
+            
+            // Verificar se o token enviado corresponde ao token atual no servidor
+            boolean valid = token.equals(tokenAtual);
+            
+            if (valid) {
+                return ResponseEntity.ok(Map.of("valid", true));
+            } else {
+                // Se o token for diferente, retornar o token atual do servidor
+                return ResponseEntity.ok(
+                    Map.of(
+                        "valid", false, 
+                        "message", "Token diferente do armazenado no servidor",
+                        "newToken", tokenAtual
+                    )
+                );
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                Map.of(
+                    "valid", false, 
+                    "message", "Erro ao validar token: " + e.getMessage()
+                )
+            );
+        }
     }
 } 

@@ -1,5 +1,6 @@
 package inkspiration.backend.controller;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,9 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import inkspiration.backend.dto.ImagemDTO;
 import inkspiration.backend.dto.ProfissionalCriacaoDTO;
 import inkspiration.backend.dto.ProfissionalDTO;
 import inkspiration.backend.entities.Profissional;
+import inkspiration.backend.service.ImagemService;
 import inkspiration.backend.service.ProfissionalService;
 import jakarta.validation.Valid;
 
@@ -32,10 +35,12 @@ import jakarta.validation.Valid;
 public class ProfissionalController {
 
     private final ProfissionalService profissionalService;
+    private final ImagemService imagemService;
 
     @Autowired
-    public ProfissionalController(ProfissionalService profissionalService) {
+    public ProfissionalController(ProfissionalService profissionalService, ImagemService imagemService) {
         this.profissionalService = profissionalService;
+        this.imagemService = imagemService;
     }
 
     @GetMapping("/profissional")
@@ -132,5 +137,19 @@ public class ProfissionalController {
         
         profissionalService.deletar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/profissional/{id}/imagens")
+    public ResponseEntity<List<ImagemDTO>> buscarImagensProfissional(@PathVariable Long id) {
+        Profissional profissional = profissionalService.buscarPorId(id);
+        
+        if (profissional.getPortifolio() == null) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+        
+        Long idPortifolio = profissional.getPortifolio().getIdPortifolio();
+        List<ImagemDTO> imagens = imagemService.listarPorPortifolio(idPortifolio);
+        
+        return ResponseEntity.ok(imagens);
     }
 } 

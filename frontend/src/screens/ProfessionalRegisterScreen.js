@@ -24,6 +24,7 @@ import FormNavigation from '../components/ui/FormNavigation';
 import toastHelper from '../utils/toastHelper';
 import { TimeInput } from '../components/TimeInput';
 import AuthService from '../services/AuthService';
+import ApiService from '../services/ApiService';
 
 const ProfessionalRegisterScreen = () => {
   const navigation = useNavigation();
@@ -276,7 +277,7 @@ const ProfessionalRegisterScreen = () => {
   };
   
   const handleAddPortfolioImage = () => {
-    setPortfolioImages([...portfolioImages, null]);
+    pickImage('portfolio');
   };
   
   const handleRemovePortfolioImage = (index) => {
@@ -292,26 +293,26 @@ const ProfessionalRegisterScreen = () => {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
-        base64: true // Solicitar imagem em formato base64
+        base64: true
       });
-      
       if (!result.canceled) {
         const selectedImage = result.assets[0];
         const imageUri = selectedImage.uri;
-        
+        const imageBase64 = `data:image/jpeg;base64,${selectedImage.base64}`;
         if (imageType === 'portfolio') {
-          const newPortfolioImages = [...portfolioImages];
-          newPortfolioImages[index] = {
-            uri: imageUri,
-            base64: selectedImage.base64,
-            type: 'image/jpeg',
-            name: `portfolio_${index}.jpg`
-          };
-          setPortfolioImages(newPortfolioImages);
+          setPortfolioImages(prev => [
+            ...prev,
+            {
+              uri: imageUri,
+              base64: imageBase64,
+              type: 'image/jpeg',
+              name: `portfolio_${prev.length}.jpg`
+            }
+          ]);
         } else if (imageType === 'profile') {
           setProfileImage({
             uri: imageUri,
-            base64: selectedImage.base64,
+            base64: imageBase64,
             type: 'image/jpeg',
             name: 'profile.jpg'
           });
@@ -326,43 +327,39 @@ const ProfessionalRegisterScreen = () => {
   // Upload de imagens para o servidor
   const uploadImages = async (profissionalId) => {
     try {
-      const authHeaders = await AuthService.getAuthHeaders();
-      const headers = {
-        ...authHeaders,
-        'Content-Type': 'multipart/form-data',
-      };
-      
       // Upload da imagem de perfil
-      if (profileImage && profileImage.uri) {
-        const formData = new FormData();
-        formData.append('imagem', {
-          uri: profileImage.uri,
-          type: profileImage.type || 'image/jpeg',
-          name: profileImage.name || 'profile.jpg'
-        });
+      if (profileImage && profileImage.base64) {
+        console.log('Enviando imagem de perfil em base64...');
         
-        await fetch(`http://localhost:8080/profissional/${profissionalId}/foto-perfil`, {
-          method: 'POST',
-          headers: headers,
-          body: formData
-        });
+        // Certifique-se de que a imagem base64 esteja no formato correto
+        const base64Data = profileImage.base64;
+        const imagemBase64 = base64Data.startsWith('data:') ? base64Data : `data:image/jpeg;base64,${base64Data}`;
+        
+        try {
+          await ApiService.put(`/usuario/${userData.idUsuario}/foto-perfil`, { imagemBase64 });
+          console.log('Imagem de perfil enviada com sucesso!');
+        } catch (error) {
+          console.error('Falha ao enviar imagem de perfil:', error);
+        }
       }
       
-      // Upload das imagens do portfólio
-      for (const [index, image] of portfolioImages.entries()) {
-        if (image && image.uri) {
-          const formData = new FormData();
-          formData.append('imagem', {
-            uri: image.uri,
-            type: image.type || 'image/jpeg',
-            name: image.name || `portfolio_${index}.jpg`
-          });
+      // Upload das imagens do portfólio em base64
+      for (const image of portfolioImages) {
+        if (image && image.base64) {
+          const base64Data = image.base64;
+          const imagemBase64 = base64Data.startsWith('data:') ? base64Data : `data:image/jpeg;base64,${base64Data}`;
           
-          await fetch(`http://localhost:8080/portifolio/${profissionalId}/imagem`, {
-            method: 'POST',
-            headers: headers,
-            body: formData
-          });
+          const imagemDTO = {
+            imagemBase64,
+            idPortifolio: profissionalId
+          };
+          
+          try {
+            await ApiService.post('/imagens', imagemDTO);
+            console.log('Imagem do portfólio enviada com sucesso!');
+          } catch (error) {
+            console.error('Falha ao enviar imagem do portfólio:', error);
+          }
         }
       }
       
@@ -439,90 +436,93 @@ const ProfessionalRegisterScreen = () => {
         return;
       }
       
-      // Obter cabeçalhos com token de autenticação
-      const headers = await AuthService.getAuthHeaders();
-      
       // Buscar os dados do usuário para obter o endereço
-      const userResponse = await fetch(`http://localhost:8080/usuario/${userData.idUsuario}`, {
-        method: 'GET',
-        headers: headers
-      });
-      
-      if (!userResponse.ok) {
-        throw new Error('Não foi possível obter os dados completos do usuário');
-      }
-      
-      const userDetails = await userResponse.json();
-      
-      if (!userDetails.idEndereco) {
-        toastHelper.showError('Seu cadastro não possui um endereço. Atualize seu perfil antes de continuar.');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Preparar objeto com formato esperado pelo backend (ProfissionalCriacaoDTO)
-      const professionalData = {
-        idUsuario: userData.idUsuario,
-        idEndereco: userDetails.idEndereco,
-        experiencia: experience,
-        especialidade: selectedSpecialties.join(', '),
-        descricao: biography,
-        estilosTatuagem: selectedSpecialties,
-        instagram: socialMedia.instagram || null,
-        tiktok: socialMedia.tiktok || null,
-        facebook: socialMedia.facebook || null,
-        twitter: socialMedia.twitter || null,
-        website: socialMedia.website || null,
-        disponibilidades: disponibilidades
-      };
-      
-      console.log('Dados a serem enviados:', professionalData);
-      
-      // Enviar dados para o backend
-      const response = await fetch('http://localhost:8080/auth/register/profissional-completo', {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(professionalData)
-      });
-      
-      if (!response.ok) {
-        // Tentar obter mensagem de erro detalhada
-        try {
-          const errorData = await response.json();
-          const errorMessage = errorData.message || 'Erro ao cadastrar profissional';
-          throw new Error(errorMessage);
-        } catch (jsonError) {
-          // Se não conseguir obter JSON, usar o status text
-          throw new Error(`Erro ao cadastrar profissional: ${response.statusText}`);
-        }
-      }
-      
-      // Obter dados do profissional cadastrado
-      const profissionalCadastrado = await response.json();
-      
-      // Se houver imagens, fazer o upload
-      if ((profileImage && profileImage.uri) || portfolioImages.some(img => img && img.uri)) {
-        toastHelper.showInfo('Enviando imagens...');
+      try {
+        const userDetails = await ApiService.get(`/usuario/${userData.idUsuario}`);
         
-        try {
-          // Tentativa de envio das imagens
-          await uploadImages(profissionalCadastrado.idProfissional);
-        } catch (imageError) {
-          console.error('Erro ao enviar imagens:', imageError);
-          toastHelper.showWarning('Profissional cadastrado, mas houve um problema ao enviar as imagens.');
+        if (!userDetails.idEndereco) {
+          toastHelper.showError('Seu cadastro não possui um endereço. Atualize seu perfil antes de continuar.');
+          setIsLoading(false);
+          return;
         }
+        
+        // Preparar objeto com formato esperado pelo backend (ProfissionalCriacaoDTO)
+        const professionalData = {
+          idUsuario: userData.idUsuario,
+          idEndereco: userDetails.idEndereco,
+          experiencia: experience,
+          especialidade: selectedSpecialties.join(', '),
+          descricao: biography,
+          estilosTatuagem: selectedSpecialties,
+          instagram: socialMedia.instagram || null,
+          tiktok: socialMedia.tiktok || null,
+          facebook: socialMedia.facebook || null,
+          twitter: socialMedia.twitter || null,
+          website: socialMedia.website || null,
+          disponibilidades: disponibilidades
+        };
+        
+        console.log('Dados a serem enviados:', professionalData);
+        
+        // Enviar dados para o backend
+        const profissionalCadastrado = await ApiService.post('/auth/register/profissional-completo', professionalData);
+        
+        // Se houver imagens, fazer o upload
+        if ((profileImage && profileImage.uri) || portfolioImages.some(img => img && img.uri)) {
+          toastHelper.showInfo('Enviando imagens...');
+          
+          try {
+            // Tentativa de envio das imagens
+            await uploadImages(profissionalCadastrado.idProfissional);
+          } catch (imageError) {
+            console.error('Erro ao enviar imagens:', imageError);
+            toastHelper.showWarning('Profissional cadastrado, mas houve um problema ao enviar as imagens.');
+          }
+        }
+        
+        // Cadastro bem-sucedido
+        toastHelper.showSuccess('Cadastro de profissional realizado com sucesso!');
+        
+        // Atualizar o token para refletir a nova role (ROLE_PROF)
+        try {
+          console.log('Atualizando token para refletir a role ROLE_PROF...');
+          
+          // Usar apenas o método de reautenticação que gera um token com a role atual
+          const tokenUpdated = await AuthService.reautenticar(userData.idUsuario);
+          
+          if (tokenUpdated) {
+            console.log('Token atualizado com sucesso para role ROLE_PROF');
+            
+            // Atualizar dados do usuário para refletir o novo papel
+            await updateUserData();
+            
+            // Navegar para a página inicial após o sucesso
+            setTimeout(() => {
+              navigation.navigate('Home');
+            }, 1000);
+          } else {
+            // Se falhar, pedir para o usuário fazer login novamente
+            console.error('Falha ao atualizar token - redirecionando para login');
+            toastHelper.showWarning('Por favor, faça login novamente para atualizar suas permissões');
+            await AuthService.logout();
+            setTimeout(() => {
+              navigation.navigate('Login');
+            }, 2000);
+          }
+        } catch (tokenError) {
+          console.error('Erro ao atualizar token:', tokenError);
+          
+          // Em caso de erro, fazer logout e pedir para o usuário fazer login novamente
+          toastHelper.showWarning('Por favor, faça login novamente para atualizar suas permissões');
+          await AuthService.logout();
+          setTimeout(() => {
+            navigation.navigate('Login');
+          }, 2000);
+        }
+      } catch (userError) {
+        console.error('Erro ao obter dados do usuário ou cadastrar profissional:', userError);
+        toastHelper.showError('Ocorreu um erro ao processar sua solicitação. Tente novamente.');
       }
-      
-      // Cadastro bem-sucedido
-      toastHelper.showSuccess('Cadastro de profissional realizado com sucesso!');
-      
-      // Atualizar dados do usuário para refletir o novo papel (ROLE_PROF)
-      await updateUserData();
-      
-      // Navegar para a página inicial
-      setTimeout(() => {
-        navigation.navigate('Home');
-      }, 1000);
       
     } catch (error) {
       console.error('Erro ao cadastrar profissional:', error);
@@ -773,18 +773,28 @@ const ProfessionalRegisterScreen = () => {
           </TouchableOpacity>
         </View>
         
+        <Text style={styles.portfolioHelpText}>
+          Adicione fotos dos seus melhores trabalhos. Clique nos quadrados ou no botão acima para selecionar imagens.
+        </Text>
+        
         <View style={styles.portfolioGrid}>
-          {portfolioImages.map((image, index) => (
+          {portfolioImages.filter(image => image !== null).map((image, index) => (
             <View key={index} style={styles.portfolioItem}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.portfolioImageContainer}
                 onPress={() => pickImage('portfolio', index)}
               >
-                <Image 
-                  source={image ? { uri: image.uri } : { uri: 'https://via.placeholder.com/200' }}
+                <Image
+                  source={{ uri: image.uri }}
                   style={styles.portfolioImage}
                   resizeMode="cover"
                 />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.removeImageButton}
+                onPress={() => handleRemovePortfolioImage(index)}
+              >
+                <Feather name="trash-2" size={18} color="#ff4444" />
               </TouchableOpacity>
             </View>
           ))}
@@ -1164,6 +1174,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000',
+  },
+  emptyImagePlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  emptyImageText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+    zIndex: 1,
+  },
+  portfolioHelpText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+    fontStyle: 'italic',
   },
 });
 

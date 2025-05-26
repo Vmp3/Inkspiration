@@ -8,7 +8,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 public class Portifolio {
@@ -34,6 +37,9 @@ public class Portifolio {
     @OneToOne(mappedBy = "portifolio", cascade = CascadeType.ALL)
     @JsonIgnore
     private Profissional profissional;
+    
+    @OneToMany(mappedBy = "portifolio", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Imagem> imagens = new ArrayList<>();
     
     public Portifolio() {}
     
@@ -116,5 +122,23 @@ public class Portifolio {
     
     public void setTwitter(String twitter) {
         this.twitter = twitter;
+    }
+    
+    public List<Imagem> getImagens() {
+        return imagens;
+    }
+    
+    public void setImagens(List<Imagem> imagens) {
+        this.imagens = imagens;
+    }
+    
+    public void adicionarImagem(Imagem imagem) {
+        imagens.add(imagem);
+        imagem.setPortifolio(this);
+    }
+    
+    public void removerImagem(Imagem imagem) {
+        imagens.remove(imagem);
+        imagem.setPortifolio(null);
     }
 } 
