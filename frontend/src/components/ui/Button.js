@@ -1,17 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 
-/**
- * Reusable Button component with primary (black) and secondary (white) variants
- * @param {Object} props Component properties
- * @param {string} props.variant 'primary' (black) or 'secondary' (white)
- * @param {function} props.onPress Function to call when button is pressed
- * @param {string} props.label Text to display in the button
- * @param {Object} props.style Additional styles to apply to the button
- * @param {Object} props.labelStyle Additional styles to apply to the label
- * @param {boolean} props.fullWidth Whether the button should take full width
- * @param {string} props.size 'sm', 'md', 'lg', or 'search' for different button sizes
- */
 const Button = ({ 
   variant = 'primary', 
   onPress, 
@@ -21,6 +10,7 @@ const Button = ({
   fullWidth = false,
   size = 'md',
   leftIcon,
+  disabled = false,
   ...props 
 }) => {
   // Determine button style based on variant and size
@@ -31,6 +21,7 @@ const Button = ({
     size === 'lg' ? styles.largeButton : 
     size === 'search' ? styles.searchButton : styles.mediumButton,
     fullWidth && styles.fullWidth,
+    disabled && (variant === 'primary' ? styles.primaryDisabled : styles.secondaryDisabled),
     style
   ];
 
@@ -41,14 +32,16 @@ const Button = ({
     size === 'sm' ? styles.smallText : 
     size === 'lg' ? styles.largeText : 
     size === 'search' ? styles.searchText : styles.mediumText,
+    disabled && (variant === 'primary' ? styles.primaryTextDisabled : styles.secondaryTextDisabled),
     labelStyle
   ];
 
   return (
     <TouchableOpacity 
       style={buttonStyles} 
-      onPress={onPress}
-      activeOpacity={0.8}
+      onPress={disabled ? undefined : onPress}
+      activeOpacity={disabled ? 1 : 0.8}
+      disabled={disabled}
       {...props}
     >
       <View style={styles.contentContainer}>
@@ -124,7 +117,21 @@ const styles = StyleSheet.create({
   },
   searchText: {
     fontSize: 14, // Smaller text for search buttons
-  }
+  },
+  primaryDisabled: {
+    backgroundColor: '#9CA3AF', 
+  },
+  secondaryDisabled: {
+    backgroundColor: '#F3F4F6', 
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+  },
+  primaryTextDisabled: {
+    color: '#E5E7EB',
+  },
+  secondaryTextDisabled: {
+    color: '#9CA3AF', 
+  },
 });
 
 export default Button; 
