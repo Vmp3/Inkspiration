@@ -84,6 +84,26 @@ class UserService {
     }
   }
 
+  async reactivateUser(id) {
+    try {
+      const headers = await AuthService.getAuthHeaders();
+      const response = await fetch(`${API_URL}/usuario/reativar/${id}`, {
+        method: 'POST',
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorMessage = await response.text();
+        throw new Error(errorMessage || 'Erro ao reativar usuário');
+      }
+
+      return await response.text();
+    } catch (error) {
+      console.error('Erro ao reativar usuário:', error);
+      throw error;
+    }
+  }
+
   async deleteUser(id) {
     try {
       const headers = await AuthService.getAuthHeaders();

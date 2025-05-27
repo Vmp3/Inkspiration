@@ -11,6 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import UserService from '../services/UserService';
+import PortifolioService from '../services/PortifolioService';
 import toastHelper from '../utils/toastHelper';
 
 import SearchInput from '../components/ui/SearchInput';
@@ -31,7 +32,7 @@ const AdminUsersScreen = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
-  const [modalAction, setModalAction] = useState(null); // 'toggle' ou 'delete'
+  const [modalAction, setModalAction] = useState(null);
 
   const isMobile = screenWidth < 768;
 
@@ -102,9 +103,9 @@ const AdminUsersScreen = () => {
     setIsConfirmModalVisible(true);
   };
 
-  const deleteUser = (user) => {
+  const deletePortfolio = (user) => {
     setSelectedUser(user);
-    setModalAction('delete');
+    setModalAction('deletePortfolio');
     setIsConfirmModalVisible(true);
   };
 
@@ -114,14 +115,23 @@ const AdminUsersScreen = () => {
     try {
       if (modalAction === 'toggle') {
         if (selectedUser.role === 'ROLE_DELETED') {
-          toastHelper.showInfo('Funcionalidade de reativação em desenvolvimento');
+          await UserService.reactivateUser(selectedUser.idUsuario);
+          toastHelper.showSuccess(`Usuário ${selectedUser.nome} foi reativado com sucesso`);
         } else {
           await UserService.deactivateUser(selectedUser.idUsuario);
           toastHelper.showSuccess(`Usuário ${selectedUser.nome} foi desativado com sucesso`);
         }
-      } else if (modalAction === 'delete') {
-        await UserService.deleteUser(selectedUser.idUsuario);
-        toastHelper.showSuccess(`Usuário ${selectedUser.nome} foi excluído com sucesso`);
+      } else if (modalAction === 'deletePortfolio') {
+        try {
+          await PortifolioService.deletePortifolio(selectedUser.idUsuario);
+          toastHelper.showSuccess(`Portfólio do usuário ${selectedUser.nome} foi excluído com sucesso`);
+        } catch (error) {
+          if (error.message.includes('404')) {
+            toastHelper.showInfo(`Usuário ${selectedUser.nome} não possui portfólio para excluir`);
+          } else {
+            throw error;
+          }
+        }
       }
       
       await loadUsers();
@@ -168,6 +178,7 @@ const AdminUsersScreen = () => {
   const renderUserItem = (user) => {
     const isInactive = user.role === 'ROLE_DELETED';
     const isAdmin = user.role === 'ROLE_ADMIN';
+    const isProfessional = user.role === 'ROLE_PROF';
 
     return (
       <Card key={user.idUsuario} style={[styles.userCard, isInactive && styles.inactiveCard]}>
@@ -208,14 +219,16 @@ const AdminUsersScreen = () => {
                   isInactive ? styles.activateText : styles.deactivateText
                 ]}
               />
-              <Button
-                variant="secondary"
-                size="sm"
-                label="Excluir"
-                onPress={() => deleteUser(user)}
-                style={[styles.actionButton, styles.deleteButton]}
-                labelStyle={styles.deleteText}
-              />
+              {isProfessional && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  label="Excluir Portfólio"
+                  onPress={() => deletePortfolio(user)}
+                  style={[styles.actionButton, styles.deletePortfolioButton]}
+                  labelStyle={styles.deletePortfolioText}
+                />
+              )}
             </View>
           )}
         </View>
@@ -283,24 +296,24 @@ const AdminUsersScreen = () => {
             ? selectedUser?.role === 'ROLE_DELETED'
               ? 'Ativar usuário'
               : 'Desativar usuário'
-            : 'Excluir usuário'
+            : 'Excluir portfólio'
         }
         description={
           modalAction === 'toggle'
             ? selectedUser?.role === 'ROLE_DELETED'
               ? `Tem certeza que deseja ativar o usuário ${selectedUser?.nome}? O usuário poderá acessar o sistema novamente.`
               : `Tem certeza que deseja desativar o usuário ${selectedUser?.nome}? O usuário não poderá mais acessar o sistema.`
-            : `Tem certeza que deseja excluir o usuário ${selectedUser?.nome}? Esta ação não pode ser desfeita.`
+            : `Tem certeza que deseja excluir o portfólio do usuário ${selectedUser?.nome}? Esta ação não pode ser desfeita.`
         }
         confirmText={
           modalAction === 'toggle'
             ? selectedUser?.role === 'ROLE_DELETED'
               ? 'Ativar'
               : 'Desativar'
-            : 'Excluir'
+            : 'Excluir Portfólio'
         }
         confirmVariant={
-          modalAction === 'delete' ? 'primary' : 'primary'
+          modalAction === 'deletePortfolio' ? 'primary' : 'primary'
         }
         onConfirm={confirmAction}
       />
@@ -443,10 +456,10 @@ const styles = StyleSheet.create({
   activateText: {
     color: '#10B981',
   },
-  deleteButton: {
+  deletePortfolioButton: {
     borderColor: '#F59E0B',
   },
-  deleteText: {
+  deletePortfolioText: {
     color: '#F59E0B',
   },
 });
