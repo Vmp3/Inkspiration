@@ -7,11 +7,14 @@ import {
   Image, 
   TouchableOpacity, 
   FlatList, 
-  Dimensions 
+  Dimensions,
+  Linking
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MaterialIcons, Feather, FontAwesome, Entypo } from '@expo/vector-icons';
+import { MaterialIcons, Feather, FontAwesome, Entypo, AntDesign } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import ProfessionalService from '../services/ProfessionalService';
+import toastHelper from '../utils/toastHelper';
 
 const Tabs = ({ tabs, activeTab, onTabChange }) => {
   return (
@@ -56,10 +59,27 @@ const Card = ({ children, style }) => {
 };
 
 const PortfolioItem = ({ image }) => {
+  // Função para processar a imagem base64
+  const processBase64Image = (base64String) => {
+    if (!base64String) {
+      return "https://via.placeholder.com/300";
+    }
+    
+    // Se já tem o prefixo data:image, usar diretamente
+    if (base64String.startsWith('data:image/')) {
+      return base64String;
+    }
+    
+    // Se não tem o prefixo, adicionar
+    return `data:image/jpeg;base64,${base64String}`;
+  };
+
+  const imageUri = processBase64Image(image);
+
   return (
     <View style={styles.portfolioItem}>
       <Image
-        source={{ uri: image }}
+        source={{ uri: imageUri }}
         style={styles.portfolioImage}
         resizeMode="cover"
       />
@@ -76,14 +96,48 @@ const TikTokIcon = ({ size = 16, color = "#6B7280" }) => {
   );
 };
 
+const SocialMediaItem = ({ platform, username, onPress }) => {
+  const getIcon = () => {
+    switch (platform) {
+      case 'instagram':
+        return <AntDesign name="instagram" size={16} color="#6B7280" style={styles.socialIcon} />;
+      case 'tiktok':
+        return <FontAwesome name="music" size={16} color="#6B7280" style={styles.socialIcon} />;
+      case 'facebook':
+        return <AntDesign name="facebook-square" size={16} color="#6B7280" style={styles.socialIcon} />;
+      case 'twitter':
+        return <AntDesign name="twitter" size={16} color="#6B7280" style={styles.socialIcon} />;
+      case 'website':
+        return <Feather name="globe" size={16} color="#6B7280" style={styles.socialIcon} />;
+      default:
+        return <Feather name="link" size={16} color="#6B7280" style={styles.socialIcon} />;
+    }
+  };
+
+  return (
+    <TouchableOpacity 
+      style={styles.socialItem} 
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      {getIcon()}
+      <Text style={styles.socialText}>{username}</Text>
+    </TouchableOpacity>
+  );
+};
+
 const ArtistScreen = ({ route }) => {
   const navigation = useNavigation();
   const { userData } = useAuth();
-  const { id } = route.params;
+  const { artistId } = route.params || {};
+  
   const [activeTab, setActiveTab] = useState('portfolio');
   const [isAdmin, setIsAdmin] = useState(false);
   const [deleteReviewId, setDeleteReviewId] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [artist, setArtist] = useState(null);
+  const [portfolioImages, setPortfolioImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const screenWidth = Dimensions.get('window').width;
   const isMobile = screenWidth < 768;
 
@@ -93,7 +147,10 @@ const ArtistScreen = ({ route }) => {
       setIsAdmin(true);
     }
 
-    // Mock de avaliações
+    // Carregar dados do profissional
+    loadArtistData();
+
+    // Mock de avaliações (manter por enquanto)
     setReviews([
       {
         id: "1",
@@ -101,7 +158,7 @@ const ArtistScreen = ({ route }) => {
         userImage: "https://via.placeholder.com/50",
         rating: 5,
         comment:
-          "Trabalho incrível! Alex é muito talentoso e cuidadoso. A tatuagem ficou exatamente como eu queria. Recomendo muito!",
+          "Trabalho incrível! Muito talentoso e cuidadoso. A tatuagem ficou exatamente como eu queria. Recomendo muito!",
         date: "2 semanas atrás",
         tattooType: "Tatuagem pequena",
       },
@@ -111,7 +168,7 @@ const ArtistScreen = ({ route }) => {
         userImage: "https://via.placeholder.com/50",
         rating: 5,
         comment:
-          "Experiência maravilhosa! O Alex é super profissional, o estúdio é muito limpo e o resultado final superou minhas expectativas.",
+          "Experiência maravilhosa! Super profissional, o estúdio é muito limpo e o resultado final superou minhas expectativas.",
         date: "1 mês atrás",
         tattooType: "Tatuagem média",
       },
@@ -121,7 +178,7 @@ const ArtistScreen = ({ route }) => {
         userImage: "https://via.placeholder.com/50",
         rating: 4,
         comment:
-          "Muito bom! O Alex entendeu perfeitamente o que eu queria. O processo foi tranquilo e o resultado ficou ótimo.",
+          "Muito bom! Entendeu perfeitamente o que eu queria. O processo foi tranquilo e o resultado ficou ótimo.",
         date: "2 meses atrás",
         tattooType: "Tatuagem grande",
       },
@@ -131,7 +188,7 @@ const ArtistScreen = ({ route }) => {
         userImage: "https://via.placeholder.com/50",
         rating: 5,
         comment:
-          "Simplesmente perfeito! O Alex é um artista incrível, muito atencioso e detalhista. Já estou planejando minha próxima tatuagem com ele!",
+          "Simplesmente perfeito! Um artista incrível, muito atencioso e detalhista. Já estou planejando minha próxima tatuagem!",
         date: "3 meses atrás",
         tattooType: "Sessão dia inteiro",
       },
@@ -151,54 +208,120 @@ const ArtistScreen = ({ route }) => {
         userImage: "https://via.placeholder.com/50",
         rating: 4,
         comment:
-          "Ótima experiência! O Alex é muito profissional e talentoso. A tatuagem ficou linda, exatamente como eu imaginava.",
+          "Ótima experiência! Muito profissional e talentoso. A tatuagem ficou linda, exatamente como eu imaginava.",
         date: "4 meses atrás",
         tattooType: "Tatuagem média",
       },
     ]);
-  }, [userData]);
+  }, [userData, artistId]);
+
+  const loadArtistData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Verificar se artistId está definido
+      if (!artistId) {
+        toastHelper.showError('ID do profissional não encontrado');
+        navigation.goBack();
+        return;
+      }
+      
+      // Buscar dados completos do profissional
+      const professionalData = await ProfessionalService.getProfessionalCompleteById(artistId);
+      const transformedData = ProfessionalService.transformCompleteProfessionalData(professionalData);
+      
+      // Buscar imagens do portfólio
+      const images = await ProfessionalService.getProfessionalImages(artistId);
+      
+      // Processar imagens base64
+      const processedImages = images.map((img, index) => {
+        return {
+          id: index.toString(),
+          imagemBase64: img.imagemBase64,
+          idImagem: img.idImagem,
+          idPortifolio: img.idPortifolio
+        };
+      });
+      
+      setArtist({
+        ...transformedData,
+        title: "Tatuador",
+        bio: transformedData.description || "Profissional especializado em tatuagens com foco na criação de designs personalizados que contam uma história e refletem a personalidade dos clientes.",
+        reviewCount: reviews.length,
+        profileImage: transformedData.coverImage,
+        coverImage: transformedData.coverImage,
+        portfolio: processedImages,
+        services: [
+          { name: "Tatuagem Pequena (5-8 cm)" },
+          { name: "Tatuagem Média (10-15 cm)" },
+          { name: "Tatuagem Grande (18+ cm)" },
+          { name: "Sessão Dia Inteiro (6-8 horas)" },
+        ],
+        social: {
+          instagram: transformedData.instagram,
+          facebook: transformedData.facebook,
+          twitter: transformedData.twitter,
+          tiktok: transformedData.tiktok,
+          website: transformedData.website,
+        },
+      });
+      
+      setPortfolioImages(processedImages);
+    } catch (error) {
+      console.error('Erro ao carregar dados do artista:', error);
+      toastHelper.showError('Erro ao carregar dados do profissional');
+      navigation.goBack();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDeleteReview = (reviewId) => {
     const updatedReviews = reviews.filter((review) => review.id !== reviewId);
     setReviews(updatedReviews);
-    alert('Avaliação excluída com sucesso');
+    toastHelper.showSuccess('Avaliação excluída com sucesso');
   };
 
-  // Mock de artista
-  const artist = {
-    id: id,
-    name: "Alex Rivera",
-    title: "Tatuador",
-    bio: "Especializado em estilos tradicional e japonês com mais de 8 anos de experiência. Foco na criação de designs personalizados que contam uma história e refletem a personalidade dos meus clientes.",
-    rating: 4.9,
-    reviewCount: 6,
-    specialties: ["Tradicional", "Japonês", "Neo-Tradicional", "Tatuagem"],
-    location: "São Paulo, SP",
-    experience: "8+ anos",
-    profileImage: "https://via.placeholder.com/300",
-    coverImage: "https://via.placeholder.com/1200x400",
-    portfolio: [
-      { id: "1", image: "https://via.placeholder.com/300" },
-      { id: "2", image: "https://via.placeholder.com/300" },
-      { id: "3", image: "https://via.placeholder.com/300" },
-      { id: "4", image: "https://via.placeholder.com/300" },
-      { id: "5", image: "https://via.placeholder.com/300" },
-      { id: "6", image: "https://via.placeholder.com/300" },
-    ],
-    services: [
-      { name: "Tatuagem Pequena (5-8 cm)" },
-      { name: "Tatuagem Média (10-15 cm)" },
-      { name: "Tatuagem Grande (18+ cm)" },
-      { name: "Sessão Dia Inteiro (6-8 horas)" },
-    ],
-    social: {
-      instagram: "@alexrivera_tattoo",
-      facebook: "alexriveratattoo",
-      twitter: "@alexrivera_ink",
-      tiktok: "@alexrivera_tattoo",
-      website: "alexrivera.com",
-    },
+  const openSocialLink = async (url) => {
+    try {
+      // Para website, garantir que tenha protocolo
+      let finalUrl = url;
+      if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+        finalUrl = `https://${url}`;
+      }
+      
+      const supported = await Linking.canOpenURL(finalUrl);
+      if (supported) {
+        await Linking.openURL(finalUrl);
+      } else {
+        toastHelper.showError('Não foi possível abrir o link');
+      }
+    } catch (error) {
+      console.error('Erro ao abrir link:', error);
+      toastHelper.showError('Erro ao abrir o link');
+    }
   };
+
+  // Mostrar loading enquanto carrega os dados
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Carregando perfil do profissional...</Text>
+      </View>
+    );
+  }
+
+  // Se não encontrou o artista
+  if (!artist) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Profissional não encontrado</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Text style={styles.backButtonText}>Voltar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   const renderStars = (rating) => {
     return (
@@ -220,9 +343,18 @@ const ArtistScreen = ({ route }) => {
     return (
       <View style={styles.tabContent}>
         <View style={styles.portfolioGrid}>
-          {Array.from({ length: 6 }).map((_, index) => (
-            <PortfolioItem key={index} image={"https://via.placeholder.com/300"} />
-          ))}
+          {portfolioImages.length === 0 ? (
+            <View style={styles.noImagesContainer}>
+              <Text style={styles.noImagesText}>Nenhuma imagem no portfólio</Text>
+            </View>
+          ) : (
+            portfolioImages.map((image, index) => (
+              <PortfolioItem 
+                key={index} 
+                image={image.imagemBase64 || "https://via.placeholder.com/300"} 
+              />
+            ))
+          )}
         </View>
       </View>
     );
@@ -391,34 +523,19 @@ const ArtistScreen = ({ route }) => {
             <Text style={styles.sectionTitle}>Redes Sociais</Text>
             <View style={styles.socialLinks}>
               {artist.social.instagram && (
-                <View style={styles.socialItem}>
-                  <Feather name="instagram" size={16} color="#6B7280" style={styles.socialIcon} />
-                  <Text style={styles.socialText}>{artist.social.instagram}</Text>
-                </View>
+                <SocialMediaItem platform="instagram" username={artist.social.instagram} onPress={() => openSocialLink(`https://instagram.com/${artist.social.instagram}`)} />
               )}
               {artist.social.tiktok && (
-                <View style={styles.socialItem}>
-                  <TikTokIcon />
-                  <Text style={styles.socialText}>{artist.social.tiktok}</Text>
-                </View>
+                <SocialMediaItem platform="tiktok" username={artist.social.tiktok} onPress={() => openSocialLink(`https://tiktok.com/@${artist.social.tiktok}`)} />
               )}
               {artist.social.facebook && (
-                <View style={styles.socialItem}>
-                  <Feather name="facebook" size={16} color="#6B7280" style={styles.socialIcon} />
-                  <Text style={styles.socialText}>{artist.social.facebook}</Text>
-                </View>
+                <SocialMediaItem platform="facebook" username={artist.social.facebook} onPress={() => openSocialLink(`https://facebook.com/${artist.social.facebook}`)} />
               )}
               {artist.social.twitter && (
-                <View style={styles.socialItem}>
-                  <Feather name="twitter" size={16} color="#6B7280" style={styles.socialIcon} />
-                  <Text style={styles.socialText}>{artist.social.twitter}</Text>
-                </View>
+                <SocialMediaItem platform="twitter" username={artist.social.twitter} onPress={() => openSocialLink(`https://twitter.com/${artist.social.twitter}`)} />
               )}
               {artist.social.website && (
-                <View style={styles.socialItem}>
-                  <Feather name="globe" size={16} color="#6B7280" style={styles.socialIcon} />
-                  <Text style={styles.socialText}>{artist.social.website}</Text>
-                </View>
+                <SocialMediaItem platform="website" username={artist.social.website} onPress={() => openSocialLink(artist.social.website)} />
               )}
             </View>
           </Card>
@@ -569,6 +686,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: 'transparent',
   },
   socialIcon: {
     marginRight: 8,
@@ -577,6 +698,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     marginLeft: 8,
+    textDecorationLine: 'underline',
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -621,16 +743,22 @@ const styles = StyleSheet.create({
     width: '33.33%',
     aspectRatio: 1,
     position: 'relative',
+    backgroundColor: '#F3F4F6',
   },
   portfolioImage: {
     width: '100%',
     height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    zIndex: 2,
   },
   portfolioPlaceholder: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F3F4F6',
+    zIndex: 1,
   },
   badge: {
     backgroundColor: '#F3F4F6',
@@ -755,6 +883,50 @@ const styles = StyleSheet.create({
   specialtiesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#EF4444',
+    marginBottom: 20,
+  },
+  backButton: {
+    backgroundColor: '#111827',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  noImagesContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  noImagesText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
   },
 });
 

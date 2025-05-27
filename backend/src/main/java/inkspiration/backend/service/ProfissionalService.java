@@ -16,6 +16,8 @@ import inkspiration.backend.dto.EnderecoDTO;
 import inkspiration.backend.dto.PortifolioDTO;
 import inkspiration.backend.dto.ProfissionalCriacaoDTO;
 import inkspiration.backend.dto.ProfissionalDTO;
+import inkspiration.backend.dto.ProfissionalCompletoDTO;
+import inkspiration.backend.dto.UsuarioSeguroDTO;
 import inkspiration.backend.entities.Endereco;
 import inkspiration.backend.entities.Portifolio;
 import inkspiration.backend.entities.Profissional;
@@ -251,5 +253,42 @@ public class ProfissionalService {
     private Endereco buscarEnderecoPorId(Long idEndereco) {
         return enderecoRepository.findById(idEndereco)
             .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado com ID: " + idEndereco));
+    }
+
+    public ProfissionalCompletoDTO buscarCompletosPorId(Long id) {
+        Profissional profissional = buscarPorId(id);
+        return converterParaCompletoDto(profissional);
+    }
+    
+    public Page<ProfissionalCompletoDTO> listarCompletos(Pageable pageable) {
+        Page<Profissional> profissionais = profissionalRepository.findAll(pageable);
+        return profissionais.map(this::converterParaCompletoDto);
+    }
+
+    public ProfissionalCompletoDTO converterParaCompletoDto(Profissional profissional) {
+        if (profissional == null) return null;
+        
+        UsuarioSeguroDTO usuarioDTO = null;
+        if (profissional.getUsuario() != null) {
+            usuarioDTO = UsuarioSeguroDTO.fromUsuario(profissional.getUsuario());
+        }
+        
+        EnderecoDTO enderecoDTO = null;
+        if (profissional.getEndereco() != null) {
+            enderecoDTO = converterEnderecoParaDto(profissional.getEndereco());
+        }
+        
+        PortifolioDTO portifolioDTO = null;
+        if (profissional.getPortifolio() != null) {
+            portifolioDTO = portifolioService.converterParaDto(profissional.getPortifolio());
+        }
+        
+        return new ProfissionalCompletoDTO(
+            profissional.getIdProfissional(),
+            profissional.getNota(),
+            usuarioDTO,
+            enderecoDTO,
+            portifolioDTO
+        );
     }
 } 

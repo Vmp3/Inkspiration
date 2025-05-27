@@ -149,10 +149,7 @@ const Header = () => {
     backgroundColor: '#fff',
     zIndex: 9999, // Highest z-index for components (only Toast should be higher)
     elevation: 24, // Higher Android elevation
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.25)',
   };
 
   return (
@@ -516,10 +513,7 @@ const styles = StyleSheet.create({
     width: 280,
     backgroundColor: '#fff',
     zIndex: 101,
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.2)',
     elevation: 5,
     height: '100vh',
   },
@@ -597,10 +591,7 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: '#fff',
     borderRadius: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 4,
     width: 220,
     zIndex: 102,

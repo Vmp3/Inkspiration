@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import inkspiration.backend.dto.ImagemDTO;
 import inkspiration.backend.dto.ProfissionalCriacaoDTO;
 import inkspiration.backend.dto.ProfissionalDTO;
+import inkspiration.backend.dto.ProfissionalCompletoDTO;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.service.ImagemService;
 import inkspiration.backend.service.ProfissionalService;
@@ -151,5 +152,18 @@ public class ProfissionalController {
         List<ImagemDTO> imagens = imagemService.listarPorPortifolio(idPortifolio);
         
         return ResponseEntity.ok(imagens);
+    }
+
+    @GetMapping("/profissional/completo")
+    public ResponseEntity<List<ProfissionalCompletoDTO>> listarCompletos(@RequestParam(defaultValue = "0") int page) {
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<ProfissionalCompletoDTO> profissionais = profissionalService.listarCompletos(pageable);
+        return ResponseEntity.ok(profissionais.getContent());
+    }
+
+    @GetMapping("/profissional/completo/{id}")
+    public ResponseEntity<ProfissionalCompletoDTO> buscarCompletoPorId(@PathVariable Long id) {
+        ProfissionalCompletoDTO profissional = profissionalService.buscarCompletosPorId(id);
+        return ResponseEntity.ok(profissional);
     }
 } 

@@ -25,7 +25,7 @@ const ArtistsGrid = ({ artists, numColumns, navigation }) => {
             numColumns === 2 ? { width: '48%', marginHorizontal: '1%' } :
             { width: '100%' }
           ]}
-          onPress={() => navigation.navigate('ArtistDetail', { artistId: artist.id })}
+          onPress={() => navigation.navigate('Artist', { artistId: artist.id })}
         >
           <ArtistCard artist={artist} />
         </TouchableOpacity>

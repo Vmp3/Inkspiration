@@ -18,7 +18,8 @@ import ArtistCard from '../components/ArtistCard';
 import Footer from '../components/Footer';
 import ActiveFilters from '../components/common/ActiveFilters';
 import MobileFiltersModal from '../components/common/MobileFiltersModal';
-import { artists as originalArtists } from '../data/artists';
+import ProfessionalService from '../services/ProfessionalService';
+import toastHelper from '../utils/toastHelper';
 import Button from '../components/ui/Button';
 
 const HomeScreen = ({ navigation }) => {
@@ -35,8 +36,10 @@ const HomeScreen = ({ navigation }) => {
   const [showFiltersModal, setShowFiltersModal] = useState(false);
   
   // Estado para resultados filtrados
-  const [filteredArtists, setFilteredArtists] = useState(originalArtists);
-  const [displayedArtists, setDisplayedArtists] = useState(originalArtists.slice(0, 6));
+  const [allArtists, setAllArtists] = useState([]);
+  const [filteredArtists, setFilteredArtists] = useState([]);
+  const [displayedArtists, setDisplayedArtists] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Detectar tamanho da tela para responsividade
   const updateLayout = () => {
@@ -71,6 +74,28 @@ const HomeScreen = ({ navigation }) => {
     };
   }, []);
 
+  useEffect(() => {
+    loadProfessionals();
+  }, []);
+
+  const loadProfessionals = async () => {
+    try {
+      setIsLoading(true);
+      const professionals = await ProfessionalService.getTransformedCompleteProfessionals();
+      setAllArtists(professionals);
+      setFilteredArtists(professionals);
+      setDisplayedArtists(professionals.slice(0, 6));
+    } catch (error) {
+      console.error('Erro ao carregar profissionais:', error);
+      toastHelper.showError('Erro ao carregar profissionais');
+      setAllArtists([]);
+      setFilteredArtists([]);
+      setDisplayedArtists([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Todas as especialidades disponíveis
   const allSpecialties = [
     "Tradicional",
@@ -88,7 +113,7 @@ const HomeScreen = ({ navigation }) => {
   // Função de busca
   const handleSearch = () => {
     // Filtrar artistas
-    const artistResults = originalArtists.filter((artist) => {
+    const artistResults = allArtists.filter((artist) => {
       const matchesSearch = 
         searchTerm === "" || 
         artist.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -182,7 +207,7 @@ const HomeScreen = ({ navigation }) => {
     return (
       <TouchableOpacity 
         style={cardStyle}
-        onPress={() => navigation.navigate('ArtistDetail', { artistId: item.id })}
+        onPress={() => navigation.navigate('Artist', { artistId: item.id })}
       >
         <ArtistCard artist={item} />
       </TouchableOpacity>
@@ -314,7 +339,11 @@ const HomeScreen = ({ navigation }) => {
               </View>
             </View>
 
-            {displayedArtists.length > 0 && (
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Carregando profissionais...</Text>
+              </View>
+            ) : displayedArtists.length > 0 ? (
               <View style={styles.artistsSection}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Artistas em Destaque</Text>
@@ -334,9 +363,7 @@ const HomeScreen = ({ navigation }) => {
                   contentContainerStyle={styles.artistGrid}
                 />
               </View>
-            )}
-
-            {displayedArtists.length === 0 && (
+            ) : (
               <View style={styles.noResultsContainer}>
                 <Text style={styles.noResultsTitle}>Nenhum resultado encontrado</Text>
                 <Text style={styles.noResultsSubtitle}>
@@ -536,6 +563,16 @@ const styles = StyleSheet.create({
   mobileSearchButton: {
     paddingHorizontal: 16,
     alignSelf: 'stretch',
+  },
+  loadingContainer: {
+    padding: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
   },
 });
 
