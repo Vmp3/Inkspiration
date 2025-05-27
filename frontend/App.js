@@ -18,6 +18,7 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import AdminUsersScreen from './src/screens/AdminUsersScreen';
 import toastConfig from './src/config/toastConfig';
 import { AuthProvider } from './src/context/AuthContext';
+import ProfessionalRegisterScreen from './src/screens/ProfessionalRegisterScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -33,6 +34,7 @@ const linking = {
       About: 'about',
       AdminUsers: 'admin/usuarios',
       Artist: 'artist/:id',
+      ProfessionalRegister: 'professional-register',
     },
   },
 };
@@ -68,6 +70,7 @@ export default function App() {
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="Artist" component={ArtistScreen} />
             <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
+            <Stack.Screen name="ProfessionalRegister" component={ProfessionalRegisterScreen} />
           </Stack.Navigator>
         </View>
       </NavigationContainer>

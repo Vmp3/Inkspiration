@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
-import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 
 const ProfileScreen = () => {
@@ -8,7 +7,6 @@ const ProfileScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.profileContainer}>
           <Text style={styles.title}>Perfil do Usuário</Text>

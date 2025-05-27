@@ -20,6 +20,12 @@ const toastConfig = {
       <Text style={styles.text2}>{props.text2}</Text>
     </View>
   ),
+  warning: (props) => (
+    <View style={[styles.toast, styles.warningToast]}>
+      <Text style={styles.text1}>{props.text1}</Text>
+      <Text style={styles.text2}>{props.text2}</Text>
+    </View>
+  ),
   any_custom_type: (props) => (
     <View style={[styles.toast, styles.defaultToast]}>
       <Text style={styles.text1}>{props.text1}</Text>
@@ -58,6 +64,9 @@ const styles = StyleSheet.create({
   },
   infoToast: {
     backgroundColor: '#2196F3',
+  },
+  warningToast: {
+    backgroundColor: '#FF9800',
   },
   defaultToast: {
     backgroundColor: '#333333',

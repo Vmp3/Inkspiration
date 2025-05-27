@@ -26,11 +26,11 @@ public class Usuario {
     private LocalDate dataNascimento;
     private String telefone;
     
-    @Column(length = 1000)
+    @Column(length = 1000, columnDefinition = "TEXT")
     private String imagemPerfil;
 
     @JsonIgnore
-    @Column(length = 1000)
+    @Column(length = 1000, columnDefinition = "TEXT")
     private String tokenAtual;
 
     @ManyToOne(cascade = CascadeType.ALL)

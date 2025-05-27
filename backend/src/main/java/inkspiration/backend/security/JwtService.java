@@ -34,8 +34,7 @@ public class JwtService {
     private int expiration;
 
     @Autowired
-    public JwtService(JwtEncoder encoder, JwtDecoder jwtDecoder, TokenRevogadoRepository tokenRevogadoRepository, 
-                     JwtConfig jwtConfig, UsuarioRepository usuarioRepository) {
+    public JwtService(JwtEncoder encoder, JwtDecoder jwtDecoder, TokenRevogadoRepository tokenRevogadoRepository, JwtConfig jwtConfig, UsuarioRepository usuarioRepository) {
         this.encoder = encoder;
         this.jwtDecoder = jwtDecoder;
         this.tokenRevogadoRepository = tokenRevogadoRepository;
@@ -47,26 +46,37 @@ public class JwtService {
         Instant now = ZonedDateTime.now(ZoneId.of("America/Sao_Paulo")).toInstant();
         long expiry = jwtConfig.getExpirySeconds();
         
-        String cpf = authentication.getName();
-        
-        // Buscar o usuário pelo CPF para obter o ID
-        Usuario usuario = usuarioRepository.findByCpf(cpf)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o CPF: " + cpf));
-        
         String scope = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));
                 
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        // Tenta obter o ID do usuário através do CPF no subject
+        String cpf = authentication.getName();
+        Long userId = null;
+        
+        try {
+            // Busca o usuário pelo CPF
+            Usuario usuario = usuarioRepository.findByCpf(cpf).orElse(null);
+            if (usuario != null) {
+                userId = usuario.getIdUsuario();
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao buscar ID do usuário para o token: " + e.getMessage());
+        }
+            
+        JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
                 .issuer("inkspiration")
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(expiry))
                 .subject(authentication.getName())
-                .claim("scope", scope)
-                .claim("userId", usuario.getIdUsuario()) // Adiciona o ID do usuário no token
-                .build();
+                .claim("scope", scope);
         
-        return encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+        // Adiciona o ID do usuário se disponível
+        if (userId != null) {
+            claimsBuilder.claim("userId", userId);
+        }
+        
+        return encoder.encode(JwtEncoderParameters.from(claimsBuilder.build())).getTokenValue();
     }
 
     public Long getUserIdFromToken(String token) {

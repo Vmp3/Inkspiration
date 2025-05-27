@@ -276,6 +276,8 @@ public class UsuarioService {
                 return "ROLE_ADMIN";
             } else if (role.equalsIgnoreCase("deleted")) {
                 return "ROLE_DELETED";
+            } else if (role.equalsIgnoreCase("prof")) {
+                return "ROLE_PROF";
             }
         }
         return "ROLE_USER";
@@ -319,5 +321,24 @@ public class UsuarioService {
 
     public void salvar(Usuario usuario) {
         repository.save(usuario);
+    }
+    
+    @Transactional
+    public void atualizarFotoPerfil(Long id, String imagemBase64) {
+        Usuario usuario = buscarPorId(id);
+        usuario.setImagemPerfil(imagemBase64);
+        repository.save(usuario);
+    }
+
+    public String atualizarTokenUsuario(Long idUsuario) {
+        Usuario usuario = buscarPorId(idUsuario);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String novoToken = jwtService.generateToken(auth);
+        
+        // Atualizar o token no usuário sem revogar o antigo
+        usuario.setTokenAtual(novoToken);
+        repository.save(usuario);
+        
+        return novoToken;
     }
 }
