@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Platform } from 'react-native';
 import ArtistCard from '../ArtistCard';
 
 const ArtistsGrid = ({ artists, numColumns, navigation }) => {
@@ -14,35 +14,70 @@ const ArtistsGrid = ({ artists, numColumns, navigation }) => {
     );
   }
 
+  // Helper function to chunk artists into rows
+  const chunkArray = (array, size) => {
+    const result = [];
+    for (let i = 0; i < array.length; i += size) {
+      result.push(array.slice(i, i + size));
+    }
+    return result;
+  };
+
+  // Divide artists into rows based on numColumns
+  const rows = chunkArray(artists, numColumns);
+
+  // Calculate card width based on numColumns
+  const cardWidthPercentage = numColumns === 1 ? 100 : (numColumns === 2 ? 49 : 32);
+  const cardMargin = numColumns === 1 ? 0 : 0.5;
+
   return (
-    <View style={styles.artistsGrid}>
-      {artists.map((artist) => (
-        <TouchableOpacity 
-          key={artist.id}
-          style={[
-            styles.artistCard,
-            numColumns === 3 ? { width: '32%', marginHorizontal: '0.66%' } :
-            numColumns === 2 ? { width: '48%', marginHorizontal: '1%' } :
-            { width: '100%' }
-          ]}
-          onPress={() => navigation.navigate('ArtistDetail', { artistId: artist.id })}
-        >
-          <ArtistCard artist={artist} />
-        </TouchableOpacity>
+    <View style={styles.container}>
+      {rows.map((row, rowIndex) => (
+        <View key={`row-${rowIndex}`} style={styles.row}>
+          {row.map((artist) => (
+            <TouchableOpacity 
+              key={artist.id}
+              style={[
+                styles.artistCard,
+                { 
+                  width: `${cardWidthPercentage}%`,
+                  marginHorizontal: `${cardMargin}%` 
+                }
+              ]}
+              onPress={() => navigation.navigate('ArtistDetail', { artistId: artist.id })}
+            >
+              <ArtistCard artist={artist} />
+            </TouchableOpacity>
+          ))}
+          
+          {/* Add placeholder cards to fill the row if needed */}
+          {row.length < numColumns && numColumns > 1 && Array(numColumns - row.length).fill().map((_, index) => (
+            <View 
+              key={`placeholder-${index}`} 
+              style={{ 
+                width: `${cardWidthPercentage}%`, 
+                marginHorizontal: `${cardMargin}%` 
+              }} 
+            />
+          ))}
+        </View>
       ))}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  artistsGrid: {
+  container: {
+    width: '100%',
+  },
+  row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 24,
-    marginTop: 8,
+    justifyContent: 'flex-start',
+    marginBottom: 16,
+    width: '100%',
   },
   artistCard: {
-    marginBottom: 16,
+    // Base styles for the card container
   },
   noResultsContainer: {
     padding: 48,
