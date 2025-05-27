@@ -68,12 +68,12 @@ const ExploreScreen = ({ navigation }) => {
   
   // Update the numColumns calculation to work better on Android
   const numColumns = (() => {
-    // Explicitly handle Android differently as it may need wider breakpoints
-    if (Platform.OS === 'android') {
-      return screenWidth >= 768 ? 3 : (screenWidth >= 360 ? 2 : 1);
+    // For mobile devices (width < 768), always show 1 column
+    if (screenWidth < 768) {
+      return 1;
     }
-    // For web and iOS
-    return screenWidth >= 768 ? 3 : (screenWidth >= 480 ? 2 : 1);
+    // For larger screens, show 3 columns
+    return 3;
   })();
 
   // Função de busca
