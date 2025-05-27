@@ -13,7 +13,7 @@ import RegisterScreen from './src/screens/RegisterScreen';
 import ExploreScreen from './src/screens/ExploreScreen';
 import AboutScreen from './src/screens/AboutScreen';
 import Header from './src/components/Header';
-import ProfileScreen from './src/screens/ProfileScreen';
+import EditProfileScreen from './src/screens/EditProfileScreen';
 import toastConfig from './src/config/toastConfig';
 import { AuthProvider } from './src/context/AuthContext';
 import ProfessionalRegisterScreen from './src/screens/ProfessionalRegisterScreen';
@@ -30,6 +30,8 @@ const linking = {
       Main: 'main',
       Explore: 'explore',
       About: 'about',
+      Profile: 'profile',
+      EditProfile: 'edit-profile',
       ProfessionalRegister: 'professional-register',
     },
   },
@@ -63,7 +65,7 @@ export default function App() {
             <Stack.Screen name="Register" component={RegisterScreen} />
             <Stack.Screen name="Explore" component={ExploreScreen} />
             <Stack.Screen name="About" component={AboutScreen} />
-            <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen name="Profile" component={EditProfileScreen} />
             <Stack.Screen name="ProfessionalRegister" component={ProfessionalRegisterScreen} />
           </Stack.Navigator>
         </View>

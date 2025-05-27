@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Input from '../ui/Input';
-import Checkbox from '../ui/Checkbox';
-import theme from '../../themes/theme';
 
 const PersonalForm = ({ 
   formData, 
@@ -16,7 +14,8 @@ const PersonalForm = ({
   sobrenomeError,
   fullNameError,
   isArtist, 
-  setIsArtist 
+  setIsArtist,
+  isEditMode = false
 }) => {
   return (
     <View style={styles.tabContent}>
@@ -60,8 +59,14 @@ const PersonalForm = ({
           onChangeText={(text) => handleChange('cpf', text)}
           onBlur={() => handleBlur('cpf')}
           keyboardType="numeric"
-          style={[styles.inputField, cpfError && styles.inputError]}
+          style={[
+            styles.inputField, 
+            cpfError && styles.inputError,
+            isEditMode && styles.disabledInput
+          ]}
+          editable={!isEditMode}
         />
+        {isEditMode && <Text style={styles.helperText}>O CPF não pode ser alterado</Text>}
         {cpfError ? <Text style={styles.errorText}>{cpfError}</Text> : null}
       </View>
       
@@ -101,8 +106,14 @@ const PersonalForm = ({
           onChangeText={(text) => handleChange('dataNascimento', text)}
           onBlur={() => handleBlur('dataNascimento')}
           keyboardType="numeric"
-          style={[styles.inputField, birthDateError && styles.inputError]}
+          style={[
+            styles.inputField, 
+            birthDateError && styles.inputError,
+            isEditMode && styles.disabledInput
+          ]}
+          editable={!isEditMode}
         />
+        {isEditMode && <Text style={styles.helperText}>A data de nascimento não pode ser alterada</Text>}
         {birthDateError ? <Text style={styles.errorText}>{birthDateError}</Text> : null}
       </View>
     </View>
@@ -154,6 +165,15 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#ff0000',
     fontSize: 12,
+    marginTop: 4,
+  },
+  disabledInput: {
+    backgroundColor: '#f5f5f5',
+    color: '#999',
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#777',
     marginTop: 4,
   },
 });
