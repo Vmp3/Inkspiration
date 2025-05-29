@@ -93,8 +93,15 @@ const ExploreScreen = ({ navigation }) => {
   // Valores derivados baseados na largura da tela
   const isMobile = screenWidth < 768;
   
-  // Determina o número de colunas com base na largura da tela
-  const numColumns = screenWidth >= 768 ? 3 : (screenWidth >= 480 ? 2 : 1);
+  // Update the numColumns calculation to work better on Android
+  const numColumns = (() => {
+    // For mobile devices (width < 768), always show 1 column
+    if (screenWidth < 768) {
+      return 1;
+    }
+    // For larger screens, show 3 columns
+    return 3;
+  })();
 
   // Função de busca
   const handleSearch = () => {
