@@ -138,8 +138,19 @@ const ArtistScreen = ({ route }) => {
   const [artist, setArtist] = useState(null);
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const screenWidth = Dimensions.get('window').width;
-  const isMobile = screenWidth < 768;
+  const [screenData, setScreenData] = useState(Dimensions.get('window'));
+  
+  const isMobile = screenData.width < 768;
+
+  useEffect(() => {
+    const onChange = (result) => {
+      setScreenData(result.window);
+    };
+
+    const subscription = Dimensions.addEventListener('change', onChange);
+    
+    return () => subscription?.remove();
+  }, []);
 
   useEffect(() => {
     // Verifica se o usuário tem permissão de admin
@@ -467,11 +478,8 @@ const ArtistScreen = ({ route }) => {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Layout principal semelhante ao site - dividido em coluna esquerda e direita */}
-      <View style={styles.pageWrapper}>
-        {/* Coluna Esquerda - Informações do artista */}
-        <View style={styles.leftColumn}>
-          {/* Foto e informações básicas */}
+      <View style={[styles.pageWrapper, isMobile && styles.pageWrapperMobile]}>
+        <View style={[styles.leftColumn, isMobile && styles.leftColumnMobile]}>
           <View style={styles.profileHeader}>
             <Image 
               source={{ uri: artist.profileImage }} 
@@ -541,9 +549,7 @@ const ArtistScreen = ({ route }) => {
           </Card>
         </View>
 
-        {/* Coluna Direita - Tabs e conteúdo */}
-        <View style={styles.rightColumn}>
-          {/* Tabs */}
+        <View style={[styles.rightColumn, isMobile && styles.rightColumnMobile]}>
           <Tabs
             tabs={[
               { value: 'portfolio', label: 'Portfólio' },
@@ -927,6 +933,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',
+  },
+  pageWrapperMobile: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: 16,
+  },
+  leftColumnMobile: {
+    width: '100%',
+    maxWidth: 320,
+    marginRight: 0,
+    marginBottom: 24,
+    alignSelf: 'center',
+  },
+  rightColumnMobile: {
+    flex: 1,
+    minWidth: 300,
+    width: '100%',
   },
 });
 
