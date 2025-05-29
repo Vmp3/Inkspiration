@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   TouchableOpacity,
-  TouchableWithoutFeedback,
+  Pressable,
   Dimensions,
   ScrollView
 } from 'react-native';
@@ -42,9 +42,9 @@ const FilterDropdown = ({
   return (
     <>
       {visible && (
-        <TouchableWithoutFeedback onPress={onClose}>
-          <View style={styles.backdrop} />
-        </TouchableWithoutFeedback>
+        <Pressable onPress={onClose}>
+          <View style={styles.overlay} />
+        </Pressable>
       )}
       
       {visible && (
@@ -126,7 +126,7 @@ const FilterDropdown = ({
 };
 
 const styles = StyleSheet.create({
-  backdrop: {
+  overlay: {
     position: 'fixed',
     top: 0,
     left: 0,
@@ -134,8 +134,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     zIndex: 1000,
-    pointerEvents: 'auto',
-  },
+},
   container: {
     position: 'absolute',
     backgroundColor: 'white',

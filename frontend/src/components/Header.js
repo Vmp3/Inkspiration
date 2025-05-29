@@ -8,7 +8,7 @@ import {
   Dimensions, 
   Platform,
   Animated,
-  TouchableWithoutFeedback,
+  Pressable,
   Image
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -90,7 +90,7 @@ const Header = () => {
     Animated.timing(slideAnim, {
       toValue: menuOpen ? 0 : -300,
       duration: 300,
-      useNativeDriver: true
+      useNativeDriver: false
     }).start();
   }, [menuOpen]);
   
@@ -157,9 +157,9 @@ const Header = () => {
       <StatusBar backgroundColor="white" barStyle="dark-content" />
       
       {menuOpen && (
-        <TouchableWithoutFeedback onPress={() => setMenuOpen(false)}>
+        <Pressable onPress={() => setMenuOpen(false)}>
           <View style={dynamicOverlayStyles} />
-        </TouchableWithoutFeedback>
+        </Pressable>
       )}
       
       <Animated.View 

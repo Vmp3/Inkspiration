@@ -10,7 +10,7 @@ import {
   Image,
   Platform,
   Modal,
-  TouchableWithoutFeedback,
+  Pressable,
   ActivityIndicator,
   Alert
 } from 'react-native';
