@@ -1,9 +1,10 @@
 import ApiService from './ApiService';
+import PublicApiService from './PublicApiService';
 
 class ProfessionalService {
   async getAllProfessionals(page = 0) {
     try {
-      const response = await ApiService.get(`/profissional?page=${page}`);
+      const response = await PublicApiService.get(`/profissional?page=${page}`);
       return response;
     } catch (error) {
       console.error('Erro ao buscar profissionais:', error);
@@ -13,7 +14,7 @@ class ProfessionalService {
 
   async getProfessionalById(id) {
     try {
-      const response = await ApiService.get(`/profissional/${id}`);
+      const response = await PublicApiService.get(`/profissional/${id}`);
       return response;
     } catch (error) {
       console.error('Erro ao buscar profissional:', error);
@@ -43,7 +44,7 @@ class ProfessionalService {
 
   async getProfessionalImages(id) {
     try {
-      const response = await ApiService.get(`/profissional/${id}/imagens`);
+      const response = await PublicApiService.get(`/profissional/${id}/imagens`);
       return response;
     } catch (error) {
       console.error('Erro ao buscar imagens do profissional:', error);
@@ -53,7 +54,7 @@ class ProfessionalService {
 
   async getAllProfessionalsComplete(page = 0) {
     try {
-      const response = await ApiService.get(`/profissional/completo?page=${page}`);
+      const response = await PublicApiService.get(`/profissional/completo?page=${page}`);
       return response;
     } catch (error) {
       console.error('Erro ao buscar profissionais completos:', error);
@@ -63,15 +64,13 @@ class ProfessionalService {
 
   async getProfessionalCompleteById(id) {
     try {
-      const response = await ApiService.get(`/profissional/completo/${id}`);
+      const response = await PublicApiService.get(`/profissional/completo/${id}`);
       return response;
     } catch (error) {
       console.error('Erro ao buscar profissional completo:', error);
       throw error;
     }
   }
-
-
 
   // Método para transformar dados do backend para o formato esperado pelo frontend
   transformProfessionalData(professional) {

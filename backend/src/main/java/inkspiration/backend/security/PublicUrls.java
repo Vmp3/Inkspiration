@@ -5,7 +5,7 @@ public class PublicUrls {
         "/auth/**",
         "/auth/register/**",
         "/h2-console/**",
-        "/profissionais/**",
+        "/profissional/**",
         "/portifolios/**",
         "/usuarios/**"
     };
