@@ -8,7 +8,7 @@ import {
   Dimensions, 
   Platform,
   Animated,
-  TouchableWithoutFeedback,
+  Pressable,
   Image
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -90,7 +90,7 @@ const Header = () => {
     Animated.timing(slideAnim, {
       toValue: menuOpen ? 0 : -300,
       duration: 300,
-      useNativeDriver: true
+      useNativeDriver: false
     }).start();
   }, [menuOpen]);
   
@@ -149,10 +149,7 @@ const Header = () => {
     backgroundColor: '#fff',
     zIndex: 9999, // Highest z-index for components (only Toast should be higher)
     elevation: 24, // Higher Android elevation
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.25)',
   };
 
   return (
@@ -160,9 +157,9 @@ const Header = () => {
       <StatusBar backgroundColor="white" barStyle="dark-content" />
       
       {menuOpen && (
-        <TouchableWithoutFeedback onPress={() => setMenuOpen(false)}>
+        <Pressable onPress={() => setMenuOpen(false)}>
           <View style={dynamicOverlayStyles} />
-        </TouchableWithoutFeedback>
+        </Pressable>
       )}
       
       <Animated.View 
@@ -336,12 +333,12 @@ const Header = () => {
                       <TouchableOpacity 
                         style={styles.dropdownItem}
                         onPress={() => {
-                          navigation.navigate('Users');
+                          navigation.navigate('AdminUsers');
                           setUserDropdownOpen(false);
                         }}
                       >
                         <Feather name="users" size={16} color="#666" style={styles.dropdownIcon} />
-                        <Text style={styles.dropdownText}>Usuários</Text>
+                        <Text style={styles.dropdownText}>Gerenciar Usuários</Text>
                       </TouchableOpacity>
                     ) : userData?.role === 'ROLE_PROF' ? (
                       
@@ -516,10 +513,7 @@ const styles = StyleSheet.create({
     width: 280,
     backgroundColor: '#fff',
     zIndex: 101,
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.2)',
     elevation: 5,
     height: '100vh',
   },
@@ -597,10 +591,7 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: '#fff',
     borderRadius: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 4,
     width: 220,
     zIndex: 102,

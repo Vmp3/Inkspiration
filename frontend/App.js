@@ -12,8 +12,10 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ExploreScreen from './src/screens/ExploreScreen';
 import AboutScreen from './src/screens/AboutScreen';
+import ArtistScreen from './src/screens/ArtistScreen';
 import Header from './src/components/Header';
 import ProfileScreen from './src/screens/ProfileScreen';
+import AdminUsersScreen from './src/screens/AdminUsersScreen';
 import toastConfig from './src/config/toastConfig';
 import { AuthProvider } from './src/context/AuthContext';
 import ProfessionalRegisterScreen from './src/screens/ProfessionalRegisterScreen';
@@ -30,6 +32,8 @@ const linking = {
       Main: 'main',
       Explore: 'explore',
       About: 'about',
+      AdminUsers: 'admin/usuarios',
+      Artist: 'artist/:id',
       ProfessionalRegister: 'professional-register',
     },
   },
@@ -64,12 +68,14 @@ export default function App() {
             <Stack.Screen name="Explore" component={ExploreScreen} />
             <Stack.Screen name="About" component={AboutScreen} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen name="Artist" component={ArtistScreen} />
+            <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
             <Stack.Screen name="ProfessionalRegister" component={ProfessionalRegisterScreen} />
           </Stack.Navigator>
         </View>
       </NavigationContainer>
 
-      <Toast ref={(ref) => Toast.setRef(ref)} config={toastConfig} />
+      <Toast config={toastConfig} />
     </AuthProvider>
   </SafeAreaProvider>
 </GestureHandlerRootView>

@@ -10,7 +10,7 @@ import {
   Image,
   Platform,
   Modal,
-  TouchableWithoutFeedback,
+  Pressable,
   ActivityIndicator,
   Alert
 } from 'react-native';
@@ -939,10 +939,7 @@ const styles = StyleSheet.create({
     maxHeight: 300,
     zIndex: 10000,
     elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
     ...(Platform.OS === 'web' ? { 
       position: 'absolute', 
       overflow: 'auto',
@@ -1182,10 +1179,7 @@ const styles = StyleSheet.create({
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    boxShadow: '0px 2px 2px rgba(0, 0, 0, 0.2)',
     elevation: 2,
     zIndex: 1,
   },

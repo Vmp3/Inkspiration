@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   TouchableOpacity,
-  TouchableWithoutFeedback,
+  Pressable,
   Dimensions,
   ScrollView
 } from 'react-native';
@@ -42,9 +42,9 @@ const FilterDropdown = ({
   return (
     <>
       {visible && (
-        <TouchableWithoutFeedback onPress={onClose}>
-          <View style={styles.backdrop} />
-        </TouchableWithoutFeedback>
+        <Pressable onPress={onClose}>
+          <View style={styles.overlay} />
+        </Pressable>
       )}
       
       {visible && (
@@ -126,7 +126,7 @@ const FilterDropdown = ({
 };
 
 const styles = StyleSheet.create({
-  backdrop: {
+  overlay: {
     position: 'fixed',
     top: 0,
     left: 0,
@@ -134,8 +134,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     zIndex: 1000,
-    pointerEvents: 'auto',
-  },
+},
   container: {
     position: 'absolute',
     backgroundColor: 'white',
@@ -144,13 +143,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     padding: 20,
     maxHeight: '80%',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
     elevation: 5,
     zIndex: 1001,
   },
@@ -210,9 +203,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   starFilled: {
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 1,
+    textShadow: '1px 1px 1px rgba(0, 0, 0, 0.1)',
   },
   ratingText: {
     fontSize: 14,

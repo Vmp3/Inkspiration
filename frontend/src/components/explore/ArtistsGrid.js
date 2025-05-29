@@ -31,36 +31,20 @@ const ArtistsGrid = ({ artists, numColumns, navigation }) => {
   const cardMargin = numColumns === 1 ? 0 : 0.5;
 
   return (
-    <View style={styles.container}>
-      {rows.map((row, rowIndex) => (
-        <View key={`row-${rowIndex}`} style={styles.row}>
-          {row.map((artist) => (
-            <TouchableOpacity 
-              key={artist.id}
-              style={[
-                styles.artistCard,
-                { 
-                  width: `${cardWidthPercentage}%`,
-                  marginHorizontal: `${cardMargin}%` 
-                }
-              ]}
-              onPress={() => navigation.navigate('ArtistDetail', { artistId: artist.id })}
-            >
-              <ArtistCard artist={artist} />
-            </TouchableOpacity>
-          ))}
-          
-          {/* Add placeholder cards to fill the row if needed */}
-          {row.length < numColumns && numColumns > 1 && Array(numColumns - row.length).fill().map((_, index) => (
-            <View 
-              key={`placeholder-${index}`} 
-              style={{ 
-                width: `${cardWidthPercentage}%`, 
-                marginHorizontal: `${cardMargin}%` 
-              }} 
-            />
-          ))}
-        </View>
+    <View style={styles.artistsGrid}>
+      {artists.map((artist) => (
+        <TouchableOpacity 
+          key={artist.id}
+          style={[
+            styles.artistCard,
+            numColumns === 3 ? { width: '32%', marginHorizontal: '0.66%' } :
+            numColumns === 2 ? { width: '48%', marginHorizontal: '1%' } :
+            { width: '100%' }
+          ]}
+          onPress={() => navigation.navigate('Artist', { artistId: artist.id })}
+        >
+          <ArtistCard artist={artist} />
+        </TouchableOpacity>
       ))}
     </View>
   );

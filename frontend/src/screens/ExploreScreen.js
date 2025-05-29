@@ -14,7 +14,8 @@ import Footer from '../components/Footer';
 import Input from '../components/ui/Input';
 import SearchInput from '../components/ui/SearchInput';
 import FilterButton from '../components/FilterButton';
-import { artists as originalArtists } from '../data/artists';
+import ProfessionalService from '../services/ProfessionalService';
+import toastHelper from '../utils/toastHelper';
 import Button from '../components/ui/Button';
 
 // Componentes de exploração
@@ -43,9 +44,11 @@ const ExploreScreen = ({ navigation }) => {
   const filterButtonRef = useRef(null);
   
   // Estado para resultados filtrados
-  const [filteredArtists, setFilteredArtists] = useState(originalArtists);
-  const [displayedArtists, setDisplayedArtists] = useState(originalArtists);
+  const [allArtists, setAllArtists] = useState([]);
+  const [filteredArtists, setFilteredArtists] = useState([]);
+  const [displayedArtists, setDisplayedArtists] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Detectar tamanho da tela para responsividade
   useEffect(() => {
@@ -62,6 +65,30 @@ const ExploreScreen = ({ navigation }) => {
       }
     };
   }, []);
+
+  // Carregar profissionais do backend
+  useEffect(() => {
+    loadProfessionals();
+  }, []);
+
+  const loadProfessionals = async () => {
+    try {
+      setIsLoading(true);
+      const professionals = await ProfessionalService.getTransformedCompleteProfessionals();
+      setAllArtists(professionals);
+      setFilteredArtists(professionals);
+      setDisplayedArtists(professionals);
+    } catch (error) {
+      console.error('Erro ao carregar profissionais:', error);
+      toastHelper.showError('Erro ao carregar profissionais');
+      // Em caso de erro, usar array vazio
+      setAllArtists([]);
+      setFilteredArtists([]);
+      setDisplayedArtists([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Valores derivados baseados na largura da tela
   const isMobile = screenWidth < 768;
@@ -78,7 +105,7 @@ const ExploreScreen = ({ navigation }) => {
 
   // Função de busca
   const handleSearch = () => {
-    const artistResults = originalArtists.filter((artist) => {
+    const artistResults = allArtists.filter((artist) => {
       const matchesSearch = 
         searchTerm === "" || 
         artist.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -334,11 +361,24 @@ const ExploreScreen = ({ navigation }) => {
               
               {/* Grid de artistas */}
               <View style={styles.artistsGridContainer}>
-                <ArtistsGrid 
-                  artists={displayedArtists} 
-                  numColumns={numColumns} 
-                  navigation={navigation} 
-                />
+                {isLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <Text style={styles.loadingText}>Carregando profissionais...</Text>
+                  </View>
+                ) : displayedArtists.length > 0 ? (
+                  <ArtistsGrid 
+                    artists={displayedArtists} 
+                    numColumns={numColumns} 
+                    navigation={navigation} 
+                  />
+                ) : (
+                  <View style={styles.noResultsContainer}>
+                    <Text style={styles.noResultsTitle}>Nenhum resultado encontrado</Text>
+                    <Text style={styles.noResultsSubtitle}>
+                      Tente ajustar seus filtros ou termos de busca para encontrar mais resultados.
+                    </Text>
+                  </View>
+                )}
               </View>
               
               {/* Paginação */}
@@ -512,6 +552,34 @@ const styles = StyleSheet.create({
     width: '100%',
     position: 'relative',
     zIndex: 1,
+  },
+  loadingContainer: {
+    padding: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  noResultsContainer: {
+    padding: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noResultsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  noResultsSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

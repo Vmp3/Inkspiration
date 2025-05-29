@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const RelevanceDropdown = ({ 
@@ -32,9 +32,9 @@ const RelevanceDropdown = ({
       {/* Menu dropdown de relevância */}
       {showDropdown && (
         <View style={styles.relevanceDropdownContainer}>
-          <TouchableWithoutFeedback onPress={() => setShowDropdown(false)}>
+          <Pressable onPress={() => setShowDropdown(false)}>
             <View style={styles.relevanceDropdownOverlay} />
-          </TouchableWithoutFeedback>
+          </Pressable>
           <View style={styles.relevanceDropdown}>
             <TouchableOpacity
               style={[
@@ -164,10 +164,7 @@ const styles = StyleSheet.create({
     width: 180,
     backgroundColor: '#FFFFFF',
     borderRadius: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 3,
     zIndex: 2000,
     borderWidth: 1,
