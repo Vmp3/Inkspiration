@@ -60,11 +60,7 @@ const Card = ({ children, style }) => {
 
 const PortfolioItem = ({ image }) => {
   // Função para processar a imagem base64
-  const processBase64Image = (base64String) => {
-    if (!base64String) {
-      return "https://via.placeholder.com/300";
-    }
-    
+  const processBase64Image = (base64String) => {    
     // Se já tem o prefixo data:image, usar diretamente
     if (base64String.startsWith('data:image/')) {
       return base64String;

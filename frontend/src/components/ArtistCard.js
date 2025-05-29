@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { Platform } from 'react-native';
 
 const ArtistCard = ({ artist }) => {
   const { id, name, rating, specialties, location, coverImage } = artist;
