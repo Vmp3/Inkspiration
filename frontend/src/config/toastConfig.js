@@ -1,43 +1,36 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { BaseToast, ErrorToast } from 'react-native-toast-message';
 
 const toastConfig = {
   success: (props) => (
-    <BaseToast
-      {...props}
-      style={styles.successToast}
-      contentContainerStyle={styles.contentContainer}
-      text1Style={styles.text1}
-      text2Style={styles.text2}
-    />
+    <View style={[styles.toast, styles.successToast]}>
+      <Text style={styles.text1}>{props.text1}</Text>
+      <Text style={styles.text2}>{props.text2}</Text>
+    </View>
   ),
   error: (props) => (
-    <ErrorToast
-      {...props}
-      style={styles.errorToast}
-      contentContainerStyle={styles.contentContainer}
-      text1Style={styles.text1}
-      text2Style={styles.text2}
-    />
+    <View style={[styles.toast, styles.errorToast]}>
+      <Text style={styles.text1}>{props.text1}</Text>
+      <Text style={styles.text2}>{props.text2}</Text>
+    </View>
   ),
   info: (props) => (
-    <BaseToast
-      {...props}
-      style={styles.infoToast}
-      contentContainerStyle={styles.contentContainer}
-      text1Style={styles.text1}
-      text2Style={styles.text2}
-    />
+    <View style={[styles.toast, styles.infoToast]}>
+      <Text style={styles.text1}>{props.text1}</Text>
+      <Text style={styles.text2}>{props.text2}</Text>
+    </View>
   ),
   warning: (props) => (
-    <BaseToast
-      {...props}
-      style={styles.warningToast}
-      contentContainerStyle={styles.contentContainer}
-      text1Style={styles.text1}
-      text2Style={styles.text2}
-    />
+    <View style={[styles.toast, styles.warningToast]}>
+      <Text style={styles.text1}>{props.text1}</Text>
+      <Text style={styles.text2}>{props.text2}</Text>
+    </View>
+  ),
+  any_custom_type: (props) => (
+    <View style={[styles.toast, styles.defaultToast]}>
+      <Text style={styles.text1}>{props.text1}</Text>
+      <Text style={styles.text2}>{props.text2}</Text>
+    </View>
   ),
   config: {
     position: 'bottom',
@@ -47,67 +40,46 @@ const toastConfig = {
 };
 
 const styles = StyleSheet.create({
-  successToast: {
-    borderLeftColor: '#4CAF50',
-    borderLeftWidth: 5,
-    backgroundColor: '#FFFFFF',
+  toast: {
+    padding: 15,
     borderRadius: 8,
     marginHorizontal: 16,
     marginBottom: 16,
-    boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
     elevation: 5,
     alignSelf: 'flex-end',
     maxWidth: '80%',
+  },
+  successToast: {
+    backgroundColor: '#4CAF50',
   },
   errorToast: {
-    borderLeftColor: '#F44336',
-    borderLeftWidth: 5,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
-    elevation: 5,
-    alignSelf: 'flex-end',
-    maxWidth: '80%',
+    backgroundColor: '#F44336',
   },
   infoToast: {
-    borderLeftColor: '#2196F3',
-    borderLeftWidth: 5,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
-    elevation: 5,
-    alignSelf: 'flex-end',
-    maxWidth: '80%',
+    backgroundColor: '#2196F3',
   },
   warningToast: {
-    borderLeftColor: '#FF9800',
-    borderLeftWidth: 5,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
-    elevation: 5,
-    alignSelf: 'flex-end',
-    maxWidth: '80%',
+    backgroundColor: '#FF9800',
   },
-  contentContainer: {
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+  defaultToast: {
+    backgroundColor: '#333333',
   },
   text1: {
+    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 4,
-    color: '#333333',
   },
   text2: {
+    color: 'white',
     fontSize: 14,
-    color: '#666666',
   },
 });
 
