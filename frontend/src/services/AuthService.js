@@ -201,42 +201,101 @@ class AuthService {
         return { nome: 'Usuário', role: role, idUsuario: null };
       }
       
-      // Buscar dados reais do usuário da API
+      // Buscar dados completos do usuário da API usando o endpoint correto
       try {
         const headers = await this.getAuthHeaders();
-        const response = await fetch(`${API_URL}/usuario/${userId}`, {
+        
+        // Usar o endpoint que retorna UsuarioResponseDTO com dados completos
+        const response = await fetch(`${API_URL}/usuario/detalhes/${userId}`, {
           method: 'GET',
           headers
         });
         
         if (response.ok) {
           const userData = await response.json();
+          
+          // Se o usuário for um profissional, buscar dados profissionais adicionais
+          let dadosProfissionais = {};
+          if (role === 'ROLE_PROF') {
+            dadosProfissionais = await this.getDadosProfissionais(userId, headers);
+          }
+          
+          // Garantir que os dados estejam formatados corretamente para o EditProfileScreen
+          const endereco = userData.endereco || {
+            cep: '',
+            rua: '',
+            numero: '',
+            complemento: '',
+            bairro: '',
+            cidade: '',
+            estado: ''
+          };
+          
           return {
-            ...userData,
+            idUsuario: userData.idUsuario,
+            nome: userData.nome,
+            cpf: userData.cpf ? userData.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : '',
+            email: userData.email || '',
+            telefone: userData.telefone || '',
+            dataNascimento: userData.dataNascimento || '',
             role: role,
             cpfMascarado: tokenData.sub ? `***.***.***-${tokenData.sub.substring(tokenData.sub.length - 2)}` : null,
+            imagemPerfil: userData.imagemPerfil || null,
+            endereco: endereco,
+            ...dadosProfissionais
           };
+        } else {
+          console.error('Erro ao buscar dados do usuário:', response.status, response.statusText);
+          throw new Error('Falha ao buscar dados do usuário');
         }
       } catch (error) {
         console.error('Erro ao buscar dados do usuário da API:', error);
+        throw error;
       }
-      
-      // Fallback para dados básicos se a API falhar
-      return {
-        idUsuario: userId,
-        nome: 'Usuário',
-        email: 'usuario@exemplo.com',
-        telefone: '',
-        cpf: '',
-        dataNascimento: '',
-        role: role,
-        cpfMascarado: tokenData.sub ? `***.***.***-${tokenData.sub.substring(tokenData.sub.length - 2)}` : null,
-        imagemPerfil: null
-      };
     } catch (error) {
       console.error('Erro ao obter dados do usuário:', error);
       return null;
     }
+  }
+
+  async getDadosProfissionais(userId, headers) {
+    try {
+      const response = await fetch(`${API_URL}/profissional/usuario/${userId}`, {
+        method: 'GET',
+        headers: headers
+      });
+      
+      if (response.ok) {
+        const dadosProfissionais = await response.json();
+        return {
+          especialidades: dadosProfissionais.especialidades || [],
+          bio: dadosProfissionais.bio || '',
+          experiencia: dadosProfissionais.experiencia || '',
+          redesSociais: dadosProfissionais.redesSociais || {
+            instagram: '',
+            tiktok: '',
+            facebook: '',
+            twitter: '',
+            website: ''
+          }
+        };
+      }
+    } catch (error) {
+      console.error('Erro ao buscar dados profissionais:', error);
+    }
+    
+    return {
+      especialidades: [],
+      bio: '',
+      experiencia: '',
+      redesSociais: {
+        instagram: '',
+        tiktok: '',
+        facebook: '',
+        twitter: '',
+        website: ''
+      }
+    };
   }
 
   async getAuthHeaders() {

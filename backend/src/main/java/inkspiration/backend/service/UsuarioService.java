@@ -2,6 +2,7 @@ package inkspiration.backend.service;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -177,7 +178,8 @@ public class UsuarioService {
             UsuarioAutenticar usuarioAuth = new UsuarioAutenticar();
             usuarioAuth.setCpf(dto.getCpf());
             usuarioAuth.setRole(usuarioExistente.getRole());
-            if (dto.getSenha() != null && !dto.getSenha().isEmpty()) {
+            if (dto.getSenha() != null && !dto.getSenha().isEmpty() && 
+                !"SENHA_NAO_ALTERADA".equals(dto.getSenha()) && !dto.isManterSenhaAtual()) {
                 usuarioAuth.setSenha(passwordEncoder.encode(dto.getSenha()));
             }
             usuarioExistente.setUsuarioAutenticar(usuarioAuth);
@@ -185,7 +187,18 @@ public class UsuarioService {
             UsuarioAutenticar usuarioAuth = usuarioExistente.getUsuarioAutenticar();
             usuarioAuth.setCpf(dto.getCpf());
             usuarioAuth.setRole(usuarioExistente.getRole());
-            if (dto.getSenha() != null && !dto.getSenha().isEmpty()) {
+            
+            // Só atualiza a senha se não for o valor especial e se não tiver a flag manterSenhaAtual
+            if (dto.getSenha() != null && !dto.getSenha().isEmpty() && 
+                !"SENHA_NAO_ALTERADA".equals(dto.getSenha()) && !dto.isManterSenhaAtual()) {
+                
+                // Se tiver senhaAtual, verificar se ela corresponde à senha atual
+                if (dto.getSenhaAtual() != null && !dto.getSenhaAtual().isEmpty()) {
+                    if (!passwordEncoder.matches(dto.getSenhaAtual(), usuarioAuth.getSenha())) {
+                        throw new UsuarioException.SenhaInvalidaException("Senha atual incorreta");
+                    }
+                }
+                
                 usuarioAuth.setSenha(passwordEncoder.encode(dto.getSenha()));
             }
         }
