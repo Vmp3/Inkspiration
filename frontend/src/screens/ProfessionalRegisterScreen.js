@@ -26,6 +26,11 @@ import { TimeInput } from '../components/TimeInput';
 import AuthService from '../services/AuthService';
 import ApiService from '../services/ApiService';
 
+// Componentes modulares para as diferentes seções do formulário
+import BasicInfoForm from '../components/forms/BasicInfoForm';
+import WorkHoursForm from '../components/forms/WorkHoursForm';
+import PortfolioForm from '../components/forms/PortfolioForm';
+
 const ProfessionalRegisterScreen = () => {
   const navigation = useNavigation();
   const { userData, updateUserData } = useAuth();
@@ -160,7 +165,7 @@ const ProfessionalRegisterScreen = () => {
   
   // Estado para portfólio
   const [biography, setBiography] = useState('');
-  const [portfolioImages, setPortfolioImages] = useState([null, null]);
+  const [portfolioImages, setPortfolioImages] = useState([]);
   const [profileImage, setProfileImage] = useState(null);
   
   // Opções de experiência
@@ -522,318 +527,6 @@ const ProfessionalRegisterScreen = () => {
     setExperienceDropdownOpen(false);
   };
   
-  // Renderizar o conteúdo para informações básicas
-  const renderBasicInfo = () => (
-    <View style={styles.tabContent}>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Anos de Experiência</Text>
-        <View style={styles.dropdownContainer} ref={dropdownRef}>
-          <TouchableOpacity 
-            style={styles.selectField}
-            onPress={() => setExperienceDropdownOpen(!experienceDropdownOpen)}
-          >
-            <Text>{experience}</Text>
-            <Feather name={experienceDropdownOpen ? "chevron-up" : "chevron-down"} size={20} color="#666" />
-          </TouchableOpacity>
-          
-          {experienceDropdownOpen && (
-            <View style={styles.dropdownList}>
-              {experienceOptions.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.dropdownItem,
-                    option === experience && styles.dropdownItemSelected
-                  ]}
-                  onPress={() => handleExperienceSelect(option)}
-                >
-                  {option === experience && (
-                    <View style={{width: 20}}>
-                      <Feather name="check" size={16} color="#000" />
-                    </View>
-                  )}
-                  {option !== experience && <View style={{width: 20}} />}
-                  <Text 
-                    style={option === experience ? styles.dropdownItemTextSelected : styles.dropdownItemText}
-                  >
-                    {option}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-      </View>
-      
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Especialidades</Text>
-        <View style={styles.checkboxGrid}>
-          {Object.entries(specialties).map(([name, checked], index) => (
-            <View key={index} style={styles.checkboxItem}>
-              <TouchableOpacity 
-                style={[styles.checkbox, checked && styles.checkboxChecked]}
-                onPress={() => handleSpecialtyChange(name)}
-              >
-                {checked && <Feather name="check" size={16} color="#fff" />}
-              </TouchableOpacity>
-              <Text style={styles.checkboxLabel}>{name}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-      
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Redes Sociais</Text>
-        
-        <View style={styles.socialInputRow}>
-          <Feather name="instagram" size={20} color="#666" />
-          <TextInput
-            style={styles.socialInput}
-            placeholder="@seu_instagram"
-            value={socialMedia.instagram}
-            onChangeText={(text) => handleSocialMediaChange('instagram', text)}
-          />
-        </View>
-        
-        <View style={styles.socialInputRow}>
-          <Feather name="music" size={20} color="#666" />
-          <TextInput
-            style={styles.socialInput}
-            placeholder="@seu_tiktok"
-            value={socialMedia.tiktok}
-            onChangeText={(text) => handleSocialMediaChange('tiktok', text)}
-          />
-        </View>
-        
-        <View style={styles.socialInputRow}>
-          <Feather name="facebook" size={20} color="#666" />
-          <TextInput
-            style={styles.socialInput}
-            placeholder="facebook.com/seuperfil"
-            value={socialMedia.facebook}
-            onChangeText={(text) => handleSocialMediaChange('facebook', text)}
-          />
-        </View>
-        
-        <View style={styles.socialInputRow}>
-          <Feather name="twitter" size={20} color="#666" />
-          <TextInput
-            style={styles.socialInput}
-            placeholder="@seu_twitter"
-            value={socialMedia.twitter}
-            onChangeText={(text) => handleSocialMediaChange('twitter', text)}
-          />
-        </View>
-        
-        <View style={styles.socialInputRow}>
-          <Feather name="globe" size={20} color="#666" />
-          <TextInput
-            style={styles.socialInput}
-            placeholder="seusite.com"
-            value={socialMedia.website}
-            onChangeText={(text) => handleSocialMediaChange('website', text)}
-          />
-        </View>
-      </View>
-      
-      <FormNavigation
-        onNext={handleNextTab}
-        showPrev={false}
-      />
-    </View>
-  );
-  
-  // Renderizar o conteúdo para horários de trabalho
-  const renderWorkHours = () => (
-    <View style={styles.tabContent}>
-      <Text style={styles.workHoursTitle}>Horário de Trabalho</Text>
-      <Text style={styles.workHoursSubtitle}>Defina seus horários de disponibilidade para agendamentos.</Text>
-      
-      <View style={styles.daysContainer}>
-        {workHours.map((day, index) => (
-          <View key={index} style={styles.dayCard}>
-            <View style={styles.dayHeader}>
-              <Text style={styles.dayName}>{day.day}</Text>
-              <View style={styles.availableCheckbox}>
-                <TouchableOpacity 
-                  style={[styles.checkbox, day.available && styles.checkboxChecked]}
-                  onPress={() => handleWorkHourChange(index, null, 'available', !day.available)}
-                >
-                  {day.available && <Feather name="check" size={16} color="#fff" />}
-                </TouchableOpacity>
-                <Text style={styles.checkboxLabel}>Disponível</Text>
-              </View>
-            </View>
-            
-            {day.available && (
-              <View style={styles.dayHours}>
-                <View style={styles.periodRow}>
-                  <View style={styles.periodCheckbox}>
-                    <TouchableOpacity 
-                      style={[styles.checkbox, day.morning.enabled && styles.checkboxChecked]}
-                      onPress={() => handleWorkHourChange(index, 'morning', 'enabled', !day.morning.enabled)}
-                    >
-                      {day.morning.enabled && <Feather name="check" size={16} color="#fff" />}
-                    </TouchableOpacity>
-                    <Text style={styles.checkboxLabel}>Manhã:</Text>
-                  </View>
-                  
-                  <View style={styles.timeInputContainer}>
-                    <TimeInput
-                      value={day.morning.start}
-                      onChange={(value) => handleWorkHourChange(index, 'morning', 'start', value)}
-                      disabled={!day.morning.enabled}
-                    />
-                    <Text style={styles.timeInputSeparator}>às</Text>
-                    <TimeInput
-                      value={day.morning.end}
-                      onChange={(value) => handleWorkHourChange(index, 'morning', 'end', value)}
-                      disabled={!day.morning.enabled}
-                    />
-                  </View>
-                </View>
-                
-                <View style={styles.periodRow}>
-                  <View style={styles.periodCheckbox}>
-                    <TouchableOpacity 
-                      style={[styles.checkbox, day.afternoon.enabled && styles.checkboxChecked]}
-                      onPress={() => handleWorkHourChange(index, 'afternoon', 'enabled', !day.afternoon.enabled)}
-                    >
-                      {day.afternoon.enabled && <Feather name="check" size={16} color="#fff" />}
-                    </TouchableOpacity>
-                    <Text style={styles.checkboxLabel}>Tarde:</Text>
-                  </View>
-                  
-                  <View style={styles.timeInputContainer}>
-                    <TimeInput
-                      value={day.afternoon.start}
-                      onChange={(value) => handleWorkHourChange(index, 'afternoon', 'start', value)}
-                      disabled={!day.afternoon.enabled}
-                    />
-                    <Text style={styles.timeInputSeparator}>às</Text>
-                    <TimeInput
-                      value={day.afternoon.end}
-                      onChange={(value) => handleWorkHourChange(index, 'afternoon', 'end', value)}
-                      disabled={!day.afternoon.enabled}
-                    />
-                  </View>
-                </View>
-              </View>
-            )}
-          </View>
-        ))}
-      </View>
-      
-      <FormNavigation
-        onPrev={handlePrevTab}
-        onNext={handleNextTab}
-      />
-    </View>
-  );
-  
-  // Renderizar o conteúdo para portfólio
-  const renderPortfolio = () => (
-    <View style={styles.tabContent}>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Biografia</Text>
-        <TextInput
-          style={styles.biographyInput}
-          placeholder="Conte sobre sua experiência, estilo e trajetória como tatuador"
-          multiline={true}
-          numberOfLines={6}
-          value={biography}
-          onChangeText={setBiography}
-        />
-      </View>
-      
-      <View style={styles.formGroup}>
-        <View style={styles.portfolioHeader}>
-          <Text style={styles.label}>Portfólio de Trabalhos</Text>
-          <TouchableOpacity 
-            style={styles.addButton}
-            onPress={handleAddPortfolioImage}
-          >
-            <Feather name="plus" size={16} color="#000" style={styles.addButtonIcon} />
-            <Text style={styles.addButtonText}>Adicionar Trabalho</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <Text style={styles.portfolioHelpText}>
-          Adicione fotos dos seus melhores trabalhos. Clique nos quadrados ou no botão acima para selecionar imagens.
-        </Text>
-        
-        <View style={styles.portfolioGrid}>
-          {portfolioImages.filter(image => image !== null).map((image, index) => (
-            <View key={index} style={styles.portfolioItem}>
-              <TouchableOpacity
-                style={styles.portfolioImageContainer}
-                onPress={() => pickImage('portfolio', index)}
-              >
-                <Image
-                  source={{ uri: image.uri }}
-                  style={styles.portfolioImage}
-                  resizeMode="cover"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.removeImageButton}
-                onPress={() => handleRemovePortfolioImage(index)}
-              >
-                <Feather name="trash-2" size={18} color="#ff4444" />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-      </View>
-      
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Foto de Perfil</Text>
-        <TouchableOpacity 
-          style={styles.profileImageContainer}
-          onPress={() => pickImage('profile')}
-        >
-          {profileImage ? (
-            <Image 
-              source={{ uri: profileImage.uri }}
-              style={styles.profileImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.profileImagePlaceholder}>
-              <Feather name="upload" size={24} color="#666" />
-              <Text style={styles.profileImageText}>
-                Arraste e solte uma imagem aqui, ou clique para selecionar
-              </Text>
-              <Text style={styles.profileImageSubtext}>
-                Recomendado: formato quadrado, máximo 5MB
-              </Text>
-              <Button
-                label="Selecionar Imagem"
-                variant="secondary"
-                onPress={() => pickImage('profile')}
-                size="sm"
-              />
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
-      
-      <FormNavigation
-        onPrev={handlePrevTab}
-        onNext={handleSubmit}
-        nextText={isLoading ? "Enviando..." : "Finalizar Cadastro"}
-        isLoading={isLoading}
-      />
-      
-      {isLoading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#000" />
-          <Text style={styles.loadingText}>Cadastrando profissional...</Text>
-        </View>
-      )}
-    </View>
-  );
-  
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -847,9 +540,65 @@ const ProfessionalRegisterScreen = () => {
             <View style={styles.card}>
               <TabHeader tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
               
-              {activeTab === 'basic' && renderBasicInfo()}
-              {activeTab === 'hours' && renderWorkHours()}
-              {activeTab === 'portfolio' && renderPortfolio()}
+              {activeTab === 'basic' && (
+                <View style={styles.tabContentWrapper}>
+                  <BasicInfoForm 
+                    experience={experience}
+                    setExperience={setExperience}
+                    specialties={specialties}
+                    handleSpecialtyChange={handleSpecialtyChange}
+                    socialMedia={socialMedia}
+                    handleSocialMediaChange={handleSocialMediaChange}
+                    experienceDropdownOpen={experienceDropdownOpen}
+                    setExperienceDropdownOpen={setExperienceDropdownOpen}
+                  />
+                  <View style={styles.formNavigationWrapper}>
+                    <FormNavigation
+                      onNext={handleNextTab}
+                      showPrev={false}
+                      nextText="Próximo"
+                    />
+                  </View>
+                </View>
+              )}
+              
+              {activeTab === 'hours' && (
+                <View style={styles.tabContentWrapper}>
+                  <WorkHoursForm 
+                    workHours={workHours}
+                    handleWorkHourChange={handleWorkHourChange}
+                  />
+                  <View style={styles.formNavigationWrapper}>
+                    <FormNavigation
+                      onPrev={handlePrevTab}
+                      onNext={handleNextTab}
+                      nextText="Próximo"
+                    />
+                  </View>
+                </View>
+              )}
+              
+              {activeTab === 'portfolio' && (
+                <View style={styles.tabContentWrapper}>
+                  <PortfolioForm 
+                    biography={biography}
+                    setBiography={setBiography}
+                    portfolioImages={portfolioImages}
+                    profileImage={profileImage}
+                    handleAddPortfolioImage={handleAddPortfolioImage}
+                    handleRemovePortfolioImage={handleRemovePortfolioImage}
+                    pickImage={pickImage}
+                  />
+                  <View style={styles.formNavigationWrapper}>
+                    <FormNavigation
+                      onPrev={handlePrevTab}
+                      onNext={handleSubmit}
+                      nextText={isLoading ? "Finalizando..." : "Finalizar Cadastro"}
+                      isLoading={isLoading}
+                    />
+                  </View>
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -900,7 +649,7 @@ const styles = StyleSheet.create({
     borderColor: '#eaeaea',
     overflow: 'hidden',
   },
-  tabContent: {
+  tabContentWrapper: {
     padding: 16,
   },
   formGroup: {
@@ -1194,6 +943,9 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 16,
     fontStyle: 'italic',
+  },
+  formNavigationWrapper: {
+    marginTop: -10,
   },
 });
 

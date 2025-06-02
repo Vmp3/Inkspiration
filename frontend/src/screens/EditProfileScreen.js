@@ -3,10 +3,12 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import * as ImagePicker from 'expo-image-picker';
 import * as formatters from '../utils/formatters';
 import toastHelper from '../utils/toastHelper';
 import { useAuth } from '../context/AuthContext';
 import AuthService from '../services/AuthService';
+import ApiService from '../services/ApiService';
 
 import Input from '../components/ui/Input';
 import TabHeader from '../components/ui/TabHeader';
@@ -16,6 +18,11 @@ import SecurityForm from '../components/forms/SecurityForm';
 import FormNavigation from '../components/ui/FormNavigation';
 import ProfessionalForm from '../components/forms/ProfessionalForm';
 
+// Componentes modulares para profissionais
+import BasicInfoForm from '../components/forms/BasicInfoForm';
+import WorkHoursForm from '../components/forms/WorkHoursForm';
+import PortfolioForm from '../components/forms/PortfolioForm';
+
 const EditProfileScreen = () => {
   const navigation = useNavigation();
   const { userData, updateUserData } = useAuth();
@@ -23,6 +30,7 @@ const EditProfileScreen = () => {
   const [isArtist, setIsArtist] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [experienceDropdownOpen, setExperienceDropdownOpen] = useState(false);
   
   // Form validation states
   const [nomeError, setNomeError] = useState('');
@@ -69,12 +77,83 @@ const EditProfileScreen = () => {
       website: ''
     }
   });
+  
+  // Estados específicos para profissionais (usando os componentes modulares)
+  const [professionalFormData, setProfessionalFormData] = useState({
+    experience: '1-3 anos',
+    specialties: {
+      Tradicional: false,
+      Blackwork: false,
+      'Neo-Tradicional': false,
+      Fineline: false,
+      Realista: false,
+      Geométrico: false,
+      Minimalista: false,
+      Aquarela: false,
+      Japonês: false,
+      'Old School': false
+    },
+    socialMedia: {
+      instagram: '',
+      tiktok: '',
+      facebook: '',
+      twitter: '',
+      website: ''
+    },
+    workHours: [
+      {
+        day: 'Segunda',
+        available: true,
+        morning: { enabled: true, start: '08:00', end: '12:00' },
+        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+      },
+      {
+        day: 'Terça',
+        available: true,
+        morning: { enabled: true, start: '08:00', end: '12:00' },
+        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+      },
+      {
+        day: 'Quarta',
+        available: true,
+        morning: { enabled: true, start: '08:00', end: '12:00' },
+        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+      },
+      {
+        day: 'Quinta',
+        available: true,
+        morning: { enabled: true, start: '08:00', end: '12:00' },
+        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+      },
+      {
+        day: 'Sexta',
+        available: true,
+        morning: { enabled: true, start: '08:00', end: '12:00' },
+        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+      },
+      {
+        day: 'Sábado',
+        available: true,
+        morning: { enabled: true, start: '08:00', end: '12:00' },
+        afternoon: { enabled: false, start: '13:00', end: '18:00' }
+      },
+      {
+        day: 'Domingo',
+        available: false,
+        morning: { enabled: false, start: '08:00', end: '12:00' },
+        afternoon: { enabled: false, start: '13:00', end: '18:00' }
+      }
+    ],
+    biography: '',
+    portfolioImages: [],
+    profileImage: null
+  });
 
   // Load user data when component mounts
   useEffect(() => {
     if (userData) {
       // Check if user is an artist/professional
-      setIsArtist(userData.role === 'ROLE_PROFESSIONAL');
+      setIsArtist(userData.role === 'ROLE_PROF');
       
       // Extract first and last name
       const nameParts = userData.nome ? userData.nome.split(' ') : ['', ''];
@@ -116,6 +195,114 @@ const EditProfileScreen = () => {
           website: userData.redesSociais?.website || ''
         }
       });
+    }
+  }, [userData]);
+  
+  // Função para carregar dados profissionais
+  const loadProfessionalData = async () => {
+    if (!userData?.idUsuario || userData.role !== 'ROLE_PROF') {
+      return;
+    }
+
+    try {
+      const response = await ApiService.get(`/profissional/usuario/${userData.idUsuario}/completo`);
+      
+      if (response && response.profissional) {
+        const { profissional, portfolio, imagens, disponibilidades } = response;
+        
+        // Transformar especialidades
+        const specialties = portfolio?.especialidade ? 
+          portfolio.especialidade.split(', ').reduce((acc, style) => {
+            acc[style] = true;
+            return acc;
+          }, {
+            Tradicional: false,
+            Blackwork: false,
+            'Neo-Tradicional': false,
+            Fineline: false,
+            Realista: false,
+            Geométrico: false,
+            Minimalista: false,
+            Aquarela: false,
+            Japonês: false,
+            'Old School': false
+          }) : {
+            Tradicional: false,
+            Blackwork: false,
+            'Neo-Tradicional': false,
+            Fineline: false,
+            Realista: false,
+            Geométrico: false,
+            Minimalista: false,
+            Aquarela: false,
+            Japonês: false,
+            'Old School': false
+          };
+
+        // Transformar horários de trabalho
+        const workHours = [
+          { day: 'Segunda', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Terça', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Quarta', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Quinta', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Sexta', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Sábado', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Domingo', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } }
+        ];
+
+        if (disponibilidades && Object.keys(disponibilidades).length > 0) {
+          Object.entries(disponibilidades).forEach(([day, horario]) => {
+            const dayIndex = workHours.findIndex(wh => wh.day === day);
+            
+            if (dayIndex >= 0 && horario && horario.inicio && horario.fim) {
+              workHours[dayIndex].available = true;
+              
+              // Determinar se é manhã ou tarde baseado no horário
+              const startHour = parseInt(horario.inicio.split(':')[0]);
+              if (startHour < 13) {
+                workHours[dayIndex].morning.enabled = true;
+                workHours[dayIndex].morning.start = horario.inicio;
+                workHours[dayIndex].morning.end = horario.fim;
+              } else {
+                workHours[dayIndex].afternoon.enabled = true;
+                workHours[dayIndex].afternoon.start = horario.inicio;
+                workHours[dayIndex].afternoon.end = horario.fim;
+              }
+            }
+          });
+        }
+
+        setProfessionalFormData({
+          experience: portfolio?.experiencia || '1-3 anos',
+          specialties,
+          socialMedia: {
+            instagram: portfolio?.instagram || '',
+            tiktok: portfolio?.tiktok || '',
+            facebook: portfolio?.facebook || '',
+            twitter: portfolio?.twitter || '',
+            website: portfolio?.website || ''
+          },
+          workHours,
+          biography: portfolio?.descricao || '',
+          portfolioImages: (imagens || []).map(img => ({
+            uri: img.imagemBase64 || img.imagem,
+            base64: img.imagemBase64 || img.imagem,
+            type: 'image/jpeg',
+            name: `portfolio_${img.idImagem || Date.now()}.jpg`
+          })),
+          profileImage: null
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados do profissional:', error);
+      toastHelper.showError('Erro ao obter informações profissionais');
+    }
+  };
+
+  // Carregar dados profissionais quando for profissional
+  useEffect(() => {
+    if (userData?.role === 'ROLE_PROF') {
+      loadProfessionalData();
     }
   }, [userData]);
 
@@ -208,6 +395,110 @@ const EditProfileScreen = () => {
     if (field === 'cep' && value.replace(/\D/g, '').length === 8) {
       buscarCep(value);
     }
+  };
+  
+  // Handlers para dados profissionais
+  const handleSpecialtyChange = (specialty) => {
+    setProfessionalFormData(prev => ({
+      ...prev,
+      specialties: {
+        ...prev.specialties,
+        [specialty]: !prev.specialties[specialty]
+      }
+    }));
+  };
+  
+  const handleSocialMediaChange = (platform, value) => {
+    setProfessionalFormData(prev => ({
+      ...prev,
+      socialMedia: {
+        ...prev.socialMedia,
+        [platform]: value
+      }
+    }));
+  };
+  
+  const handleWorkHourChange = (index, period, field, value) => {
+    const newWorkHours = [...professionalFormData.workHours];
+    
+    if (field === 'available') {
+      newWorkHours[index].available = value;
+      if (!value) {
+        newWorkHours[index].morning.enabled = false;
+        newWorkHours[index].afternoon.enabled = false;
+      }
+    }
+    else if (period === 'morning' || period === 'afternoon') {
+      newWorkHours[index][period][field] = value;
+    }
+    
+    setProfessionalFormData(prev => ({
+      ...prev,
+      workHours: newWorkHours
+    }));
+  };
+  
+  const handleAddPortfolioImage = () => {
+    pickImage('portfolio');
+  };
+  
+  const handleRemovePortfolioImage = (index) => {
+    const newImages = [...professionalFormData.portfolioImages];
+    newImages.splice(index, 1);
+    setProfessionalFormData(prev => ({
+      ...prev,
+      portfolioImages: newImages
+    }));
+  };
+  
+  const pickImage = async (imageType, index = null) => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true
+      });
+      if (!result.canceled) {
+        const selectedImage = result.assets[0];
+        const imageUri = selectedImage.uri;
+        const imageBase64 = `data:image/jpeg;base64,${selectedImage.base64}`;
+        if (imageType === 'portfolio') {
+          setProfessionalFormData(prev => ({
+            ...prev,
+            portfolioImages: [
+              ...prev.portfolioImages,
+              {
+                uri: imageUri,
+                base64: imageBase64,
+                type: 'image/jpeg',
+                name: `portfolio_${prev.portfolioImages.length}.jpg`
+              }
+            ]
+          }));
+        } else if (imageType === 'profile') {
+          setProfessionalFormData(prev => ({
+            ...prev,
+            profileImage: {
+              uri: imageUri,
+              base64: imageBase64,
+              type: 'image/jpeg',
+              name: 'profile.jpg'
+            }
+          }));
+        }
+      }
+    } catch (error) {
+      toastHelper.showError('Falha ao selecionar imagem. Tente novamente.');
+    }
+  };
+  
+  const setBiography = (value) => {
+    setProfessionalFormData(prev => ({
+      ...prev,
+      biography: value
+    }));
   };
 
   const handleBlur = (field) => {
@@ -447,6 +738,34 @@ const EditProfileScreen = () => {
     
     return true;
   };
+  
+  const validateBasicInfoTab = () => {
+    const selectedSpecialties = Object.keys(professionalFormData.specialties).filter(key => professionalFormData.specialties[key]);
+    if (selectedSpecialties.length === 0) {
+      toastHelper.showError('Selecione pelo menos uma especialidade');
+      return false;
+    }
+    return true;
+  };
+  
+  const validateWorkHoursTab = () => {
+    const hasWorkHours = professionalFormData.workHours.some(day => 
+      day.available && (day.morning.enabled || day.afternoon.enabled)
+    );
+    if (!hasWorkHours) {
+      toastHelper.showError('Defina pelo menos um horário de disponibilidade');
+      return false;
+    }
+    return true;
+  };
+  
+  const validatePortfolioTab = () => {
+    if (!professionalFormData.biography || professionalFormData.biography.trim().length < 20) {
+      toastHelper.showError('A biografia deve conter pelo menos 20 caracteres');
+      return false;
+    }
+    return true;
+  };
 
   const handleNextTab = () => {
     if (activeTab === 'personal') {
@@ -456,10 +775,22 @@ const EditProfileScreen = () => {
     } else if (activeTab === 'address') {
       if (validateAddressTab()) {
         if (isArtist) {
-          setActiveTab('professional');
+          setActiveTab('basic-info');
         } else {
           setActiveTab('security');
         }
+      }
+    } else if (activeTab === 'basic-info') {
+      if (validateBasicInfoTab()) {
+        setActiveTab('hours');
+      }
+    } else if (activeTab === 'hours') {
+      if (validateWorkHoursTab()) {
+        setActiveTab('portfolio');
+      }
+    } else if (activeTab === 'portfolio') {
+      if (validatePortfolioTab()) {
+        setActiveTab('security');
       }
     } else if (activeTab === 'professional') {
       if (validateProfessionalTab()) {
@@ -471,10 +802,16 @@ const EditProfileScreen = () => {
   const handlePrevTab = () => {
     if (activeTab === 'security') {
       if (isArtist) {
-        setActiveTab('professional');
+        setActiveTab('portfolio');
       } else {
         setActiveTab('address');
       }
+    } else if (activeTab === 'portfolio') {
+      setActiveTab('hours');
+    } else if (activeTab === 'hours') {
+      setActiveTab('basic-info');
+    } else if (activeTab === 'basic-info') {
+      setActiveTab('address');
     } else if (activeTab === 'professional') {
       setActiveTab('address');
     } else if (activeTab === 'address') {
@@ -488,6 +825,9 @@ const EditProfileScreen = () => {
     if (activeTab === 'address' && !validateAddressTab()) return;
     if (activeTab === 'security' && !validateSecurityTab()) return;
     if (activeTab === 'professional' && !validateProfessionalTab()) return;
+    if (activeTab === 'basic-info' && !validateBasicInfoTab()) return;
+    if (activeTab === 'hours' && !validateWorkHoursTab()) return;
+    if (activeTab === 'portfolio' && !validatePortfolioTab()) return;
 
     try {
       setIsLoading(true);
@@ -532,10 +872,31 @@ const EditProfileScreen = () => {
 
       // Adicionar dados profissionais se for artista
       if (isArtist) {
-        userData.especialidades = formData.especialidades;
-        userData.bio = formData.bio;
-        userData.experiencia = formData.experiencia;
-        userData.redesSociais = formData.redesSociais;
+        // Para profissionais, usar os dados dos componentes modulares
+        const selectedSpecialties = Object.keys(professionalFormData.specialties).filter(key => professionalFormData.specialties[key]);
+        
+        userData.especialidades = selectedSpecialties;
+        userData.bio = professionalFormData.biography;
+        userData.experiencia = professionalFormData.experience;
+        userData.redesSociais = professionalFormData.socialMedia;
+        
+        // Preparar disponibilidades (horários de trabalho)
+        const disponibilidades = [];
+        professionalFormData.workHours.forEach(day => {
+          if (day.available) {
+            if (day.morning.enabled) {
+              disponibilidades.push({
+                hrAtendimento: `${day.day}-${day.morning.start}-${day.morning.end}`
+              });
+            }
+            if (day.afternoon.enabled) {
+              disponibilidades.push({
+                hrAtendimento: `${day.day}-${day.afternoon.start}-${day.afternoon.end}`
+              });
+            }
+          }
+        });
+        userData.disponibilidades = disponibilidades;
       }
 
       // Se estiver mudando a senha, substitua pela nova e remova a flag
@@ -569,6 +930,11 @@ const EditProfileScreen = () => {
         return;
       }
 
+      // Se for profissional, atualizar também os dados profissionais
+      if (isArtist) {
+        await updateProfessionalData();
+      }
+
       // Update user data in context
       await updateUserData();
       
@@ -584,6 +950,92 @@ const EditProfileScreen = () => {
       setIsLoading(false);
     }
   };
+  
+  const uploadProfessionalImages = async () => {
+    try {
+      // Upload da imagem de perfil
+      if (professionalFormData.profileImage && professionalFormData.profileImage.base64) {
+        try {
+          await ApiService.put(`/usuario/${userData.idUsuario}/foto-perfil`, { 
+            imagemBase64: professionalFormData.profileImage.base64 
+          });
+        } catch (error) {
+          console.error('Falha ao enviar imagem de perfil:', error);
+        }
+      }
+      
+      // Upload das imagens do portfólio em base64
+      for (const image of professionalFormData.portfolioImages) {
+        if (image && image.base64) {
+          const base64Data = image.base64;
+          const imagemBase64 = base64Data.startsWith('data:') ? base64Data : `data:image/jpeg;base64,${base64Data}`;
+          
+          const imagemDTO = {
+            imagemBase64,
+            idPortifolio: null
+          };
+          
+          try {
+            await ApiService.post('/imagens', imagemDTO);
+          } catch (error) {
+            console.error('Falha ao enviar imagem do portfólio:', error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao fazer upload das imagens:', error);
+    }
+  };
+
+  const updateProfessionalData = async () => {
+    try {
+      // Preparar disponibilidades (horários de trabalho)
+      const disponibilidades = [];
+      professionalFormData.workHours.forEach(day => {
+        if (day.available) {
+          if (day.morning.enabled) {
+            disponibilidades.push({
+              hrAtendimento: `${day.day}-${day.morning.start}-${day.morning.end}`
+            });
+          }
+          if (day.afternoon.enabled) {
+            disponibilidades.push({
+              hrAtendimento: `${day.day}-${day.afternoon.start}-${day.afternoon.end}`
+            });
+          }
+        }
+      });
+      
+      // Preparar especialidades selecionadas
+      const selectedSpecialties = Object.keys(professionalFormData.specialties).filter(key => professionalFormData.specialties[key]);
+      
+      // Preparar objeto com formato esperado pelo backend (ProfissionalCriacaoDTO)
+      const professionalUpdateData = {
+        idUsuario: userData.idUsuario,
+        idEndereco: userData.endereco?.idEndereco,
+        experiencia: professionalFormData.experience,
+        especialidade: selectedSpecialties.join(', '),
+        descricao: professionalFormData.biography,
+        estilosTatuagem: selectedSpecialties,
+        instagram: professionalFormData.socialMedia.instagram || null,
+        tiktok: professionalFormData.socialMedia.tiktok || null,
+        facebook: professionalFormData.socialMedia.facebook || null,
+        twitter: professionalFormData.socialMedia.twitter || null,
+        website: professionalFormData.socialMedia.website || null,
+        disponibilidades: disponibilidades
+      };
+      
+      // Atualizar dados profissionais
+      await ApiService.put(`/profissional/usuario/${userData.idUsuario}/atualizar-completo`, professionalUpdateData);
+      
+      // Upload das imagens
+      await uploadProfessionalImages();
+      
+    } catch (error) {
+      console.error('Erro ao atualizar dados profissionais:', error);
+      toastHelper.showError('Erro ao atualizar dados profissionais');
+    }
+  };
 
   // Define tabs based on user role
   const getTabs = () => {
@@ -593,7 +1045,11 @@ const EditProfileScreen = () => {
     ];
 
     if (isArtist) {
-      tabs.push({ id: 'professional', label: 'Profissional' });
+      tabs.push(
+        { id: 'basic-info', label: 'Profissional' },
+        { id: 'hours', label: 'Horário' },
+        { id: 'portfolio', label: 'Portfólio' }
+      );
     }
 
     tabs.push({ id: 'security', label: 'Segurança' });
@@ -657,8 +1113,61 @@ const EditProfileScreen = () => {
                     />
                   </>
                 )}
+                
+                {isArtist && activeTab === 'basic-info' && (
+                  <>
+                    <BasicInfoForm 
+                      experience={professionalFormData.experience}
+                      setExperience={(value) => setProfessionalFormData(prev => ({ ...prev, experience: value }))}
+                      specialties={professionalFormData.specialties}
+                      handleSpecialtyChange={handleSpecialtyChange}
+                      socialMedia={professionalFormData.socialMedia}
+                      handleSocialMediaChange={handleSocialMediaChange}
+                      handleNextTab={handleNextTab}
+                      experienceDropdownOpen={experienceDropdownOpen}
+                      setExperienceDropdownOpen={setExperienceDropdownOpen}
+                    />
+                    <FormNavigation
+                      onPrev={handlePrevTab}
+                      onNext={handleNextTab}
+                    />
+                  </>
+                )}
+                
+                {isArtist && activeTab === 'hours' && (
+                  <>
+                    <WorkHoursForm 
+                      workHours={professionalFormData.workHours}
+                      handleWorkHourChange={handleWorkHourChange}
+                      handlePrevTab={handlePrevTab}
+                      handleNextTab={handleNextTab}
+                    />
+                    <FormNavigation
+                      onPrev={handlePrevTab}
+                      onNext={handleNextTab}
+                    />
+                  </>
+                )}
+                
+                {isArtist && activeTab === 'portfolio' && (
+                  <>
+                    <PortfolioForm 
+                      biography={professionalFormData.biography}
+                      setBiography={setBiography}
+                      portfolioImages={professionalFormData.portfolioImages}
+                      profileImage={professionalFormData.profileImage}
+                      handleAddPortfolioImage={handleAddPortfolioImage}
+                      handleRemovePortfolioImage={handleRemovePortfolioImage}
+                      pickImage={pickImage}
+                    />
+                    <FormNavigation
+                      onPrev={handlePrevTab}
+                      onNext={handleNextTab}
+                    />
+                  </>
+                )}
 
-                {isArtist && activeTab === 'professional' && (
+                {!isArtist && activeTab === 'professional' && (
                   <>
                     <ProfessionalForm 
                       formData={formData}
