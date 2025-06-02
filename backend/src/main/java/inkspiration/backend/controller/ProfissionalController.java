@@ -103,7 +103,7 @@ public class ProfissionalController {
             }
             
             // Buscar disponibilidades
-            Map<String, Map<String, String>> disponibilidades = Collections.emptyMap();
+            Map<String, List<Map<String, String>>> disponibilidades = Collections.emptyMap();
             try {
                 // Retornar o Map diretamente como no endpoint /disponibilidades/profissional/1
                 disponibilidades = disponibilidadeService.obterDisponibilidade(profissional.getIdProfissional());
