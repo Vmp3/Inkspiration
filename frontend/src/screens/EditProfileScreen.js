@@ -6,6 +6,7 @@ import axios from 'axios';
 import * as formatters from '../utils/formatters';
 import toastHelper from '../utils/toastHelper';
 import { useAuth } from '../context/AuthContext';
+import AuthService from '../services/AuthService';
 
 import Input from '../components/ui/Input';
 import TabHeader from '../components/ui/TabHeader';
@@ -396,30 +397,37 @@ const EditProfileScreen = () => {
       return true;
     }
     
-    // Se está alterando a senha, valida os campos
-    if (!formData.senhaAtual) {
-      toastHelper.showError('Senha atual é obrigatória');
-      return false;
+    // Se está alterando a senha parcialmente (apenas um dos campos), exigir todos
+    if ((formData.senhaAtual || formData.novaSenha || formData.confirmarSenha) && 
+        !(formData.senhaAtual && formData.novaSenha && formData.confirmarSenha)) {
+      
+      if (!formData.senhaAtual) {
+        toastHelper.showError('Senha atual é obrigatória para alterar a senha');
+        return false;
+      }
+      
+      if (!formData.novaSenha) {
+        toastHelper.showError('Nova senha é obrigatória');
+        return false;
+      }
+      
+      if (!formData.confirmarSenha) {
+        toastHelper.showError('Confirmação de senha é obrigatória');
+        return false;
+      }
     }
     
-    if (!formData.novaSenha) {
-      toastHelper.showError('Nova senha é obrigatória');
-      return false;
-    }
-    
-    if (formData.novaSenha.length < 6) {
-      toastHelper.showError('A senha deve ter pelo menos 6 caracteres');
-      return false;
-    }
-
-    if (!formData.confirmarSenha) {
-      toastHelper.showError('Confirmação de senha é obrigatória');
-      return false;
-    }
-    
-    if (formData.novaSenha !== formData.confirmarSenha) {
-      toastHelper.showError('As senhas não coincidem');
-      return false;
+    // Se está alterando a senha completamente, validar os requisitos
+    if (formData.senhaAtual && formData.novaSenha && formData.confirmarSenha) {
+      if (formData.novaSenha.length < 6) {
+        toastHelper.showError('A senha deve ter pelo menos 6 caracteres');
+        return false;
+      }
+      
+      if (formData.novaSenha !== formData.confirmarSenha) {
+        toastHelper.showError('As senhas não coincidem');
+        return false;
+      }
     }
     
     return true;
@@ -485,6 +493,19 @@ const EditProfileScreen = () => {
       setIsLoading(true);
       setErrorMessage('');
 
+      // Obter token e extrair userId
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (!token) {
+        toastHelper.showError('Sessão expirada. Por favor, faça login novamente.');
+        return;
+      }
+
+      const tokenData = AuthService.parseJwt(token);
+      if (!tokenData || !tokenData.userId) {
+        toastHelper.showError('Erro ao obter dados do usuário. Por favor, faça login novamente.');
+        return;
+      }
+
       // Preparar objeto de endereço
       const endereco = {
         cep: formData.cep,
@@ -501,7 +522,12 @@ const EditProfileScreen = () => {
         nome: `${formData.nome} ${formData.sobrenome}`.trim(),
         email: formData.email,
         telefone: formData.telefone,
-        endereco: endereco
+        cpf: formData.cpf.replace(/\D/g, ''), // Remove formatação e envia apenas números
+        dataNascimento: formData.dataNascimento,
+        endereco: endereco,
+        // Precisamos incluir a senha para passar na validação do backend
+        senha: 'SENHA_NAO_ALTERADA', // Valor especial que o backend deve reconhecer
+        manterSenhaAtual: true // Flag para o backend não alterar a senha
       };
 
       // Adicionar dados profissionais se for artista
@@ -512,18 +538,19 @@ const EditProfileScreen = () => {
         userData.redesSociais = formData.redesSociais;
       }
 
-      // Adicionar senha se estiver atualizando
+      // Se estiver mudando a senha, substitua pela nova e remova a flag
       if (formData.senhaAtual && formData.novaSenha) {
-        userData.senhaAtual = formData.senhaAtual;
-        userData.novaSenha = formData.novaSenha;
+        userData.senha = formData.novaSenha;
+        userData.senhaAtual = formData.senhaAtual; // Enviar a senha atual para verificação
+        delete userData.manterSenhaAtual; // Remover a flag para permitir a alteração
       }
 
       const baseUrl = 'http://localhost:8080';
-      const response = await fetch(`${baseUrl}/api/users/profile`, {
+      const response = await fetch(`${baseUrl}/usuario/atualizar/${tokenData.userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await AsyncStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(userData)
       });
@@ -534,6 +561,8 @@ const EditProfileScreen = () => {
         // Handle error messages
         if (data.message) {
           toastHelper.showError(data.message);
+        } else if (data.error && data.error.includes("Senha atual incorreta")) {
+          toastHelper.showError("Senha atual incorreta");
         } else {
           toastHelper.showError('Ocorreu um erro ao atualizar o perfil. Tente novamente.');
         }
@@ -545,6 +574,9 @@ const EditProfileScreen = () => {
       
       // Show success message
       toastHelper.showSuccess('Perfil atualizado com sucesso!');
+      
+      // Redirecionar para a tela inicial
+      navigation.navigate('Home');
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
       toastHelper.showError('Ocorreu um erro ao atualizar o perfil. Tente novamente.');

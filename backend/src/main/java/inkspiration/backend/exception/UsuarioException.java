@@ -46,4 +46,10 @@ public class UsuarioException {
             super(message);
         }
     }
+
+    public static class SenhaInvalidaException extends RuntimeException {
+        public SenhaInvalidaException(String message) {
+            super(message);
+        }
+    }
 } 

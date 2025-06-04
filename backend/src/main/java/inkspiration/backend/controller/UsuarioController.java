@@ -49,6 +49,30 @@ public class UsuarioController {
         return ResponseEntity.ok(dto);
     }
 
+    @GetMapping("/detalhes/{id}")
+    public ResponseEntity<UsuarioResponseDTO> buscarDetalhes(@PathVariable Long id) {
+        Usuario usuario = service.buscarPorId(id);
+        String dataNascimentoStr = null;
+        
+        if (usuario.getDataNascimento() != null) {
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            dataNascimentoStr = usuario.getDataNascimento().format(formatter);
+        }
+        
+        UsuarioResponseDTO dto = new UsuarioResponseDTO(
+            usuario.getIdUsuario(),
+            usuario.getNome(),
+            usuario.getCpf(),
+            usuario.getEmail(),
+            dataNascimentoStr,
+            usuario.getTelefone(),
+            usuario.getImagemPerfil(),
+            usuario.getEndereco(),
+            usuario.getRole()
+        );
+        return ResponseEntity.ok(dto);
+    }
+
     @GetMapping("/buscar-por-cpf/{cpf}")
     public ResponseEntity<UsuarioSeguroDTO> buscarPorCpf(@PathVariable String cpf) {
         try {
@@ -74,12 +98,6 @@ public class UsuarioController {
     public ResponseEntity<String> inativarUsuario(@PathVariable Long id) {
         service.inativar(id);
         return ResponseEntity.ok("Usuário inativado com sucesso.");
-    }
-
-    @PostMapping("/reativar/{id}")
-    public ResponseEntity<String> reativarUsuario(@PathVariable Long id) {
-        service.reativar(id);
-        return ResponseEntity.ok("Usuário reativado com sucesso.");
     }
 
     @DeleteMapping("/deletar/{id}")

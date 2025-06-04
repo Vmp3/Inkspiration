@@ -2,6 +2,7 @@ package inkspiration.backend.service;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,6 @@ import inkspiration.backend.exception.UsuarioValidationException;
 import inkspiration.backend.repository.TokenRevogadoRepository;
 import inkspiration.backend.repository.UsuarioAutenticarRepository;
 import inkspiration.backend.repository.UsuarioRepository;
-import inkspiration.backend.repository.ProfissionalRepository;
 import inkspiration.backend.security.JwtService;
 import inkspiration.backend.util.CpfValidator;
 import inkspiration.backend.util.DateValidator;
@@ -36,7 +36,6 @@ public class UsuarioService {
 
     private final UsuarioRepository repository;
     private final UsuarioAutenticarRepository autenticarRepository;
-    private final ProfissionalRepository profissionalRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final HttpServletRequest request;
@@ -45,14 +44,12 @@ public class UsuarioService {
     @Autowired
     public UsuarioService(UsuarioRepository repository, 
                          UsuarioAutenticarRepository autenticarRepository,
-                         ProfissionalRepository profissionalRepository,
                          PasswordEncoder passwordEncoder,
                          JwtService jwtService,
                          HttpServletRequest request,
                          TokenRevogadoRepository tokenRevogadoRepository) {
         this.repository = repository;
         this.autenticarRepository = autenticarRepository;
-        this.profissionalRepository = profissionalRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.request = request;
@@ -181,7 +178,8 @@ public class UsuarioService {
             UsuarioAutenticar usuarioAuth = new UsuarioAutenticar();
             usuarioAuth.setCpf(dto.getCpf());
             usuarioAuth.setRole(usuarioExistente.getRole());
-            if (dto.getSenha() != null && !dto.getSenha().isEmpty()) {
+            if (dto.getSenha() != null && !dto.getSenha().isEmpty() && 
+                !"SENHA_NAO_ALTERADA".equals(dto.getSenha()) && !dto.isManterSenhaAtual()) {
                 usuarioAuth.setSenha(passwordEncoder.encode(dto.getSenha()));
             }
             usuarioExistente.setUsuarioAutenticar(usuarioAuth);
@@ -189,7 +187,18 @@ public class UsuarioService {
             UsuarioAutenticar usuarioAuth = usuarioExistente.getUsuarioAutenticar();
             usuarioAuth.setCpf(dto.getCpf());
             usuarioAuth.setRole(usuarioExistente.getRole());
-            if (dto.getSenha() != null && !dto.getSenha().isEmpty()) {
+            
+            // Só atualiza a senha se não for o valor especial e se não tiver a flag manterSenhaAtual
+            if (dto.getSenha() != null && !dto.getSenha().isEmpty() && 
+                !"SENHA_NAO_ALTERADA".equals(dto.getSenha()) && !dto.isManterSenhaAtual()) {
+                
+                // Se tiver senhaAtual, verificar se ela corresponde à senha atual
+                if (dto.getSenhaAtual() != null && !dto.getSenhaAtual().isEmpty()) {
+                    if (!passwordEncoder.matches(dto.getSenhaAtual(), usuarioAuth.getSenha())) {
+                        throw new UsuarioException.SenhaInvalidaException("Senha atual incorreta");
+                    }
+                }
+                
                 usuarioAuth.setSenha(passwordEncoder.encode(dto.getSenha()));
             }
         }
@@ -222,39 +231,6 @@ public class UsuarioService {
         }
         
         repository.save(usuario);
-    }
-
-    @Transactional
-    public void reativar(Long id) {
-        Usuario usuario = buscarPorId(id);
-        
-        if (!"ROLE_DELETED".equals(usuario.getRole())) {
-            throw new UsuarioException.UsuarioNaoEncontradoException("Usuário não está desativado");
-        }
-        
-        // Determina a role original baseada no contexto do usuário
-        String roleOriginal = determinarRoleOriginal(usuario);
-        usuario.setRole(roleOriginal);
-
-        if (usuario.getUsuarioAutenticar() != null) {
-            usuario.getUsuarioAutenticar().setRole(roleOriginal);
-        }
-        
-        repository.save(usuario);
-    }
-
-    private String determinarRoleOriginal(Usuario usuario) {
-        // Verifica se o usuário tem um registro de profissional associado
-        // Se tiver, era um profissional (ROLE_PROF)
-        // Caso contrário, era um usuário comum (ROLE_USER)
-        
-        boolean isProfissional = profissionalRepository.existsByUsuario_IdUsuario(usuario.getIdUsuario());
-        
-        if (isProfissional) {
-            return "ROLE_PROF";
-        } else {
-            return "ROLE_USER";
-        }
     }
 
     @Transactional
