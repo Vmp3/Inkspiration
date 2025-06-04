@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import AuthService from '../services/AuthService';
+import useTokenMonitor from '../hooks/useTokenMonitor';
 
 const AuthContext = createContext(null);
 
@@ -7,6 +8,21 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Callback para quando o token for inválido
+  const handleTokenInvalid = useCallback(async () => {
+    console.log('Token inválido detectado, fazendo logout automático');
+    setIsAuthenticated(false);
+    setUserData(null);
+    try {
+      await AuthService.logout();
+    } catch (error) {
+      console.error('Erro ao fazer logout automático:', error);
+    }
+  }, []);
+
+  // Usar o hook de monitoramento de token
+  useTokenMonitor(isAuthenticated, handleTokenInvalid);
 
   const checkAuthStatus = useCallback(async () => {
     try {
@@ -35,23 +51,29 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus();
   }, [checkAuthStatus]);
 
-  // Verificar periodicamente se o token foi revogado (a cada 30 segundos)
+  // Verificar periodicamente a integridade do token (a cada 30 segundos)
   useEffect(() => {
     if (!isAuthenticated) return;
     
     const interval = setInterval(() => {
-      const verifyToken = async () => {
-        const token = await AuthService.getToken();
-        if (token) {
-          const isRevoked = await AuthService.isTokenRevoked(token);
-          if (isRevoked) {
-            console.log('Token revogado detectado, fazendo logout');
-            await logout();
+      const verifyTokenIntegrity = async () => {
+        try {
+          // Usar o método isAuthenticated que já faz todas as verificações
+          const isStillAuth = await AuthService.isAuthenticated();
+          if (!isStillAuth) {
+            console.log('Token inválido detectado na verificação periódica, fazendo logout');
+            setIsAuthenticated(false);
+            setUserData(null);
           }
+        } catch (error) {
+          console.error('Erro na verificação periódica do token:', error);
+          // Em caso de erro crítico, fazer logout por segurança
+          setIsAuthenticated(false);
+          setUserData(null);
         }
       };
       
-      verifyToken();
+      verifyTokenIntegrity();
     }, 30000); // 30 segundos
     
     return () => clearInterval(interval);

@@ -2,15 +2,7 @@ import ApiService from './ApiService';
 import PublicApiService from './PublicApiService';
 
 class ProfessionalService {
-  async getAllProfessionals(page = 0) {
-    try {
-      const response = await PublicApiService.get(`/profissional?page=${page}`);
-      return response;
-    } catch (error) {
-      console.error('Erro ao buscar profissionais:', error);
-      throw error;
-    }
-  }
+
 
   async getProfessionalById(id) {
     try {
@@ -101,16 +93,7 @@ class ProfessionalService {
     };
   }
 
-  // Método para buscar e transformar todos os profissionais
-  async getTransformedProfessionals(page = 0) {
-    try {
-      const professionals = await this.getAllProfessionals(page);
-      return professionals.map(professional => this.transformProfessionalData(professional));
-    } catch (error) {
-      console.error('Erro ao buscar e transformar profissionais:', error);
-      throw error;
-    }
-  }
+
 
   // Método para transformar dados completos do backend para o formato esperado pelo frontend
   transformCompleteProfessionalData(professional) {
