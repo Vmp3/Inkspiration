@@ -124,7 +124,24 @@ class AuthService {
 
   parseJwt(token) {
     try {
-      const base64Url = token.split('.')[1];
+      // Verificar se o token existe e tem o formato básico correto
+      if (!token || typeof token !== 'string') {
+        console.error('Token inválido: não é uma string válida');
+        return null;
+      }
+      
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.error('Token inválido: não possui 3 partes separadas por ponto');
+        return null;
+      }
+      
+      const base64Url = parts[1];
+      if (!base64Url) {
+        console.error('Token inválido: payload vazio');
+        return null;
+      }
+      
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(
         atob(base64)
@@ -132,7 +149,16 @@ class AuthService {
           .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
           .join('')
       );
-      return JSON.parse(jsonPayload);
+      
+      const parsedPayload = JSON.parse(jsonPayload);
+      
+      // Verificar se o payload tem os campos essenciais
+      if (!parsedPayload || typeof parsedPayload !== 'object') {
+        console.error('Token inválido: payload não é um objeto válido');
+        return null;
+      }
+      
+      return parsedPayload;
     } catch (error) {
       console.error('Erro ao decodificar token:', error);
       return null;
@@ -147,7 +173,22 @@ class AuthService {
         return false;
       }
       
-      // Verificar se o token está revogado
+      // Verificar se o token tem formato válido
+      const tokenData = this.parseJwt(token);
+      if (!tokenData) {
+        console.log('Token com formato inválido detectado, fazendo logout automático');
+        await this.logout();
+        return false;
+      }
+      
+      // Verificar se o token está expirado
+      if (!tokenData.exp || tokenData.exp * 1000 <= Date.now()) {
+        console.log('Token expirado, fazendo logout automático');
+        await this.logout();
+        return false;
+      }
+      
+      // Verificar se o token está revogado no servidor
       const isRevoked = await this.isTokenRevoked(token);
       if (isRevoked) {
         console.log('Token revogado, fazendo logout automático');
@@ -155,10 +196,26 @@ class AuthService {
         return false;
       }
       
-      const tokenData = this.parseJwt(token);
-      return tokenData && tokenData.exp * 1000 > Date.now();
+      // Verificar se o token no cliente corresponde ao token_atual no servidor
+      if (tokenData.userId) {
+        try {
+          const isTokenValid = await this.validateTokenWithServer(token, tokenData.userId);
+          if (!isTokenValid) {
+            console.log('Token não corresponde ao armazenado no servidor, fazendo logout automático');
+            await this.logout();
+            return false;
+          }
+        } catch (error) {
+          console.error('Erro ao validar token com servidor:', error);
+          // Em caso de erro de rede, não deslogar automaticamente
+        }
+      }
+      
+      return true;
     } catch (error) {
       console.error('Erro ao verificar autenticação:', error);
+      // Em caso de erro crítico, fazer logout por segurança
+      await this.logout();
       return false;
     }
   }
@@ -175,7 +232,8 @@ class AuthService {
       const tokenData = this.parseJwt(token);
       
       if (!tokenData) {
-        console.error('Erro ao decodificar token para obter dados do usuário');
+        console.error('Token com formato inválido detectado ao buscar dados do usuário, fazendo logout');
+        await this.logout();
         return null;
       }
       
@@ -308,73 +366,18 @@ class AuthService {
 
   async validateTokenBeforeRequest() {
     try {
-      // Verificar se existe um token
-      const token = await this.getToken();
-      if (!token) {
-        console.warn('Nenhum token disponível para validação');
+      // Usar o método isAuthenticated que já faz todas as validações necessárias
+      const isAuth = await this.isAuthenticated();
+      
+      if (!isAuth) {
+        console.warn('Token inválido ou usuário não autenticado');
         return false;
-      }
-
-      // Verificar se o token está expirado
-      const tokenData = this.parseJwt(token);
-      if (!tokenData || !tokenData.exp) {
-        console.warn('Token inválido ou sem data de expiração');
-        return false;
-      }
-
-      const isExpired = tokenData.exp * 1000 < Date.now();
-      if (isExpired) {
-        console.warn('Token expirado, necessário fazer login novamente');
-        await this.logout();
-        return false;
-      }
-
-      // Verificar se o token foi revogado no servidor
-      const isRevoked = await this.isTokenRevoked(token);
-      if (isRevoked) {
-        console.warn('Token foi revogado no servidor');
-        await this.logout();
-        return false;
-      }
-
-      // Verificar se o token no cliente corresponde ao token_atual no servidor
-      // para o usuário logado
-      if (tokenData.userId) {
-        try {
-          const response = await fetch(`${API_URL}/usuario/${tokenData.userId}/validate-token`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ token })
-          });
-
-          if (response.ok) {
-            const result = await response.json();
-            if (!result.valid) {
-              console.warn('Token diferente do armazenado no servidor:', result.message);
-              
-              if (result.newToken) {
-                console.log('Recebendo novo token do servidor');
-                await this.setToken(result.newToken);
-                return true;
-              }
-              
-              await this.logout();
-              return false;
-            }
-            return true;
-          }
-        } catch (error) {
-          console.error('Erro ao validar token com servidor:', error);
-          // Continua mesmo com erro de validação no servidor
-        }
       }
 
       return true;
     } catch (error) {
-      console.error('Erro ao validar token:', error);
+      console.error('Erro ao validar token antes da requisição:', error);
+      await this.logout();
       return false;
     }
   }
@@ -429,6 +432,31 @@ class AuthService {
     }
   }
 
+  async validateTokenWithServer(token, userId) {
+    try {
+      const response = await fetch(`${API_URL}/usuario/${userId}/validate-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ token })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return result.valid === true;
+      }
+      
+      // Se a resposta não for ok, considerar token inválido
+      return false;
+    } catch (error) {
+      console.error('Erro ao validar token com servidor:', error);
+      // Em caso de erro de rede, assumir que o token é válido para não deslogar desnecessariamente
+      return true;
+    }
+  }
+
   async reautenticar(userId) {
     try {
       // Limpar tokens anteriores
@@ -467,6 +495,43 @@ class AuthService {
   async refreshToken(userId) {
     // Delegando para o método reautenticar
     return await this.reautenticar(userId);
+  }
+
+  // Método para detectar se o token foi modificado externamente
+  async detectTokenTampering() {
+    try {
+      const token = await this.getToken();
+      if (!token) {
+        return false; // Sem token, não há tampering
+      }
+
+      // Verificar se o token tem formato válido
+      const tokenData = this.parseJwt(token);
+      if (!tokenData) {
+        console.warn('Token com formato inválido detectado');
+        return true; // Token foi modificado/corrompido
+      }
+
+      // Verificar se o token está expirado
+      if (!tokenData.exp || tokenData.exp * 1000 <= Date.now()) {
+        console.warn('Token expirado detectado');
+        return true;
+      }
+
+      // Verificar com o servidor se o token é válido
+      if (tokenData.userId) {
+        const isValid = await this.validateTokenWithServer(token, tokenData.userId);
+        if (!isValid) {
+          console.warn('Token não corresponde ao armazenado no servidor');
+          return true;
+        }
+      }
+
+      return false; // Token está íntegro
+    } catch (error) {
+      console.error('Erro ao detectar tampering do token:', error);
+      return true; // Em caso de erro, assumir que há problema
+    }
   }
 }
 
