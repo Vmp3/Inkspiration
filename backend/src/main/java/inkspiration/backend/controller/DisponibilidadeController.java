@@ -19,15 +19,21 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import inkspiration.backend.dto.DisponibilidadeDTO;
 import inkspiration.backend.service.DisponibilidadeService;
+import inkspiration.backend.security.AuthorizationService;
+import inkspiration.backend.service.ProfissionalService;
 
 @RestController
 @RequestMapping("/disponibilidades")
 public class DisponibilidadeController {
     
     private final DisponibilidadeService disponibilidadeService;
+    private final AuthorizationService authorizationService;
+    private final ProfissionalService profissionalService;
     
-    public DisponibilidadeController(DisponibilidadeService disponibilidadeService) {
+    public DisponibilidadeController(DisponibilidadeService disponibilidadeService, AuthorizationService authorizationService, ProfissionalService profissionalService) {
         this.disponibilidadeService = disponibilidadeService;
+        this.authorizationService = authorizationService;
+        this.profissionalService = profissionalService;
     }
     
     @PostMapping("/profissional/{idProfissional}")
@@ -36,6 +42,13 @@ public class DisponibilidadeController {
             @RequestBody Map<String, List<Map<String, String>>> horarios) {
         
         try {
+            // Busca o profissional para obter o ID do usuário
+            var profissional = profissionalService.buscarPorId(idProfissional);
+            Long idUsuario = profissional.getUsuario().getIdUsuario();
+            
+            // Verifica se o usuário pode cadastrar disponibilidade para este profissional
+            authorizationService.requireUserAccessOrAdmin(idUsuario);
+            
             DisponibilidadeDTO disponibilidadeDTO = disponibilidadeService.cadastrarDisponibilidadeDTO(
                     idProfissional, horarios);
             return ResponseEntity.status(HttpStatus.CREATED).body(disponibilidadeDTO);
@@ -62,6 +75,13 @@ public class DisponibilidadeController {
     @GetMapping("/profissional/{idProfissional}/dto")
     public ResponseEntity<?> obterDisponibilidadeDTO(@PathVariable Long idProfissional) {
         try {
+            // Busca o profissional para obter o ID do usuário
+            var profissional = profissionalService.buscarPorId(idProfissional);
+            Long idUsuario = profissional.getUsuario().getIdUsuario();
+            
+            // Verifica se o usuário pode acessar a disponibilidade deste profissional
+            authorizationService.requireUserAccessOrAdmin(idUsuario);
+            
             DisponibilidadeDTO disponibilidadeDTO = disponibilidadeService.buscarPorProfissionalDTO(idProfissional);
             return ResponseEntity.ok(disponibilidadeDTO);
         } catch (Exception e) {
