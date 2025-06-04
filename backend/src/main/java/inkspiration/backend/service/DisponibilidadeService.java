@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
@@ -26,8 +27,13 @@ import inkspiration.backend.repository.ProfissionalRepository;
  * 
  * A disponibilidade é armazenada como um JSON na forma:
  * {
- *   "Segunda": {"inicio": "08:00", "fim": "18:00"},
- *   "Terça": {"inicio": "09:00", "fim": "19:00"},
+ *   "Segunda": [
+ *     {"inicio": "08:00", "fim": "12:00"},
+ *     {"inicio": "13:00", "fim": "18:00"}
+ *   ],
+ *   "Terça": [
+ *     {"inicio": "09:00", "fim": "19:00"}
+ *   ],
  *   ...
  * }
  * 
@@ -53,11 +59,11 @@ public class DisponibilidadeService {
      * Cadastra ou atualiza a disponibilidade de um profissional.
      * 
      * @param idProfissional ID do profissional
-     * @param horarios Mapa de dias da semana para horários de início e fim
+     * @param horarios Mapa de dias da semana para lista de períodos com horários de início e fim
      * @return A entidade de disponibilidade salva
      * @throws JsonProcessingException Se houver erro ao converter o mapa para JSON
      */
-    public Disponibilidade cadastrarDisponibilidade(Long idProfissional, Map<String, Map<String, String>> horarios) 
+    public Disponibilidade cadastrarDisponibilidade(Long idProfissional, Map<String, List<Map<String, String>>> horarios) 
             throws JsonProcessingException {
         Profissional profissional = profissionalRepository.findById(idProfissional)
                 .orElseThrow(() -> new RuntimeException("Profissional não encontrado"));
@@ -79,10 +85,10 @@ public class DisponibilidadeService {
      * Obtém a disponibilidade de um profissional como um mapa.
      * 
      * @param idProfissional ID do profissional
-     * @return Mapa de dias da semana para horários de início e fim
+     * @return Mapa de dias da semana para lista de períodos com horários de início e fim
      * @throws JsonProcessingException Se houver erro ao converter o JSON para mapa
      */
-    public Map<String, Map<String, String>> obterDisponibilidade(Long idProfissional) 
+    public Map<String, List<Map<String, String>>> obterDisponibilidade(Long idProfissional) 
             throws JsonProcessingException {
         Profissional profissional = profissionalRepository.findById(idProfissional)
                 .orElseThrow(() -> new RuntimeException("Profissional não encontrado"));
@@ -92,8 +98,8 @@ public class DisponibilidadeService {
                 .orElseThrow(() -> new RuntimeException("Disponibilidade não cadastrada"));
                 
         // Converter JSON para Map usando TypeReference
-        TypeReference<Map<String, Map<String, String>>> typeRef = 
-                new TypeReference<Map<String, Map<String, String>>>() {};
+        TypeReference<Map<String, List<Map<String, String>>>> typeRef = 
+                new TypeReference<Map<String, List<Map<String, String>>>>() {};
         return objectMapper.readValue(disponibilidade.getHrAtendimento(), typeRef);
     }
     
@@ -123,7 +129,7 @@ public class DisponibilidadeService {
         LocalTime horaFim = dataHoraFim.toLocalTime();
         
         // Obter a disponibilidade do profissional
-        Map<String, Map<String, String>> disponibilidade = obterDisponibilidade(idProfissional);
+        Map<String, List<Map<String, String>>> disponibilidade = obterDisponibilidade(idProfissional);
         
         // Nome do dia em português
         String nomeDia = obterNomeDiaSemana(diaSemana);
@@ -134,16 +140,20 @@ public class DisponibilidadeService {
         }
         
         // Verificar se o horário está dentro do período de trabalho
-        Map<String, String> horariosDia = disponibilidade.get(nomeDia);
-        if (horariosDia.containsKey("inicio") && horariosDia.containsKey("fim")) {
-            LocalTime inicioTrabalho = LocalTime.parse(horariosDia.get("inicio"));
-            LocalTime fimTrabalho = LocalTime.parse(horariosDia.get("fim"));
-            
-            // Verifica se o horário de início e fim estão dentro do horário de trabalho
-            boolean inicioValido = !horaInicio.isBefore(inicioTrabalho) && !horaInicio.isAfter(fimTrabalho);
-            boolean fimValido = !horaFim.isBefore(inicioTrabalho) && !horaFim.isAfter(fimTrabalho);
-            
-            return inicioValido && fimValido;
+        List<Map<String, String>> horariosDia = disponibilidade.get(nomeDia);
+        for (Map<String, String> horario : horariosDia) {
+            if (horario.containsKey("inicio") && horario.containsKey("fim")) {
+                LocalTime inicioTrabalho = LocalTime.parse(horario.get("inicio"));
+                LocalTime fimTrabalho = LocalTime.parse(horario.get("fim"));
+                
+                // Verifica se o horário de início e fim estão dentro do horário de trabalho
+                boolean inicioValido = !horaInicio.isBefore(inicioTrabalho) && !horaInicio.isAfter(fimTrabalho);
+                boolean fimValido = !horaFim.isBefore(inicioTrabalho) && !horaFim.isAfter(fimTrabalho);
+                
+                if (inicioValido && fimValido) {
+                    return true;
+                }
+            }
         }
         
         return false;
@@ -199,11 +209,11 @@ public class DisponibilidadeService {
      * Cadastra ou atualiza a disponibilidade de um profissional e retorna como DTO.
      * 
      * @param idProfissional ID do profissional
-     * @param horarios Mapa de dias da semana para horários de início e fim
+     * @param horarios Mapa de dias da semana para lista de períodos com horários de início e fim
      * @return DTO com os dados da disponibilidade salva
      * @throws JsonProcessingException Se houver erro ao converter o mapa para JSON
      */
-    public DisponibilidadeDTO cadastrarDisponibilidadeDTO(Long idProfissional, Map<String, Map<String, String>> horarios) 
+    public DisponibilidadeDTO cadastrarDisponibilidadeDTO(Long idProfissional, Map<String, List<Map<String, String>>> horarios) 
             throws JsonProcessingException {
         Disponibilidade disponibilidade = cadastrarDisponibilidade(idProfissional, horarios);
         return new DisponibilidadeDTO(disponibilidade);
