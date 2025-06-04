@@ -1,7 +1,9 @@
 package inkspiration.backend.service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +18,6 @@ import inkspiration.backend.dto.EnderecoDTO;
 import inkspiration.backend.dto.PortifolioDTO;
 import inkspiration.backend.dto.ProfissionalCriacaoDTO;
 import inkspiration.backend.dto.ProfissionalDTO;
-import inkspiration.backend.dto.ProfissionalCompletoDTO;
-import inkspiration.backend.dto.UsuarioSeguroDTO;
 import inkspiration.backend.entities.Endereco;
 import inkspiration.backend.entities.Portifolio;
 import inkspiration.backend.entities.Profissional;
@@ -112,22 +112,32 @@ public class ProfissionalService {
     /**
      * Cria um profissional completo, com portifólio e disponibilidade em uma única transação.
      * Se qualquer parte do processo falhar, toda a transação é revertida.
+     * Se o profissional já existir, será atualizado em vez de criado.
      * 
      * @param dto O DTO contendo todas as informações para criar o profissional e suas entidades relacionadas
-     * @return O profissional criado
+     * @return O profissional criado ou atualizado
      * @throws JsonProcessingException Caso ocorra um erro no processamento do JSON de disponibilidade
      */
     @Transactional
     public Profissional criarProfissionalCompleto(ProfissionalCriacaoDTO dto) throws JsonProcessingException {
-        // 1. Criar o profissional
-        ProfissionalDTO profissionalDTO = new ProfissionalDTO();
-        profissionalDTO.setIdUsuario(dto.getIdUsuario());
-        profissionalDTO.setIdEndereco(dto.getIdEndereco());
-        profissionalDTO.setNota(new BigDecimal("0.0")); // Nota inicial sempre zero
+        // 1. Verificar se já existe um profissional para este usuário
+        Profissional profissional;
+        boolean isUpdate = false;
         
-        Profissional profissional = criar(profissionalDTO);
+        try {
+            profissional = buscarPorUsuario(dto.getIdUsuario());
+            isUpdate = true;
+        } catch (ResourceNotFoundException e) {
+            // Profissional não existe, criar um novo
+            ProfissionalDTO profissionalDTO = new ProfissionalDTO();
+            profissionalDTO.setIdUsuario(dto.getIdUsuario());
+            profissionalDTO.setIdEndereco(dto.getIdEndereco());
+            profissionalDTO.setNota(new BigDecimal("0.0")); // Nota inicial sempre zero
+            
+            profissional = criar(profissionalDTO);
+        }
         
-        // 2. Criar o portifólio
+        // 2. Criar ou atualizar o portifólio
         PortifolioDTO portifolioDTO = new PortifolioDTO();
         portifolioDTO.setIdProfissional(profissional.getIdProfissional());
         portifolioDTO.setDescricao(dto.getDescricao());
@@ -144,11 +154,19 @@ public class ProfissionalService {
             // TODO: Adicionar estilos de tatuagem ao portifólio
         }
         
-        Portifolio portifolio = portifolioService.criar(portifolioDTO);
+        Portifolio portifolio;
+        if (isUpdate && profissional.getPortifolio() != null) {
+            // Atualizar portfólio existente
+            portifolioDTO.setIdPortifolio(profissional.getPortifolio().getIdPortifolio());
+            portifolio = portifolioService.atualizar(profissional.getPortifolio().getIdPortifolio(), portifolioDTO);
+        } else {
+            // Criar novo portfólio
+            portifolio = portifolioService.criar(portifolioDTO);
+        }
         
-        // 3. Criar as disponibilidades
+        // 3. Criar ou atualizar as disponibilidades
         if (dto.getDisponibilidades() != null && !dto.getDisponibilidades().isEmpty()) {
-            Map<String, Map<String, String>> horarios = new HashMap<>();
+            Map<String, List<Map<String, String>>> horarios = new HashMap<>();
             
             // Converter do formato da API para o formato esperado pelo serviço
             dto.getDisponibilidades().forEach(dispDTO -> {
@@ -160,14 +178,16 @@ public class ProfissionalService {
                     String inicio = partes[1];
                     String fim = partes[2];
                     
-                    Map<String, String> horario = new HashMap<>();
-                    horario.put("inicio", inicio);
-                    horario.put("fim", fim);
+                    Map<String, String> periodo = new HashMap<>();
+                    periodo.put("inicio", inicio);
+                    periodo.put("fim", fim);
                     
-                    horarios.put(diaSemana, horario);
+                    // Se o dia ainda não existe no mapa, criar uma lista
+                    horarios.computeIfAbsent(diaSemana, k -> new ArrayList<>()).add(periodo);
                 }
             });
             
+            // O serviço de disponibilidade já lida com criar ou atualizar automaticamente
             disponibilidadeService.cadastrarDisponibilidade(profissional.getIdProfissional(), horarios);
         }
         
@@ -253,42 +273,5 @@ public class ProfissionalService {
     private Endereco buscarEnderecoPorId(Long idEndereco) {
         return enderecoRepository.findById(idEndereco)
             .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado com ID: " + idEndereco));
-    }
-
-    public ProfissionalCompletoDTO buscarCompletosPorId(Long id) {
-        Profissional profissional = buscarPorId(id);
-        return converterParaCompletoDto(profissional);
-    }
-    
-    public Page<ProfissionalCompletoDTO> listarCompletos(Pageable pageable) {
-        Page<Profissional> profissionais = profissionalRepository.findAll(pageable);
-        return profissionais.map(this::converterParaCompletoDto);
-    }
-
-    public ProfissionalCompletoDTO converterParaCompletoDto(Profissional profissional) {
-        if (profissional == null) return null;
-        
-        UsuarioSeguroDTO usuarioDTO = null;
-        if (profissional.getUsuario() != null) {
-            usuarioDTO = UsuarioSeguroDTO.fromUsuario(profissional.getUsuario());
-        }
-        
-        EnderecoDTO enderecoDTO = null;
-        if (profissional.getEndereco() != null) {
-            enderecoDTO = converterEnderecoParaDto(profissional.getEndereco());
-        }
-        
-        PortifolioDTO portifolioDTO = null;
-        if (profissional.getPortifolio() != null) {
-            portifolioDTO = portifolioService.converterParaDto(profissional.getPortifolio());
-        }
-        
-        return new ProfissionalCompletoDTO(
-            profissional.getIdProfissional(),
-            profissional.getNota(),
-            usuarioDTO,
-            enderecoDTO,
-            portifolioDTO
-        );
     }
 } 

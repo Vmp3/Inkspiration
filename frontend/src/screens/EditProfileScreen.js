@@ -251,23 +251,28 @@ const EditProfileScreen = () => {
         ];
 
         if (disponibilidades && Object.keys(disponibilidades).length > 0) {
-          Object.entries(disponibilidades).forEach(([day, horario]) => {
+          Object.entries(disponibilidades).forEach(([day, horarios]) => {
             const dayIndex = workHours.findIndex(wh => wh.day === day);
             
-            if (dayIndex >= 0 && horario && horario.inicio && horario.fim) {
+            if (dayIndex >= 0 && Array.isArray(horarios) && horarios.length > 0) {
               workHours[dayIndex].available = true;
               
-              // Determinar se é manhã ou tarde baseado no horário
-              const startHour = parseInt(horario.inicio.split(':')[0]);
-              if (startHour < 13) {
-                workHours[dayIndex].morning.enabled = true;
-                workHours[dayIndex].morning.start = horario.inicio;
-                workHours[dayIndex].morning.end = horario.fim;
-              } else {
-                workHours[dayIndex].afternoon.enabled = true;
-                workHours[dayIndex].afternoon.start = horario.inicio;
-                workHours[dayIndex].afternoon.end = horario.fim;
-              }
+              // Processar cada período de horário para o dia
+              horarios.forEach(horario => {
+                if (horario && horario.inicio && horario.fim) {
+                  // Determinar se é manhã ou tarde baseado no horário
+                  const startHour = parseInt(horario.inicio.split(':')[0]);
+                  if (startHour < 13) {
+                    workHours[dayIndex].morning.enabled = true;
+                    workHours[dayIndex].morning.start = horario.inicio;
+                    workHours[dayIndex].morning.end = horario.fim;
+                  } else {
+                    workHours[dayIndex].afternoon.enabled = true;
+                    workHours[dayIndex].afternoon.start = horario.inicio;
+                    workHours[dayIndex].afternoon.end = horario.fim;
+                  }
+                }
+              });
             }
           });
         }
@@ -989,7 +994,7 @@ const EditProfileScreen = () => {
 
   const updateProfessionalData = async () => {
     try {
-      // Preparar disponibilidades (horários de trabalho)
+      // Preparar disponibilidades (horários de trabalho) - igual ao ProfessionalRegisterScreen
       const disponibilidades = [];
       professionalFormData.workHours.forEach(day => {
         if (day.available) {
@@ -1009,7 +1014,7 @@ const EditProfileScreen = () => {
       // Preparar especialidades selecionadas
       const selectedSpecialties = Object.keys(professionalFormData.specialties).filter(key => professionalFormData.specialties[key]);
       
-      // Preparar objeto com formato esperado pelo backend (ProfissionalCriacaoDTO)
+      // Preparar objeto com formato esperado pelo backend (ProfissionalCriacaoDTO) - igual ao ProfessionalRegisterScreen
       const professionalUpdateData = {
         idUsuario: userData.idUsuario,
         idEndereco: userData.endereco?.idEndereco,
@@ -1025,7 +1030,7 @@ const EditProfileScreen = () => {
         disponibilidades: disponibilidades
       };
       
-      // Atualizar dados profissionais
+      // Usar o mesmo endpoint que já está funcionando no ProfessionalRegisterScreen
       await ApiService.put(`/profissional/usuario/${userData.idUsuario}/atualizar-completo`, professionalUpdateData);
       
       // Upload das imagens

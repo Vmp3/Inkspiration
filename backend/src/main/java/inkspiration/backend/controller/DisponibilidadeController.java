@@ -1,6 +1,7 @@
 package inkspiration.backend.controller;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.format.annotation.DateTimeFormat;
@@ -32,7 +33,7 @@ public class DisponibilidadeController {
     @PostMapping("/profissional/{idProfissional}")
     public ResponseEntity<?> cadastrarDisponibilidade(
             @PathVariable Long idProfissional,
-            @RequestBody Map<String, Map<String, String>> horarios) {
+            @RequestBody Map<String, List<Map<String, String>>> horarios) {
         
         try {
             DisponibilidadeDTO disponibilidadeDTO = disponibilidadeService.cadastrarDisponibilidadeDTO(
@@ -48,7 +49,7 @@ public class DisponibilidadeController {
     @GetMapping("/profissional/{idProfissional}")
     public ResponseEntity<?> obterDisponibilidade(@PathVariable Long idProfissional) {
         try {
-            Map<String, Map<String, String>> disponibilidade = 
+            Map<String, List<Map<String, String>>> disponibilidade = 
                     disponibilidadeService.obterDisponibilidade(idProfissional);
             return ResponseEntity.ok(disponibilidade);
         } catch (JsonProcessingException e) {
