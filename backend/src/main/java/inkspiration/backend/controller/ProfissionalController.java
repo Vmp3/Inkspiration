@@ -3,6 +3,8 @@ package inkspiration.backend.controller;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,10 +28,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import inkspiration.backend.dto.ImagemDTO;
 import inkspiration.backend.dto.ProfissionalCriacaoDTO;
 import inkspiration.backend.dto.ProfissionalDTO;
-import inkspiration.backend.dto.ProfissionalCompletoDTO;
+import inkspiration.backend.dto.PortifolioDTO;
+import inkspiration.backend.dto.DisponibilidadeDTO;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.service.ImagemService;
 import inkspiration.backend.service.ProfissionalService;
+import inkspiration.backend.service.PortifolioService;
+import inkspiration.backend.service.DisponibilidadeService;
 import jakarta.validation.Valid;
 
 @RestController
@@ -37,11 +42,15 @@ public class ProfissionalController {
 
     private final ProfissionalService profissionalService;
     private final ImagemService imagemService;
+    private final PortifolioService portifolioService;
+    private final DisponibilidadeService disponibilidadeService;
 
     @Autowired
-    public ProfissionalController(ProfissionalService profissionalService, ImagemService imagemService) {
+    public ProfissionalController(ProfissionalService profissionalService, ImagemService imagemService, PortifolioService portifolioService, DisponibilidadeService disponibilidadeService) {
         this.profissionalService = profissionalService;
         this.imagemService = imagemService;
+        this.portifolioService = portifolioService;
+        this.disponibilidadeService = disponibilidadeService;
     }
 
     @GetMapping("/profissional")
@@ -67,6 +76,50 @@ public class ProfissionalController {
         try {
             Profissional profissional = profissionalService.buscarPorUsuario(idUsuario);
             return ResponseEntity.ok(profissionalService.converterParaDto(profissional));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @GetMapping("/profissional/usuario/{idUsuario}/completo")
+    public ResponseEntity<?> buscarProfissionalCompleto(@PathVariable Long idUsuario) {
+        try {
+            // Buscar o profissional pelo ID do usuário
+            Profissional profissional = profissionalService.buscarPorUsuario(idUsuario);
+            
+            // Converter para DTO básico
+            ProfissionalDTO profissionalDto = profissionalService.converterParaDto(profissional);
+            
+            // Buscar dados do portfólio
+            PortifolioDTO portfolioDto = null;
+            if (profissional.getPortifolio() != null) {
+                portfolioDto = portifolioService.converterParaDto(profissional.getPortifolio());
+            }
+            
+            // Buscar imagens do portfólio se existir
+            List<ImagemDTO> imagens = Collections.emptyList();
+            if (profissional.getPortifolio() != null) {
+                imagens = imagemService.listarPorPortifolio(profissional.getPortifolio().getIdPortifolio());
+            }
+            
+            // Buscar disponibilidades
+            Map<String, Map<String, String>> disponibilidades = Collections.emptyMap();
+            try {
+                // Retornar o Map diretamente como no endpoint /disponibilidades/profissional/1
+                disponibilidades = disponibilidadeService.obterDisponibilidade(profissional.getIdProfissional());
+            } catch (Exception e) {
+                // Se não houver disponibilidades cadastradas, manter mapa vazio
+                System.out.println("Nenhuma disponibilidade encontrada para o profissional: " + e.getMessage());
+            }
+            
+            // Criar resposta com todas as informações necessárias para edição
+            Map<String, Object> response = new HashMap<>();
+            response.put("profissional", profissionalDto);
+            response.put("portfolio", portfolioDto);
+            response.put("imagens", imagens);
+            response.put("disponibilidades", disponibilidades);
+            
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
@@ -118,6 +171,38 @@ public class ProfissionalController {
         return ResponseEntity.ok(profissionalService.converterParaDto(profissionalAtualizado));
     }
 
+    @PutMapping("/profissional/usuario/{idUsuario}/atualizar-completo")
+    public ResponseEntity<?> atualizarProfissionalCompleto(@PathVariable Long idUsuario, @RequestBody @Valid ProfissionalCriacaoDTO dto) {
+        try {
+            // Buscar o profissional pelo ID do usuário
+            Profissional profissionalExistente = profissionalService.buscarPorUsuario(idUsuario);
+            
+            // Verificar autorização
+            Authentication autenticacao = SecurityContextHolder.getContext().getAuthentication();
+            if (autenticacao != null) {
+                boolean isAdmin = autenticacao.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                
+                String cpfAutenticado = autenticacao.getName();
+                String cpfProfissional = profissionalExistente.getUsuario().getUsuarioAutenticar().getCpf();
+                
+                if (!isAdmin && !cpfAutenticado.equals(cpfProfissional)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+            }
+            
+            // Garantir que o DTO tem o ID do usuário correto
+            dto.setIdUsuario(idUsuario);
+            
+            // Para atualização, vamos usar o método de criação que já trata todos os campos
+            // O service deve detectar se já existe e fazer update em vez de create
+            Profissional profissionalAtualizado = profissionalService.criarProfissionalCompleto(dto);
+            return ResponseEntity.ok(profissionalService.converterParaDto(profissionalAtualizado));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
     @DeleteMapping("/profissional/deletar/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         // Verifica se o usuário autenticado é o dono do perfil ou um admin
@@ -152,18 +237,5 @@ public class ProfissionalController {
         List<ImagemDTO> imagens = imagemService.listarPorPortifolio(idPortifolio);
         
         return ResponseEntity.ok(imagens);
-    }
-
-    @GetMapping("/profissional/completo")
-    public ResponseEntity<List<ProfissionalCompletoDTO>> listarCompletos(@RequestParam(defaultValue = "0") int page) {
-        Pageable pageable = PageRequest.of(page, 10);
-        Page<ProfissionalCompletoDTO> profissionais = profissionalService.listarCompletos(pageable);
-        return ResponseEntity.ok(profissionais.getContent());
-    }
-
-    @GetMapping("/profissional/completo/{id}")
-    public ResponseEntity<ProfissionalCompletoDTO> buscarCompletoPorId(@PathVariable Long id) {
-        ProfissionalCompletoDTO profissional = profissionalService.buscarCompletosPorId(id);
-        return ResponseEntity.ok(profissional);
     }
 } 
