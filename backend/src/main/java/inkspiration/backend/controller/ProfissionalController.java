@@ -83,6 +83,78 @@ public class ProfissionalController {
         return ResponseEntity.ok(dtos);
     }
 
+    @GetMapping("/profissional/completo")
+    public ResponseEntity<List<Map<String, Object>>> listarCompleto(@RequestParam(defaultValue = "0") int page) {
+        // Endpoint público para listar profissionais com informações completas (portfolio, endereço, nota)
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<Profissional> profissionais = profissionalService.listar(pageable);
+        
+        List<Map<String, Object>> profissionaisCompletos = profissionais.getContent().stream()
+                .map(profissional -> {
+                    Map<String, Object> profissionalCompleto = new HashMap<>();
+                    
+                    // Informações básicas do profissional
+                    ProfissionalDTO profissionalDto = profissionalService.converterParaDto(profissional);
+                    profissionalCompleto.put("profissional", profissionalDto);
+                    
+                    // Informações do usuário (nome e outros dados)
+                    Map<String, Object> usuarioInfo = new HashMap<>();
+                    if (profissional.getUsuario() != null) {
+                        usuarioInfo.put("idUsuario", profissional.getUsuario().getIdUsuario());
+                        usuarioInfo.put("nome", profissional.getUsuario().getNome());
+                        usuarioInfo.put("email", profissional.getUsuario().getEmail());
+                        usuarioInfo.put("telefone", profissional.getUsuario().getTelefone());
+                        usuarioInfo.put("imagemPerfil", profissional.getUsuario().getImagemPerfil());
+                    }
+                    profissionalCompleto.put("usuario", usuarioInfo);
+                    
+                    // Informações do endereço
+                    Map<String, Object> enderecoInfo = new HashMap<>();
+                    if (profissional.getEndereco() != null) {
+                        enderecoInfo.put("idEndereco", profissional.getEndereco().getIdEndereco());
+                        enderecoInfo.put("cep", profissional.getEndereco().getCep());
+                        enderecoInfo.put("rua", profissional.getEndereco().getRua());
+                        enderecoInfo.put("bairro", profissional.getEndereco().getBairro());
+                        enderecoInfo.put("cidade", profissional.getEndereco().getCidade());
+                        enderecoInfo.put("estado", profissional.getEndereco().getEstado());
+                        enderecoInfo.put("numero", profissional.getEndereco().getNumero());
+                        enderecoInfo.put("complemento", profissional.getEndereco().getComplemento());
+                        enderecoInfo.put("latitude", profissional.getEndereco().getLatitude());
+                        enderecoInfo.put("longitude", profissional.getEndereco().getLongitude());
+                    }
+                    profissionalCompleto.put("endereco", enderecoInfo);
+                    
+                    // Buscar dados do portfólio
+                    PortifolioDTO portfolioDto = null;
+                    if (profissional.getPortifolio() != null) {
+                        portfolioDto = portifolioService.converterParaDto(profissional.getPortifolio());
+                    }
+                    profissionalCompleto.put("portfolio", portfolioDto);
+                    
+                    // Buscar imagens do portfólio se existir
+                    List<ImagemDTO> imagens = Collections.emptyList();
+                    if (profissional.getPortifolio() != null) {
+                        imagens = imagemService.listarPorPortifolio(profissional.getPortifolio().getIdPortifolio());
+                    }
+                    profissionalCompleto.put("imagens", imagens);
+                    
+                    // Buscar disponibilidades
+                    Map<String, List<Map<String, String>>> disponibilidades = Collections.emptyMap();
+                    try {
+                        disponibilidades = disponibilidadeService.obterDisponibilidade(profissional.getIdProfissional());
+                    } catch (Exception e) {
+                        // Se não houver disponibilidades cadastradas, manter mapa vazio
+                        System.out.println("Nenhuma disponibilidade encontrada para o profissional: " + e.getMessage());
+                    }
+                    profissionalCompleto.put("disponibilidades", disponibilidades);
+                    
+                    return profissionalCompleto;
+                })
+                .collect(Collectors.toList());
+                
+        return ResponseEntity.ok(profissionaisCompletos);
+    }
+
     @GetMapping("/profissional/{id}")
     public ResponseEntity<ProfissionalDTO> buscarPorId(@PathVariable Long id) {
         Profissional profissional = profissionalService.buscarPorId(id);
