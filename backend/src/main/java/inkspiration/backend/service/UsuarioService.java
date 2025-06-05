@@ -2,7 +2,6 @@ package inkspiration.backend.service;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,10 +34,8 @@ import jakarta.servlet.http.HttpServletRequest;
 public class UsuarioService {
 
     private final UsuarioRepository repository;
-    private final UsuarioAutenticarRepository autenticarRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final HttpServletRequest request;
     private final TokenRevogadoRepository tokenRevogadoRepository;
 
     @Autowired
@@ -49,10 +46,8 @@ public class UsuarioService {
                          HttpServletRequest request,
                          TokenRevogadoRepository tokenRevogadoRepository) {
         this.repository = repository;
-        this.autenticarRepository = autenticarRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
-        this.request = request;
         this.tokenRevogadoRepository = tokenRevogadoRepository;
     }
 

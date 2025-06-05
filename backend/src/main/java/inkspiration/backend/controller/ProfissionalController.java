@@ -29,7 +29,6 @@ import inkspiration.backend.dto.ImagemDTO;
 import inkspiration.backend.dto.ProfissionalCriacaoDTO;
 import inkspiration.backend.dto.ProfissionalDTO;
 import inkspiration.backend.dto.PortifolioDTO;
-import inkspiration.backend.dto.DisponibilidadeDTO;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.service.ImagemService;
 import inkspiration.backend.service.ProfissionalService;
