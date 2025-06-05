@@ -1,19 +1,25 @@
 package inkspiration.backend.enums;
 
 public enum TipoServico {
-    TATUAGEM_PEQUENA("tatuagem pequena"),
-    TATUAGEM_MEDIA("tatuagem media"),
-    TATUAGEM_GRANDE("tatuagem grande"),
-    SESSAO("sessão");
+    TATUAGEM_PEQUENA("tatuagem pequena", 2),
+    TATUAGEM_MEDIA("tatuagem media", 4),
+    TATUAGEM_GRANDE("tatuagem grande", 6),
+    SESSAO("sessão", 8);
     
     private final String descricao;
+    private final int duracaoHoras;
     
-    TipoServico(String descricao) {
+    TipoServico(String descricao, int duracaoHoras) {
         this.descricao = descricao;
+        this.duracaoHoras = duracaoHoras;
     }
     
     public String getDescricao() {
         return descricao;
+    }
+    
+    public int getDuracaoHoras() {
+        return duracaoHoras;
     }
     
     public static TipoServico fromDescricao(String descricao) {

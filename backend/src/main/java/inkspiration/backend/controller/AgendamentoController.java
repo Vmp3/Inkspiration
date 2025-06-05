@@ -2,6 +2,7 @@ package inkspiration.backend.controller;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,8 +47,7 @@ public class AgendamentoController {
                     request.getIdProfissional(),
                     request.getTipoServico(),
                     request.getDescricao(),
-                    request.getDtInicio(),
-                    request.getDtFim());
+                    request.getDtInicio());
             return ResponseEntity.status(HttpStatus.CREATED).body(new AgendamentoDTO(agendamento));
         } catch (Exception e) {
             String errorMessage = e.getMessage();
@@ -129,7 +129,7 @@ public class AgendamentoController {
         try {
             Agendamento agendamento = agendamentoService.atualizarAgendamento(
                     id, request.getTipoServico(), request.getDescricao(), 
-                    request.getDtInicio(), request.getDtFim());
+                    request.getDtInicio());
             return ResponseEntity.ok(new AgendamentoDTO(agendamento));
         } catch (Exception e) {
             String errorMessage = e.getMessage();
@@ -153,11 +153,27 @@ public class AgendamentoController {
     @GetMapping("/tipos-servico")
     public ResponseEntity<?> listarTiposServico() {
         try {
-            List<String> tiposServico = List.of(
-                TipoServico.TATUAGEM_PEQUENA.getDescricao(),
-                TipoServico.TATUAGEM_MEDIA.getDescricao(),
-                TipoServico.TATUAGEM_GRANDE.getDescricao(),
-                TipoServico.SESSAO.getDescricao()
+            List<Map<String, Object>> tiposServico = List.of(
+                Map.of(
+                    "tipo", TipoServico.TATUAGEM_PEQUENA.getDescricao(),
+                    "duracaoHoras", TipoServico.TATUAGEM_PEQUENA.getDuracaoHoras(),
+                    "exemplo", "Início: 10:00 → Fim: 11:59:59"
+                ),
+                Map.of(
+                    "tipo", TipoServico.TATUAGEM_MEDIA.getDescricao(),
+                    "duracaoHoras", TipoServico.TATUAGEM_MEDIA.getDuracaoHoras(),
+                    "exemplo", "Início: 10:00 → Fim: 13:59:59"
+                ),
+                Map.of(
+                    "tipo", TipoServico.TATUAGEM_GRANDE.getDescricao(),
+                    "duracaoHoras", TipoServico.TATUAGEM_GRANDE.getDuracaoHoras(),
+                    "exemplo", "Início: 10:00 → Fim: 15:59:59"
+                ),
+                Map.of(
+                    "tipo", TipoServico.SESSAO.getDescricao(),
+                    "duracaoHoras", TipoServico.SESSAO.getDuracaoHoras(),
+                    "exemplo", "Início: 10:00 → Fim: 17:59:59"
+                )
             );
             return ResponseEntity.ok(tiposServico);
         } catch (Exception e) {

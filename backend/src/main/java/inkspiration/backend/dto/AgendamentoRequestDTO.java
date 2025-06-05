@@ -17,9 +17,6 @@ public class AgendamentoRequestDTO {
     @NotNull(message = "Data de início é obrigatória")
     private LocalDateTime dtInicio;
     
-    @NotNull(message = "Data de fim é obrigatória")
-    private LocalDateTime dtFim;
-    
     @NotNull(message = "ID do profissional é obrigatório")
     private Long idProfissional;
     
@@ -28,12 +25,11 @@ public class AgendamentoRequestDTO {
 
     public AgendamentoRequestDTO() {}
 
-    public AgendamentoRequestDTO(String tipoServico, String descricao, LocalDateTime dtInicio, LocalDateTime dtFim, 
+    public AgendamentoRequestDTO(String tipoServico, String descricao, LocalDateTime dtInicio, 
                                Long idProfissional, Long idUsuario) {
         this.tipoServico = tipoServico;
         this.descricao = descricao;
         this.dtInicio = dtInicio;
-        this.dtFim = dtFim;
         this.idProfissional = idProfissional;
         this.idUsuario = idUsuario;
     }
@@ -60,14 +56,6 @@ public class AgendamentoRequestDTO {
 
     public void setDtInicio(LocalDateTime dtInicio) {
         this.dtInicio = dtInicio;
-    }
-
-    public LocalDateTime getDtFim() {
-        return dtFim;
-    }
-
-    public void setDtFim(LocalDateTime dtFim) {
-        this.dtFim = dtFim;
     }
 
     public Long getIdProfissional() {

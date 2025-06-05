@@ -40,9 +40,20 @@ public class AgendamentoService {
         this.disponibilidadeService = disponibilidadeService;
     }
     
+    private LocalDateTime ajustarHorarioInicio(LocalDateTime dtInicio) {
+        return dtInicio.withMinute(0).withSecond(0).withNano(0);
+    }
+    
+    private LocalDateTime calcularHorarioFim(LocalDateTime dtInicioAjustado, TipoServico tipoServico) {
+        return dtInicioAjustado
+                .plusHours(tipoServico.getDuracaoHoras())
+                .minusSeconds(1) 
+                .withNano(0);
+    }
+    
     @Transactional
     public Agendamento criarAgendamento(Long idUsuario, Long idProfissional, String tipoServicoStr, 
-            String descricao, LocalDateTime dtInicio, LocalDateTime dtFim) throws Exception {
+            String descricao, LocalDateTime dtInicio) throws Exception {
         
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
@@ -58,19 +69,27 @@ public class AgendamentoService {
                     "tatuagem pequena, tatuagem media, tatuagem grande, sessão");
         }
         
+        LocalDateTime dtInicioAjustado = ajustarHorarioInicio(dtInicio);
+        
+        LocalDateTime dtFim = calcularHorarioFim(dtInicioAjustado, tipoServico);
+        
         try {
             boolean estaNoHorarioDeTrabalho = disponibilidadeService.isProfissionalDisponivel(
-                    idProfissional, dtInicio, dtFim);
+                    idProfissional, dtInicioAjustado, dtFim);
             
             if (!estaNoHorarioDeTrabalho) {
-                throw new RuntimeException("O profissional não está trabalhando nesse horário");
+                throw new RuntimeException("O profissional não está trabalhando nesse horário. " +
+                        "Horário necessário: " + dtInicioAjustado.toLocalTime() + " às " + dtFim.toLocalTime() +
+                        " (" + tipoServico.getDuracaoHoras() + " horas)");
             }
             
             boolean existeConflito = agendamentoRepository.existsConflitingSchedule(
-                    idProfissional, dtInicio, dtFim);
+                    idProfissional, dtInicioAjustado, dtFim);
             
             if (existeConflito) {
-                throw new RuntimeException("O profissional já possui outro agendamento nesse horário");
+                throw new RuntimeException("O profissional já possui outro agendamento nesse horário. " +
+                        "Horário necessário: " + dtInicioAjustado.toLocalTime() + " às " + dtFim.toLocalTime() +
+                        " (" + tipoServico.getDuracaoHoras() + " horas)");
             }
             
             Agendamento agendamento = new Agendamento();
@@ -78,7 +97,7 @@ public class AgendamentoService {
             agendamento.setProfissional(profissional);
             agendamento.setTipoServico(tipoServico);
             agendamento.setDescricao(descricao);
-            agendamento.setDtInicio(dtInicio);
+            agendamento.setDtInicio(dtInicioAjustado);
             agendamento.setDtFim(dtFim);
             
             return agendamentoRepository.save(agendamento);
@@ -129,7 +148,7 @@ public class AgendamentoService {
     
     @Transactional
     public Agendamento atualizarAgendamento(Long id, String tipoServicoStr, String descricao,
-            LocalDateTime dtInicio, LocalDateTime dtFim) throws Exception {
+            LocalDateTime dtInicio) throws Exception {
         
         Agendamento agendamento = buscarPorId(id);
         
@@ -141,27 +160,35 @@ public class AgendamentoService {
                     "tatuagem pequena, tatuagem media, tatuagem grande, sessão");
         }
         
-        if (!agendamento.getDtInicio().equals(dtInicio) || !agendamento.getDtFim().equals(dtFim)) {
+        LocalDateTime dtInicioAjustado = ajustarHorarioInicio(dtInicio);
+        
+        LocalDateTime dtFim = calcularHorarioFim(dtInicioAjustado, tipoServico);
+        
+        if (!agendamento.getDtInicio().equals(dtInicioAjustado) || !agendamento.getDtFim().equals(dtFim)) {
             try {
                 boolean estaNoHorarioDeTrabalho = disponibilidadeService.isProfissionalDisponivel(
-                        agendamento.getProfissional().getIdProfissional(), dtInicio, dtFim);
+                        agendamento.getProfissional().getIdProfissional(), dtInicioAjustado, dtFim);
                 
                 if (!estaNoHorarioDeTrabalho) {
-                    throw new RuntimeException("O profissional não está trabalhando nesse horário");
+                    throw new RuntimeException("O profissional não está trabalhando nesse horário. " +
+                            "Horário necessário: " + dtInicioAjustado.toLocalTime() + " às " + dtFim.toLocalTime() +
+                            " (" + tipoServico.getDuracaoHoras() + " horas)");
                 }
                 
                 List<Agendamento> agendamentosConflitantes = agendamentoRepository
                         .findByProfissionalAndPeriod(
                                 agendamento.getProfissional().getIdProfissional(), 
-                                dtInicio.minusHours(1), 
+                                dtInicioAjustado.minusHours(1), 
                                 dtFim.plusHours(1))
                         .stream()
                         .filter(a -> !a.getIdAgendamento().equals(id)) 
-                        .filter(a -> (a.getDtInicio().isBefore(dtFim) && a.getDtFim().isAfter(dtInicio)))
+                        .filter(a -> (a.getDtInicio().isBefore(dtFim) && a.getDtFim().isAfter(dtInicioAjustado)))
                         .collect(Collectors.toList());
                 
                 if (!agendamentosConflitantes.isEmpty()) {
-                    throw new RuntimeException("O profissional já possui outro agendamento nesse horário");
+                    throw new RuntimeException("O profissional já possui outro agendamento nesse horário. " +
+                            "Horário necessário: " + dtInicioAjustado.toLocalTime() + " às " + dtFim.toLocalTime() +
+                            " (" + tipoServico.getDuracaoHoras() + " horas)");
                 }
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Erro ao processar disponibilidade do profissional", e);
@@ -170,7 +197,7 @@ public class AgendamentoService {
         
         agendamento.setTipoServico(tipoServico);
         agendamento.setDescricao(descricao);
-        agendamento.setDtInicio(dtInicio);
+        agendamento.setDtInicio(dtInicioAjustado);
         agendamento.setDtFim(dtFim);
         
         return agendamentoRepository.save(agendamento);
