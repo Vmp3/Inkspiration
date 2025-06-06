@@ -14,6 +14,7 @@ import Footer from '../components/Footer';
 import Input from '../components/ui/Input';
 import SearchInput from '../components/ui/SearchInput';
 import FilterButton from '../components/FilterButton';
+import ProfessionalService from '../services/ProfessionalService';
 
 import toastHelper from '../utils/toastHelper';
 import Button from '../components/ui/Button';
@@ -68,12 +69,27 @@ const ExploreScreen = ({ navigation }) => {
 
   // Carregar profissionais do backend
   useEffect(() => {
-    // Remover carregamento de profissionais - funcionalidade removida por questões de segurança
-    setIsLoading(false);
-    setAllArtists([]);
-    setFilteredArtists([]);
-    setDisplayedArtists([]);
+    loadProfessionals();
   }, []);
+  
+  const loadProfessionals = async () => {
+    try {
+      setIsLoading(true);
+      const professionals = await ProfessionalService.getTransformedCompleteProfessionals();
+      setAllArtists(professionals);
+      setFilteredArtists(professionals);
+      setDisplayedArtists(professionals);
+    } catch (error) {
+      console.error('Erro ao carregar profissionais:', error);
+      toastHelper.showError('Erro ao carregar profissionais');
+      // Em caso de erro, usar array vazio
+      setAllArtists([]);
+      setFilteredArtists([]);
+      setDisplayedArtists([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Valores derivados baseados na largura da tela
   const isMobile = screenWidth < 768;
