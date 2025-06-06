@@ -35,5 +35,4 @@ build/
 # Arquivos de chaves e propriedades sensíveis
 backend/src/main/resources/app.pub
 backend/src/main/resources/app.key
-backend/src/main/resources/application.properties
 backend/.env
