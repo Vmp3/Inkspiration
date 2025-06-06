@@ -27,6 +27,7 @@ import ArtistsGrid from '../components/explore/ArtistsGrid';
 import Pagination from '../components/common/Pagination';
 import MobileFiltersModal from '../components/common/MobileFiltersModal';
 import FilterDropdown from '../components/common/FilterDropdown';
+import ProfessionalService from '../services/ProfessionalService';
 
 const ExploreScreen = ({ navigation }) => {
   // Estados
@@ -71,6 +72,25 @@ const ExploreScreen = ({ navigation }) => {
   useEffect(() => {
     loadProfessionals();
   }, []);
+
+  const loadProfessionals = async () => {
+    try {
+      setIsLoading(true);
+      const professionals = await ProfessionalService.getTransformedCompleteProfessionals();
+      setAllArtists(professionals);
+      setFilteredArtists(professionals);
+      setDisplayedArtists(professionals);
+    } catch (error) {
+      console.error('Erro ao carregar profissionais:', error);
+      toastHelper.showError('Erro ao carregar profissionais');
+      // Em caso de erro, usar array vazio
+      setAllArtists([]);
+      setFilteredArtists([]);
+      setDisplayedArtists([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
   
   const loadProfessionals = async () => {
     try {

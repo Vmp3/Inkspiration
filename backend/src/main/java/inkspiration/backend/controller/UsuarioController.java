@@ -23,6 +23,7 @@ import inkspiration.backend.dto.UsuarioSeguroDTO;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.exception.UsuarioException;
 import inkspiration.backend.service.UsuarioService;
+import inkspiration.backend.security.AuthorizationService;
 import jakarta.validation.Valid;
 
 @RestController
@@ -30,13 +31,18 @@ import jakarta.validation.Valid;
 public class UsuarioController {
 
     private final UsuarioService service;
+    private final AuthorizationService authorizationService;
 
-    public UsuarioController(UsuarioService service) {
+    public UsuarioController(UsuarioService service, AuthorizationService authorizationService) {
         this.service = service;
+        this.authorizationService = authorizationService;
     }
 
     @GetMapping
     public ResponseEntity<List<UsuarioResponseDTO>> listarTodos(@RequestParam(defaultValue = "0") int page) {
+        // Apenas administradores podem listar todos os usuários
+        authorizationService.requireAdmin();
+        
         Pageable pageable = PageRequest.of(page, 10);
         List<UsuarioResponseDTO> usuarios = service.listarTodosResponse(pageable);
         return ResponseEntity.ok(usuarios);
@@ -44,6 +50,9 @@ public class UsuarioController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioSeguroDTO> buscarPorId(@PathVariable Long id) {
+        // Verifica se o usuário pode acessar esses dados
+        authorizationService.requireUserAccessOrAdmin(id);
+        
         Usuario usuario = service.buscarPorId(id);
         UsuarioSeguroDTO dto = UsuarioSeguroDTO.fromUsuario(usuario);
         return ResponseEntity.ok(dto);
@@ -51,6 +60,9 @@ public class UsuarioController {
 
     @GetMapping("/detalhes/{id}")
     public ResponseEntity<UsuarioResponseDTO> buscarDetalhes(@PathVariable Long id) {
+        // Verifica se o usuário pode acessar esses dados detalhados
+        authorizationService.requireUserAccessOrAdmin(id);
+        
         Usuario usuario = service.buscarPorId(id);
         String dataNascimentoStr = null;
         
@@ -87,6 +99,9 @@ public class UsuarioController {
     @PutMapping("/atualizar/{id}")
     public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody @Valid UsuarioDTO dto) {
         try {
+            // Verifica se o usuário pode editar este perfil
+            authorizationService.requireUserAccessOrAdmin(id);
+            
             Usuario usuario = service.atualizar(id, dto);
             return ResponseEntity.ok(UsuarioSeguroDTO.fromUsuario(usuario));
         } catch (UsuarioException.PermissaoNegadaException e) {
@@ -96,18 +111,27 @@ public class UsuarioController {
 
     @PostMapping("/inativar/{id}")
     public ResponseEntity<String> inativarUsuario(@PathVariable Long id) {
+        // Apenas administradores podem inativar usuários
+        authorizationService.requireAdmin();
+        
         service.inativar(id);
         return ResponseEntity.ok("Usuário inativado com sucesso.");
     }
 
     @DeleteMapping("/deletar/{id}")
     public ResponseEntity<String> excluirUsuario(@PathVariable Long id) {
+        // Apenas administradores podem excluir usuários
+        authorizationService.requireAdmin();
+        
         service.deletar(id);
         return ResponseEntity.ok("Usuário excluído com sucesso.");
     }
 
     @PutMapping("/{id}/foto-perfil")
     public ResponseEntity<Void> atualizarFotoPerfil(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        // Verifica se o usuário pode editar este perfil
+        authorizationService.requireUserAccessOrAdmin(id);
+        
         String imagemBase64 = request.get("imagemBase64");
         if (imagemBase64 == null || imagemBase64.isEmpty()) {
             return ResponseEntity.badRequest().build();
@@ -120,6 +144,13 @@ public class UsuarioController {
     @PostMapping("/{id}/validate-token")
     public ResponseEntity<Map<String, Object>> validateToken(@PathVariable Long id, @RequestBody Map<String, String> request) {
         try {
+            // Verifica se o token JWT atual pertence ao usuário especificado
+            if (!authorizationService.validateTokenOwnership(id)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    Map.of("valid", false, "message", "Token não pertence ao usuário especificado")
+                );
+            }
+            
             String token = request.get("token");
             if (token == null) {
                 return ResponseEntity.badRequest().body(

@@ -65,60 +65,107 @@ class ProfessionalService {
   }
 
   // Método para transformar dados do backend para o formato esperado pelo frontend
-  transformProfessionalData(professional) {
-    return {
-      id: professional.idProfissional?.toString() || professional.id?.toString(),
-      name: professional.usuario?.nome || professional.name,
-      rating: professional.nota !== undefined && professional.nota !== null ? professional.nota : 0,
-      specialties: professional.portifolio?.especialidade 
-        ? professional.portifolio.especialidade.split(',').map(s => s.trim())
-        : ['Tatuagem'],
-      location: professional.endereco 
-        ? `${professional.endereco.cidade}, ${professional.endereco.estado}`
-        : professional.usuario?.endereco
-        ? `${professional.usuario.endereco.cidade}, ${professional.usuario.endereco.estado}`
-        : 'Localização não informada',
-      coverImage: professional.usuario?.imagemPerfil || 
-                 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png',
-      // Dados adicionais do backend
-      experience: professional.portifolio?.experiencia,
-      description: professional.portifolio?.descricao,
-      instagram: professional.portifolio?.instagram,
-      tiktok: professional.portifolio?.tiktok,
-      facebook: professional.portifolio?.facebook,
-      twitter: professional.portifolio?.twitter,
-      website: professional.portifolio?.website,
-      email: professional.usuario?.email,
-      phone: professional.usuario?.telefone,
-    };
+  transformProfessionalData(data) {
+    // Verificar se é a nova estrutura (com objetos separados) ou a estrutura antiga
+    if (data.endereco && data.portfolio && data.usuario && data.profissional) {
+      // Nova estrutura
+      const { endereco, portfolio, usuario, profissional } = data;
+      
+      return {
+        id: profissional?.idProfissional?.toString() || profissional?.id?.toString(),
+        name: usuario?.nome || usuario?.name,
+        rating: profissional?.nota !== undefined && profissional?.nota !== null ? profissional.nota : 0,
+        specialties: portfolio?.especialidade 
+          ? portfolio.especialidade.split(',').map(s => s.trim())
+          : ['Tatuagem'],
+        location: endereco 
+          ? `${endereco.cidade}, ${endereco.estado}`
+          : 'Localização não informada',
+        coverImage: usuario?.imagemPerfil || 
+                   'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png',
+        // Dados adicionais do backend
+        experience: portfolio?.experiencia,
+        description: portfolio?.descricao,
+        instagram: portfolio?.instagram,
+        tiktok: portfolio?.tiktok,
+        facebook: portfolio?.facebook,
+        twitter: portfolio?.twitter,
+        website: portfolio?.website,
+        email: usuario?.email,
+        phone: usuario?.telefone,
+      };
+    } else {
+      // Estrutura antiga (manter compatibilidade)
+      const professional = data;
+      return {
+        id: professional.idProfissional?.toString() || professional.id?.toString(),
+        name: professional.usuario?.nome || professional.name,
+        rating: professional.nota !== undefined && professional.nota !== null ? professional.nota : 0,
+        specialties: professional.portifolio?.especialidade 
+          ? professional.portifolio.especialidade.split(',').map(s => s.trim())
+          : ['Tatuagem'],
+        location: professional.endereco 
+          ? `${professional.endereco.cidade}, ${professional.endereco.estado}`
+          : professional.usuario?.endereco
+          ? `${professional.usuario.endereco.cidade}, ${professional.usuario.endereco.estado}`
+          : 'Localização não informada',
+        coverImage: professional.usuario?.imagemPerfil || 
+                   'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png',
+        // Dados adicionais do backend
+        experience: professional.portifolio?.experiencia,
+        description: professional.portifolio?.descricao,
+        instagram: professional.portifolio?.instagram,
+        tiktok: professional.portifolio?.tiktok,
+        facebook: professional.portifolio?.facebook,
+        twitter: professional.portifolio?.twitter,
+        website: professional.portifolio?.website,
+        email: professional.usuario?.email,
+        phone: professional.usuario?.telefone,
+      };
+    }
   }
 
 
 
   // Método para transformar dados completos do backend para o formato esperado pelo frontend
-  transformCompleteProfessionalData(professional) {
+  transformCompleteProfessionalData(data) {
+    // Nova estrutura da API tem os dados organizados em objetos separados
+    const { endereco, portfolio, usuario, profissional } = data;
+    
     return {
-      id: professional.idProfissional?.toString(),
-      name: professional.usuario?.nome || 'Nome não informado',
-      rating: professional.nota !== undefined && professional.nota !== null ? professional.nota : 0,
-      specialties: professional.portifolio?.especialidade 
-        ? professional.portifolio.especialidade.split(',').map(s => s.trim())
+      id: profissional?.idProfissional?.toString() || 'N/A',
+      name: usuario?.nome || 'Nome não informado',
+      rating: profissional?.nota !== undefined && profissional?.nota !== null ? profissional.nota : 0,
+      specialties: portfolio?.especialidade 
+        ? portfolio.especialidade.split(',').map(s => s.trim())
         : ['Tatuagem'],
-      location: professional.endereco 
-        ? `${professional.endereco.cidade}, ${professional.endereco.estado}`
+      location: endereco 
+        ? `${endereco.cidade}, ${endereco.estado}`
         : 'Localização não informada',
-      coverImage: professional.usuario?.imagemPerfil || 
+      coverImage: usuario?.imagemPerfil || 
                  'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png',
       // Dados adicionais do backend
-      experience: professional.portifolio?.experiencia,
-      description: professional.portifolio?.descricao,
-      instagram: professional.portifolio?.instagram,
-      tiktok: professional.portifolio?.tiktok,
-      facebook: professional.portifolio?.facebook,
-      twitter: professional.portifolio?.twitter,
-      website: professional.portifolio?.website,
-      email: professional.usuario?.email,
-      phone: professional.usuario?.telefone,
+      experience: portfolio?.experiencia || 'Não informado',
+      description: portfolio?.descricao || 'Descrição não disponível',
+      instagram: portfolio?.instagram,
+      tiktok: portfolio?.tiktok,
+      facebook: portfolio?.facebook,
+      twitter: portfolio?.twitter,
+      website: portfolio?.website,
+      email: usuario?.email,
+      phone: usuario?.telefone,
+      // Dados do endereço
+      address: endereco ? {
+        rua: endereco.rua,
+        numero: endereco.numero,
+        bairro: endereco.bairro,
+        cidade: endereco.cidade,
+        estado: endereco.estado,
+        cep: endereco.cep,
+        complemento: endereco.complemento,
+        latitude: endereco.latitude,
+        longitude: endereco.longitude
+      } : null,
     };
   }
 

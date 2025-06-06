@@ -228,17 +228,25 @@ const ArtistScreen = ({ route }) => {
       
       // Verificar se artistId está definido
       if (!artistId) {
+        console.log('❌ artistId não encontrado:', artistId);
         toastHelper.showError('ID do profissional não encontrado');
         navigation.goBack();
         return;
       }
       
+      console.log('🔍 Buscando dados do profissional com ID:', artistId);
+      
       // Buscar dados completos do profissional
       const professionalData = await ProfessionalService.getProfessionalCompleteById(artistId);
+      console.log('📊 Dados recebidos da API:', professionalData);
+      
       const transformedData = ProfessionalService.transformCompleteProfessionalData(professionalData);
+      console.log('🔄 Dados transformados:', transformedData);
       
       // Buscar imagens do portfólio
+      console.log('🖼️ Buscando imagens do portfólio...');
       const images = await ProfessionalService.getProfessionalImages(artistId);
+      console.log('📸 Imagens recebidas:', images);
       
       // Processar imagens base64
       const processedImages = images.map((img, index) => {
@@ -249,6 +257,8 @@ const ArtistScreen = ({ route }) => {
           idPortifolio: img.idPortifolio
         };
       });
+      
+      console.log('✅ Imagens processadas:', processedImages);
       
       setArtist({
         ...transformedData,
@@ -274,8 +284,10 @@ const ArtistScreen = ({ route }) => {
       });
       
       setPortfolioImages(processedImages);
+      console.log('✅ Dados do artista carregados com sucesso');
     } catch (error) {
-      console.error('Erro ao carregar dados do artista:', error);
+      console.error('❌ Erro ao carregar dados do artista:', error);
+      console.error('❌ Stack trace:', error.stack);
       toastHelper.showError('Erro ao carregar dados do profissional');
       navigation.goBack();
     } finally {
