@@ -12,8 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,6 +33,7 @@ import inkspiration.backend.service.ImagemService;
 import inkspiration.backend.service.ProfissionalService;
 import inkspiration.backend.service.PortifolioService;
 import inkspiration.backend.service.DisponibilidadeService;
+import inkspiration.backend.security.AuthorizationService;
 import jakarta.validation.Valid;
 
 @RestController
@@ -43,17 +43,22 @@ public class ProfissionalController {
     private final ImagemService imagemService;
     private final PortifolioService portifolioService;
     private final DisponibilidadeService disponibilidadeService;
+    private final AuthorizationService authorizationService;
 
     @Autowired
-    public ProfissionalController(ProfissionalService profissionalService, ImagemService imagemService, PortifolioService portifolioService, DisponibilidadeService disponibilidadeService) {
+    public ProfissionalController(ProfissionalService profissionalService, ImagemService imagemService, PortifolioService portifolioService, DisponibilidadeService disponibilidadeService, AuthorizationService authorizationService) {
         this.profissionalService = profissionalService;
         this.imagemService = imagemService;
         this.portifolioService = portifolioService;
         this.disponibilidadeService = disponibilidadeService;
+        this.authorizationService = authorizationService;
     }
 
     @GetMapping("/profissional")
     public ResponseEntity<List<ProfissionalDTO>> listar(@RequestParam(defaultValue = "0") int page) {
+        // Apenas administradores podem listar todos os profissionais com paginação
+        authorizationService.requireAdmin();
+        
         Pageable pageable = PageRequest.of(page, 10);
         Page<Profissional> profissionais = profissionalService.listar(pageable);
         
@@ -62,6 +67,156 @@ public class ProfissionalController {
                 .collect(Collectors.toList());
                 
         return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/profissional/publico")
+    public ResponseEntity<List<ProfissionalDTO>> listarPublico() {
+        // Endpoint público para listar profissionais (sem paginação, dados básicos)
+        Pageable pageable = PageRequest.of(0, 100); // Limite razoável
+        Page<Profissional> profissionais = profissionalService.listar(pageable);
+        
+        List<ProfissionalDTO> dtos = profissionais.getContent().stream()
+                .map(profissionalService::converterParaDto)
+                .collect(Collectors.toList());
+                
+        return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/profissional/completo")
+    public ResponseEntity<List<Map<String, Object>>> listarCompleto(@RequestParam(defaultValue = "0") int page) {
+        // Endpoint público para listar profissionais com informações completas (portfolio, endereço, nota)
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<Profissional> profissionais = profissionalService.listar(pageable);
+        
+        List<Map<String, Object>> profissionaisCompletos = profissionais.getContent().stream()
+                .map(profissional -> {
+                    Map<String, Object> profissionalCompleto = new HashMap<>();
+                    
+                    // Informações básicas do profissional
+                    ProfissionalDTO profissionalDto = profissionalService.converterParaDto(profissional);
+                    profissionalCompleto.put("profissional", profissionalDto);
+                    
+                    // Informações do usuário (nome e outros dados)
+                    Map<String, Object> usuarioInfo = new HashMap<>();
+                    if (profissional.getUsuario() != null) {
+                        usuarioInfo.put("idUsuario", profissional.getUsuario().getIdUsuario());
+                        usuarioInfo.put("nome", profissional.getUsuario().getNome());
+                        usuarioInfo.put("email", profissional.getUsuario().getEmail());
+                        usuarioInfo.put("telefone", profissional.getUsuario().getTelefone());
+                        usuarioInfo.put("imagemPerfil", profissional.getUsuario().getImagemPerfil());
+                    }
+                    profissionalCompleto.put("usuario", usuarioInfo);
+                    
+                    // Informações do endereço
+                    Map<String, Object> enderecoInfo = new HashMap<>();
+                    if (profissional.getEndereco() != null) {
+                        enderecoInfo.put("idEndereco", profissional.getEndereco().getIdEndereco());
+                        enderecoInfo.put("cep", profissional.getEndereco().getCep());
+                        enderecoInfo.put("rua", profissional.getEndereco().getRua());
+                        enderecoInfo.put("bairro", profissional.getEndereco().getBairro());
+                        enderecoInfo.put("cidade", profissional.getEndereco().getCidade());
+                        enderecoInfo.put("estado", profissional.getEndereco().getEstado());
+                        enderecoInfo.put("numero", profissional.getEndereco().getNumero());
+                        enderecoInfo.put("complemento", profissional.getEndereco().getComplemento());
+                        enderecoInfo.put("latitude", profissional.getEndereco().getLatitude());
+                        enderecoInfo.put("longitude", profissional.getEndereco().getLongitude());
+                    }
+                    profissionalCompleto.put("endereco", enderecoInfo);
+                    
+                    // Buscar dados do portfólio
+                    PortifolioDTO portfolioDto = null;
+                    if (profissional.getPortifolio() != null) {
+                        portfolioDto = portifolioService.converterParaDto(profissional.getPortifolio());
+                    }
+                    profissionalCompleto.put("portfolio", portfolioDto);
+                    
+                    // Buscar imagens do portfólio se existir
+                    List<ImagemDTO> imagens = Collections.emptyList();
+                    if (profissional.getPortifolio() != null) {
+                        imagens = imagemService.listarPorPortifolio(profissional.getPortifolio().getIdPortifolio());
+                    }
+                    profissionalCompleto.put("imagens", imagens);
+                    
+                    // Buscar disponibilidades
+                    Map<String, List<Map<String, String>>> disponibilidades = Collections.emptyMap();
+                    try {
+                        disponibilidades = disponibilidadeService.obterDisponibilidade(profissional.getIdProfissional());
+                    } catch (Exception e) {
+                        // Se não houver disponibilidades cadastradas, manter mapa vazio
+                        System.out.println("Nenhuma disponibilidade encontrada para o profissional: " + e.getMessage());
+                    }
+                    profissionalCompleto.put("disponibilidades", disponibilidades);
+                    
+                    return profissionalCompleto;
+                })
+                .collect(Collectors.toList());
+                
+        return ResponseEntity.ok(profissionaisCompletos);
+    }
+
+    @GetMapping("/profissional/completo/{id}")
+    public ResponseEntity<Map<String, Object>> buscarCompletoPorid(@PathVariable Long id) {
+        // Endpoint público para buscar um profissional específico com informações completas
+        Profissional profissional = profissionalService.buscarPorId(id);
+        
+        Map<String, Object> profissionalCompleto = new HashMap<>();
+        
+        // Informações básicas do profissional
+        ProfissionalDTO profissionalDto = profissionalService.converterParaDto(profissional);
+        profissionalCompleto.put("profissional", profissionalDto);
+        
+        // Informações do usuário (nome e outros dados)
+        Map<String, Object> usuarioInfo = new HashMap<>();
+        if (profissional.getUsuario() != null) {
+            usuarioInfo.put("idUsuario", profissional.getUsuario().getIdUsuario());
+            usuarioInfo.put("nome", profissional.getUsuario().getNome());
+            usuarioInfo.put("email", profissional.getUsuario().getEmail());
+            usuarioInfo.put("telefone", profissional.getUsuario().getTelefone());
+            usuarioInfo.put("imagemPerfil", profissional.getUsuario().getImagemPerfil());
+        }
+        profissionalCompleto.put("usuario", usuarioInfo);
+        
+        // Informações do endereço
+        Map<String, Object> enderecoInfo = new HashMap<>();
+        if (profissional.getEndereco() != null) {
+            enderecoInfo.put("idEndereco", profissional.getEndereco().getIdEndereco());
+            enderecoInfo.put("cep", profissional.getEndereco().getCep());
+            enderecoInfo.put("rua", profissional.getEndereco().getRua());
+            enderecoInfo.put("bairro", profissional.getEndereco().getBairro());
+            enderecoInfo.put("cidade", profissional.getEndereco().getCidade());
+            enderecoInfo.put("estado", profissional.getEndereco().getEstado());
+            enderecoInfo.put("numero", profissional.getEndereco().getNumero());
+            enderecoInfo.put("complemento", profissional.getEndereco().getComplemento());
+            enderecoInfo.put("latitude", profissional.getEndereco().getLatitude());
+            enderecoInfo.put("longitude", profissional.getEndereco().getLongitude());
+        }
+        profissionalCompleto.put("endereco", enderecoInfo);
+        
+        // Buscar dados do portfólio
+        PortifolioDTO portfolioDto = null;
+        if (profissional.getPortifolio() != null) {
+            portfolioDto = portifolioService.converterParaDto(profissional.getPortifolio());
+        }
+        profissionalCompleto.put("portfolio", portfolioDto);
+        
+        // Buscar imagens do portfólio se existir
+        List<ImagemDTO> imagens = Collections.emptyList();
+        if (profissional.getPortifolio() != null) {
+            imagens = imagemService.listarPorPortifolio(profissional.getPortifolio().getIdPortifolio());
+        }
+        profissionalCompleto.put("imagens", imagens);
+        
+        // Buscar disponibilidades
+        Map<String, List<Map<String, String>>> disponibilidades = Collections.emptyMap();
+        try {
+            disponibilidades = disponibilidadeService.obterDisponibilidade(profissional.getIdProfissional());
+        } catch (Exception e) {
+            // Se não houver disponibilidades cadastradas, manter mapa vazio
+            System.out.println("Nenhuma disponibilidade encontrada para o profissional: " + e.getMessage());
+        }
+        profissionalCompleto.put("disponibilidades", disponibilidades);
+        
+        return ResponseEntity.ok(profissionalCompleto);
     }
 
     @GetMapping("/profissional/{id}")
@@ -73,6 +228,9 @@ public class ProfissionalController {
     @GetMapping("/profissional/usuario/{idUsuario}")
     public ResponseEntity<ProfissionalDTO> buscarPorUsuario(@PathVariable Long idUsuario) {
         try {
+            // Verifica se o usuário pode acessar este perfil profissional
+            authorizationService.requireUserAccessOrAdmin(idUsuario);
+            
             Profissional profissional = profissionalService.buscarPorUsuario(idUsuario);
             return ResponseEntity.ok(profissionalService.converterParaDto(profissional));
         } catch (Exception e) {
@@ -83,6 +241,9 @@ public class ProfissionalController {
     @GetMapping("/profissional/usuario/{idUsuario}/completo")
     public ResponseEntity<?> buscarProfissionalCompleto(@PathVariable Long idUsuario) {
         try {
+            // Verifica se o usuário pode acessar este perfil profissional completo
+            authorizationService.requireUserAccessOrAdmin(idUsuario);
+            
             // Buscar o profissional pelo ID do usuário
             Profissional profissional = profissionalService.buscarPorUsuario(idUsuario);
             
@@ -126,6 +287,9 @@ public class ProfissionalController {
     
     @GetMapping("/profissional/verificar/{idUsuario}")
     public ResponseEntity<Boolean> verificarPerfil(@PathVariable Long idUsuario) {
+        // Verifica se o usuário pode verificar este perfil
+        authorizationService.requireUserAccessOrAdmin(idUsuario);
+        
         boolean existePerfil = profissionalService.existePerfil(idUsuario);
         return ResponseEntity.ok(existePerfil);
     }
@@ -150,21 +314,12 @@ public class ProfissionalController {
 
     @PutMapping("/profissional/atualizar/{id}")
     public ResponseEntity<ProfissionalDTO> atualizar(@PathVariable Long id, @RequestBody @Valid ProfissionalDTO dto) {
-        // Verifica se o usuário autenticado é o dono do perfil ou um admin
-        Authentication autenticacao = SecurityContextHolder.getContext().getAuthentication();
+        // Busca o profissional para obter o ID do usuário
         Profissional profissionalExistente = profissionalService.buscarPorId(id);
+        Long idUsuario = profissionalExistente.getUsuario().getIdUsuario();
         
-        if (autenticacao != null) {
-            boolean isAdmin = autenticacao.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            
-            String cpfAutenticado = autenticacao.getName();
-            String cpfProfissional = profissionalExistente.getUsuario().getUsuarioAutenticar().getCpf();
-            
-            if (!isAdmin && !cpfAutenticado.equals(cpfProfissional)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-        }
+        // Verifica se o usuário pode editar este perfil profissional
+        authorizationService.requireUserAccessOrAdmin(idUsuario);
         
         Profissional profissionalAtualizado = profissionalService.atualizar(id, dto);
         return ResponseEntity.ok(profissionalService.converterParaDto(profissionalAtualizado));
@@ -173,22 +328,8 @@ public class ProfissionalController {
     @PutMapping("/profissional/usuario/{idUsuario}/atualizar-completo")
     public ResponseEntity<?> atualizarProfissionalCompleto(@PathVariable Long idUsuario, @RequestBody @Valid ProfissionalCriacaoDTO dto) {
         try {
-            // Buscar o profissional pelo ID do usuário
-            Profissional profissionalExistente = profissionalService.buscarPorUsuario(idUsuario);
-            
-            // Verificar autorização
-            Authentication autenticacao = SecurityContextHolder.getContext().getAuthentication();
-            if (autenticacao != null) {
-                boolean isAdmin = autenticacao.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-                
-                String cpfAutenticado = autenticacao.getName();
-                String cpfProfissional = profissionalExistente.getUsuario().getUsuarioAutenticar().getCpf();
-                
-                if (!isAdmin && !cpfAutenticado.equals(cpfProfissional)) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-                }
-            }
+            // Verifica se o usuário pode editar este perfil profissional
+            authorizationService.requireUserAccessOrAdmin(idUsuario);
             
             // Garantir que o DTO tem o ID do usuário correto
             dto.setIdUsuario(idUsuario);
@@ -204,21 +345,12 @@ public class ProfissionalController {
 
     @DeleteMapping("/profissional/deletar/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        // Verifica se o usuário autenticado é o dono do perfil ou um admin
-        Authentication autenticacao = SecurityContextHolder.getContext().getAuthentication();
+        // Busca o profissional para obter o ID do usuário
         Profissional profissional = profissionalService.buscarPorId(id);
+        Long idUsuario = profissional.getUsuario().getIdUsuario();
         
-        if (autenticacao != null) {
-            boolean isAdmin = autenticacao.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            
-            String cpfAutenticado = autenticacao.getName();
-            String cpfProfissional = profissional.getUsuario().getUsuarioAutenticar().getCpf();
-            
-            if (!isAdmin && !cpfAutenticado.equals(cpfProfissional)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-        }
+        // Verifica se o usuário pode deletar este perfil profissional
+        authorizationService.requireUserAccessOrAdmin(idUsuario);
         
         profissionalService.deletar(id);
         return ResponseEntity.noContent().build();
