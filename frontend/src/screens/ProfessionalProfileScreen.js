@@ -36,10 +36,11 @@ const ProfessionalProfileScreen = () => {
   const loadProfissionalData = async () => {
     try {
       setLoading(true);
+      
       const headers = await AuthService.getAuthHeaders();
       
-      // Buscar dados do profissional
-      const profResponse = await fetch(`http://localhost:8080/profissional/${profissionalId}`, {
+      // Usar o endpoint completo que já inclui todas as informações necessárias
+      const profResponse = await fetch(`http://localhost:8080/profissional/completo/${profissionalId}`, {
         method: 'GET',
         headers: headers
       });
@@ -48,19 +49,21 @@ const ProfessionalProfileScreen = () => {
         throw new Error('Erro ao buscar dados do profissional');
       }
       
-      const profData = await profResponse.json();
-      setProfissional(profData);
+      const completeData = await profResponse.json();
       
-      // Buscar imagens do portfólio
-      const imageResponse = await fetch(`http://localhost:8080/profissional/${profissionalId}/imagens`, {
-        method: 'GET',
-        headers: headers
+      // Extrair dados organizados
+      const { profissional: profData, portfolio, usuario, endereco, imagens } = completeData;
+      
+      // Estruturar os dados no formato esperado pelo componente
+      setProfissional({
+        ...profData,
+        usuario,
+        portifolio: portfolio,
+        endereco
       });
       
-      if (imageResponse.ok) {
-        const imageData = await imageResponse.json();
-        setImagens(imageData);
-      }
+      // Definir as imagens diretamente
+      setImagens(imagens || []);
       
     } catch (error) {
       console.error('Erro ao carregar dados:', error);

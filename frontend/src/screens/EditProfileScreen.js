@@ -956,9 +956,65 @@ const EditProfileScreen = () => {
     }
   };
   
-  const uploadProfessionalImages = async () => {
+  const updateProfessionalData = async () => {
     try {
-      // Upload da imagem de perfil
+      // Preparar disponibilidades no formato esperado pelo backend (Map<String, List<Map<String, String>>>)
+      const disponibilidades = {};
+      professionalFormData.workHours.forEach(day => {
+        if (day.available) {
+          const horariosDia = [];
+          if (day.morning.enabled) {
+            horariosDia.push({
+              inicio: day.morning.start,
+              fim: day.morning.end
+            });
+          }
+          if (day.afternoon.enabled) {
+            horariosDia.push({
+              inicio: day.afternoon.start,
+              fim: day.afternoon.end
+            });
+          }
+          if (horariosDia.length > 0) {
+            disponibilidades[day.day] = horariosDia;
+          }
+        }
+      });
+      
+      // Preparar especialidades selecionadas
+      const selectedSpecialties = Object.keys(professionalFormData.specialties).filter(key => professionalFormData.specialties[key]);
+      
+      // Preparar dados do portfólio
+      const portfolioData = {
+        descricao: professionalFormData.biography,
+        especialidade: selectedSpecialties.join(', '),
+        experiencia: professionalFormData.experience,
+        instagram: professionalFormData.socialMedia.instagram || null,
+        tiktok: professionalFormData.socialMedia.tiktok || null,
+        facebook: professionalFormData.socialMedia.facebook || null,
+        twitter: professionalFormData.socialMedia.twitter || null,
+        website: professionalFormData.socialMedia.website || null
+      };
+      
+      // Preparar imagens do portfólio
+      const imagensData = professionalFormData.portfolioImages.map(image => ({
+        imagemBase64: image.base64
+      }));
+      
+      // Preparar dados completos no formato esperado pelo novo endpoint
+      const dadosCompletos = {
+        profissional: {
+          // Dados básicos do profissional se necessário
+        },
+        portfolio: portfolioData,
+        imagens: imagensData,
+        disponibilidades: disponibilidades
+      };
+      
+      // Usar o novo endpoint que aceita dados completos
+      await ApiService.put(`/profissional/usuario/${userData.idUsuario}/atualizar-completo-com-imagens`, dadosCompletos);
+      
+      // Upload da imagem de perfil separadamente
       if (professionalFormData.profileImage && professionalFormData.profileImage.base64) {
         try {
           await ApiService.put(`/usuario/${userData.idUsuario}/foto-perfil`, { 
@@ -968,73 +1024,8 @@ const EditProfileScreen = () => {
           console.error('Falha ao enviar imagem de perfil:', error);
         }
       }
-      
-      // Upload das imagens do portfólio em base64
-      for (const image of professionalFormData.portfolioImages) {
-        if (image && image.base64) {
-          const base64Data = image.base64;
-          const imagemBase64 = base64Data.startsWith('data:') ? base64Data : `data:image/jpeg;base64,${base64Data}`;
-          
-          const imagemDTO = {
-            imagemBase64,
-            idPortifolio: null
-          };
-          
-          try {
-            await ApiService.post('/imagens', imagemDTO);
-          } catch (error) {
-            console.error('Falha ao enviar imagem do portfólio:', error);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao fazer upload das imagens:', error);
-    }
-  };
-
-  const updateProfessionalData = async () => {
-    try {
-      // Preparar disponibilidades (horários de trabalho) - igual ao ProfessionalRegisterScreen
-      const disponibilidades = [];
-      professionalFormData.workHours.forEach(day => {
-        if (day.available) {
-          if (day.morning.enabled) {
-            disponibilidades.push({
-              hrAtendimento: `${day.day}-${day.morning.start}-${day.morning.end}`
-            });
-          }
-          if (day.afternoon.enabled) {
-            disponibilidades.push({
-              hrAtendimento: `${day.day}-${day.afternoon.start}-${day.afternoon.end}`
-            });
-          }
-        }
-      });
-      
-      // Preparar especialidades selecionadas
-      const selectedSpecialties = Object.keys(professionalFormData.specialties).filter(key => professionalFormData.specialties[key]);
-      
-      // Preparar objeto com formato esperado pelo backend (ProfissionalCriacaoDTO) - igual ao ProfessionalRegisterScreen
-      const professionalUpdateData = {
-        idUsuario: userData.idUsuario,
-        idEndereco: userData.endereco?.idEndereco,
-        experiencia: professionalFormData.experience,
-        especialidade: selectedSpecialties.join(', '),
-        descricao: professionalFormData.biography,
-        estilosTatuagem: selectedSpecialties,
-        instagram: professionalFormData.socialMedia.instagram || null,
-        tiktok: professionalFormData.socialMedia.tiktok || null,
-        facebook: professionalFormData.socialMedia.facebook || null,
-        twitter: professionalFormData.socialMedia.twitter || null,
-        website: professionalFormData.socialMedia.website || null,
-        disponibilidades: disponibilidades
-      };
-      
-      // Usar o mesmo endpoint que já está funcionando no ProfessionalRegisterScreen
-      await ApiService.put(`/profissional/usuario/${userData.idUsuario}/atualizar-completo`, professionalUpdateData);
-      
-      // Upload das imagens
-      await uploadProfessionalImages();
+      // Nota: Se profileImage for null ou não tiver base64, não fazemos nada, 
+      // mantendo a imagem existente no servidor
       
     } catch (error) {
       console.error('Erro ao atualizar dados profissionais:', error);

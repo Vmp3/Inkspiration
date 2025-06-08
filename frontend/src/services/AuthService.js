@@ -188,26 +188,23 @@ class AuthService {
         return false;
       }
       
-      // Verificar se o token está revogado no servidor
-      const isRevoked = await this.isTokenRevoked(token);
-      if (isRevoked) {
-        console.log('Token revogado, fazendo logout automático');
-        await this.logout();
-        return false;
-      }
-      
-      // Verificar se o token no cliente corresponde ao token_atual no servidor
+      // Verificar se o token está revogado ou inválido no servidor
       if (tokenData.userId) {
         try {
-          const isTokenValid = await this.validateTokenWithServer(token, tokenData.userId);
-          if (!isTokenValid) {
-            console.log('Token não corresponde ao armazenado no servidor, fazendo logout automático');
+          const validationResult = await this.validateToken(token, tokenData.userId);
+          if (!validationResult.valid) {
+            console.log('Token inválido no servidor:', validationResult.reason);
             await this.logout();
             return false;
           }
+          
+          // Se há um novo token, atualizá-lo
+          if (validationResult.newToken) {
+            console.log('Recebido novo token do servidor');
+            await this.setToken(validationResult.newToken);
+          }
         } catch (error) {
           console.error('Erro ao validar token com servidor:', error);
-          // Em caso de erro de rede, não deslogar automaticamente
         }
       }
       
@@ -411,29 +408,17 @@ class AuthService {
     return response;
   }
 
-  async isTokenRevoked(token) {
+  async validateToken(token, userId = null) {
     try {
-      const response = await fetch(`${API_URL}/auth/verify-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ token })
-      });
-      
-      if (response.ok) {
-        return await response.json();
+      // Primeiro, extrair o userId do token se não foi fornecido
+      if (!userId) {
+        const tokenData = this.parseJwt(token);
+        if (!tokenData || !tokenData.userId) {
+          return { valid: false, reason: 'Token inválido ou userId não encontrado' };
+        }
+        userId = tokenData.userId;
       }
       
-      return false;
-    } catch (error) {
-      console.error('Erro ao verificar token revogado:', error);
-      return false;
-    }
-  }
-
-  async validateTokenWithServer(token, userId) {
-    try {
       const response = await fetch(`${API_URL}/usuario/${userId}/validate-token`, {
         method: 'POST',
         headers: {
@@ -442,18 +427,20 @@ class AuthService {
         },
         body: JSON.stringify({ token })
       });
-
+      
       if (response.ok) {
         const result = await response.json();
-        return result.valid === true;
+        return {
+          valid: result.valid === true,
+          reason: result.message || '',
+          newToken: result.newToken || null
+        };
       }
       
-      // Se a resposta não for ok, considerar token inválido
-      return false;
+      return { valid: false, reason: 'Erro na resposta do servidor' };
     } catch (error) {
-      console.error('Erro ao validar token com servidor:', error);
-      // Em caso de erro de rede, assumir que o token é válido para não deslogar desnecessariamente
-      return true;
+      console.error('Erro ao validar token:', error);
+      return { valid: false, reason: 'Erro de conexão com servidor' };
     }
   }
 
@@ -518,11 +505,11 @@ class AuthService {
         return true;
       }
 
-      // Verificar com o servidor se o token é válido
+      // Verificar com o servidor se o token é válido usando o novo método
       if (tokenData.userId) {
-        const isValid = await this.validateTokenWithServer(token, tokenData.userId);
-        if (!isValid) {
-          console.warn('Token não corresponde ao armazenado no servidor');
+        const validationResult = await this.validateToken(token, tokenData.userId);
+        if (!validationResult.valid) {
+          console.warn('Token não corresponde ao armazenado no servidor:', validationResult.reason);
           return true;
         }
       }
