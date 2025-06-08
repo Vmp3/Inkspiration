@@ -209,7 +209,7 @@ const BookingScreen = () => {
   };
 
   const handleBackPress = () => {
-    navigation.navigate('Artist', { id: professionalId });
+    navigation.navigate('Artist', { artistId: professionalId });
   };
 
   const renderProgressBar = () => {
@@ -413,7 +413,7 @@ const BookingScreen = () => {
 
   const renderConfirmation = () => {
     const selectedServiceObj = services.find(s => s.tipo === selectedService);
-    const formattedDate = selectedDate ? new Date(selectedDate).toLocaleDateString('pt-BR', {
+    const formattedDate = selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('pt-BR', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
