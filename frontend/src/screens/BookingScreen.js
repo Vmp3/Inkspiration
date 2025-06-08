@@ -17,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import AgendamentoService from '../services/AgendamentoService';
 import ProfessionalService from '../services/ProfessionalService';
 import toastHelper from '../utils/toastHelper';
+import Footer from '../components/Footer';
 
 const BookingScreen = () => {
   const navigation = useNavigation();
@@ -320,9 +321,10 @@ const BookingScreen = () => {
           </View>
           <ScrollView 
             horizontal 
-            showsHorizontalScrollIndicator={false}
+            showsHorizontalScrollIndicator={true}
             style={styles.datesScrollView}
             contentContainerStyle={styles.datesContainer}
+            indicatorStyle="black"
           >
             {dates.map((date) => (
               <TouchableOpacity
@@ -427,7 +429,7 @@ const BookingScreen = () => {
         </View>
         <Text style={styles.confirmationTitle}>Agendamento Confirmado!</Text>
         <Text style={styles.confirmationDescription}>
-          Seu agendamento foi realizado com sucesso. Enviamos um email de confirmação com todos os detalhes.
+          Seu agendamento foi realizado com sucesso!
         </Text>
         
         <View style={styles.confirmationDetails}>
@@ -558,6 +560,7 @@ const BookingScreen = () => {
             )}
           </View>
         </View>
+        <Footer />
       </ScrollView>
     </SafeAreaView>
   );
@@ -572,7 +575,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 16,
     paddingVertical: 24,
     flexDirection: 'row',
     alignItems: 'center',
@@ -580,6 +582,10 @@ const styles = StyleSheet.create({
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    maxWidth: 768,
+    alignSelf: 'center',
+    width: '100%',
   },
   backButtonText: {
     marginLeft: 4,
@@ -591,6 +597,7 @@ const styles = StyleSheet.create({
     maxWidth: 768,
     alignSelf: 'center',
     width: '100%',
+    marginBottom: 48,
   },
   card: {
     backgroundColor: '#fff',
@@ -658,49 +665,57 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 32,
     marginBottom: 32,
-    paddingHorizontal: 24,
+    position: 'relative',
   },
   progressStep: {
-    alignItems: 'center',
     flex: 1,
+    alignItems: 'center',
+    position: 'relative',
   },
   progressNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#e2e8f0',
-    alignItems: 'center',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#e5e7eb',
     justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 8,
   },
   progressNumberActive: {
     backgroundColor: '#111',
   },
   progressNumberText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#64748b',
+    color: '#6b7280',
+    fontSize: 12,
+    fontWeight: '600',
   },
   progressNumberTextActive: {
     color: '#fff',
   },
   progressText: {
+    color: '#6b7280',
     fontSize: 14,
-    color: '#64748b',
+    textAlign: 'center',
+    minHeight: 40,
+    display: 'flex',
+    alignItems: 'center',
   },
   progressTextActive: {
     color: '#111',
     fontWeight: '500',
   },
   progressLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#e2e8f0',
-    marginHorizontal: 8,
-    marginTop: -20,
+    position: 'absolute',
+    top: 12,
+    left: '50%',
+    right: '50%',
+    height: 2,
+    backgroundColor: '#e5e7eb',
+    zIndex: -1,
   },
   stepContent: {
     marginBottom: 24,
@@ -764,21 +779,23 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   datesScrollView: {
-    marginHorizontal: -4,
+    height: 100,
+    marginBottom: 16,
   },
   datesContainer: {
+    paddingVertical: 8,
     paddingHorizontal: 4,
   },
   dateCard: {
-    width: 60,
-    height: 80,
-    marginHorizontal: 4,
+    backgroundColor: '#fff',
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    padding: 12,
+    marginHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    minWidth: 80,
   },
   dateCardSelected: {
     backgroundColor: '#111',
