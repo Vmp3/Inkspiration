@@ -346,7 +346,7 @@ const Header = () => {
                         <TouchableOpacity 
                           style={styles.dropdownItem}
                           onPress={() => {
-                            navigation.navigate('Appointments');
+                            navigation.navigate('MyAppointments');
                             setUserDropdownOpen(false);
                           }}
                         >
@@ -370,7 +370,7 @@ const Header = () => {
                         <TouchableOpacity 
                           style={styles.dropdownItem}
                           onPress={() => {
-                            navigation.navigate('Appointments');
+                            navigation.navigate('MyAppointments');
                             setUserDropdownOpen(false);
                           }}
                         >

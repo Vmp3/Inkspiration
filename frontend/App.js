@@ -20,6 +20,7 @@ import ProfessionalRegisterScreen from './src/screens/ProfessionalRegisterScreen
 import AdminUsersScreen from './src/screens/AdminUsersScreen';
 import ArtistScreen from './src/screens/ArtistScreen';
 import BookingScreen from './src/screens/BookingScreen';
+import MyAppointmentsScreen from './src/screens/MyAppointmentsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -39,6 +40,7 @@ const linking = {
       Profile: 'profile',
       EditProfile: 'edit-profile',
       ProfessionalRegister: 'professional-register',
+      MyAppointments: 'my-appointments',
     },
   },
 };
@@ -76,6 +78,7 @@ export default function App() {
             <Stack.Screen name="Booking" component={BookingScreen} />
             <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
             <Stack.Screen name="ProfessionalRegister" component={ProfessionalRegisterScreen} />
+            <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} />
           </Stack.Navigator>
         </View>
       </NavigationContainer>

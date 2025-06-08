@@ -79,6 +79,16 @@ class AgendamentoService {
       throw error;
     }
   }
+
+  async listarMeusAgendamentos(page = 0, size = 5) {
+    try {
+      const response = await ApiService.get(`/agendamentos/meus-agendamentos?page=${page}&size=${size}`);
+      return response;
+    } catch (error) {
+      console.error('Erro ao buscar meus agendamentos:', error);
+      throw error;
+    }
+  }
 }
 
 export default new AgendamentoService(); 

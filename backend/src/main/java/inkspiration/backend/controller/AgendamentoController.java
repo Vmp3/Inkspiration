@@ -10,6 +10,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -186,6 +189,35 @@ public class AgendamentoController {
         try {
             agendamentoService.excluirAgendamento(id);
             return ResponseEntity.ok("Agendamento excluído com sucesso");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/meus-agendamentos")
+    public ResponseEntity<?> listarMeusAgendamentos(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            if (authentication instanceof JwtAuthenticationToken) {
+                JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+                Jwt jwt = jwtAuth.getToken();
+                Long userId = jwt.getClaim("userId");
+                
+                if (userId == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body("Token não contém informações do usuário");
+                }
+                
+                Pageable pageable = PageRequest.of(page, size);
+                Page<AgendamentoDTO> agendamentosPage = agendamentoService.listarPorUsuarioDTO(userId, pageable);
+                
+                return ResponseEntity.ok(agendamentosPage);
+            }
+            
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Autenticação inválida");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
