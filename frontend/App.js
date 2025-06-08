@@ -19,6 +19,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import ProfessionalRegisterScreen from './src/screens/ProfessionalRegisterScreen';
 import AdminUsersScreen from './src/screens/AdminUsersScreen';
 import ArtistScreen from './src/screens/ArtistScreen';
+import BookingScreen from './src/screens/BookingScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -31,6 +32,7 @@ const linking = {
       Register: 'register',
       AdminUsers: 'admin/usuarios',
       Artist: 'artist/:id',
+      Booking: 'booking/:professionalId',
       Main: 'main',
       Explore: 'explore',
       About: 'about',
@@ -71,13 +73,14 @@ export default function App() {
             <Stack.Screen name="About" component={AboutScreen} />
             <Stack.Screen name="Profile" component={EditProfileScreen} />
             <Stack.Screen name="Artist" component={ArtistScreen} />
+            <Stack.Screen name="Booking" component={BookingScreen} />
             <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
             <Stack.Screen name="ProfessionalRegister" component={ProfessionalRegisterScreen} />
           </Stack.Navigator>
         </View>
       </NavigationContainer>
 
-      <Toast ref={(ref) => Toast.setRef(ref)} config={toastConfig} />
+      <Toast config={toastConfig} />
     </AuthProvider>
   </SafeAreaProvider>
 </GestureHandlerRootView>

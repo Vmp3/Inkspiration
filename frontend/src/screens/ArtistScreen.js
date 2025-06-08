@@ -262,6 +262,7 @@ const ArtistScreen = ({ route }) => {
       
       setArtist({
         ...transformedData,
+        idProfissional: artistId,
         title: "Tatuador",
         bio: transformedData.description || "Profissional especializado em tatuagens com foco na criação de designs personalizados que contam uma história e refletem a personalidade dos clientes.",
         reviewCount: reviews.length,
@@ -520,7 +521,7 @@ const ArtistScreen = ({ route }) => {
           {/* Botão de agendar */}
           <TouchableOpacity 
             style={styles.scheduleButton}
-            onPress={() => navigation.navigate('Booking', { id: artist.id, type: 'artist' })}
+            onPress={() => navigation.navigate('Booking', { professionalId: artist.idProfissional })}
           >
             <Feather name="calendar" size={20} color="#FFFFFF" style={styles.scheduleIcon} />
             <Text style={styles.scheduleText}>Agendar</Text>
