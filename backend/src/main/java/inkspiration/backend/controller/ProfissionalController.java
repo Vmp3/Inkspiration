@@ -344,6 +344,107 @@ public class ProfissionalController {
         }
     }
 
+    @PutMapping("/profissional/usuario/{idUsuario}/atualizar-completo-com-imagens")
+    public ResponseEntity<?> atualizarProfissionalCompletoComImagens(@PathVariable Long idUsuario, @RequestBody Map<String, Object> requestData) {
+        try {
+            // Verifica se o usuário pode editar este perfil profissional
+            authorizationService.requireUserAccessOrAdmin(idUsuario);
+            
+            // Extrair dados profissionais
+            @SuppressWarnings("unchecked")
+            Map<String, Object> profissionalData = (Map<String, Object>) requestData.get("profissional");
+            
+            // Extrair dados do portfólio
+            @SuppressWarnings("unchecked")
+            Map<String, Object> portfolioData = (Map<String, Object>) requestData.get("portfolio");
+            
+            // Extrair imagens
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> imagensData = (List<Map<String, Object>>) requestData.get("imagens");
+            
+            // Extrair disponibilidades no formato de Map para usar com cadastrarDisponibilidade
+            @SuppressWarnings("unchecked")
+            Map<String, List<Map<String, String>>> disponibilidadesData = (Map<String, List<Map<String, String>>>) requestData.get("disponibilidades");
+            
+            // Buscar o profissional existente
+            Profissional profissional = profissionalService.buscarPorUsuario(idUsuario);
+            
+            // Atualizar dados básicos do profissional se fornecidos
+            if (profissionalData != null) {
+                // Atualizar campos do profissional conforme necessário
+                // (implementar lógica de atualização baseada nos dados recebidos)
+            }
+            
+            // Atualizar portfólio se fornecido
+            if (portfolioData != null && profissional.getPortifolio() != null) {
+                Long portfolioId = profissional.getPortifolio().getIdPortifolio();
+                
+                // Atualizar dados do portfólio
+                PortifolioDTO portfolioDto = new PortifolioDTO();
+                portfolioDto.setIdPortifolio(portfolioId);
+                
+                if (portfolioData.containsKey("descricao")) {
+                    portfolioDto.setDescricao((String) portfolioData.get("descricao"));
+                }
+                if (portfolioData.containsKey("especialidade")) {
+                    portfolioDto.setEspecialidade((String) portfolioData.get("especialidade"));
+                }
+                if (portfolioData.containsKey("experiencia")) {
+                    portfolioDto.setExperiencia((String) portfolioData.get("experiencia"));
+                }
+                if (portfolioData.containsKey("instagram")) {
+                    portfolioDto.setInstagram((String) portfolioData.get("instagram"));
+                }
+                if (portfolioData.containsKey("tiktok")) {
+                    portfolioDto.setTiktok((String) portfolioData.get("tiktok"));
+                }
+                if (portfolioData.containsKey("facebook")) {
+                    portfolioDto.setFacebook((String) portfolioData.get("facebook"));
+                }
+                if (portfolioData.containsKey("twitter")) {
+                    portfolioDto.setTwitter((String) portfolioData.get("twitter"));
+                }
+                if (portfolioData.containsKey("website")) {
+                    portfolioDto.setWebsite((String) portfolioData.get("website"));
+                }
+                
+                portifolioService.atualizar(portfolioId, portfolioDto);
+            }
+            
+            // Atualizar imagens do portfólio se fornecidas
+            if (imagensData != null && profissional.getPortifolio() != null) {
+                Long portfolioId = profissional.getPortifolio().getIdPortifolio();
+                
+                // Buscar e deletar imagens antigas
+                List<ImagemDTO> imagensAtuais = imagemService.listarPorPortifolio(portfolioId);
+                for (ImagemDTO imagem : imagensAtuais) {
+                    imagemService.deletar(imagem.getIdImagem());
+                }
+                
+                // Adicionar novas imagens
+                for (Map<String, Object> imagemData : imagensData) {
+                    if (imagemData.containsKey("imagemBase64")) {
+                        ImagemDTO imagemDto = new ImagemDTO();
+                        imagemDto.setImagemBase64((String) imagemData.get("imagemBase64"));
+                        imagemDto.setIdPortifolio(portfolioId);
+                        imagemService.salvar(imagemDto);
+                    }
+                }
+            }
+            
+            // Atualizar disponibilidades se fornecidas
+            if (disponibilidadesData != null) {
+                disponibilidadeService.cadastrarDisponibilidade(profissional.getIdProfissional(), disponibilidadesData);
+            }
+            
+            // Retornar dados completos atualizados no mesmo formato do endpoint /completo
+            return buscarCompletoPorid(profissional.getIdProfissional());
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao atualizar dados completos: " + e.getMessage());
+        }
+    }
+
     @DeleteMapping("/profissional/deletar/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         // Busca o profissional para obter o ID do usuário
@@ -355,19 +456,5 @@ public class ProfissionalController {
         
         profissionalService.deletar(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/profissional/{id}/imagens")
-    public ResponseEntity<List<ImagemDTO>> buscarImagensProfissional(@PathVariable Long id) {
-        Profissional profissional = profissionalService.buscarPorId(id);
-        
-        if (profissional.getPortifolio() == null) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
-        
-        Long idPortifolio = profissional.getPortifolio().getIdPortifolio();
-        List<ImagemDTO> imagens = imagemService.listarPorPortifolio(idPortifolio);
-        
-        return ResponseEntity.ok(imagens);
     }
 } 

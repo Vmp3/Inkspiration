@@ -77,7 +77,7 @@ export default function App() {
         </View>
       </NavigationContainer>
 
-      <Toast ref={(ref) => Toast.setRef(ref)} config={toastConfig} />
+      <Toast/>
     </AuthProvider>
   </SafeAreaProvider>
 </GestureHandlerRootView>
