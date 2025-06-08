@@ -1,8 +1,10 @@
 package inkspiration.backend.service;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -13,8 +15,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import inkspiration.backend.dto.DisponibilidadeDTO;
+import inkspiration.backend.entities.Agendamento;
 import inkspiration.backend.entities.Disponibilidade;
 import inkspiration.backend.entities.Profissional;
+import inkspiration.backend.enums.TipoServico;
+import inkspiration.backend.repository.AgendamentoRepository;
 import inkspiration.backend.repository.DisponibilidadeRepository;
 import inkspiration.backend.repository.ProfissionalRepository;
 
@@ -44,13 +49,16 @@ public class DisponibilidadeService {
     
     private final DisponibilidadeRepository disponibilidadeRepository;
     private final ProfissionalRepository profissionalRepository;
+    private final AgendamentoRepository agendamentoRepository;
     private final ObjectMapper objectMapper;
     
     public DisponibilidadeService(
             DisponibilidadeRepository disponibilidadeRepository,
-            ProfissionalRepository profissionalRepository) {
+            ProfissionalRepository profissionalRepository,
+            AgendamentoRepository agendamentoRepository) {
         this.disponibilidadeRepository = disponibilidadeRepository;
         this.profissionalRepository = profissionalRepository;
+        this.agendamentoRepository = agendamentoRepository;
         this.objectMapper = new ObjectMapper();
     }
     
@@ -216,5 +224,73 @@ public class DisponibilidadeService {
             throws JsonProcessingException {
         Disponibilidade disponibilidade = cadastrarDisponibilidade(idProfissional, horarios);
         return new DisponibilidadeDTO(disponibilidade);
+    }
+    
+    /**
+     * Obtém os horários disponíveis de um profissional em uma data específica,
+     * considerando a disponibilidade cadastrada, agendamentos existentes e duração do serviço.
+     * 
+     * @param idProfissional ID do profissional
+     * @param data Data para verificar disponibilidade
+     * @param tipoServico Tipo de serviço que define a duração
+     * @return Lista de horários disponíveis no formato "HH:mm"
+     * @throws JsonProcessingException Se houver erro ao processar a disponibilidade
+     */
+    public List<String> obterHorariosDisponiveis(Long idProfissional, LocalDate data, TipoServico tipoServico) 
+            throws JsonProcessingException {
+        List<String> horariosDisponiveis = new ArrayList<>();
+        
+        Map<String, List<Map<String, String>>> disponibilidade = obterDisponibilidade(idProfissional);
+        
+        DayOfWeek diaSemana = data.getDayOfWeek();
+        String nomeDia = obterNomeDiaSemana(diaSemana);
+        
+        if (!disponibilidade.containsKey(nomeDia)) {
+            return horariosDisponiveis;
+        }
+        
+        LocalDateTime inicioDia = data.atTime(0, 0);
+        LocalDateTime fimDia = data.atTime(23, 59, 59);
+        List<Agendamento> agendamentosExistentes = agendamentoRepository
+                .findByProfissionalAndPeriod(idProfissional, inicioDia, fimDia);
+        
+        int duracaoHoras = tipoServico.getDuracaoHoras();
+        
+        List<Map<String, String>> horariosDia = disponibilidade.get(nomeDia);
+        for (Map<String, String> horario : horariosDia) {
+            if (horario.containsKey("inicio") && horario.containsKey("fim")) {
+                LocalTime inicioTrabalho = LocalTime.parse(horario.get("inicio"));
+                LocalTime fimTrabalho = LocalTime.parse(horario.get("fim"));
+                
+                LocalTime horarioLimite = fimTrabalho.minusHours(duracaoHoras);
+                
+                if (inicioTrabalho.isAfter(horarioLimite)) {
+                    continue;
+                }
+                
+                LocalTime horaAtual = inicioTrabalho;
+                while (!horaAtual.isAfter(horarioLimite)) {
+                    LocalDateTime inicioServico = data.atTime(horaAtual);
+                    LocalDateTime fimServico = inicioServico.plusHours(duracaoHoras).minusSeconds(1);
+                    
+                    boolean temConflito = agendamentosExistentes.stream()
+                            .anyMatch(agendamento -> 
+                                agendamento.getDtInicio().isBefore(fimServico.plusSeconds(1)) && 
+                                agendamento.getDtFim().isAfter(inicioServico.minusSeconds(1)));
+                    
+                    if (!temConflito) {
+                        horariosDisponiveis.add(horaAtual.toString());
+                    }
+                    
+                    horaAtual = horaAtual.plusHours(1);
+                    
+                    if (horaAtual.isAfter(fimTrabalho)) {
+                        break;
+                    }
+                }
+            }
+        }
+        
+        return horariosDisponiveis;
     }
 } 

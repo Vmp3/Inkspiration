@@ -66,7 +66,7 @@ public class AgendamentoService {
             tipoServico = TipoServico.fromDescricao(tipoServicoStr);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Tipo de serviço inválido. Opções válidas: " +
-                    "tatuagem pequena, tatuagem media, tatuagem grande, sessão");
+                    "pequena, media, grande, sessao");
         }
         
         LocalDateTime dtInicioAjustado = ajustarHorarioInicio(dtInicio);
@@ -157,7 +157,7 @@ public class AgendamentoService {
             tipoServico = TipoServico.fromDescricao(tipoServicoStr);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Tipo de serviço inválido. Opções válidas: " +
-                    "tatuagem pequena, tatuagem media, tatuagem grande, sessão");
+                    "pequena, media, grande, sessao");
         }
         
         LocalDateTime dtInicioAjustado = ajustarHorarioInicio(dtInicio);

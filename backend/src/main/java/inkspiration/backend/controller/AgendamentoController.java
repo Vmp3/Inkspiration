@@ -157,22 +157,22 @@ public class AgendamentoController {
                 Map.of(
                     "tipo", TipoServico.TATUAGEM_PEQUENA.getDescricao(),
                     "duracaoHoras", TipoServico.TATUAGEM_PEQUENA.getDuracaoHoras(),
-                    "exemplo", "Início: 10:00 → Fim: 11:59:59"
+                    "exemplo", "Tatuagem pequena - 2 horas"
                 ),
                 Map.of(
                     "tipo", TipoServico.TATUAGEM_MEDIA.getDescricao(),
                     "duracaoHoras", TipoServico.TATUAGEM_MEDIA.getDuracaoHoras(),
-                    "exemplo", "Início: 10:00 → Fim: 13:59:59"
+                    "exemplo", "Tatuagem média - 4 horas"
                 ),
                 Map.of(
                     "tipo", TipoServico.TATUAGEM_GRANDE.getDescricao(),
                     "duracaoHoras", TipoServico.TATUAGEM_GRANDE.getDuracaoHoras(),
-                    "exemplo", "Início: 10:00 → Fim: 15:59:59"
+                    "exemplo", "Tatuagem grande - 6 horas"
                 ),
                 Map.of(
                     "tipo", TipoServico.SESSAO.getDescricao(),
                     "duracaoHoras", TipoServico.SESSAO.getDuracaoHoras(),
-                    "exemplo", "Início: 10:00 → Fim: 17:59:59"
+                    "exemplo", "Sessão completa - 8 horas"
                 )
             );
             return ResponseEntity.ok(tiposServico);

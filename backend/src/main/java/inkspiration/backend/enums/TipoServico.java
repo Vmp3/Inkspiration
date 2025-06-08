@@ -1,10 +1,10 @@
 package inkspiration.backend.enums;
 
 public enum TipoServico {
-    TATUAGEM_PEQUENA("tatuagem pequena", 2),
-    TATUAGEM_MEDIA("tatuagem media", 4),
-    TATUAGEM_GRANDE("tatuagem grande", 6),
-    SESSAO("sessão", 8);
+    TATUAGEM_PEQUENA("pequena", 2),
+    TATUAGEM_MEDIA("media", 4),
+    TATUAGEM_GRANDE("grande", 6),
+    SESSAO("sessao", 8);
     
     private final String descricao;
     private final int duracaoHoras;
