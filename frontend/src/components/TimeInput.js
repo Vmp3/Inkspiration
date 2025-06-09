@@ -3,7 +3,6 @@ import { View, TextInput, StyleSheet, Platform } from 'react-native';
 
 export const TimeInput = ({ value, onChange, disabled }) => {
   const handleChange = (text) => {
-    // Remove caracteres não numéricos
     let formattedText = text.replace(/[^0-9]/g, '');
     
     // Limita as horas a 23 e os minutos a 59

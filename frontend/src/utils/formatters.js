@@ -1,6 +1,4 @@
-// Formatters for various input fields
 const formatCPF = (value) => {
-  // Remove all non-numeric characters
   const numbers = value.replace(/\D/g, '');
   
   // Format: 000.000.000-00
@@ -11,7 +9,6 @@ const formatCPF = (value) => {
 };
 
 const formatCEP = (value) => {
-  // Remove all non-numeric characters
   const numbers = value.replace(/\D/g, '');
   
   // Format: 00000-000
@@ -20,7 +17,6 @@ const formatCEP = (value) => {
 };
 
 const formatPhone = (value) => {
-  // Remove all non-numeric characters
   const numbers = value.replace(/\D/g, '');
   
   // Format: (00) 00000-0000
@@ -30,7 +26,6 @@ const formatPhone = (value) => {
 };
 
 const formatBirthDate = (value) => {
-  // Remove all non-numeric characters
   const numbers = value.replace(/\D/g, '');
   
   // Format: DD/MM/AAAA
@@ -60,16 +55,11 @@ const validateEmail = (email) => {
 };
 
 const validateCPF = (cpf) => {
-  // Remove all non-numeric characters
   const numbers = cpf.replace(/\D/g, '');
-  
-  // Check if it has 11 digits
+
   if (numbers.length !== 11) return false;
-  
-  // Check if all digits are the same
   if (/^(\d)\1{10}$/.test(numbers)) return false;
   
-  // Validate first digit
   let sum = 0;
   for (let i = 0; i < 9; i++) {
     sum += parseInt(numbers.charAt(i)) * (10 - i);
@@ -78,7 +68,6 @@ const validateCPF = (cpf) => {
   let digit = remainder > 9 ? 0 : remainder;
   if (digit !== parseInt(numbers.charAt(9))) return false;
   
-  // Validate second digit
   sum = 0;
   for (let i = 0; i < 10; i++) {
     sum += parseInt(numbers.charAt(i)) * (11 - i);

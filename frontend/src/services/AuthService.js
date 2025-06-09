@@ -1,31 +1,28 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const API_URL = 'http://localhost:8080';
 
 const TOKEN_KEY = 'jwtToken';
 
-
 class AuthService {
+  constructor() {
+    this.api = axios.create({
+      baseURL: API_URL,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
   async login(cpf, senha) {
     try {
       // Limpar qualquer token anterior
       await this.logout();
       
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ cpf, senha }),
-      });
+      const response = await this.api.post('/auth/login', { cpf, senha });
+      const token = response.data;
 
-      if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new Error(errorMessage || 'Erro ao realizar login');
-      }
-
-      const token = await response.text();
-      
       if (!token) {
         throw new Error('Servidor retornou um token vazio');
       }
@@ -58,22 +55,17 @@ class AuthService {
     }
   }
 
-
   async logout() {
     try {
       // Remover do AsyncStorage
       await AsyncStorage.removeItem(TOKEN_KEY);
       
-      // Remover do cookie (para web)
+      // Remover de cookie (web)
       if (typeof document !== 'undefined') {
-        document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict`;
-        
-        // Tenta remover sem o path e SameSite também (caso tenha sido salvo de forma diferente)
-        document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+        document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
       }
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
-      throw error;
     }
   }
 
@@ -93,7 +85,6 @@ class AuthService {
       throw error;
     }
   }
-
 
   async getToken() {
     try {
@@ -120,7 +111,6 @@ class AuthService {
       return null;
     }
   }
-
 
   parseJwt(token) {
     try {
@@ -256,53 +246,42 @@ class AuthService {
         return { nome: 'Usuário', role: role, idUsuario: null };
       }
       
-      // Buscar dados completos do usuário da API usando o endpoint correto
+      // Buscar dados completos do usuário da API usando axios
       try {
         const headers = await this.getAuthHeaders();
+        const response = await this.api.get(`/usuario/detalhes/${userId}`, { headers });
+        const userData = response.data;
         
-        // Usar o endpoint que retorna UsuarioResponseDTO com dados completos
-        const response = await fetch(`${API_URL}/usuario/detalhes/${userId}`, {
-          method: 'GET',
-          headers
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          
-          // Se o usuário for um profissional, buscar dados profissionais adicionais
-          let dadosProfissionais = {};
-          if (role === 'ROLE_PROF') {
-            dadosProfissionais = await this.getDadosProfissionais(userId, headers);
-          }
-          
-          // Garantir que os dados estejam formatados corretamente para o EditProfileScreen
-          const endereco = userData.endereco || {
-            cep: '',
-            rua: '',
-            numero: '',
-            complemento: '',
-            bairro: '',
-            cidade: '',
-            estado: ''
-          };
-          
-          return {
-            idUsuario: userData.idUsuario,
-            nome: userData.nome,
-            cpf: userData.cpf ? userData.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : '',
-            email: userData.email || '',
-            telefone: userData.telefone || '',
-            dataNascimento: userData.dataNascimento || '',
-            role: role,
-            cpfMascarado: tokenData.sub ? `***.***.***-${tokenData.sub.substring(tokenData.sub.length - 2)}` : null,
-            imagemPerfil: userData.imagemPerfil || null,
-            endereco: endereco,
-            ...dadosProfissionais
-          };
-        } else {
-          console.error('Erro ao buscar dados do usuário:', response.status, response.statusText);
-          throw new Error('Falha ao buscar dados do usuário');
+        // Se o usuário for um profissional, buscar dados profissionais adicionais
+        let dadosProfissionais = {};
+        if (role === 'ROLE_PROF') {
+          dadosProfissionais = await this.getDadosProfissionais(userId);
         }
+        
+        // Garantir que os dados estejam formatados corretamente para o EditProfileScreen
+        const endereco = userData.endereco || {
+          cep: '',
+          rua: '',
+          numero: '',
+          complemento: '',
+          bairro: '',
+          cidade: '',
+          estado: ''
+        };
+        
+        return {
+          idUsuario: userData.idUsuario,
+          nome: userData.nome,
+          cpf: userData.cpf ? userData.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : '',
+          email: userData.email || '',
+          telefone: userData.telefone || '',
+          dataNascimento: userData.dataNascimento || '',
+          role: role,
+          cpfMascarado: tokenData.sub ? `***.***.***-${tokenData.sub.substring(tokenData.sub.length - 2)}` : null,
+          imagemPerfil: userData.imagemPerfil || null,
+          endereco: endereco,
+          ...dadosProfissionais
+        };
       } catch (error) {
         console.error('Erro ao buscar dados do usuário da API:', error);
         throw error;
@@ -313,44 +292,39 @@ class AuthService {
     }
   }
 
-  async getDadosProfissionais(userId, headers) {
+  async getDadosProfissionais(userId) {
     try {
-      const response = await fetch(`${API_URL}/profissional/usuario/${userId}`, {
-        method: 'GET',
-        headers: headers
-      });
-      
-      if (response.ok) {
-        const dadosProfissionais = await response.json();
-        return {
-          especialidades: dadosProfissionais.especialidades || [],
-          bio: dadosProfissionais.bio || '',
-          experiencia: dadosProfissionais.experiencia || '',
-          redesSociais: dadosProfissionais.redesSociais || {
-            instagram: '',
-            tiktok: '',
-            facebook: '',
-            twitter: '',
-            website: ''
-          }
-        };
-      }
+      const headers = await this.getAuthHeaders();
+      const response = await this.api.get(`/profissional/usuario/${userId}`, { headers });
+      const dadosProfissionais = response.data;
+
+      return {
+        especialidades: dadosProfissionais.especialidades || [],
+        bio: dadosProfissionais.bio || '',
+        experiencia: dadosProfissionais.experiencia || '',
+        redesSociais: dadosProfissionais.redesSociais || {
+          instagram: '',
+          tiktok: '',
+          facebook: '',
+          twitter: '',
+          website: ''
+        }
+      };
     } catch (error) {
       console.error('Erro ao buscar dados profissionais:', error);
+      return {
+        especialidades: [],
+        bio: '',
+        experiencia: '',
+        redesSociais: {
+          instagram: '',
+          tiktok: '',
+          facebook: '',
+          twitter: '',
+          website: ''
+        }
+      };
     }
-    
-    return {
-      especialidades: [],
-      bio: '',
-      experiencia: '',
-      redesSociais: {
-        instagram: '',
-        tiktok: '',
-        facebook: '',
-        twitter: '',
-        website: ''
-      }
-    };
   }
 
   async getAuthHeaders() {
@@ -419,25 +393,22 @@ class AuthService {
         userId = tokenData.userId;
       }
       
-      const response = await fetch(`${API_URL}/usuario/${userId}/validate-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ token })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        return {
-          valid: result.valid === true,
-          reason: result.message || '',
-          newToken: result.newToken || null
-        };
-      }
-      
-      return { valid: false, reason: 'Erro na resposta do servidor' };
+      const response = await this.api.post(`/usuario/${userId}/validate-token`, 
+        { token },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      const result = response.data;
+      return {
+        valid: result.valid === true,
+        reason: result.message || '',
+        newToken: result.newToken || null
+      };
     } catch (error) {
       console.error('Erro ao validar token:', error);
       return { valid: false, reason: 'Erro de conexão com servidor' };
@@ -449,19 +420,8 @@ class AuthService {
       // Limpar tokens anteriores
       await this.logout();
       
-      const response = await fetch(`${API_URL}/auth/reauth/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        console.error('Erro na reautenticação:', response.status, response.statusText);
-        throw new Error('Falha na reautenticação');
-      }
-      
-      const token = await response.text();
+      const response = await this.api.post(`/auth/reauth/${userId}`);
+      const token = response.data;
       
       // Salvar o novo token
       await this.setToken(token);

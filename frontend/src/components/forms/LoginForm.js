@@ -105,9 +105,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     backgroundColor: '#fff',
   },
-  primaryButton: {
-    // Any additional custom styles for the button
-  },
   inputError: {
     borderColor: '#ff0000',
   },

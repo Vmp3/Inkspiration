@@ -29,7 +29,6 @@ const RelevanceDropdown = ({
         />
       </TouchableOpacity>
       
-      {/* Menu dropdown de relevância */}
       {showDropdown && (
         <View style={styles.relevanceDropdownContainer}>
           <Pressable onPress={() => setShowDropdown(false)}>

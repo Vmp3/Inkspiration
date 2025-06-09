@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native'
 import Input from '../ui/Input';
 import Checkbox from '../ui/Checkbox';
 import FormNavigation from '../ui/FormNavigation';
+import ApiService from '../../services/ApiService';
 
 const SecurityForm = ({ 
   formData, 
@@ -14,12 +15,12 @@ const SecurityForm = ({
   passwordError,
   confirmPasswordError
 }) => {
-  const handleTermsPress = () => {
-    Linking.openURL('http://localhost:8081/termos-de-uso');
+  const openTerms = () => {
+    Linking.openURL('https://app.inkspiration.com.br/termos-de-uso');
   };
 
-  const handlePrivacyPress = () => {
-    Linking.openURL('http://localhost:8081/politica-de-privacidade');
+  const openPrivacyPolicy = () => {
+    Linking.openURL('https://app.inkspiration.com.br/politica-de-privacidade');
   };
 
   return (
@@ -65,11 +66,11 @@ const SecurityForm = ({
         />
         <View style={styles.termsTextContainer}>
           <Text style={styles.termsText}>Eu aceito os </Text>
-          <TouchableOpacity onPress={handleTermsPress}>
+          <TouchableOpacity onPress={openTerms}>
             <Text style={styles.termsLink}>Termos de Uso</Text>
           </TouchableOpacity>
           <Text style={styles.termsText}> e a </Text>
-          <TouchableOpacity onPress={handlePrivacyPress}>
+          <TouchableOpacity onPress={openPrivacyPolicy}>
             <Text style={styles.termsLink}>Política de Privacidade</Text>
           </TouchableOpacity>
         </View>

@@ -11,7 +11,7 @@ import {
   Pressable,
   Image
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import toastHelper from '../utils/toastHelper';
@@ -29,6 +29,14 @@ const Header = () => {
   
   const slideAnim = new Animated.Value(-300); 
   
+  // Obtém a rota atual usando useNavigationState
+  const currentRouteName = useNavigationState(state => {
+    if (!state || !state.routes || state.routes.length === 0) {
+      return 'Home';
+    }
+    const currentRoute = state.routes[state.index];
+    return currentRoute?.name || 'Home';
+  });
   
   const updateLayout = () => {
     const { width, height } = Dimensions.get('window');
@@ -116,11 +124,8 @@ const Header = () => {
 
   
   const isActive = (routeName) => {
-    const currentRoute = navigation?.getCurrentRoute?.()?.name || '';
-    
-    if (routeName === 'Home' && currentRoute === 'Home') return true;
-    if (routeName !== 'Home' && currentRoute.startsWith(routeName)) return true;
-    return false;
+    const isRouteActive = currentRouteName === routeName;
+    return isRouteActive;
   };
 
   
@@ -128,7 +133,6 @@ const Header = () => {
     return name && typeof name === 'string' ? name.charAt(0).toUpperCase() : '?';
   };
 
-  // Get dynamic styles for overlay and menu
   const dynamicOverlayStyles = {
     height: Platform.OS === 'web' ? '100vh' : screenHeight,
     position: 'absolute',
@@ -137,7 +141,7 @@ const Header = () => {
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: 9998, // Very high z-index but below the menu
+    zIndex: 9998,
   };
 
   const dynamicMenuStyles = {
@@ -147,8 +151,8 @@ const Header = () => {
     left: 0,
     width: 280,
     backgroundColor: '#fff',
-    zIndex: 9999, // Highest z-index for components (only Toast should be higher)
-    elevation: 24, // Higher Android elevation
+    zIndex: 9999,
+    elevation: 24,
     boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.25)',
   };
 
