@@ -33,6 +33,14 @@ public class Usuario {
     @Column(length = 1000, columnDefinition = "TEXT")
     private String tokenAtual;
 
+    // Campos para autenticação de dois fatores
+    @Column(name = "two_factor_enabled")
+    private Boolean twoFactorEnabled = false;
+    
+    @JsonIgnore
+    @Column(name = "two_factor_secret")
+    private String twoFactorSecret;
+
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id_endereco")
     private Endereco endereco;
@@ -132,5 +140,21 @@ public class Usuario {
 
     public void setTokenAtual(String tokenAtual) {
         this.tokenAtual = tokenAtual;
+    }
+
+    public Boolean getTwoFactorEnabled() {
+        return twoFactorEnabled;
+    }
+
+    public void setTwoFactorEnabled(Boolean twoFactorEnabled) {
+        this.twoFactorEnabled = twoFactorEnabled;
+    }
+
+    public String getTwoFactorSecret() {
+        return twoFactorSecret;
+    }
+
+    public void setTwoFactorSecret(String twoFactorSecret) {
+        this.twoFactorSecret = twoFactorSecret;
     }
 }
