@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
@@ -47,20 +48,28 @@ public class SecurityConfig {
     private RSAPrivateKey priv;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, TokenOwnershipFilter tokenOwnershipFilter) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/profissionais/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/profissional/publico").permitAll()
+                .requestMatchers(HttpMethod.GET, "/profissional/{id}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/profissional/completo").permitAll()
+                .requestMatchers(HttpMethod.GET, "/profissional/completo/{id}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/profissional/{id}/imagens").permitAll()
+                .requestMatchers(HttpMethod.GET, "/portifolio/{id}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/disponibilidades/profissional/{idProfissional}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/disponibilidades/profissional/{idProfissional}/verificar").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
             )
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterAfter(tokenOwnershipFilter, UsernamePasswordAuthenticationFilter.class);
 
         // Configuração para permitir acesso ao console H2
         http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));

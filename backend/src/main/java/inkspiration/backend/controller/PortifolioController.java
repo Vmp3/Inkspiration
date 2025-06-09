@@ -21,20 +21,26 @@ import org.springframework.web.bind.annotation.RestController;
 import inkspiration.backend.dto.PortifolioDTO;
 import inkspiration.backend.entities.Portifolio;
 import inkspiration.backend.service.PortifolioService;
+import inkspiration.backend.security.AuthorizationService;
 import jakarta.validation.Valid;
 
 @RestController
 public class PortifolioController {
 
     private final PortifolioService portifolioService;
+    private final AuthorizationService authorizationService;
 
     @Autowired
-    public PortifolioController(PortifolioService portifolioService) {
+    public PortifolioController(PortifolioService portifolioService, AuthorizationService authorizationService) {
         this.portifolioService = portifolioService;
+        this.authorizationService = authorizationService;
     }
 
     @GetMapping("/portifolio")
     public ResponseEntity<List<PortifolioDTO>> listar(@RequestParam(defaultValue = "0") int page) {
+        // Apenas administradores podem listar todos os portfólios com paginação
+        authorizationService.requireAdmin();
+        
         Pageable pageable = PageRequest.of(page, 10);
         Page<Portifolio> portifolios = portifolioService.listarTodos(pageable);
         

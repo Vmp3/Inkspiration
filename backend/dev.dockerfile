@@ -43,17 +43,15 @@ else \n\
     echo "✅ Chaves RSA existentes encontradas. Mantendo as chaves atuais." \n\
 fi \n\
 \n\
-echo "Iniciando build do projeto..." \n\
-mvn clean package -DskipTests \n\
-\n\
-echo "Iniciando a aplicação..." \n\
-exec java -jar target/inkspiration-0.0.1-SNAPSHOT.jar \n\
-' > /app/entrypoint.sh
+echo "Iniciando aplicação em modo desenvolvimento com hot reload..." \n\
+exec mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Dspring.devtools.restart.enabled=true -Dspring.devtools.livereload.enabled=true" \n\
+' > /app/entrypoint-dev.sh
 
-RUN chmod +x /app/entrypoint.sh
+RUN chmod +x /app/entrypoint-dev.sh
 
-RUN bash -n /app/entrypoint.sh
+RUN bash -n /app/entrypoint-dev.sh
 
 EXPOSE 8080
+EXPOSE 35729
 
-ENTRYPOINT ["/app/entrypoint.sh"] 
+ENTRYPOINT ["/app/entrypoint-dev.sh"] 

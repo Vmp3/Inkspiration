@@ -48,8 +48,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
         UsuarioValidationException.NomeObrigatorioException.class,
         UsuarioValidationException.EmailObrigatorioException.class,
+        UsuarioValidationException.EmailInvalidoException.class,
         UsuarioValidationException.CpfObrigatorioException.class,
+        UsuarioValidationException.CpfInvalidoException.class,
         UsuarioValidationException.DataNascimentoObrigatoriaException.class,
+        UsuarioValidationException.DataInvalidaException.class,
         UsuarioValidationException.SenhaObrigatoriaException.class
     })
     public ResponseEntity<Map<String, String>> handleUsuarioValidationExceptions(RuntimeException ex) {

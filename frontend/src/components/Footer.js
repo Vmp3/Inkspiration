@@ -1,20 +1,28 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
 
 const Footer = () => {
   const navigation = useNavigation();
+  const { isAuthenticated, userData } = useAuth();
   const windowWidth = Dimensions.get('window').width;
   const isMobile = windowWidth < 768;
 
   const handleArtistRegistration = () => {
-    // Redirecionar para a página de registro com opção de artista ativada
-    navigation.navigate('Register', { artist: true });
+    if (!isAuthenticated) {
+      navigation.navigate('Login');
+      return;
+    }
+
+    navigation.navigate('ProfessionalRegister');
   };
 
   const handleLinkPress = (route) => {
     navigation.navigate(route);
   };
+
+  const shouldShowArtistButton = !isAuthenticated || (userData?.role !== 'ROLE_PROF');
 
   return (
     <View style={styles.footer}>
@@ -23,7 +31,7 @@ const Footer = () => {
           <View style={[styles.column, !isMobile && styles.desktopColumn]}>
             <Text style={styles.title}>Inkspiration</Text>
             <Text style={styles.description}>
-              Conectando entusiastas de tatuagem com artistas talentosos desde 2023.
+              Conectando entusiastas de tatuagem com artistas talentosos desde 2025.
             </Text>
           </View>
 
@@ -42,19 +50,21 @@ const Footer = () => {
             </View>
           </View>
 
-          <View style={[styles.column, !isMobile && styles.desktopColumn]}>
-            <Text style={styles.subtitle}>Para Artistas</Text>
-            <View style={styles.linksList}>
-              <TouchableOpacity onPress={handleArtistRegistration}>
-                <Text style={styles.link}>Cadastre-se como Artista</Text>
-              </TouchableOpacity>
+          {shouldShowArtistButton && (
+            <View style={[styles.column, !isMobile && styles.desktopColumn]}>
+              <Text style={styles.subtitle}>Para Artistas</Text>
+              <View style={styles.linksList}>
+                <TouchableOpacity onPress={handleArtistRegistration}>
+                  <Text style={styles.link}>Cadastre-se como Artista</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          )}
         </View>
 
         <View style={styles.divider} />
         <Text style={styles.copyright}>
-          © 2023 Inkspiration. Todos os direitos reservados.
+          © 2025 Inkspiration. Todos os direitos reservados.
         </Text>
       </View>
     </View>
@@ -128,8 +138,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Adicione media query para tablets e desktops usando responsividade
-// Para tamanhos de tela maiores que 768px
 const mediaQuery = {
   tablet: {
     columnsContainer: {
@@ -141,8 +149,5 @@ const mediaQuery = {
     },
   },
 };
-
-// Em uma implementação real, você precisaria de uma biblioteca como react-native-responsive-screen
-// para aplicar estilos baseados no tamanho da tela
 
 export default Footer; 

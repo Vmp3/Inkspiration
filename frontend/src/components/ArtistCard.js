@@ -1,12 +1,19 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { Platform } from 'react-native';
 
 const ArtistCard = ({ artist }) => {
-  const { name, rating, specialties, location, coverImage } = artist;
+  const { id, name, rating, specialties, location, coverImage } = artist;
+  const navigation = useNavigation();
+
+  const handlePress = () => {
+    navigation.navigate('Artist', { artistId: id });
+  };
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.9}>
       <View style={styles.imageContainer}>
         <Image 
           source={coverImage ? { uri: coverImage } : { uri: 'https://via.placeholder.com/400x200/e0e0e0/8c8c8c?text=No+Image' }}
@@ -16,8 +23,8 @@ const ArtistCard = ({ artist }) => {
       </View>
       <View style={styles.content}>
         <View style={styles.header}>
-          <View>
-            <Text style={styles.name}>{name}</Text>
+          <View style={styles.nameContainer}>
+            <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">{name}</Text>
           </View>
           <View style={styles.ratingContainer}>
             <MaterialIcons name="star" size={16} color="#FFD700" style={styles.starIcon} />
@@ -25,7 +32,7 @@ const ArtistCard = ({ artist }) => {
           </View>
         </View>
         <View style={styles.specialtiesContainer}>
-          {specialties.map((specialty, index) => (
+          {specialties.slice(0, 3).map((specialty, index) => (
             <View key={index} style={styles.badge}>
               <Text style={styles.badgeText}>{specialty}</Text>
             </View>
@@ -33,10 +40,10 @@ const ArtistCard = ({ artist }) => {
         </View>
         <View style={styles.locationContainer}>
           <MaterialIcons name="location-on" size={14} color="#6B7280" />
-          <Text style={styles.locationText}>{location}</Text>
+          <Text style={styles.locationText} numberOfLines={1} ellipsizeMode="tail">{location}</Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -45,29 +52,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 2,
-    height: '100%',
+    width: '100%',
+    ...Platform.select({
+      android: {
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+      }
+    })
   },
   imageContainer: {
     aspectRatio: 16/9,
     overflow: 'hidden',
+    backgroundColor: '#f3f4f6',
   },
   image: {
     width: '100%',
     height: '100%',
   },
   content: {
-    padding: 16,
+    padding: 12,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 8,
+    width: '100%',
+  },
+  nameContainer: {
+    flex: 1,
+    paddingRight: 8,
   },
   name: {
     fontSize: 16,
@@ -90,7 +106,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginBottom: 8,
-    gap: 4,
   },
   badge: {
     backgroundColor: '#F3F4F6',
@@ -107,11 +122,13 @@ const styles = StyleSheet.create({
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
   },
   locationText: {
     marginLeft: 4,
     fontSize: 12,
     color: '#6B7280',
+    flex: 1,
   },
 });
 

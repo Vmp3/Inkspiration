@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Toast from 'react-native-toast-message';
 import * as formatters from '../utils/formatters';
+import { useAuth } from '../context/AuthContext';
+import toastHelper from '../utils/toastHelper';
 
-import Header from '../components/Header';
 import LoginForm from '../components/forms/LoginForm';
-
-const API_URL = 'http://localhost:8080';
+import { authMessages } from '../components/auth/messages';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
+  const { login, loading: authLoading } = useAuth();
+  
   const [formData, setFormData] = useState({
     cpf: '',
     password: '',
@@ -23,10 +23,8 @@ const LoginScreen = () => {
   const handleChange = (field, value) => {
     let formattedValue = value;
     
-    // Apply CPF formatter
     if (field === 'cpf') {
       formattedValue = formatters.formatCPF(value);
-      // Clear error when typing
       setCpfError('');
     }
 
@@ -36,7 +34,7 @@ const LoginScreen = () => {
   const handleBlur = (field) => {
     if (field === 'cpf' && formData.cpf) {
       if (!formatters.validateCPF(formData.cpf)) {
-        setCpfError('CPF inválido');
+        setCpfError(authMessages.loginErrors.invalidCpf);
       } else {
         setCpfError('');
       }
@@ -45,72 +43,28 @@ const LoginScreen = () => {
 
   const handleSubmit = async () => {
     if (!formData.cpf || !formData.password) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Por favor, preencha todos os campos',
-      });
+      toastHelper.showError(authMessages.loginErrors.requiredFields);
       return;
     }
 
     if (!formatters.validateCPF(formData.cpf)) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'CPF inválido',
-      });
+      toastHelper.showError(authMessages.loginErrors.invalidCpf);
       return;
     }
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cpf: formData.cpf.replace(/\D/g, ''),
-          senha: formData.password,
-        }),
-      });
+      const result = await login(
+        formData.cpf.replace(/\D/g, ''),
+        formData.password
+      );
 
-      if (!response.ok) {
-        const data = await response.json();
-        if (response.status === 400 && data.message.includes('CPF')) {
-          Toast.show({
-            type: 'error',
-            text1: 'Erro',
-            text2: 'CPF inválido',
-          });
-        } else if (response.status === 401) {
-          Toast.show({
-            type: 'error',
-            text1: 'Erro',
-            text2: 'CPF ou senha inválidos',
-          });
-        } else {
-          Toast.show({
-            type: 'error',
-            text1: 'Erro',
-            text2: data.message || 'Ocorreu um erro ao fazer login',
-          });
-        }
+      if (!result.success) {
+        toastHelper.showError(authMessages.loginErrors.loginFailed);
         return;
       }
 
-      // A resposta é apenas o token como string
-      const token = await response.text();
-
-      // Salvar token e dados do usuário
-      await AsyncStorage.setItem('token', token);
-      await AsyncStorage.setItem('user', JSON.stringify({ cpf: formData.cpf }));
-
-      Toast.show({
-        type: 'success',
-        text1: 'Sucesso',
-        text2: 'Login realizado com sucesso!',
-      });
+      toastHelper.showSuccess(authMessages.success.loginSuccess);
 
       // Navegar para a tela principal
       navigation.reset({
@@ -118,11 +72,7 @@ const LoginScreen = () => {
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Ocorreu um erro ao fazer login. Tente novamente.',
-      });
+      toastHelper.showError(authMessages.loginErrors.serverError);
     } finally {
       setLoading(false);
     }
@@ -135,8 +85,6 @@ const LoginScreen = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
       >
-        <Header />
-        
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.formContainer}>
             <View style={styles.titleContainer}>
@@ -152,7 +100,7 @@ const LoginScreen = () => {
               cpfError={cpfError}
               rememberMe={rememberMe}
               setRememberMe={setRememberMe}
-              loading={loading}
+              loading={loading || authLoading}
             />
 
             <View style={styles.registerContainer}>

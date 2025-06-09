@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import theme from '../../themes/theme';
 
 const TabHeader = ({ tabs, activeTab, setActiveTab }) => {
   return (

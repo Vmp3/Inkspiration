@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Platform } from 'react-native';
 import ArtistCard from '../ArtistCard';
 
 const ArtistsGrid = ({ artists, numColumns, navigation }) => {
@@ -14,6 +14,19 @@ const ArtistsGrid = ({ artists, numColumns, navigation }) => {
     );
   }
 
+  const chunkArray = (array, size) => {
+    const result = [];
+    for (let i = 0; i < array.length; i += size) {
+      result.push(array.slice(i, i + size));
+    }
+    return result;
+  };
+
+  const rows = chunkArray(artists, numColumns);
+
+  const cardWidthPercentage = numColumns === 1 ? 100 : (numColumns === 2 ? 49 : 32);
+  const cardMargin = numColumns === 1 ? 0 : 0.5;
+
   return (
     <View style={styles.artistsGrid}>
       {artists.map((artist) => (
@@ -25,7 +38,7 @@ const ArtistsGrid = ({ artists, numColumns, navigation }) => {
             numColumns === 2 ? { width: '48%', marginHorizontal: '1%' } :
             { width: '100%' }
           ]}
-          onPress={() => navigation.navigate('ArtistDetail', { artistId: artist.id })}
+          onPress={() => navigation.navigate('Artist', { artistId: artist.id })}
         >
           <ArtistCard artist={artist} />
         </TouchableOpacity>
@@ -35,14 +48,14 @@ const ArtistsGrid = ({ artists, numColumns, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  artistsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 24,
-    marginTop: 8,
+  container: {
+    width: '100%',
   },
-  artistCard: {
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
     marginBottom: 16,
+    width: '100%',
   },
   noResultsContainer: {
     padding: 48,

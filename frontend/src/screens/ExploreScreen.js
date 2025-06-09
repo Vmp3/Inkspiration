@@ -10,12 +10,13 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Input from '../components/ui/Input';
 import SearchInput from '../components/ui/SearchInput';
 import FilterButton from '../components/FilterButton';
-import { artists as originalArtists } from '../data/artists';
+import ProfessionalService from '../services/ProfessionalService';
+import toastHelper from '../utils/toastHelper';
+import { exploreMessages } from '../components/explore/messages';
 import Button from '../components/ui/Button';
 
 // Componentes de exploração
@@ -44,9 +45,11 @@ const ExploreScreen = ({ navigation }) => {
   const filterButtonRef = useRef(null);
   
   // Estado para resultados filtrados
-  const [filteredArtists, setFilteredArtists] = useState(originalArtists);
-  const [displayedArtists, setDisplayedArtists] = useState(originalArtists);
+  const [allArtists, setAllArtists] = useState([]);
+  const [filteredArtists, setFilteredArtists] = useState([]);
+  const [displayedArtists, setDisplayedArtists] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Detectar tamanho da tela para responsividade
   useEffect(() => {
@@ -63,16 +66,47 @@ const ExploreScreen = ({ navigation }) => {
       }
     };
   }, []);
+
+  // Carregar profissionais do backend
+  useEffect(() => {
+    loadProfessionals();
+  }, []);
+
+  const loadProfessionals = async () => {
+    try {
+      setIsLoading(true);
+      const professionals = await ProfessionalService.getTransformedCompleteProfessionals();
+      setAllArtists(professionals);
+      setFilteredArtists(professionals);
+      setDisplayedArtists(professionals);
+    } catch (error) {
+      console.error('Erro ao carregar profissionais:', error);
+      toastHelper.showError('Erro ao carregar profissionais');
+      // Em caso de erro, usar array vazio
+      setAllArtists([]);
+      setFilteredArtists([]);
+      setDisplayedArtists([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Valores derivados baseados na largura da tela
   const isMobile = screenWidth < 768;
   
-  // Determina o número de colunas com base na largura da tela
-  const numColumns = screenWidth >= 768 ? 3 : (screenWidth >= 480 ? 2 : 1);
+  // Update the numColumns calculation to work better on Android
+  const numColumns = (() => {
+    // For mobile devices (width < 768), always show 1 column
+    if (screenWidth < 768) {
+      return 1;
+    }
+    // For larger screens, show 3 columns
+    return 3;
+  })();
 
   // Função de busca
   const handleSearch = () => {
-    const artistResults = originalArtists.filter((artist) => {
+    const artistResults = allArtists.filter((artist) => {
       const matchesSearch = 
         searchTerm === "" || 
         artist.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -164,16 +198,10 @@ const ExploreScreen = ({ navigation }) => {
     const sortedArtists = [...artists];
     
     if (sortBy === 'melhorAvaliacao') {
-      // Ordenar por avaliação (maior para menor)
       sortedArtists.sort((a, b) => b.rating - a.rating);
     } else if (sortBy === 'maisRecente') {
-      // Como não temos um campo createdAt, vamos usar o ID como referência
-      // Assumindo que IDs maiores são artistas mais recentes
       sortedArtists.sort((a, b) => parseInt(b.id) - parseInt(a.id));
     } else {
-      // Ordenação padrão por relevância
-      // Como não temos um algoritmo complexo de relevância,
-      // vamos usar uma combinação de avaliação e alfabética
       sortedArtists.sort((a, b) => {
         // Primeiro por avaliação
         const ratingDiff = b.rating - a.rating;
@@ -209,8 +237,7 @@ const ExploreScreen = ({ navigation }) => {
         document.removeEventListener('mousedown', handlePressOutside);
       };
     }
-    
-    // No React Native nativo, usamos o componente Pressable
+
     return () => {};
   }, [showRelevanceDropdown]);
 
@@ -232,7 +259,6 @@ const ExploreScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Header />
       <StatusBar style="dark" />
       
       <ScrollView style={styles.scrollView}>
@@ -336,11 +362,24 @@ const ExploreScreen = ({ navigation }) => {
               
               {/* Grid de artistas */}
               <View style={styles.artistsGridContainer}>
-                <ArtistsGrid 
-                  artists={displayedArtists} 
-                  numColumns={numColumns} 
-                  navigation={navigation} 
-                />
+                {isLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <Text style={styles.loadingText}>Carregando profissionais...</Text>
+                  </View>
+                ) : displayedArtists.length > 0 ? (
+                  <ArtistsGrid 
+                    artists={displayedArtists} 
+                    numColumns={numColumns} 
+                    navigation={navigation} 
+                  />
+                ) : (
+                  <View style={styles.noResultsContainer}>
+                    <Text style={styles.noResultsTitle}>Nenhum resultado encontrado</Text>
+                    <Text style={styles.noResultsSubtitle}>
+                      Tente ajustar seus filtros ou termos de busca para encontrar mais resultados.
+                    </Text>
+                  </View>
+                )}
               </View>
               
               {/* Paginação */}
@@ -491,19 +530,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     marginBottom: 16,
-    zIndex: 100, // Garantir que fique acima de outros elementos
-    position: 'relative', // Importante para estabelecer um novo contexto de empilhamento
+    zIndex: 100,
+    position: 'relative',
   },
   filtersContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
     flex: 1,
-    zIndex: 101, // Garantir que os filtros apareçam acima
+    zIndex: 101,
   },
   relevanceContainer: {
     alignItems: 'flex-end',
-    zIndex: 101, // Mesmo nível que os filtros
+    zIndex: 101,
   },
   activeFiltersContainer: {
     flexDirection: 'row',
@@ -513,7 +552,35 @@ const styles = StyleSheet.create({
   artistsGridContainer: {
     width: '100%',
     position: 'relative',
-    zIndex: 1, // Menor que os elementos acima
+    zIndex: 1,
+  },
+  loadingContainer: {
+    padding: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  noResultsContainer: {
+    padding: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noResultsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  noResultsSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

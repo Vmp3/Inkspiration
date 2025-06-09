@@ -38,6 +38,9 @@ public class UsuarioDTO {
     private UsuarioAutenticar usuarioAutenticar;
 
     private String role;
+    
+    private boolean manterSenhaAtual;
+    private String senhaAtual;
 
     public UsuarioDTO() {}
 
@@ -141,5 +144,21 @@ public class UsuarioDTO {
 
     public void setRole(String role) {
         this.role = role;
+    }
+    
+    public boolean isManterSenhaAtual() {
+        return manterSenhaAtual;
+    }
+    
+    public void setManterSenhaAtual(boolean manterSenhaAtual) {
+        this.manterSenhaAtual = manterSenhaAtual;
+    }
+    
+    public String getSenhaAtual() {
+        return senhaAtual;
+    }
+    
+    public void setSenhaAtual(String senhaAtual) {
+        this.senhaAtual = senhaAtual;
     }
 }

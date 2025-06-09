@@ -2,6 +2,7 @@ package inkspiration.backend.service;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -177,7 +178,8 @@ public class UsuarioService {
             UsuarioAutenticar usuarioAuth = new UsuarioAutenticar();
             usuarioAuth.setCpf(dto.getCpf());
             usuarioAuth.setRole(usuarioExistente.getRole());
-            if (dto.getSenha() != null && !dto.getSenha().isEmpty()) {
+            if (dto.getSenha() != null && !dto.getSenha().isEmpty() && 
+                !"SENHA_NAO_ALTERADA".equals(dto.getSenha()) && !dto.isManterSenhaAtual()) {
                 usuarioAuth.setSenha(passwordEncoder.encode(dto.getSenha()));
             }
             usuarioExistente.setUsuarioAutenticar(usuarioAuth);
@@ -185,7 +187,18 @@ public class UsuarioService {
             UsuarioAutenticar usuarioAuth = usuarioExistente.getUsuarioAutenticar();
             usuarioAuth.setCpf(dto.getCpf());
             usuarioAuth.setRole(usuarioExistente.getRole());
-            if (dto.getSenha() != null && !dto.getSenha().isEmpty()) {
+            
+            // Só atualiza a senha se não for o valor especial e se não tiver a flag manterSenhaAtual
+            if (dto.getSenha() != null && !dto.getSenha().isEmpty() && 
+                !"SENHA_NAO_ALTERADA".equals(dto.getSenha()) && !dto.isManterSenhaAtual()) {
+                
+                // Se tiver senhaAtual, verificar se ela corresponde à senha atual
+                if (dto.getSenhaAtual() != null && !dto.getSenhaAtual().isEmpty()) {
+                    if (!passwordEncoder.matches(dto.getSenhaAtual(), usuarioAuth.getSenha())) {
+                        throw new UsuarioException.SenhaInvalidaException("Senha atual incorreta");
+                    }
+                }
+                
                 usuarioAuth.setSenha(passwordEncoder.encode(dto.getSenha()));
             }
         }
@@ -267,7 +280,12 @@ public class UsuarioService {
         usuario.setEmail(dto.getEmail());
         usuario.setDataNascimento(DateValidator.parseDate(dto.getDataNascimento()));
         usuario.setTelefone(dto.getTelefone());
-        usuario.setImagemPerfil(dto.getImagemPerfil());
+        
+        // Só atualiza a imagem de perfil se ela for fornecida no DTO
+        if (dto.getImagemPerfil() != null) {
+            usuario.setImagemPerfil(dto.getImagemPerfil());
+        }
+        // Se for null, mantém a imagem existente
     }
 
     private String determinarRole(String role) {
@@ -276,6 +294,8 @@ public class UsuarioService {
                 return "ROLE_ADMIN";
             } else if (role.equalsIgnoreCase("deleted")) {
                 return "ROLE_DELETED";
+            } else if (role.equalsIgnoreCase("prof")) {
+                return "ROLE_PROF";
             }
         }
         return "ROLE_USER";
@@ -319,5 +339,24 @@ public class UsuarioService {
 
     public void salvar(Usuario usuario) {
         repository.save(usuario);
+    }
+    
+    @Transactional
+    public void atualizarFotoPerfil(Long id, String imagemBase64) {
+        Usuario usuario = buscarPorId(id);
+        usuario.setImagemPerfil(imagemBase64);
+        repository.save(usuario);
+    }
+
+    public String atualizarTokenUsuario(Long idUsuario) {
+        Usuario usuario = buscarPorId(idUsuario);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String novoToken = jwtService.generateToken(auth);
+        
+        // Atualizar o token no usuário sem revogar o antigo
+        usuario.setTokenAtual(novoToken);
+        repository.save(usuario);
+        
+        return novoToken;
     }
 }

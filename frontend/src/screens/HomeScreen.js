@@ -15,11 +15,12 @@ import SearchInput from '../components/ui/SearchInput';
 import FilterButton from '../components/FilterButton';
 import FilterDropdown from '../components/common/FilterDropdown';
 import ArtistCard from '../components/ArtistCard';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ActiveFilters from '../components/common/ActiveFilters';
 import MobileFiltersModal from '../components/common/MobileFiltersModal';
-import { artists as originalArtists } from '../data/artists';
+import ProfessionalService from '../services/ProfessionalService';
+import toastHelper from '../utils/toastHelper';
+import { homeMessages } from '../components/home/messages';
 import Button from '../components/ui/Button';
 
 const HomeScreen = ({ navigation }) => {
@@ -36,8 +37,10 @@ const HomeScreen = ({ navigation }) => {
   const [showFiltersModal, setShowFiltersModal] = useState(false);
   
   // Estado para resultados filtrados
-  const [filteredArtists, setFilteredArtists] = useState(originalArtists);
-  const [displayedArtists, setDisplayedArtists] = useState(originalArtists.slice(0, 6));
+  const [allArtists, setAllArtists] = useState([]);
+  const [filteredArtists, setFilteredArtists] = useState([]);
+  const [displayedArtists, setDisplayedArtists] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Detectar tamanho da tela para responsividade
   const updateLayout = () => {
@@ -51,9 +54,9 @@ const HomeScreen = ({ navigation }) => {
   
   // Determina o número de colunas com base na largura da tela
   const numColumns = useMemo(() => {
-    if (screenWidth >= 768) return 3; // Desktop: 3 colunas
-    if (screenWidth >= 480) return 2; // Tablet/Mobile médio: 2 colunas
-    return 1; // Mobile pequeno: 1 coluna
+    if (screenWidth >= 768) return 3;
+    if (screenWidth >= 480) return 2;
+    return 1;
   }, [screenWidth]);
   
   // Key única para o FlatList quando numColumns muda
@@ -72,6 +75,28 @@ const HomeScreen = ({ navigation }) => {
     };
   }, []);
 
+  useEffect(() => {
+    loadProfessionals();
+  }, []);
+
+  const loadProfessionals = async () => {
+    try {
+      setIsLoading(true);
+      const professionals = await ProfessionalService.getTransformedCompleteProfessionals();
+      setAllArtists(professionals);
+      setFilteredArtists(professionals);
+      setDisplayedArtists(professionals.slice(0, 6));
+    } catch (error) {
+      console.error('Erro ao carregar profissionais:', error);
+      toastHelper.showError('Erro ao carregar profissionais');
+      setAllArtists([]);
+      setFilteredArtists([]);
+      setDisplayedArtists([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Todas as especialidades disponíveis
   const allSpecialties = [
     "Tradicional",
@@ -89,7 +114,7 @@ const HomeScreen = ({ navigation }) => {
   // Função de busca
   const handleSearch = () => {
     // Filtrar artistas
-    const artistResults = originalArtists.filter((artist) => {
+    const artistResults = allArtists.filter((artist) => {
       const matchesSearch = 
         searchTerm === "" || 
         artist.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -183,7 +208,7 @@ const HomeScreen = ({ navigation }) => {
     return (
       <TouchableOpacity 
         style={cardStyle}
-        onPress={() => navigation.navigate('ArtistDetail', { artistId: item.id })}
+        onPress={() => navigation.navigate('Artist', { artistId: item.id })}
       >
         <ArtistCard artist={item} />
       </TouchableOpacity>
@@ -224,7 +249,6 @@ const HomeScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <Header />
 
       <View style={styles.pageWrapper}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -316,7 +340,11 @@ const HomeScreen = ({ navigation }) => {
               </View>
             </View>
 
-            {displayedArtists.length > 0 && (
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Carregando profissionais...</Text>
+              </View>
+            ) : displayedArtists.length > 0 ? (
               <View style={styles.artistsSection}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Artistas em Destaque</Text>
@@ -326,7 +354,7 @@ const HomeScreen = ({ navigation }) => {
                 </View>
 
                 <FlatList
-                  key={flatListKey} // Key única quando numColumns muda
+                  key={flatListKey}
                   data={displayedArtists}
                   renderItem={renderArtistItem}
                   keyExtractor={item => item.id}
@@ -336,9 +364,7 @@ const HomeScreen = ({ navigation }) => {
                   contentContainerStyle={styles.artistGrid}
                 />
               </View>
-            )}
-
-            {displayedArtists.length === 0 && (
+            ) : (
               <View style={styles.noResultsContainer}>
                 <Text style={styles.noResultsTitle}>Nenhum resultado encontrado</Text>
                 <Text style={styles.noResultsSubtitle}>
@@ -400,7 +426,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1, // Importante para que o conteúdo possa crescer e empurrar o footer para baixo
+    flexGrow: 1,
     flexDirection: 'column',
   },
   main: {
@@ -422,7 +448,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   heroTitleMobile: {
-    fontSize: 28, // Tamanho menor para mobile
+    fontSize: 28,
   },
   heroSubtitle: {
     fontSize: 16,
@@ -522,8 +548,8 @@ const styles = StyleSheet.create({
     maxWidth: 400,
   },
   footerSpacer: {
-    flex: 1, // Isso irá empurrar o footer para baixo
-    minHeight: 20, // Altura mínima para garantir algum espaço
+    flex: 1,
+    minHeight: 20,
   },
   mobileSearchContainer: {
     flexDirection: 'column',
@@ -538,6 +564,16 @@ const styles = StyleSheet.create({
   mobileSearchButton: {
     paddingHorizontal: 16,
     alignSelf: 'stretch',
+  },
+  loadingContainer: {
+    padding: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
   },
 });
 

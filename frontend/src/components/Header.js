@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -8,75 +8,174 @@ import {
   Dimensions, 
   Platform,
   Animated,
-  TouchableWithoutFeedback 
+  Pressable,
+  Image
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
+import { MaterialIcons, Feather } from '@expo/vector-icons';
+import { useAuth } from '../context/AuthContext';
+import toastHelper from '../utils/toastHelper';
 
 const Header = () => {
   const navigation = useNavigation();
+  const { isAuthenticated, userData, logout } = useAuth();
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   
-  // Valor para animação do menu offcanvas
-  const slideAnim = new Animated.Value(-300); // Começa fora da tela
+  const dropdownRef = useRef(null);
+  const dropdownButtonRef = useRef(null);
   
-  // Detectar tamanho da tela para responsividade
+  const slideAnim = new Animated.Value(-300); 
+  
+  // Obtém a rota atual usando useNavigationState
+  const currentRouteName = useNavigationState(state => {
+    if (!state || !state.routes || state.routes.length === 0) {
+      return 'Home';
+    }
+    const currentRoute = state.routes[state.index];
+    return currentRoute?.name || 'Home';
+  });
+  
   const updateLayout = () => {
-    const { width } = Dimensions.get('window');
+    const { width, height } = Dimensions.get('window');
     setScreenWidth(width);
+    setScreenHeight(height);
   };
   
   const isMobile = screenWidth < 768;
   
   useEffect(() => {
     updateLayout();
-    // Listener para mudanças no tamanho da tela
+    
     const dimensionsHandler = Dimensions.addEventListener('change', updateLayout);
     
     return () => {
-      // Cleanup listener
+      
       if (dimensionsHandler?.remove) {
         dimensionsHandler.remove();
       }
     };
   }, []);
   
-  // Animar abertura/fechamento do menu
+  useEffect(() => {
+    if (userData) {
+      const availableRoles = ['ROLE_USER', 'ROLE_ADMIN', 'ROLE_PROF', 'ROLE_DELETED'];
+    }
+  }, [userData]);
+  
+  
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      
+      if (Platform.OS === 'web' && userDropdownOpen) {
+        
+        const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(event.target);
+        const isOutsideButton = dropdownButtonRef.current && !dropdownButtonRef.current.contains(event.target);
+        
+        if (isOutsideDropdown && isOutsideButton) {
+          setUserDropdownOpen(false);
+        }
+      }
+    };
+
+    
+    if (Platform.OS === 'web') {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    
+    return () => {
+      if (Platform.OS === 'web') {
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
+    };
+  }, [userDropdownOpen]);
+  
+  
   useEffect(() => {
     Animated.timing(slideAnim, {
       toValue: menuOpen ? 0 : -300,
       duration: 300,
-      useNativeDriver: true
+      useNativeDriver: false
     }).start();
   }, [menuOpen]);
   
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
   };
+  
+  const toggleUserDropdown = () => {
+    setUserDropdownOpen(!userDropdownOpen);
+  };
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setUserDropdownOpen(false);
+      toastHelper.showSuccess('Logout realizado com sucesso!');
+      navigation.navigate('Home');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+      toastHelper.showError('Erro ao fazer logout. Tente novamente.');
+    }
+  };
+
+  
+  const isActive = (routeName) => {
+    const isRouteActive = currentRouteName === routeName;
+    return isRouteActive;
+  };
+
+  
+  const getInitial = (name) => {
+    return name && typeof name === 'string' ? name.charAt(0).toUpperCase() : '?';
+  };
+
+  const dynamicOverlayStyles = {
+    height: Platform.OS === 'web' ? '100vh' : screenHeight,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 9998,
+  };
+
+  const dynamicMenuStyles = {
+    height: Platform.OS === 'web' ? '100vh' : screenHeight,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 280,
+    backgroundColor: '#fff',
+    zIndex: 9999,
+    elevation: 24,
+    boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.25)',
+  };
 
   return (
     <View style={styles.headerContainer}>
       <StatusBar backgroundColor="white" barStyle="dark-content" />
       
-      {/* Overlay para fechar o menu quando clicar fora */}
       {menuOpen && (
-        <TouchableWithoutFeedback onPress={() => setMenuOpen(false)}>
-          <View style={styles.overlay} />
-        </TouchableWithoutFeedback>
+        <Pressable onPress={() => setMenuOpen(false)}>
+          <View style={dynamicOverlayStyles} />
+        </Pressable>
       )}
       
-      {/* Menu Offcanvas */}
       <Animated.View 
         style={[
-          styles.offcanvasMenu,
+          dynamicMenuStyles,
           { transform: [{ translateX: slideAnim }] }
         ]}
       >
         <View style={styles.menuHeader}>
           <Text style={styles.menuTitle}>Menu</Text>
           <TouchableOpacity onPress={() => setMenuOpen(false)}>
-            <MaterialIcons name="close" size={24} color="#111" />
+            <Feather name="x" size={24} color="#000" />
           </TouchableOpacity>
         </View>
         
@@ -88,8 +187,7 @@ const Header = () => {
               setMenuOpen(false);
             }}
           >
-            <MaterialIcons name="home" size={20} color="#666" style={styles.menuIcon} />
-            <Text style={styles.menuText}>Início</Text>
+            <Text style={[styles.menuText, isActive('Home') && styles.activeMenuText]}>Início</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -99,8 +197,7 @@ const Header = () => {
               setMenuOpen(false);
             }}
           >
-            <MaterialIcons name="search" size={20} color="#666" style={styles.menuIcon} />
-            <Text style={styles.menuText}>Explorar</Text>
+            <Text style={[styles.menuText, isActive('Explore') && styles.activeMenuText]}>Explorar</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -110,50 +207,23 @@ const Header = () => {
               setMenuOpen(false);
             }}
           >
-            <MaterialIcons name="info" size={20} color="#666" style={styles.menuIcon} />
-            <Text style={styles.menuText}>Sobre</Text>
-          </TouchableOpacity>
-          
-          <View style={styles.menuDivider} />
-          
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => {
-              navigation.navigate('Login');
-              setMenuOpen(false);
-            }}
-          >
-            <MaterialIcons name="login" size={20} color="#666" style={styles.menuIcon} />
-            <Text style={styles.menuText}>Entrar</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.registerButton}
-            onPress={() => {
-              navigation.navigate('Register');
-              setMenuOpen(false);
-            }}
-          >
-            <Text style={styles.registerText}>Registrar</Text>
+            <Text style={[styles.menuText, isActive('About') && styles.activeMenuText]}>Sobre</Text>
           </TouchableOpacity>
         </View>
       </Animated.View>
       
-      {/* Header principal */}
       <View style={styles.header}>
         <View style={styles.container}>
           <View style={styles.leftSection}>
-            {/* Menu Hambúrguer (visível apenas em dispositivos móveis) */}
             {isMobile && (
               <TouchableOpacity 
                 style={styles.menuButton}
                 onPress={toggleMenu}
               >
-                <MaterialIcons name="menu" size={24} color="#111" />
+                <Feather name="menu" size={24} color="#000" />
               </TouchableOpacity>
             )}
-            
-            {/* Logo à esquerda */}
+
             <TouchableOpacity 
               style={styles.logoContainer}
               onPress={() => navigation.navigate('Home')}
@@ -162,38 +232,41 @@ const Header = () => {
             </TouchableOpacity>
           </View>
           
-          {/* Navegação no centro (oculta em dispositivos móveis) */}
           {!isMobile && (
             <View style={styles.navContainer}>
               <TouchableOpacity 
                 style={styles.navItem}
                 onPress={() => navigation.navigate('Home')}
               >
-                <Text style={styles.navText}>Início</Text>
+                <Text style={[
+                  styles.navText, 
+                  isActive('Home') ? styles.activeNavText : styles.inactiveNavText
+                ]}>Início</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.navItem}
                 onPress={() => navigation.navigate('Explore')}
               >
-                <Text style={styles.navText}>Explorar</Text>
+                <Text style={[
+                  styles.navText, 
+                  isActive('Explore') ? styles.activeNavText : styles.inactiveNavText
+                ]}>Explorar</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.navItem}
                 onPress={() => navigation.navigate('About')}
               >
-                <Text style={styles.navText}>Sobre</Text>
+                <Text style={[
+                  styles.navText, 
+                  isActive('About') ? styles.activeNavText : styles.inactiveNavText
+                ]}>Sobre</Text>
               </TouchableOpacity>
             </View>
           )}
 
-          {/* Botões à direita (sempre visíveis) */}
           <View style={styles.authContainer}>
-            {isMobile ? (
-              // Em mobile, não mostrar botões de autenticação
-              <View />
-            ) : (
-              // Em desktop, mostrar ambos os botões
-              <>
+            {!isAuthenticated ? (
+              <View style={styles.authButtons}>
                 <TouchableOpacity 
                   style={styles.loginButton}
                   onPress={() => navigation.navigate('Login')}
@@ -207,7 +280,133 @@ const Header = () => {
                 >
                   <Text style={styles.registerText}>Registrar</Text>
                 </TouchableOpacity>
-              </>
+              </View>
+            ) : (
+              <View style={styles.userDropdownContainer}>
+                <TouchableOpacity 
+                  style={styles.userButton}
+                  onPress={toggleUserDropdown}
+                  ref={dropdownButtonRef}
+                >
+                  <View style={styles.avatar}>
+                    {userData?.imagemPerfil ? (
+                      <Image 
+                        source={{ uri: userData.imagemPerfil }} 
+                        style={styles.avatarImage} 
+                      />
+                    ) : (
+                      <View style={styles.avatarFallback}>
+                        <Text style={styles.avatarText}>
+                          {getInitial(userData?.nome)}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  
+                  {!isMobile && (
+                    <Text style={styles.userName}>
+                      {userData?.nome ? userData.nome.split(' ')[0] : 'Carregando...'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+                
+                {userDropdownOpen && (
+                  <View 
+                    style={styles.userDropdown}
+                    ref={dropdownRef}
+                  >
+                    <View style={styles.dropdownHeader}>
+                      <Text style={styles.dropdownLabel}>Minha Conta</Text>
+                    </View>
+                    
+                    <View style={styles.dropdownDivider} />
+                    
+                    <TouchableOpacity 
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        navigation.navigate('Profile');
+                        setUserDropdownOpen(false);
+                      }}
+                    >
+                      <Feather name="user" size={16} color="#666" style={styles.dropdownIcon} />
+                      <Text style={styles.dropdownText}>Perfil</Text>
+                    </TouchableOpacity>
+                    
+                    {userData?.role === 'ROLE_ADMIN' ? (
+                      
+                      <TouchableOpacity 
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          navigation.navigate('AdminUsers');
+                          setUserDropdownOpen(false);
+                        }}
+                      >
+                        <Feather name="users" size={16} color="#666" style={styles.dropdownIcon} />
+                        <Text style={styles.dropdownText}>Gerenciar Usuários</Text>
+                      </TouchableOpacity>
+                    ) : userData?.role === 'ROLE_PROF' ? (
+                      
+                      <>
+                        <TouchableOpacity 
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            navigation.navigate('Appointments');
+                            setUserDropdownOpen(false);
+                          }}
+                        >
+                          <Feather name="calendar" size={16} color="#666" style={styles.dropdownIcon} />
+                          <Text style={styles.dropdownText}>Meus agendamentos</Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity 
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            navigation.navigate('ProfessionalAppointments');
+                            setUserDropdownOpen(false);
+                          }}
+                        >
+                          <Feather name="clock" size={16} color="#666" style={styles.dropdownIcon} />
+                          <Text style={styles.dropdownText}>Meus atendimentos</Text>
+                        </TouchableOpacity>
+                      </>
+                    ) : userData?.role === 'ROLE_USER' ? (
+                      <>
+                        <TouchableOpacity 
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            navigation.navigate('Appointments');
+                            setUserDropdownOpen(false);
+                          }}
+                        >
+                          <Feather name="calendar" size={16} color="#666" style={styles.dropdownIcon} />
+                          <Text style={styles.dropdownText}>Meus agendamentos</Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity 
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            navigation.navigate('ProfessionalRegister');
+                            setUserDropdownOpen(false);
+                          }}
+                        >
+                          <Feather name="edit-3" size={16} color="#666" style={styles.dropdownIcon} />
+                          <Text style={styles.dropdownText}>Tornar-se profissional</Text>
+                        </TouchableOpacity>
+                      </>
+                    ) : null}
+                    
+                    <View style={styles.dropdownDivider} />
+                    
+                    <TouchableOpacity 
+                      style={styles.dropdownItem}
+                      onPress={handleLogout}
+                    >
+                      <Feather name="log-out" size={16} color="#666" style={styles.dropdownIcon} />
+                      <Text style={styles.dropdownText}>Sair</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
             )}
           </View>
         </View>
@@ -219,12 +418,13 @@ const Header = () => {
 const styles = StyleSheet.create({
   headerContainer: {
     position: 'relative',
-    zIndex: 100,
+    zIndex: 1000,
+    width: '100%',
   },
   header: {
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#e5e5e5',
     width: '100%',
   },
   container: {
@@ -234,7 +434,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     maxWidth: 1200,
     width: '100%',
-    height: 60,
+    height: 64, 
     alignSelf: 'center',
   },
   leftSection: {
@@ -249,52 +449,61 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   logoText: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#111',
+    color: '#333',
   },
   navContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
     flex: 1,
   },
   navItem: {
-    paddingHorizontal: 16,
+    marginHorizontal: 16,
     paddingVertical: 8,
   },
   navText: {
     fontSize: 16,
+  },
+  activeNavText: {
+    fontWeight: '500',
+    color: '#000',
+  },
+  inactiveNavText: {
     color: '#666',
   },
   authContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+  },
+  authButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   loginButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
     marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+    borderRadius: 4,
   },
   loginText: {
-    fontSize: 14,
-    color: '#111',
+    fontSize: 16,
+    color: '#333',
   },
   registerButton: {
+    backgroundColor: '#000',
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#111',
     borderRadius: 4,
-    alignItems: 'center',
   },
   registerText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#fff',
     fontWeight: '500',
   },
   
-  // Estilos do menu offcanvas
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
@@ -308,10 +517,7 @@ const styles = StyleSheet.create({
     width: 280,
     backgroundColor: '#fff',
     zIndex: 101,
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.2)',
     elevation: 5,
     height: '100vh',
   },
@@ -319,35 +525,111 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#e5e5e5',
   },
   menuTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111',
+    color: '#000',
   },
   menuContent: {
-    padding: 20,
+    padding: 16,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: 12,
   },
-  menuIcon: {
-    marginRight: 12,
-  },
   menuText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 18,
+    color: '#666',
   },
-  menuDivider: {
+  activeMenuText: {
+    fontWeight: '500',
+    color: '#000',
+  },
+
+  userDropdownContainer: {
+    position: 'relative',
+  },
+  userButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 4,
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#e5e5e5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarFallback: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#e5e5e5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000',
+  },
+  userName: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#000',
+  },
+  userDropdown: {
+    position: 'absolute',
+    top: 45,
+    right: 0,
+    backgroundColor: '#fff',
+    borderRadius: 4,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+    elevation: 4,
+    width: 220,
+    zIndex: 102,
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+    padding: 4,
+  },
+  dropdownHeader: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  dropdownLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+  },
+  dropdownDivider: {
     height: 1,
-    backgroundColor: '#f0f0f0',
-    marginVertical: 16,
+    backgroundColor: '#e5e5e5',
+    marginVertical: 4,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 2,
+  },
+  dropdownIcon: {
+    marginRight: 8,
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: '#333',
   },
 });
 

@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Input from '../ui/Input';
 import Checkbox from '../ui/Checkbox';
 import Button from '../ui/Button';
-import theme from '../../themes/theme';
 
 const LoginForm = ({ 
   formData, 
@@ -15,6 +15,8 @@ const LoginForm = ({
   setRememberMe, 
   loading 
 }) => {
+  const navigation = useNavigation();
+  
   return (
     <View style={styles.form}>
       <View style={styles.formFieldGroup}>
@@ -102,9 +104,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 14,
     backgroundColor: '#fff',
-  },
-  primaryButton: {
-    // Any additional custom styles for the button
   },
   inputError: {
     borderColor: '#ff0000',

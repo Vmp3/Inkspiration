@@ -11,13 +11,14 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
 import HeroSection from '../components/about/HeroSection';
 import MissionSection from '../components/about/MissionSection';
 import HowItWorksSection from '../components/about/HowItWorksSection';
 import WhyChooseSection from '../components/about/WhyChooseSection';
 import CTASection from '../components/about/CTASection';
+import toastHelper from '../utils/toastHelper';
+import { aboutMessages } from '../components/about/messages';
 
 const AboutScreen = ({ navigation }) => {
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
@@ -30,11 +31,9 @@ const AboutScreen = ({ navigation }) => {
     };
     
     updateLayout();
-    // Listener para mudanças no tamanho da tela
     const dimensionsHandler = Dimensions.addEventListener('change', updateLayout);
     
     return () => {
-      // Cleanup listener
       if (dimensionsHandler?.remove) {
         dimensionsHandler.remove();
       }
@@ -47,38 +46,32 @@ const AboutScreen = ({ navigation }) => {
   const isDesktop = screenWidth >= 1024;
 
   // Navigation handlers
-  const handleExplorePress = () => navigation.navigate('Explore');
-  const handleCreateAccountPress = () => navigation.navigate('Register');
+  const handleExplorePress = () => {
+    toastHelper.showInfo(aboutMessages.navigation.explore);
+    navigation.navigate('Explore');
+  };
+  
+  const handleCreateAccountPress = () => {
+    toastHelper.showInfo(aboutMessages.navigation.createAccount);
+    navigation.navigate('Register');
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <Header />
       
       <View style={styles.pageWrapper}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Hero Section */}
           <HeroSection onExplorePress={handleExplorePress} />
-
-          {/* Mission Section */}
           <MissionSection isMobile={isMobile} />
-
-          {/* How It Works Section */}
           <HowItWorksSection isMobile={isMobile} />
-
-          {/* Why Choose Section */}
           <WhyChooseSection isMobile={isMobile} />
-
-          {/* CTA Section */}
           <CTASection 
             isMobile={isMobile}
             onCreateAccountPress={handleCreateAccountPress}
             onExplorePress={handleExplorePress}
           />
-          
-          {/* Espaço para garantir que o footer fique no final */}
           <View style={styles.footerSpacer} />
-          
           <Footer />
         </ScrollView>
       </View>
@@ -95,14 +88,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1, // Importante para que o conteúdo possa crescer e empurrar o footer para baixo
+    flexGrow: 1,
     flexDirection: 'column',
   },
   footerSpacer: {
-    flex: 1, // Isso irá empurrar o footer para baixo
-    minHeight: 20, // Altura mínima para garantir algum espaço
+    flex: 1,
+    minHeight: 20,
   },
-  // Hero Section
   heroSection: {
     paddingVertical: 64,
     backgroundColor: '#f8fafc',
@@ -130,7 +122,6 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     maxWidth: 600,
   },
-  // Shared Section Styles
   section: {
     padding: 32,
     backgroundColor: '#fff',
@@ -150,7 +141,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     lineHeight: 24,
   },
-  // Mission Section
   missionContainer: {
     flexDirection: 'column',
     maxWidth: 1200,
@@ -176,7 +166,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Checklist
   checklistContainer: {
     marginTop: 16,
   },
@@ -194,7 +183,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#374151',
   },
-  // How It Works Section
   howItWorksSection: {
     backgroundColor: '#f3f4f6',
   },
@@ -210,10 +198,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 24,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 2,
     alignItems: 'center',
   },
@@ -239,7 +224,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  // Benefits Section
   benefitsContainer: {
     flexDirection: 'column',
     flexWrap: 'wrap',
@@ -269,7 +253,6 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     textAlign: 'center',
   },
-  // CTA Section
   ctaSection: {
     backgroundColor: '#f3f4f6',
     paddingVertical: 48,
@@ -301,7 +284,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
   },
-  // Buttons
   primaryButton: {
     backgroundColor: '#6366f1',
     paddingVertical: 12,

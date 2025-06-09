@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Toast from 'react-native-toast-message';
 import axios from 'axios';
 import * as formatters from '../utils/formatters';
+import toastHelper from '../utils/toastHelper';
 
-import Header from '../components/Header';
 import TabHeader from '../components/ui/TabHeader';
 import PersonalForm from '../components/forms/PersonalForm';
 import AddressForm from '../components/forms/AddressForm';
 import SecurityForm from '../components/forms/SecurityForm';
 import FormNavigation from '../components/ui/FormNavigation';
+import PublicAuthService from '../services/PublicAuthService';
+import { authMessages } from '../components/auth/messages';
 
 const RegisterScreen = () => {
   const navigation = useNavigation();
@@ -80,7 +81,6 @@ const RegisterScreen = () => {
         break;
       case 'cpf':
         formattedValue = formatters.formatCPF(value);
-        // Clear error when typing
         setCpfError('');
         break;
       case 'cep':
@@ -119,7 +119,6 @@ const RegisterScreen = () => {
       [field]: formattedValue,
     });
 
-    // If the field is CEP and has 8 digits (without hyphen), fetch address
     if (field === 'cep' && value.replace(/\D/g, '').length === 8) {
       buscarCep(value);
     }
@@ -234,152 +233,74 @@ const RegisterScreen = () => {
     let isValid = true;
 
     if (!formData.nome) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Nome é obrigatório',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formatters.validateFirstName(formData.nome)) {
-      setNomeError('Nome inválido');
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Nome inválido',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      setNomeError(authMessages.registerErrors.invalidName);
+      toastHelper.showError(authMessages.registerErrors.invalidName);
       return false;
     }
     
     if (!formData.sobrenome) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Sobrenome é obrigatório',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formatters.validateSurname(formData.sobrenome)) {
-      setSobrenomeError('Sobrenome inválido');
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Sobrenome inválido',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      setSobrenomeError(authMessages.registerErrors.invalidSurname);
+      toastHelper.showError(authMessages.registerErrors.invalidSurname);
       return false;
     }
     
     if (!formatters.validateFullNameLength(formData.nome, formData.sobrenome)) {
-      setFullNameError('Nome e sobrenome não podem ultrapassar 255 caracteres');
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Nome e sobrenome não podem ultrapassar 255 caracteres',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      setFullNameError(authMessages.registerErrors.invalidFullName);
+      toastHelper.showError(authMessages.registerErrors.invalidFullName);
       return false;
     }
     
     if (!formData.cpf) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'CPF é obrigatório',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
 
     if (!formatters.validateCPF(formData.cpf)) {
-      setCpfError('CPF inválido');
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'CPF inválido',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      setCpfError(authMessages.registerErrors.invalidCpf);
+      toastHelper.showError(authMessages.registerErrors.invalidCpf);
       return false;
     }
     
     if (!formData.email) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Email é obrigatório',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
 
     if (!formatters.validateEmail(formData.email)) {
-      setEmailError('Email inválido');
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Email inválido',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      setEmailError(authMessages.registerErrors.invalidEmail);
+      toastHelper.showError(authMessages.registerErrors.invalidEmail);
       return false;
     }
     
     if (!formData.telefone) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Telefone é obrigatório',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
 
     if (!formatters.validatePhone(formData.telefone)) {
-      setPhoneError('Telefone inválido');
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Telefone inválido',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      setPhoneError(authMessages.registerErrors.invalidPhone);
+      toastHelper.showError(authMessages.registerErrors.invalidPhone);
       return false;
     }
     
     if (!formData.dataNascimento) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Data de nascimento é obrigatória',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
 
     if (!formatters.validateBirthDate(formData.dataNascimento)) {
-      setBirthDateError('Você deve ter pelo menos 18 anos para se registrar');
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Você deve ter pelo menos 18 anos para se registrar',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      setBirthDateError(authMessages.registerErrors.invalidBirthDate);
+      toastHelper.showError(authMessages.registerErrors.invalidBirthDate);
       return false;
     }
     
@@ -388,68 +309,32 @@ const RegisterScreen = () => {
 
   const validateAddressTab = () => {
     if (!formData.cep) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'CEP é obrigatório',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formData.rua) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Rua é obrigatória',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formData.numero) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Número é obrigatório',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formData.bairro) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Bairro é obrigatório',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formData.cidade) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Cidade é obrigatória',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formData.estado) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Estado é obrigatório',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
@@ -458,57 +343,27 @@ const RegisterScreen = () => {
 
   const validateSecurityTab = () => {
     if (!formData.senha) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Senha é obrigatória',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.invalidPassword);
       return false;
     }
     
     if (formData.senha.length < 6) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'A senha deve ter pelo menos 6 caracteres',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.invalidPassword);
       return false;
     }
 
     if (!formData.confirmarSenha) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Confirmação de senha é obrigatória',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (formData.senha !== formData.confirmarSenha) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'As senhas não coincidem',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.passwordMismatch);
       return false;
     }
     
     if (!formData.termsAccepted) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Você precisa aceitar os termos de uso para continuar',
-        position: 'top',
-        visibilityTime: 3000,
-      });
+      toastHelper.showError(authMessages.registerErrors.requiredTerms);
       return false;
     }
     
@@ -588,91 +443,26 @@ const RegisterScreen = () => {
       // Preparar dados para envio conforme o DTO do backend
       const userData = {
         nome: `${formData.nome} ${formData.sobrenome}`.trim(),
-        cpf: formData.cpf.replace(/[^\d]/g, ''), // Remove caracteres não numéricos
+        cpf: formData.cpf.replace(/[^\d]/g, ''),
         email: formData.email,
         dataNascimento: dataNascFormatada,
         telefone: formData.telefone,
         senha: formData.senha,
         endereco: endereco,
-        role: 'user' // Registrando como usuário comum
+        role: 'user'
       };
 
-      const baseUrl = 'http://localhost:8080'; 
-      const response = await fetch(`${baseUrl}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(userData)
-      });
+      await PublicAuthService.register(userData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Verifica se há erros diretos no objeto data
-        const errorMessages = {};
-        
-        // Verifica cada propriedade do objeto data para encontrar mensagens de erro
-        Object.entries(data).forEach(([field, message]) => {
-          if (typeof message === 'string') {
-            errorMessages[field] = message;
-          }
-        });
-
-        // Se encontrou mensagens de erro
-        if (Object.keys(errorMessages).length > 0) {
-          Object.entries(errorMessages).forEach(([field, message]) => {
-            Toast.show({
-              type: 'error',
-              text1: 'Erro de Validação',
-              text2: message,
-              position: 'top',
-              visibilityTime: 4000,
-            });
-          });
-        } else if (data.message) {
-          // Se houver uma mensagem de erro geral
-          Toast.show({
-            type: 'error',
-            text1: 'Erro',
-            text2: data.message,
-            position: 'top',
-            visibilityTime: 4000,
-          });
-        } else {
-          // Mensagem genérica de erro
-          Toast.show({
-            type: 'error',
-            text1: 'Erro',
-            text2: 'Ocorreu um erro ao cadastrar. Tente novamente.',
-            position: 'top',
-            visibilityTime: 4000,
-          });
-        }
-        return;
-      }
-
-      // Exibe mensagem de sucesso do backend ou uma mensagem padrão
-      Toast.show({
-        type: 'success',
-        text1: 'Sucesso',
-        text2: data.message || 'Cadastro realizado com sucesso!',
-        position: 'top',
-        visibilityTime: 4000,
-      });
+      // Exibe mensagem de sucesso
+      toastHelper.showSuccess(authMessages.success.registerSuccess);
 
       // Aguarda um momento para mostrar o toast antes de navegar
       setTimeout(() => {
         navigation.navigate('Login');
       }, 1000);
     } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro',
-        text2: 'Ocorreu um erro ao cadastrar. Tente novamente.',
-        position: 'top',
-        visibilityTime: 4000,
-      });
+      toastHelper.showError(error.message || authMessages.registerErrors.serverError);
     } finally {
       setIsLoading(false);
     }
@@ -686,8 +476,6 @@ const RegisterScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header />
-      
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.contentContainer}>
           <View style={styles.pageHeaderContainer}>
@@ -772,7 +560,6 @@ const RegisterScreen = () => {
           </View>
         </View>
       </ScrollView>
-      <Toast />
     </SafeAreaView>
   );
 };
@@ -826,10 +613,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#eaeaea',
     marginBottom: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 3,
     position: 'relative',
     padding: 15,
@@ -840,10 +624,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#eaeaea',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
     elevation: 1,
     backgroundColor: '#f8f8f8',
     width: '100%',
