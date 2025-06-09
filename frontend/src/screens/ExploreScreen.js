@@ -15,8 +15,8 @@ import Input from '../components/ui/Input';
 import SearchInput from '../components/ui/SearchInput';
 import FilterButton from '../components/FilterButton';
 import ProfessionalService from '../services/ProfessionalService';
-
 import toastHelper from '../utils/toastHelper';
+import { exploreMessages } from '../components/explore/messages';
 import Button from '../components/ui/Button';
 
 // Componentes de exploração
@@ -89,7 +89,7 @@ const ExploreScreen = ({ navigation }) => {
     } finally {
       setIsLoading(false);
     }
-  }
+  };
   
   // Valores derivados baseados na largura da tela
   const isMobile = screenWidth < 768;

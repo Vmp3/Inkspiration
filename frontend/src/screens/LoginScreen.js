@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import toastHelper from '../utils/toastHelper';
 
 import LoginForm from '../components/forms/LoginForm';
+import { authMessages } from '../components/auth/messages';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
@@ -22,10 +23,8 @@ const LoginScreen = () => {
   const handleChange = (field, value) => {
     let formattedValue = value;
     
-    // Apply CPF formatter
     if (field === 'cpf') {
       formattedValue = formatters.formatCPF(value);
-      // Clear error when typing
       setCpfError('');
     }
 
@@ -35,7 +34,7 @@ const LoginScreen = () => {
   const handleBlur = (field) => {
     if (field === 'cpf' && formData.cpf) {
       if (!formatters.validateCPF(formData.cpf)) {
-        setCpfError('CPF inválido');
+        setCpfError(authMessages.loginErrors.invalidCpf);
       } else {
         setCpfError('');
       }
@@ -44,12 +43,12 @@ const LoginScreen = () => {
 
   const handleSubmit = async () => {
     if (!formData.cpf || !formData.password) {
-      toastHelper.showError('Por favor, preencha todos os campos');
+      toastHelper.showError(authMessages.loginErrors.requiredFields);
       return;
     }
 
     if (!formatters.validateCPF(formData.cpf)) {
-      toastHelper.showError('CPF inválido');
+      toastHelper.showError(authMessages.loginErrors.invalidCpf);
       return;
     }
 
@@ -61,11 +60,11 @@ const LoginScreen = () => {
       );
 
       if (!result.success) {
-        toastHelper.showError('Falha ao fazer login. Verifique suas credenciais.');
+        toastHelper.showError(authMessages.loginErrors.loginFailed);
         return;
       }
 
-      toastHelper.showSuccess('Login realizado com sucesso!');
+      toastHelper.showSuccess(authMessages.success.loginSuccess);
 
       // Navegar para a tela principal
       navigation.reset({
@@ -73,7 +72,7 @@ const LoginScreen = () => {
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
-      toastHelper.showError('Ocorreu um erro ao fazer login. Tente novamente.');
+      toastHelper.showError(authMessages.loginErrors.serverError);
     } finally {
       setLoading(false);
     }

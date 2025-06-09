@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import AuthService from '../services/AuthService';
+import ApiService from '../services/ApiService';
 import toastHelper from '../utils/toastHelper';
+import { professionalMessages } from '../components/professional/messages';
 
 const ProfessionalProfileScreen = () => {
   const navigation = useNavigation();
@@ -25,7 +26,7 @@ const ProfessionalProfileScreen = () => {
   
   useEffect(() => {
     if (!profissionalId) {
-      toastHelper.showError('ID do profissional não fornecido');
+      toastHelper.showError(professionalMessages.profileErrors.noId);
       navigation.goBack();
       return;
     }
@@ -36,35 +37,26 @@ const ProfessionalProfileScreen = () => {
   const loadProfissionalData = async () => {
     try {
       setLoading(true);
-      const headers = await AuthService.getAuthHeaders();
       
-      // Buscar dados do profissional
-      const profResponse = await fetch(`http://localhost:8080/profissional/${profissionalId}`, {
-        method: 'GET',
-        headers: headers
+      // Usar ApiService em vez de fetch
+      const completeData = await ApiService.get(`/profissional/completo/${profissionalId}`);
+      
+      // Extrair dados organizados
+      const { profissional: profData, portfolio, usuario, endereco, imagens } = completeData;
+      
+      setProfissional({
+        ...profData,
+        usuario,
+        portifolio: portfolio,
+        endereco
       });
       
-      if (!profResponse.ok) {
-        throw new Error('Erro ao buscar dados do profissional');
-      }
-      
-      const profData = await profResponse.json();
-      setProfissional(profData);
-      
-      // Buscar imagens do portfólio
-      const imageResponse = await fetch(`http://localhost:8080/profissional/${profissionalId}/imagens`, {
-        method: 'GET',
-        headers: headers
-      });
-      
-      if (imageResponse.ok) {
-        const imageData = await imageResponse.json();
-        setImagens(imageData);
-      }
+      // Definir as imagens diretamente
+      setImagens(imagens || []);
       
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
-      toastHelper.showError('Não foi possível carregar o perfil do profissional');
+      toastHelper.showError(professionalMessages.profileErrors.loadProfile);
     } finally {
       setLoading(false);
     }
@@ -74,7 +66,7 @@ const ProfessionalProfileScreen = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#000" />
-        <Text style={styles.loadingText}>Carregando perfil...</Text>
+        <Text style={styles.loadingText}>{professionalMessages.loading.profile}</Text>
       </View>
     );
   }
@@ -83,7 +75,7 @@ const ProfessionalProfileScreen = () => {
     return (
       <View style={styles.errorContainer}>
         <Feather name="alert-circle" size={64} color="#ff4444" />
-        <Text style={styles.errorText}>Não foi possível carregar o perfil</Text>
+        <Text style={styles.errorText}>{professionalMessages.profileErrors.notFound}</Text>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
@@ -118,7 +110,7 @@ const ProfessionalProfileScreen = () => {
       return (
         <View style={styles.emptyPortfolio}>
           <Feather name="image" size={32} color="#999" />
-          <Text style={styles.emptyText}>Nenhuma imagem no portfólio</Text>
+          <Text style={styles.emptyText}>{professionalMessages.info.noImages}</Text>
         </View>
       );
     }
@@ -130,7 +122,7 @@ const ProfessionalProfileScreen = () => {
             key={index} 
             style={styles.portfolioItem}
             onPress={() => {
-              // Aqui você pode implementar uma visualização ampliada da imagem se desejar
+              // Implementar uma visualização ampliada da imagem
               console.log('Imagem clicada:', index);
             }}
           >
@@ -232,7 +224,7 @@ const ProfessionalProfileScreen = () => {
            !profissional.portifolio?.facebook && 
            !profissional.portifolio?.twitter && 
            !profissional.portifolio?.website && (
-            <Text style={styles.emptyText}>Nenhuma rede social cadastrada</Text>
+            <Text style={styles.emptyText}>{professionalMessages.info.noSocialMedia}</Text>
           )}
         </View>
       </View>

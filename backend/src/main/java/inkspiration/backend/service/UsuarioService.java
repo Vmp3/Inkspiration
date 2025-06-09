@@ -275,7 +275,12 @@ public class UsuarioService {
         usuario.setEmail(dto.getEmail());
         usuario.setDataNascimento(DateValidator.parseDate(dto.getDataNascimento()));
         usuario.setTelefone(dto.getTelefone());
-        usuario.setImagemPerfil(dto.getImagemPerfil());
+        
+        // Só atualiza a imagem de perfil se ela for fornecida no DTO
+        if (dto.getImagemPerfil() != null) {
+            usuario.setImagemPerfil(dto.getImagemPerfil());
+        }
+        // Se for null, mantém a imagem existente
     }
 
     private String determinarRole(String role) {

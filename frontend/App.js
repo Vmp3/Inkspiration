@@ -21,6 +21,9 @@ import AdminUsersScreen from './src/screens/AdminUsersScreen';
 import ArtistScreen from './src/screens/ArtistScreen';
 import BookingScreen from './src/screens/BookingScreen';
 import MyAppointmentsScreen from './src/screens/MyAppointmentsScreen';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
+import TwoFactorSetupScreen from './src/screens/TwoFactorSetupScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -31,6 +34,8 @@ const linking = {
       Home: 'home',
       Login: 'login',
       Register: 'register',
+      ForgotPassword: 'forgot-password',
+      ResetPassword: 'reset-password',
       AdminUsers: 'admin/usuarios',
       Artist: 'artist/:id',
       Booking: 'booking/:professionalId',
@@ -41,6 +46,7 @@ const linking = {
       EditProfile: 'edit-profile',
       ProfessionalRegister: 'professional-register',
       MyAppointments: 'my-appointments',
+      TwoFactorSetup: 'two-factor-setup',
     },
   },
 };
@@ -71,6 +77,8 @@ export default function App() {
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
             <Stack.Screen name="Explore" component={ExploreScreen} />
             <Stack.Screen name="About" component={AboutScreen} />
             <Stack.Screen name="Profile" component={EditProfileScreen} />
@@ -79,6 +87,7 @@ export default function App() {
             <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
             <Stack.Screen name="ProfessionalRegister" component={ProfessionalRegisterScreen} />
             <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} />
+            <Stack.Screen name="TwoFactorSetup" component={TwoFactorSetupScreen} />
           </Stack.Navigator>
         </View>
       </NavigationContainer>

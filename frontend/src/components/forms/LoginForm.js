@@ -4,7 +4,6 @@ import { useNavigation } from '@react-navigation/native';
 import Input from '../ui/Input';
 import Checkbox from '../ui/Checkbox';
 import Button from '../ui/Button';
-import theme from '../../themes/theme';
 
 const LoginForm = ({ 
   formData, 
@@ -105,9 +104,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 14,
     backgroundColor: '#fff',
-  },
-  primaryButton: {
-    // Any additional custom styles for the button
   },
   inputError: {
     borderColor: '#ff0000',

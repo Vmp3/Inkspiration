@@ -144,21 +144,23 @@ public class UsuarioController {
     @PostMapping("/{id}/validate-token")
     public ResponseEntity<Map<String, Object>> validateToken(@PathVariable Long id, @RequestBody Map<String, String> request) {
         try {
-            // Verifica se o token JWT atual pertence ao usuário especificado
-            if (!authorizationService.validateTokenOwnership(id)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                    Map.of("valid", false, "message", "Token não pertence ao usuário especificado")
-                );
-            }
-            
             String token = request.get("token");
-            if (token == null) {
+            if (token == null || token.isEmpty()) {
                 return ResponseEntity.badRequest().body(
                     Map.of("valid", false, "message", "Token não fornecido")
                 );
             }
             
-            Usuario usuario = service.buscarPorId(id);
+            // Buscar o usuário diretamente sem validação de autorização prévia
+            Usuario usuario;
+            try {
+                usuario = service.buscarPorId(id);
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    Map.of("valid", false, "message", "Usuário não encontrado")
+                );
+            }
+            
             String tokenAtual = usuario.getTokenAtual();
             
             if (tokenAtual == null) {
@@ -183,6 +185,7 @@ public class UsuarioController {
                 );
             }
         } catch (Exception e) {
+            e.printStackTrace(); // Para debug
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 Map.of(
                     "valid", false, 

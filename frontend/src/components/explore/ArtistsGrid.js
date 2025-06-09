@@ -14,7 +14,6 @@ const ArtistsGrid = ({ artists, numColumns, navigation }) => {
     );
   }
 
-  // Helper function to chunk artists into rows
   const chunkArray = (array, size) => {
     const result = [];
     for (let i = 0; i < array.length; i += size) {
@@ -23,10 +22,8 @@ const ArtistsGrid = ({ artists, numColumns, navigation }) => {
     return result;
   };
 
-  // Divide artists into rows based on numColumns
   const rows = chunkArray(artists, numColumns);
 
-  // Calculate card width based on numColumns
   const cardWidthPercentage = numColumns === 1 ? 100 : (numColumns === 2 ? 49 : 32);
   const cardMargin = numColumns === 1 ? 0 : 0.5;
 
@@ -59,9 +56,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     marginBottom: 16,
     width: '100%',
-  },
-  artistCard: {
-    // Base styles for the card container
   },
   noResultsContainer: {
     padding: 48,

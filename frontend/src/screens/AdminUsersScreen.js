@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import UserService from '../services/UserService';
 import PortifolioService from '../services/PortifolioService';
 import toastHelper from '../utils/toastHelper';
+import { adminMessages } from '../components/admin/messages';
 
 import SearchInput from '../components/ui/SearchInput';
 import Button from '../components/ui/Button';
@@ -67,7 +68,7 @@ const AdminUsersScreen = () => {
       setFilteredUsers(usersData);
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
-      toastHelper.showError('Erro ao carregar usuários');
+      toastHelper.showError(adminMessages.errors.loadUsers);
     } finally {
       setIsLoading(false);
     }
@@ -116,18 +117,18 @@ const AdminUsersScreen = () => {
       if (modalAction === 'toggle') {
         if (selectedUser.role === 'ROLE_DELETED') {
           await UserService.reactivateUser(selectedUser.idUsuario);
-          toastHelper.showSuccess(`Usuário ${selectedUser.nome} foi reativado com sucesso`);
+          toastHelper.showSuccess(adminMessages.success.userActivated(selectedUser.nome));
         } else {
           await UserService.deactivateUser(selectedUser.idUsuario);
-          toastHelper.showSuccess(`Usuário ${selectedUser.nome} foi desativado com sucesso`);
+          toastHelper.showSuccess(adminMessages.success.userDeactivated(selectedUser.nome));
         }
       } else if (modalAction === 'deletePortfolio') {
         try {
           await PortifolioService.deletePortifolio(selectedUser.idUsuario);
-          toastHelper.showSuccess(`Portfólio do usuário ${selectedUser.nome} foi excluído com sucesso`);
+          toastHelper.showSuccess(adminMessages.success.portfolioDeleted(selectedUser.nome));
         } catch (error) {
           if (error.message.includes('404')) {
-            toastHelper.showInfo(`Usuário ${selectedUser.nome} não possui portfólio para excluir`);
+            toastHelper.showInfo(adminMessages.info.noPortfolio(selectedUser.nome));
           } else {
             throw error;
           }
@@ -137,7 +138,7 @@ const AdminUsersScreen = () => {
       await loadUsers();
     } catch (error) {
       console.error('Erro na ação:', error);
-      toastHelper.showError('Erro ao executar ação');
+      toastHelper.showError(adminMessages.errors.userAction);
     } finally {
       setIsConfirmModalVisible(false);
       setSelectedUser(null);

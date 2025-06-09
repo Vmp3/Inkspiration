@@ -67,7 +67,6 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (error) {
           console.error('Erro na verificação periódica do token:', error);
-          // Em caso de erro crítico, fazer logout por segurança
           setIsAuthenticated(false);
           setUserData(null);
         }

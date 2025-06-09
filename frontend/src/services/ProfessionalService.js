@@ -46,8 +46,9 @@ class ProfessionalService {
 
   async getProfessionalImages(id) {
     try {
-      const response = await PublicApiService.get(`/profissional/${id}/imagens`);
-      return response;
+      // Usar o endpoint completo e extrair apenas as imagens
+      const response = await PublicApiService.get(`/profissional/completo/${id}`);
+      return response.imagens || [];
     } catch (error) {
       console.error('Erro ao buscar imagens do profissional:', error);
       throw error;

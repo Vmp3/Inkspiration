@@ -85,17 +85,6 @@ public class AuthenticationController {
         }
     }
     
-    @PostMapping("/verify-token")
-    public ResponseEntity<Boolean> verifyToken(@RequestBody Map<String, String> requestBody) {
-        String token = requestBody.get("token");
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.badRequest().body(false);
-        }
-        
-        boolean isRevoked = authService.isTokenRevoked(token);
-        return ResponseEntity.ok(isRevoked);
-    }
-    
     @PostMapping("/reauth/{userId}")
     public ResponseEntity<String> reautenticar(@PathVariable Long userId) {
         try {
