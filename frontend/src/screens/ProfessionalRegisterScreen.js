@@ -25,6 +25,8 @@ import toastHelper from '../utils/toastHelper';
 import { TimeInput } from '../components/TimeInput';
 import AuthService from '../services/AuthService';
 import ApiService from '../services/ApiService';
+import ProfessionalService from '../services/ProfessionalService';
+import { professionalMessages } from '../components/professional/messages';
 
 // Componentes modulares para as diferentes seções do formulário
 import BasicInfoForm from '../components/forms/BasicInfoForm';
@@ -474,24 +476,19 @@ const ProfessionalRegisterScreen = () => {
           }
         }
         
-        // Cadastro bem-sucedido
         toastHelper.showSuccess('Cadastro de profissional realizado com sucesso!');
         
         // Atualizar o token para refletir a nova role (ROLE_PROF)
         try {
-          // Usar apenas o método de reautenticação que gera um token com a role atual
           const tokenUpdated = await AuthService.reautenticar(userData.idUsuario);
           
           if (tokenUpdated) {
-            // Atualizar dados do usuário para refletir o novo papel
             await updateUserData();
             
-            // Navegar para a página inicial após o sucesso
             setTimeout(() => {
               navigation.navigate('Home');
             }, 1000);
           } else {
-            // Se falhar, pedir para o usuário fazer login novamente
             console.error('Falha ao atualizar token - redirecionando para login');
             toastHelper.showWarning('Por favor, faça login novamente para atualizar suas permissões');
             await AuthService.logout();
@@ -502,7 +499,6 @@ const ProfessionalRegisterScreen = () => {
         } catch (tokenError) {
           console.error('Erro ao atualizar token:', tokenError);
           
-          // Em caso de erro, fazer logout e pedir para o usuário fazer login novamente
           toastHelper.showWarning('Por favor, faça login novamente para atualizar suas permissões');
           await AuthService.logout();
           setTimeout(() => {

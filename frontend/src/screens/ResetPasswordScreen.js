@@ -14,6 +14,8 @@ import { Feather } from '@expo/vector-icons';
 import toastHelper from '../utils/toastHelper';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import PublicAuthService from '../services/PublicAuthService';
+import { authMessages } from '../components/auth/messages';
 
 const ResetPasswordScreen = () => {
   const navigation = useNavigation();
@@ -42,7 +44,7 @@ const ResetPasswordScreen = () => {
   const handleBlur = (field) => {
     if (field === 'code' && formData.code) {
       if (formData.code.length !== 6) {
-        setCodeError('O código deve ter 6 dígitos');
+        setCodeError(authMessages.resetPasswordErrors.invalidCode);
       } else {
         setCodeError('');
       }
@@ -50,7 +52,7 @@ const ResetPasswordScreen = () => {
 
     if (field === 'newPassword' && formData.newPassword) {
       if (formData.newPassword.length < 6) {
-        setPasswordError('A senha deve ter pelo menos 6 caracteres');
+        setPasswordError(authMessages.resetPasswordErrors.invalidPassword);
       } else {
         setPasswordError('');
       }
@@ -58,7 +60,7 @@ const ResetPasswordScreen = () => {
 
     if (field === 'confirmPassword' && formData.confirmPassword) {
       if (formData.newPassword !== formData.confirmPassword) {
-        setConfirmPasswordError('As senhas não coincidem');
+        setConfirmPasswordError(authMessages.resetPasswordErrors.passwordMismatch);
       } else {
         setConfirmPasswordError('');
       }
@@ -69,26 +71,26 @@ const ResetPasswordScreen = () => {
     let isValid = true;
 
     if (!formData.code) {
-      setCodeError('Código é obrigatório');
+      setCodeError(authMessages.resetPasswordErrors.requiredFields);
       isValid = false;
     } else if (formData.code.length !== 6) {
-      setCodeError('O código deve ter 6 dígitos');
+      setCodeError(authMessages.resetPasswordErrors.invalidCode);
       isValid = false;
     }
 
     if (!formData.newPassword) {
-      setPasswordError('Nova senha é obrigatória');
+      setPasswordError(authMessages.resetPasswordErrors.requiredFields);
       isValid = false;
     } else if (formData.newPassword.length < 6) {
-      setPasswordError('A senha deve ter pelo menos 6 caracteres');
+      setPasswordError(authMessages.resetPasswordErrors.invalidPassword);
       isValid = false;
     }
 
     if (!formData.confirmPassword) {
-      setConfirmPasswordError('Confirmação de senha é obrigatória');
+      setConfirmPasswordError(authMessages.resetPasswordErrors.requiredFields);
       isValid = false;
     } else if (formData.newPassword !== formData.confirmPassword) {
-      setConfirmPasswordError('As senhas não coincidem');
+      setConfirmPasswordError(authMessages.resetPasswordErrors.passwordMismatch);
       isValid = false;
     }
 
@@ -102,41 +104,16 @@ const ResetPasswordScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cpf: cpf,
-          code: formData.code,
-          newPassword: formData.newPassword,
-        }),
+      await PublicAuthService.resetPassword(cpf, formData.code, formData.newPassword);
+      toastHelper.showSuccess(authMessages.success.resetPasswordSuccess);
+      setFormData({
+        code: '',
+        newPassword: '',
+        confirmPassword: '',
       });
-
-      if (response.ok) {
-        toastHelper.showSuccess('Senha redefinida com sucesso!');
-        setFormData({
-          code: '',
-          newPassword: '',
-          confirmPassword: '',
-        });
-        navigation.navigate('Login');
-      } else {
-        const errorData = await response.text();
-        
-        if (response.status === 400) {
-          if (errorData.includes('inválido') || errorData.includes('expirado')) {
-            toastHelper.showError('Código inválido ou expirado. Solicite um novo código');
-          } else {
-            toastHelper.showError(errorData || 'Dados inválidos');
-          }
-        } else {
-          toastHelper.showError(errorData || 'Erro ao redefinir senha');
-        }
-      }
+      navigation.navigate('Login');
     } catch (error) {
-      toastHelper.showError('Erro de conexão. Tente novamente.');
+      toastHelper.showError(error.message);
     } finally {
       setLoading(false);
     }
@@ -145,21 +122,10 @@ const ResetPasswordScreen = () => {
   const handleResendCode = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ cpf }),
-      });
-
-      if (response.ok) {
-        toastHelper.showSuccess('Novo código enviado para seu email!');
-      } else {
-        toastHelper.showError('Erro ao reenviar código');
-      }
+      await PublicAuthService.forgotPassword(cpf);
+      toastHelper.showSuccess(authMessages.success.codeResent);
     } catch (error) {
-      toastHelper.showError('Erro de conexão. Tente novamente.');
+      toastHelper.showError(error.message);
     } finally {
       setLoading(false);
     }
@@ -210,7 +176,7 @@ const ResetPasswordScreen = () => {
               </View>
 
               <View style={styles.formFieldGroup}>
-                <Text style={styles.formLabel}>Confirmar nova senha</Text>
+                <Text style={styles.formLabel}>Confirmar senha</Text>
                 <Input
                   placeholder="••••••••"
                   value={formData.confirmPassword}

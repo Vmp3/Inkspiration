@@ -1,126 +1,73 @@
-import AuthService from './AuthService';
-
-const API_URL = 'http://localhost:8080';
+import ApiService from './ApiService';
 
 class UserService {
   async getAllUsers(page = 0) {
     try {
-      const headers = await AuthService.getAuthHeaders();
-      const response = await fetch(`${API_URL}/usuario?page=${page}`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new Error(errorMessage || 'Erro ao buscar usuários');
-      }
-
-      return await response.json();
+      const response = await ApiService.get(`/usuario?page=${page}`);
+      return response;
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
-      throw error;
+      throw new Error(error.message || 'Erro ao buscar usuários');
     }
   }
 
   async getUserById(id) {
     try {
-      const headers = await AuthService.getAuthHeaders();
-      const response = await fetch(`${API_URL}/usuario/${id}`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new Error(errorMessage || 'Erro ao buscar usuário');
-      }
-
-      return await response.json();
+      const response = await ApiService.get(`/usuario/${id}`);
+      return response;
     } catch (error) {
       console.error('Erro ao buscar usuário:', error);
-      throw error;
+      throw new Error(error.message || 'Erro ao buscar usuário');
     }
   }
 
   async updateUser(id, userData) {
     try {
-      const headers = await AuthService.getAuthHeaders();
-      const response = await fetch(`${API_URL}/usuario/atualizar/${id}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new Error(errorMessage || 'Erro ao atualizar usuário');
-      }
-
-      return await response.json();
+      const response = await ApiService.put(`/usuario/atualizar/${id}`, userData);
+      return response;
     } catch (error) {
       console.error('Erro ao atualizar usuário:', error);
-      throw error;
+      throw new Error(error.message || 'Erro ao atualizar usuário');
     }
   }
 
   async deactivateUser(id) {
     try {
-      const headers = await AuthService.getAuthHeaders();
-      const response = await fetch(`${API_URL}/usuario/inativar/${id}`, {
-        method: 'POST',
-        headers,
-      });
-
-      if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new Error(errorMessage || 'Erro ao inativar usuário');
-      }
-
-      return await response.text();
+      const response = await ApiService.put(`/usuario/desativar/${id}`);
+      return response;
     } catch (error) {
-      console.error('Erro ao inativar usuário:', error);
-      throw error;
+      console.error('Erro ao desativar usuário:', error);
+      throw new Error(error.message || 'Erro ao desativar usuário');
     }
   }
 
   async reactivateUser(id) {
     try {
-      const headers = await AuthService.getAuthHeaders();
-      const response = await fetch(`${API_URL}/usuario/reativar/${id}`, {
-        method: 'POST',
-        headers,
-      });
-
-      if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new Error(errorMessage || 'Erro ao reativar usuário');
-      }
-
-      return await response.text();
+      const response = await ApiService.put(`/usuario/reativar/${id}`);
+      return response;
     } catch (error) {
       console.error('Erro ao reativar usuário:', error);
-      throw error;
+      throw new Error(error.message || 'Erro ao reativar usuário');
     }
   }
 
   async deleteUser(id) {
     try {
-      const headers = await AuthService.getAuthHeaders();
-      const response = await fetch(`${API_URL}/usuario/deletar/${id}`, {
-        method: 'DELETE',
-        headers,
-      });
-
-      if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new Error(errorMessage || 'Erro ao excluir usuário');
-      }
-
-      return await response.text();
+      const response = await ApiService.delete(`/usuario/deletar/${id}`);
+      return response;
     } catch (error) {
       console.error('Erro ao excluir usuário:', error);
-      throw error;
+      throw new Error(error.message || 'Erro ao excluir usuário');
+    }
+  }
+
+  async updateProfileImage(id, imageBase64) {
+    try {
+      const response = await ApiService.put(`/usuario/${id}/foto-perfil`, { imagemBase64: imageBase64 });
+      return response;
+    } catch (error) {
+      console.error('Erro ao atualizar foto do perfil:', error);
+      throw new Error(error.message || 'Erro ao atualizar foto do perfil');
     }
   }
 }

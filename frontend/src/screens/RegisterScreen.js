@@ -11,6 +11,8 @@ import PersonalForm from '../components/forms/PersonalForm';
 import AddressForm from '../components/forms/AddressForm';
 import SecurityForm from '../components/forms/SecurityForm';
 import FormNavigation from '../components/ui/FormNavigation';
+import PublicAuthService from '../services/PublicAuthService';
+import { authMessages } from '../components/auth/messages';
 
 const RegisterScreen = () => {
   const navigation = useNavigation();
@@ -79,7 +81,6 @@ const RegisterScreen = () => {
         break;
       case 'cpf':
         formattedValue = formatters.formatCPF(value);
-        // Clear error when typing
         setCpfError('');
         break;
       case 'cep':
@@ -118,7 +119,6 @@ const RegisterScreen = () => {
       [field]: formattedValue,
     });
 
-    // If the field is CEP and has 8 digits (without hyphen), fetch address
     if (field === 'cep' && value.replace(/\D/g, '').length === 8) {
       buscarCep(value);
     }
@@ -233,74 +233,74 @@ const RegisterScreen = () => {
     let isValid = true;
 
     if (!formData.nome) {
-      toastHelper.showError('Nome é obrigatório');
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formatters.validateFirstName(formData.nome)) {
-      setNomeError('Nome inválido');
-      toastHelper.showError('Nome inválido');
+      setNomeError(authMessages.registerErrors.invalidName);
+      toastHelper.showError(authMessages.registerErrors.invalidName);
       return false;
     }
     
     if (!formData.sobrenome) {
-      toastHelper.showError('Sobrenome é obrigatório');
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formatters.validateSurname(formData.sobrenome)) {
-      setSobrenomeError('Sobrenome inválido');
-      toastHelper.showError('Sobrenome inválido');
+      setSobrenomeError(authMessages.registerErrors.invalidSurname);
+      toastHelper.showError(authMessages.registerErrors.invalidSurname);
       return false;
     }
     
     if (!formatters.validateFullNameLength(formData.nome, formData.sobrenome)) {
-      setFullNameError('Nome e sobrenome não podem ultrapassar 255 caracteres');
-      toastHelper.showError('Nome e sobrenome não podem ultrapassar 255 caracteres');
+      setFullNameError(authMessages.registerErrors.invalidFullName);
+      toastHelper.showError(authMessages.registerErrors.invalidFullName);
       return false;
     }
     
     if (!formData.cpf) {
-      toastHelper.showError('CPF é obrigatório');
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
 
     if (!formatters.validateCPF(formData.cpf)) {
-      setCpfError('CPF inválido');
-      toastHelper.showError('CPF inválido');
+      setCpfError(authMessages.registerErrors.invalidCpf);
+      toastHelper.showError(authMessages.registerErrors.invalidCpf);
       return false;
     }
     
     if (!formData.email) {
-      toastHelper.showError('Email é obrigatório');
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
 
     if (!formatters.validateEmail(formData.email)) {
-      setEmailError('Email inválido');
-      toastHelper.showError('Email inválido');
+      setEmailError(authMessages.registerErrors.invalidEmail);
+      toastHelper.showError(authMessages.registerErrors.invalidEmail);
       return false;
     }
     
     if (!formData.telefone) {
-      toastHelper.showError('Telefone é obrigatório');
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
 
     if (!formatters.validatePhone(formData.telefone)) {
-      setPhoneError('Telefone inválido');
-      toastHelper.showError('Telefone inválido');
+      setPhoneError(authMessages.registerErrors.invalidPhone);
+      toastHelper.showError(authMessages.registerErrors.invalidPhone);
       return false;
     }
     
     if (!formData.dataNascimento) {
-      toastHelper.showError('Data de nascimento é obrigatória');
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
 
     if (!formatters.validateBirthDate(formData.dataNascimento)) {
-      setBirthDateError('Você deve ter pelo menos 18 anos para se registrar');
-      toastHelper.showError('Você deve ter pelo menos 18 anos para se registrar');
+      setBirthDateError(authMessages.registerErrors.invalidBirthDate);
+      toastHelper.showError(authMessages.registerErrors.invalidBirthDate);
       return false;
     }
     
@@ -309,32 +309,32 @@ const RegisterScreen = () => {
 
   const validateAddressTab = () => {
     if (!formData.cep) {
-      toastHelper.showError('CEP é obrigatório');
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formData.rua) {
-      toastHelper.showError('Rua é obrigatória');
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formData.numero) {
-      toastHelper.showError('Número é obrigatório');
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formData.bairro) {
-      toastHelper.showError('Bairro é obrigatório');
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formData.cidade) {
-      toastHelper.showError('Cidade é obrigatória');
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (!formData.estado) {
-      toastHelper.showError('Estado é obrigatório');
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
@@ -343,27 +343,27 @@ const RegisterScreen = () => {
 
   const validateSecurityTab = () => {
     if (!formData.senha) {
-      toastHelper.showError('Senha é obrigatória');
+      toastHelper.showError(authMessages.registerErrors.invalidPassword);
       return false;
     }
     
     if (formData.senha.length < 6) {
-      toastHelper.showError('A senha deve ter pelo menos 6 caracteres');
+      toastHelper.showError(authMessages.registerErrors.invalidPassword);
       return false;
     }
 
     if (!formData.confirmarSenha) {
-      toastHelper.showError('Confirmação de senha é obrigatória');
+      toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
     
     if (formData.senha !== formData.confirmarSenha) {
-      toastHelper.showError('As senhas não coincidem');
+      toastHelper.showError(authMessages.registerErrors.passwordMismatch);
       return false;
     }
     
     if (!formData.termsAccepted) {
-      toastHelper.showError('Você precisa aceitar os termos de uso para continuar');
+      toastHelper.showError(authMessages.registerErrors.requiredTerms);
       return false;
     }
     
@@ -443,61 +443,26 @@ const RegisterScreen = () => {
       // Preparar dados para envio conforme o DTO do backend
       const userData = {
         nome: `${formData.nome} ${formData.sobrenome}`.trim(),
-        cpf: formData.cpf.replace(/[^\d]/g, ''), // Remove caracteres não numéricos
+        cpf: formData.cpf.replace(/[^\d]/g, ''),
         email: formData.email,
         dataNascimento: dataNascFormatada,
         telefone: formData.telefone,
         senha: formData.senha,
         endereco: endereco,
-        role: 'user' // Registrando como usuário comum
+        role: 'user'
       };
 
-      const baseUrl = 'http://localhost:8080'; 
-      const response = await fetch(`${baseUrl}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(userData)
-      });
+      await PublicAuthService.register(userData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Verifica se há erros diretos no objeto data
-        const errorMessages = {};
-        
-        // Verifica cada propriedade do objeto data para encontrar mensagens de erro
-        Object.entries(data).forEach(([field, message]) => {
-          if (typeof message === 'string') {
-            errorMessages[field] = message;
-          }
-        });
-
-        // Se encontrou mensagens de erro
-        if (Object.keys(errorMessages).length > 0) {
-          Object.entries(errorMessages).forEach(([field, message]) => {
-            toastHelper.showError(message);
-          });
-        } else if (data.message) {
-          // Se houver uma mensagem de erro geral
-          toastHelper.showError(data.message);
-        } else {
-          // Mensagem genérica de erro
-          toastHelper.showError('Ocorreu um erro ao cadastrar. Tente novamente.');
-        }
-        return;
-      }
-
-      // Exibe mensagem de sucesso do backend ou uma mensagem padrão
-      toastHelper.showSuccess('Cadastro realizado com sucesso!');
+      // Exibe mensagem de sucesso
+      toastHelper.showSuccess(authMessages.success.registerSuccess);
 
       // Aguarda um momento para mostrar o toast antes de navegar
       setTimeout(() => {
         navigation.navigate('Login');
       }, 1000);
     } catch (error) {
-      toastHelper.showError('Ocorreu um erro ao cadastrar. Tente novamente.');
+      toastHelper.showError(error.message || authMessages.registerErrors.serverError);
     } finally {
       setIsLoading(false);
     }

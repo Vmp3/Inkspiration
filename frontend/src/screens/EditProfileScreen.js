@@ -1,40 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import axios from 'axios';
-import * as ImagePicker from 'expo-image-picker';
 import * as formatters from '../utils/formatters';
-import toastHelper from '../utils/toastHelper';
 import { useAuth } from '../context/AuthContext';
-import AuthService from '../services/AuthService';
-import ApiService from '../services/ApiService';
 
-import Input from '../components/ui/Input';
-import TabHeader from '../components/ui/TabHeader';
 import PersonalForm from '../components/forms/PersonalForm';
 import AddressForm from '../components/forms/AddressForm';
-import SecurityForm from '../components/forms/SecurityForm';
 import FormNavigation from '../components/ui/FormNavigation';
 import ProfessionalForm from '../components/forms/ProfessionalForm';
+import PageHeader from '../components/EditProfile/PageHeader';
+import FormContainer from '../components/EditProfile/FormContainer';
+import SecuritySection from '../components/EditProfile/SecuritySection';
 
 // Componentes modulares para profissionais
 import BasicInfoForm from '../components/forms/BasicInfoForm';
 import WorkHoursForm from '../components/forms/WorkHoursForm';
 import PortfolioForm from '../components/forms/PortfolioForm';
 
+// Hooks customizados
+import useProfessionalData from '../components/EditProfile/hooks/useProfessionalData';
+import useTabNavigation from '../components/EditProfile/hooks/useTabNavigation';
+import useProfileUpdate from '../components/EditProfile/hooks/useProfileUpdate';
+
 const EditProfileScreen = () => {
-  const navigation = useNavigation();
-  const { userData, updateUserData } = useAuth();
-  const [activeTab, setActiveTab] = useState('personal');
+  const { userData } = useAuth();
   const [isArtist, setIsArtist] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const [experienceDropdownOpen, setExperienceDropdownOpen] = useState(false);
-  
-  // Estados para 2FA
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-  const [isLoadingTwoFactor, setIsLoadingTwoFactor] = useState(true);
   
   // Form validation states
   const [nomeError, setNomeError] = useState('');
@@ -47,15 +38,12 @@ const EditProfileScreen = () => {
   
   // Form data state
   const [formData, setFormData] = useState({
-    // Dados pessoais
     nome: '',
     sobrenome: '',
     cpf: '',
     email: '',
     telefone: '',
     dataNascimento: '',
-    
-    // Endereço
     cep: '',
     rua: '',
     numero: '',
@@ -63,13 +51,9 @@ const EditProfileScreen = () => {
     bairro: '',
     cidade: '',
     estado: '',
-    
-    // Senha
     senhaAtual: '',
     novaSenha: '',
     confirmarSenha: '',
-    
-    // Dados profissionais (quando aplicável)
     especialidades: [],
     bio: '',
     experiencia: '',
@@ -82,89 +66,20 @@ const EditProfileScreen = () => {
     }
   });
   
-  // Estados específicos para profissionais (usando os componentes modulares)
-  const [professionalFormData, setProfessionalFormData] = useState({
-    experience: '1-3 anos',
-    specialties: {
-      Tradicional: false,
-      Blackwork: false,
-      'Neo-Tradicional': false,
-      Fineline: false,
-      Realista: false,
-      Geométrico: false,
-      Minimalista: false,
-      Aquarela: false,
-      Japonês: false,
-      'Old School': false
-    },
-    socialMedia: {
-      instagram: '',
-      tiktok: '',
-      facebook: '',
-      twitter: '',
-      website: ''
-    },
-    workHours: [
-      {
-        day: 'Segunda',
-        available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
-      },
-      {
-        day: 'Terça',
-        available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
-      },
-      {
-        day: 'Quarta',
-        available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
-      },
-      {
-        day: 'Quinta',
-        available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
-      },
-      {
-        day: 'Sexta',
-        available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
-      },
-      {
-        day: 'Sábado',
-        available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: false, start: '13:00', end: '18:00' }
-      },
-      {
-        day: 'Domingo',
-        available: false,
-        morning: { enabled: false, start: '08:00', end: '12:00' },
-        afternoon: { enabled: false, start: '13:00', end: '18:00' }
-      }
-    ],
-    biography: '',
-    portfolioImages: [],
-    profileImage: null
-  });
+  // Hooks customizados
+  const professionalData = useProfessionalData(userData);
+  const tabNavigation = useTabNavigation(isArtist, formData, professionalData.professionalFormData);
+  const profileUpdate = useProfileUpdate(isArtist, professionalData.updateProfessionalData);
 
   // Load user data when component mounts
   useEffect(() => {
     if (userData) {
-      // Check if user is an artist/professional
       setIsArtist(userData.role === 'ROLE_PROF');
       
-      // Extract first and last name
       const nameParts = userData.nome ? userData.nome.split(' ') : ['', ''];
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
       
-      // Set form data with user information
       setFormData({
         nome: firstName,
         sobrenome: lastName,
@@ -172,8 +87,6 @@ const EditProfileScreen = () => {
         email: userData.email || '',
         telefone: userData.telefone || '',
         dataNascimento: userData.dataNascimento || '',
-        
-        // Endereço
         cep: userData.endereco?.cep || '',
         rua: userData.endereco?.rua || '',
         numero: userData.endereco?.numero || '',
@@ -181,13 +94,9 @@ const EditProfileScreen = () => {
         bairro: userData.endereco?.bairro || '',
         cidade: userData.endereco?.cidade || '',
         estado: userData.endereco?.estado || '',
-        
-        // Senha (deixar em branco por segurança)
         senhaAtual: '',
         novaSenha: '',
         confirmarSenha: '',
-        
-        // Dados profissionais (quando aplicável)
         especialidades: userData.especialidades || [],
         bio: userData.bio || '',
         experiencia: userData.experiencia || '',
@@ -201,176 +110,10 @@ const EditProfileScreen = () => {
       });
     }
   }, [userData]);
-  
-  // Função para carregar dados profissionais
-  const loadProfessionalData = async () => {
-    if (!userData?.idUsuario || userData.role !== 'ROLE_PROF') {
-      return;
-    }
-
-    try {
-      const response = await ApiService.get(`/profissional/usuario/${userData.idUsuario}/completo`);
-      
-      if (response && response.profissional) {
-        const { profissional, portfolio, imagens, disponibilidades } = response;
-        
-        // Transformar especialidades
-        const specialties = portfolio?.especialidade ? 
-          portfolio.especialidade.split(', ').reduce((acc, style) => {
-            acc[style] = true;
-            return acc;
-          }, {
-            Tradicional: false,
-            Blackwork: false,
-            'Neo-Tradicional': false,
-            Fineline: false,
-            Realista: false,
-            Geométrico: false,
-            Minimalista: false,
-            Aquarela: false,
-            Japonês: false,
-            'Old School': false
-          }) : {
-            Tradicional: false,
-            Blackwork: false,
-            'Neo-Tradicional': false,
-            Fineline: false,
-            Realista: false,
-            Geométrico: false,
-            Minimalista: false,
-            Aquarela: false,
-            Japonês: false,
-            'Old School': false
-          };
-
-        // Transformar horários de trabalho
-        const workHours = [
-          { day: 'Segunda', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Terça', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Quarta', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Quinta', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Sexta', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Sábado', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Domingo', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } }
-        ];
-
-        if (disponibilidades && Object.keys(disponibilidades).length > 0) {
-          Object.entries(disponibilidades).forEach(([day, horarios]) => {
-            const dayIndex = workHours.findIndex(wh => wh.day === day);
-            
-            if (dayIndex >= 0 && Array.isArray(horarios) && horarios.length > 0) {
-              workHours[dayIndex].available = true;
-              
-              // Processar cada período de horário para o dia
-              horarios.forEach(horario => {
-                if (horario && horario.inicio && horario.fim) {
-                  // Determinar se é manhã ou tarde baseado no horário
-                  const startHour = parseInt(horario.inicio.split(':')[0]);
-                  if (startHour < 13) {
-                    workHours[dayIndex].morning.enabled = true;
-                    workHours[dayIndex].morning.start = horario.inicio;
-                    workHours[dayIndex].morning.end = horario.fim;
-                  } else {
-                    workHours[dayIndex].afternoon.enabled = true;
-                    workHours[dayIndex].afternoon.start = horario.inicio;
-                    workHours[dayIndex].afternoon.end = horario.fim;
-                  }
-                }
-              });
-            }
-          });
-        }
-
-        setProfessionalFormData({
-          experience: portfolio?.experiencia || '1-3 anos',
-          specialties,
-          socialMedia: {
-            instagram: portfolio?.instagram || '',
-            tiktok: portfolio?.tiktok || '',
-            facebook: portfolio?.facebook || '',
-            twitter: portfolio?.twitter || '',
-            website: portfolio?.website || ''
-          },
-          workHours,
-          biography: portfolio?.descricao || '',
-          portfolioImages: (imagens || []).map(img => ({
-            uri: img.imagemBase64 || img.imagem,
-            base64: img.imagemBase64 || img.imagem,
-            type: 'image/jpeg',
-            name: `portfolio_${img.idImagem || Date.now()}.jpg`
-          })),
-          profileImage: null
-        });
-      }
-    } catch (error) {
-      toastHelper.showError('Erro ao obter informações profissionais');
-    }
-  };
-
-  // Carregar dados profissionais quando for profissional
-  useEffect(() => {
-    if (userData?.role === 'ROLE_PROF') {
-      loadProfessionalData();
-    }
-  }, [userData]);
-  
-  // Carregar status do 2FA
-  useEffect(() => {
-    loadTwoFactorStatus();
-  }, []);
-
-  // Recarregar status quando voltar da tela de 2FA
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      loadTwoFactorStatus();
-    });
-
-    return unsubscribe;
-  }, [navigation]);
-
-  const loadTwoFactorStatus = async () => {
-    try {
-      setIsLoadingTwoFactor(true);
-      const token = await AsyncStorage.getItem('jwtToken');
-      
-      if (!token) {
-        setTwoFactorEnabled(false);
-        return;
-      }
-
-      const response = await ApiService.get('/two-factor/status');
-      
-      if (response && response.success) {
-        setTwoFactorEnabled(response.enabled || false);
-      } else {
-        setTwoFactorEnabled(false);
-      }
-    } catch (error) {
-      // Definir como false mesmo em caso de erro para mostrar a seção
-      setTwoFactorEnabled(false);
-    } finally {
-      setIsLoadingTwoFactor(false);
-    }
-  };
-
-  const handleTwoFactorToggle = () => {
-    if (twoFactorEnabled) {
-      // Navegar para tela de desativação
-      navigation.navigate('TwoFactorSetup', { 
-        action: 'disable'
-      });
-    } else {
-      // Navegar para tela de ativação
-      navigation.navigate('TwoFactorSetup', { 
-        action: 'enable'
-      });
-    }
-  };
 
   const handleChange = (field, value) => {
     let formattedValue = value;
     
-    // Apply appropriate formatter based on field type
     switch (field) {
       case 'nome':
         setNomeError('');
@@ -393,8 +136,7 @@ const EditProfileScreen = () => {
         }
         break;
       case 'cpf':
-        // CPF is read-only in edit mode
-        return;
+        return; // CPF is read-only in edit mode
       case 'cep':
         formattedValue = formatters.formatCEP(value);
         break;
@@ -452,110 +194,6 @@ const EditProfileScreen = () => {
     if (field === 'cep' && value.replace(/\D/g, '').length === 8) {
       buscarCep(value);
     }
-  };
-  
-  // Handlers para dados profissionais
-  const handleSpecialtyChange = (specialty) => {
-    setProfessionalFormData(prev => ({
-      ...prev,
-      specialties: {
-        ...prev.specialties,
-        [specialty]: !prev.specialties[specialty]
-      }
-    }));
-  };
-  
-  const handleSocialMediaChange = (platform, value) => {
-    setProfessionalFormData(prev => ({
-      ...prev,
-      socialMedia: {
-        ...prev.socialMedia,
-        [platform]: value
-      }
-    }));
-  };
-  
-  const handleWorkHourChange = (index, period, field, value) => {
-    const newWorkHours = [...professionalFormData.workHours];
-    
-    if (field === 'available') {
-      newWorkHours[index].available = value;
-      if (!value) {
-        newWorkHours[index].morning.enabled = false;
-        newWorkHours[index].afternoon.enabled = false;
-      }
-    }
-    else if (period === 'morning' || period === 'afternoon') {
-      newWorkHours[index][period][field] = value;
-    }
-    
-    setProfessionalFormData(prev => ({
-      ...prev,
-      workHours: newWorkHours
-    }));
-  };
-  
-  const handleAddPortfolioImage = () => {
-    pickImage('portfolio');
-  };
-  
-  const handleRemovePortfolioImage = (index) => {
-    const newImages = [...professionalFormData.portfolioImages];
-    newImages.splice(index, 1);
-    setProfessionalFormData(prev => ({
-      ...prev,
-      portfolioImages: newImages
-    }));
-  };
-  
-  const pickImage = async (imageType, index = null) => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-        base64: true
-      });
-      if (!result.canceled) {
-        const selectedImage = result.assets[0];
-        const imageUri = selectedImage.uri;
-        const imageBase64 = `data:image/jpeg;base64,${selectedImage.base64}`;
-        if (imageType === 'portfolio') {
-          setProfessionalFormData(prev => ({
-            ...prev,
-            portfolioImages: [
-              ...prev.portfolioImages,
-              {
-                uri: imageUri,
-                base64: imageBase64,
-                type: 'image/jpeg',
-                name: `portfolio_${prev.portfolioImages.length}.jpg`
-              }
-            ]
-          }));
-        } else if (imageType === 'profile') {
-          setProfessionalFormData(prev => ({
-            ...prev,
-            profileImage: {
-              uri: imageUri,
-              base64: imageBase64,
-              type: 'image/jpeg',
-              name: 'profile.jpg'
-            }
-          }));
-        }
-      }
-    } catch (error) {
-      toastHelper.showError('Falha ao selecionar imagem. Tente novamente.');
-    }
-  };
-  
-  const setBiography = (value) => {
-    setProfessionalFormData(prev => ({
-      ...prev,
-      biography: value
-    }));
   };
 
   const handleBlur = (field) => {
@@ -624,16 +262,12 @@ const EditProfileScreen = () => {
 
   const buscarCep = async (cep) => {
     try {
-      // Remove caracteres não numéricos
       const cepLimpo = cep.replace(/\D/g, '');
-      
-      // URL da API ViaCEP
       const response = await axios.get(`https://viacep.com.br/ws/${cepLimpo}/json/`);
       
       if (response.data && !response.data.erro) {
         const endereco = response.data;
         
-        // Atualiza os campos do formulário com os dados retornados
         setFormData(prev => ({
           ...prev,
           rua: endereco.logradouro || '',
@@ -641,489 +275,27 @@ const EditProfileScreen = () => {
           cidade: endereco.localidade || '',
           estado: endereco.uf || '',
         }));
-      } else {
-        console.log('CEP não encontrado');
       }
     } catch (error) {
       console.error('Erro ao buscar CEP:', error);
     }
   };
 
-  const validatePersonalTab = () => {
-    let isValid = true;
-
-    if (!formData.nome) {
-      toastHelper.showError('Nome é obrigatório');
-      return false;
-    }
-    
-    if (!formatters.validateFirstName(formData.nome)) {
-      setNomeError('Nome inválido');
-      toastHelper.showError('Nome inválido');
-      return false;
-    }
-    
-    if (!formData.sobrenome) {
-      toastHelper.showError('Sobrenome é obrigatório');
-      return false;
-    }
-    
-    if (!formatters.validateSurname(formData.sobrenome)) {
-      setSobrenomeError('Sobrenome inválido');
-      toastHelper.showError('Sobrenome inválido');
-      return false;
-    }
-    
-    if (!formatters.validateFullNameLength(formData.nome, formData.sobrenome)) {
-      setFullNameError('Nome e sobrenome não podem ultrapassar 255 caracteres');
-      toastHelper.showError('Nome e sobrenome não podem ultrapassar 255 caracteres');
-      return false;
-    }
-    
-    if (!formData.email) {
-      toastHelper.showError('Email é obrigatório');
-      return false;
-    }
-
-    if (!formatters.validateEmail(formData.email)) {
-      setEmailError('Email inválido');
-      toastHelper.showError('Email inválido');
-      return false;
-    }
-    
-    if (!formData.telefone) {
-      toastHelper.showError('Telefone é obrigatório');
-      return false;
-    }
-
-    if (!formatters.validatePhone(formData.telefone)) {
-      setPhoneError('Telefone inválido');
-      toastHelper.showError('Telefone inválido');
-      return false;
-    }
-    
-    return true;
-  };
-
-  const validateAddressTab = () => {
-    if (!formData.cep) {
-      toastHelper.showError('CEP é obrigatório');
-      return false;
-    }
-    
-    if (!formData.rua) {
-      toastHelper.showError('Rua é obrigatória');
-      return false;
-    }
-    
-    if (!formData.numero) {
-      toastHelper.showError('Número é obrigatório');
-      return false;
-    }
-    
-    if (!formData.bairro) {
-      toastHelper.showError('Bairro é obrigatório');
-      return false;
-    }
-    
-    if (!formData.cidade) {
-      toastHelper.showError('Cidade é obrigatória');
-      return false;
-    }
-    
-    if (!formData.estado) {
-      toastHelper.showError('Estado é obrigatório');
-      return false;
-    }
-    
-    return true;
-  };
-
-  const validateSecurityTab = () => {
-    // Se não está alterando a senha, retorna true
-    if (!formData.senhaAtual && !formData.novaSenha && !formData.confirmarSenha) {
-      return true;
-    }
-    
-    // Se está alterando a senha parcialmente (apenas um dos campos), exigir todos
-    if ((formData.senhaAtual || formData.novaSenha || formData.confirmarSenha) && 
-        !(formData.senhaAtual && formData.novaSenha && formData.confirmarSenha)) {
-      
-      if (!formData.senhaAtual) {
-        toastHelper.showError('Senha atual é obrigatória para alterar a senha');
-        return false;
-      }
-      
-      if (!formData.novaSenha) {
-        toastHelper.showError('Nova senha é obrigatória');
-        return false;
-      }
-      
-      if (!formData.confirmarSenha) {
-        toastHelper.showError('Confirmação de senha é obrigatória');
-        return false;
-      }
-    }
-    
-    // Se está alterando a senha completamente, validar os requisitos
-    if (formData.senhaAtual && formData.novaSenha && formData.confirmarSenha) {
-      if (formData.novaSenha.length < 6) {
-        toastHelper.showError('A senha deve ter pelo menos 6 caracteres');
-        return false;
-      }
-      
-      if (formData.novaSenha !== formData.confirmarSenha) {
-        toastHelper.showError('As senhas não coincidem');
-        return false;
-      }
-    }
-    
-    return true;
-  };
-
-  const validateProfessionalTab = () => {
-    // Validação mínima para profissionais
-    if (isArtist && !formData.bio) {
-      toastHelper.showError('Bio é obrigatória para profissionais');
-      return false;
-    }
-    
-    if (isArtist && formData.especialidades.length === 0) {
-      toastHelper.showError('Selecione pelo menos uma especialidade');
-      return false;
-    }
-    
-    return true;
-  };
-  
-  const validateBasicInfoTab = () => {
-    const selectedSpecialties = Object.keys(professionalFormData.specialties).filter(key => professionalFormData.specialties[key]);
-    if (selectedSpecialties.length === 0) {
-      toastHelper.showError('Selecione pelo menos uma especialidade');
-      return false;
-    }
-    return true;
-  };
-  
-  const validateWorkHoursTab = () => {
-    const hasWorkHours = professionalFormData.workHours.some(day => 
-      day.available && (day.morning.enabled || day.afternoon.enabled)
-    );
-    if (!hasWorkHours) {
-      toastHelper.showError('Defina pelo menos um horário de disponibilidade');
-      return false;
-    }
-    return true;
-  };
-  
-  const validatePortfolioTab = () => {
-    if (!professionalFormData.biography || professionalFormData.biography.trim().length < 20) {
-      toastHelper.showError('A biografia deve conter pelo menos 20 caracteres');
-      return false;
-    }
-    return true;
-  };
-
-  const handleNextTab = () => {
-    if (activeTab === 'personal') {
-      if (validatePersonalTab()) {
-        setActiveTab('address');
-      }
-    } else if (activeTab === 'address') {
-      if (validateAddressTab()) {
-        if (isArtist) {
-          setActiveTab('basic-info');
-        } else {
-          setActiveTab('security');
-        }
-      }
-    } else if (activeTab === 'basic-info') {
-      if (validateBasicInfoTab()) {
-        setActiveTab('hours');
-      }
-    } else if (activeTab === 'hours') {
-      if (validateWorkHoursTab()) {
-        setActiveTab('portfolio');
-      }
-    } else if (activeTab === 'portfolio') {
-      if (validatePortfolioTab()) {
-        setActiveTab('security');
-      }
-    } else if (activeTab === 'professional') {
-      if (validateProfessionalTab()) {
-        setActiveTab('security');
-      }
-    }
-  };
-
-  const handlePrevTab = () => {
-    if (activeTab === 'security') {
-      if (isArtist) {
-        setActiveTab('portfolio');
-      } else {
-        setActiveTab('address');
-      }
-    } else if (activeTab === 'portfolio') {
-      setActiveTab('hours');
-    } else if (activeTab === 'hours') {
-      setActiveTab('basic-info');
-    } else if (activeTab === 'basic-info') {
-      setActiveTab('address');
-    } else if (activeTab === 'professional') {
-      setActiveTab('address');
-    } else if (activeTab === 'address') {
-      setActiveTab('personal');
-    }
-  };
-
-  const handleUpdateProfile = async () => {
-    // Validate current tab
-    if (activeTab === 'personal' && !validatePersonalTab()) return;
-    if (activeTab === 'address' && !validateAddressTab()) return;
-    if (activeTab === 'security' && !validateSecurityTab()) return;
-    if (activeTab === 'professional' && !validateProfessionalTab()) return;
-    if (activeTab === 'basic-info' && !validateBasicInfoTab()) return;
-    if (activeTab === 'hours' && !validateWorkHoursTab()) return;
-    if (activeTab === 'portfolio' && !validatePortfolioTab()) return;
-
-    try {
-      setIsLoading(true);
-      setErrorMessage('');
-
-      // Obter token e extrair userId
-      const token = await AsyncStorage.getItem('jwtToken');
-      if (!token) {
-        toastHelper.showError('Sessão expirada. Por favor, faça login novamente.');
-        return;
-      }
-
-      const tokenData = AuthService.parseJwt(token);
-      if (!tokenData || !tokenData.userId) {
-        toastHelper.showError('Erro ao obter dados do usuário. Por favor, faça login novamente.');
-        return;
-      }
-
-      // Preparar objeto de endereço
-      const endereco = {
-        cep: formData.cep,
-        rua: formData.rua,
-        numero: formData.numero,
-        complemento: formData.complemento || '',
-        bairro: formData.bairro,
-        cidade: formData.cidade,
-        estado: formData.estado
-      };
-
-      // Preparar dados para envio
-      const userData = {
-        nome: `${formData.nome} ${formData.sobrenome}`.trim(),
-        email: formData.email,
-        telefone: formData.telefone,
-        cpf: formData.cpf.replace(/\D/g, ''), // Remove formatação e envia apenas números
-        dataNascimento: formData.dataNascimento,
-        endereco: endereco,
-        // Precisamos incluir a senha para passar na validação do backend
-        senha: 'SENHA_NAO_ALTERADA', // Valor especial que o backend deve reconhecer
-        manterSenhaAtual: true // Flag para o backend não alterar a senha
-      };
-
-      // Adicionar dados profissionais se for artista
-      if (isArtist) {
-        // Para profissionais, usar os dados dos componentes modulares
-        const selectedSpecialties = Object.keys(professionalFormData.specialties).filter(key => professionalFormData.specialties[key]);
-        
-        userData.especialidades = selectedSpecialties;
-        userData.bio = professionalFormData.biography;
-        userData.experiencia = professionalFormData.experience;
-        userData.redesSociais = professionalFormData.socialMedia;
-        
-        // Preparar disponibilidades (horários de trabalho)
-        const disponibilidades = [];
-        professionalFormData.workHours.forEach(day => {
-          if (day.available) {
-            if (day.morning.enabled) {
-              disponibilidades.push({
-                hrAtendimento: `${day.day}-${day.morning.start}-${day.morning.end}`
-              });
-            }
-            if (day.afternoon.enabled) {
-              disponibilidades.push({
-                hrAtendimento: `${day.day}-${day.afternoon.start}-${day.afternoon.end}`
-              });
-            }
-          }
-        });
-        userData.disponibilidades = disponibilidades;
-      }
-
-      // Se estiver mudando a senha, substitua pela nova e remova a flag
-      if (formData.senhaAtual && formData.novaSenha) {
-        userData.senha = formData.novaSenha;
-        userData.senhaAtual = formData.senhaAtual; // Enviar a senha atual para verificação
-        delete userData.manterSenhaAtual; // Remover a flag para permitir a alteração
-      }
-
-      const baseUrl = 'http://localhost:8080';
-      const response = await fetch(`${baseUrl}/usuario/atualizar/${tokenData.userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(userData)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Handle error messages
-        if (data.message) {
-          toastHelper.showError(data.message);
-        } else if (data.error && data.error.includes("Senha atual incorreta")) {
-          toastHelper.showError("Senha atual incorreta");
-        } else {
-          toastHelper.showError('Ocorreu um erro ao atualizar o perfil. Tente novamente.');
-        }
-        return;
-      }
-
-      // Se for profissional, atualizar também os dados profissionais
-      if (isArtist) {
-        await updateProfessionalData();
-      }
-
-      // Update user data in context
-      await updateUserData();
-      
-      // Show success message
-      toastHelper.showSuccess('Perfil atualizado com sucesso!');
-      
-      // Redirecionar para a tela inicial
-      navigation.navigate('Home');
-    } catch (error) {
-      toastHelper.showError('Ocorreu um erro ao atualizar o perfil. Tente novamente.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const updateProfessionalData = async () => {
-    try {
-      // Preparar disponibilidades no formato esperado pelo backend (Map<String, List<Map<String, String>>>)
-      const disponibilidades = {};
-      professionalFormData.workHours.forEach(day => {
-        if (day.available) {
-          const horariosDia = [];
-          if (day.morning.enabled) {
-            horariosDia.push({
-              inicio: day.morning.start,
-              fim: day.morning.end
-            });
-          }
-          if (day.afternoon.enabled) {
-            horariosDia.push({
-              inicio: day.afternoon.start,
-              fim: day.afternoon.end
-            });
-          }
-          if (horariosDia.length > 0) {
-            disponibilidades[day.day] = horariosDia;
-          }
-        }
-      });
-      
-      // Preparar especialidades selecionadas
-      const selectedSpecialties = Object.keys(professionalFormData.specialties).filter(key => professionalFormData.specialties[key]);
-      
-      // Preparar dados do portfólio
-      const portfolioData = {
-        descricao: professionalFormData.biography,
-        especialidade: selectedSpecialties.join(', '),
-        experiencia: professionalFormData.experience,
-        instagram: professionalFormData.socialMedia.instagram || null,
-        tiktok: professionalFormData.socialMedia.tiktok || null,
-        facebook: professionalFormData.socialMedia.facebook || null,
-        twitter: professionalFormData.socialMedia.twitter || null,
-        website: professionalFormData.socialMedia.website || null
-      };
-      
-      // Preparar imagens do portfólio
-      const imagensData = professionalFormData.portfolioImages.map(image => ({
-        imagemBase64: image.base64
-      }));
-      
-      // Preparar dados completos no formato esperado pelo novo endpoint
-      const dadosCompletos = {
-        profissional: {
-          // Dados básicos do profissional se necessário
-        },
-        portfolio: portfolioData,
-        imagens: imagensData,
-        disponibilidades: disponibilidades
-      };
-      
-      // Usar o novo endpoint que aceita dados completos
-      await ApiService.put(`/profissional/usuario/${userData.idUsuario}/atualizar-completo-com-imagens`, dadosCompletos);
-      
-      // Upload da imagem de perfil separadamente
-      if (professionalFormData.profileImage && professionalFormData.profileImage.base64) {
-        try {
-          await ApiService.put(`/usuario/${userData.idUsuario}/foto-perfil`, { 
-            imagemBase64: professionalFormData.profileImage.base64 
-          });
-        } catch (error) {
-          console.error('Falha ao enviar imagem de perfil:', error);
-        }
-      }
-      // Nota: Se profileImage for null ou não tiver base64, não fazemos nada, 
-      // mantendo a imagem existente no servidor
-      
-    } catch (error) {
-      toastHelper.showError('Erro ao atualizar dados profissionais');
-    }
-  };
-
-  // Define tabs based on user role
-  const getTabs = () => {
-    const tabs = [
-      { id: 'personal', label: 'Dados Pessoais' },
-      { id: 'address', label: 'Endereço' }
-    ];
-
-    if (isArtist) {
-      tabs.push(
-        { id: 'basic-info', label: 'Profissional' },
-        { id: 'hours', label: 'Horário' },
-        { id: 'portfolio', label: 'Portfólio' }
-      );
-    }
-
-    tabs.push({ id: 'security', label: 'Segurança' });
-
-    return tabs;
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.contentContainer}>
-          <View style={styles.pageHeaderContainer}>
-            <Text style={styles.pageTitle}>Meu Perfil</Text>
-            <Text style={styles.pageSubtitle}>Gerencie suas informações pessoais</Text>
-          </View>
+          <PageHeader 
+            title="Meu Perfil"
+            subtitle="Gerencie suas informações pessoais"
+          />
           
-          <View style={styles.cardWrapper}>
-            <View style={styles.formCard}>
-              <View style={styles.tabHeaderWrapper}>
-                <TabHeader 
-                  tabs={getTabs()}
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                />
-              </View>
-              
-              <View style={styles.formContainer}>
-                {activeTab === 'personal' && (
+          <FormContainer 
+            tabs={tabNavigation.getTabs()}
+            activeTab={tabNavigation.activeTab}
+            setActiveTab={tabNavigation.setActiveTab}
+          >
+            {tabNavigation.activeTab === 'personal' && (
                   <>
                     <PersonalForm
                       formData={formData}
@@ -1139,14 +311,14 @@ const EditProfileScreen = () => {
                       isEditMode={true}
                     />
                     <FormNavigation
-                      onNext={handleNextTab}
+                  onNext={tabNavigation.handleNextTab}
                       showPrev={false}
                       nextText="Próximo"
                     />
                   </>
                 )}
 
-                {activeTab === 'address' && (
+            {tabNavigation.activeTab === 'address' && (
                   <>
                     <AddressForm
                       formData={formData}
@@ -1154,189 +326,98 @@ const EditProfileScreen = () => {
                       buscarCep={buscarCep}
                     />
                     <FormNavigation
-                      onPrev={handlePrevTab}
-                      onNext={handleNextTab}
+                  onPrev={tabNavigation.handlePrevTab}
+                  onNext={tabNavigation.handleNextTab}
                     />
                   </>
                 )}
                 
-                {isArtist && activeTab === 'basic-info' && (
+            {isArtist && tabNavigation.activeTab === 'basic-info' && (
                   <>
                     <BasicInfoForm 
-                      experience={professionalFormData.experience}
-                      setExperience={(value) => setProfessionalFormData(prev => ({ ...prev, experience: value }))}
-                      specialties={professionalFormData.specialties}
-                      handleSpecialtyChange={handleSpecialtyChange}
-                      socialMedia={professionalFormData.socialMedia}
-                      handleSocialMediaChange={handleSocialMediaChange}
-                      handleNextTab={handleNextTab}
+                  experience={professionalData.professionalFormData.experience}
+                  setExperience={(value) => professionalData.setProfessionalFormData(prev => ({ ...prev, experience: value }))}
+                  specialties={professionalData.professionalFormData.specialties}
+                  handleSpecialtyChange={professionalData.handleSpecialtyChange}
+                  socialMedia={professionalData.professionalFormData.socialMedia}
+                  handleSocialMediaChange={professionalData.handleSocialMediaChange}
+                  handleNextTab={tabNavigation.handleNextTab}
                       experienceDropdownOpen={experienceDropdownOpen}
                       setExperienceDropdownOpen={setExperienceDropdownOpen}
                     />
                     <FormNavigation
-                      onPrev={handlePrevTab}
-                      onNext={handleNextTab}
+                  onPrev={tabNavigation.handlePrevTab}
+                  onNext={tabNavigation.handleNextTab}
                     />
                   </>
                 )}
                 
-                {isArtist && activeTab === 'hours' && (
+            {isArtist && tabNavigation.activeTab === 'hours' && (
                   <>
                     <WorkHoursForm 
-                      workHours={professionalFormData.workHours}
-                      handleWorkHourChange={handleWorkHourChange}
-                      handlePrevTab={handlePrevTab}
-                      handleNextTab={handleNextTab}
+                  workHours={professionalData.professionalFormData.workHours}
+                  handleWorkHourChange={professionalData.handleWorkHourChange}
+                  handlePrevTab={tabNavigation.handlePrevTab}
+                  handleNextTab={tabNavigation.handleNextTab}
                     />
                     <FormNavigation
-                      onPrev={handlePrevTab}
-                      onNext={handleNextTab}
+                  onPrev={tabNavigation.handlePrevTab}
+                  onNext={tabNavigation.handleNextTab}
                     />
                   </>
                 )}
                 
-                {isArtist && activeTab === 'portfolio' && (
+            {isArtist && tabNavigation.activeTab === 'portfolio' && (
                   <>
                     <PortfolioForm 
-                      biography={professionalFormData.biography}
-                      setBiography={setBiography}
-                      portfolioImages={professionalFormData.portfolioImages}
-                      profileImage={professionalFormData.profileImage}
-                      handleAddPortfolioImage={handleAddPortfolioImage}
-                      handleRemovePortfolioImage={handleRemovePortfolioImage}
-                      pickImage={pickImage}
+                  biography={professionalData.professionalFormData.biography}
+                  setBiography={professionalData.setBiography}
+                  portfolioImages={professionalData.professionalFormData.portfolioImages}
+                  profileImage={professionalData.professionalFormData.profileImage}
+                  handleAddPortfolioImage={professionalData.handleAddPortfolioImage}
+                  handleRemovePortfolioImage={professionalData.handleRemovePortfolioImage}
+                  pickImage={professionalData.pickImage}
                     />
                     <FormNavigation
-                      onPrev={handlePrevTab}
-                      onNext={handleNextTab}
+                  onPrev={tabNavigation.handlePrevTab}
+                  onNext={tabNavigation.handleNextTab}
                     />
                   </>
                 )}
 
-                {!isArtist && activeTab === 'professional' && (
+            {!isArtist && tabNavigation.activeTab === 'professional' && (
                   <>
                     <ProfessionalForm 
                       formData={formData}
                       handleChange={handleChange}
                     />
                     <FormNavigation
-                      onPrev={handlePrevTab}
-                      onNext={handleNextTab}
+                  onPrev={tabNavigation.handlePrevTab}
+                  onNext={tabNavigation.handleNextTab}
                     />
                   </>
                 )}
 
-                {activeTab === 'security' && (
+            {tabNavigation.activeTab === 'security' && (
                   <>
-                    <View style={styles.tabContent}>
-                      {/* Seção de Alteração de Senha */}
-                      <View style={styles.passwordSection}>
-                        <Text style={styles.sectionTitle}>Alterar Senha</Text>
-                        
-                        <View style={styles.formRow}>
-                          <View style={styles.formGroup}>
-                            <Text style={styles.formLabel}>Senha Atual</Text>
-                            <Input
-                              placeholder="••••••••"
-                              secureTextEntry
-                              value={formData.senhaAtual}
-                              onChangeText={(text) => handleChange('senhaAtual', text)}
-                              onBlur={() => handleBlur('senhaAtual')}
-                              style={[
-                                styles.inputField,
-                                passwordError && styles.inputError
-                              ]}
-                            />
-                            {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
-                          </View>
-                        </View>
-
-                        <View style={styles.formRow}>
-                          <View style={styles.formGroup}>
-                            <Text style={styles.formLabel}>Nova Senha</Text>
-                            <Input
-                              placeholder="••••••••"
-                              secureTextEntry
-                              value={formData.novaSenha}
-                              onChangeText={(text) => handleChange('novaSenha', text)}
-                              onBlur={() => handleBlur('novaSenha')}
-                              style={styles.inputField}
-                            />
-                          </View>
-                          
-                          <View style={styles.formGroup}>
-                            <Text style={styles.formLabel}>Confirmar Nova Senha</Text>
-                            <Input
-                              placeholder="••••••••"
-                              secureTextEntry
-                              value={formData.confirmarSenha}
-                              onChangeText={(text) => handleChange('confirmarSenha', text)}
-                              onBlur={() => handleBlur('confirmarSenha')}
-                              style={[
-                                styles.inputField,
-                                confirmPasswordError && styles.inputError
-                              ]}
-                            />
-                            {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
-                          </View>
-                        </View>
-
-                        <Text style={styles.securityNote}>
-                          Deixe os campos em branco se não deseja alterar sua senha.
-                        </Text>
-                      </View>
-
-                      {/* Divisor */}
-                      <View style={styles.divider} />
-
-                      {/* Seção de Autenticação de Dois Fatores */}
-                      <View style={styles.twoFactorSection}>
-                        <Text style={styles.sectionTitle}>Autenticação de Dois Fatores</Text>
-                        <Text style={styles.sectionDescription}>
-                          Adicione uma camada extra de segurança à sua conta usando o Google Authenticator.
-                        </Text>
-                        
-                        <View style={styles.twoFactorRow}>
-                          <View style={styles.twoFactorInfo}>
-                            <Text style={styles.twoFactorLabel}>
-                              Status: {isLoadingTwoFactor ? 'Carregando...' : (twoFactorEnabled ? 'Ativada' : 'Desativada')}
-                            </Text>
-                            <Text style={styles.twoFactorIcon}>
-                              {isLoadingTwoFactor ? '⏳' : (twoFactorEnabled ? '🔒' : '🔓')}
-                            </Text>
-                          </View>
-                          
-                          <TouchableOpacity 
-                            style={[
-                              styles.twoFactorToggleButton,
-                              twoFactorEnabled ? styles.toggleButtonActive : styles.toggleButtonInactive
-                            ]}
-                            onPress={handleTwoFactorToggle}
-                            disabled={isLoadingTwoFactor}
-                          >
-                            <Text style={[
-                              styles.toggleButtonText,
-                              twoFactorEnabled ? styles.toggleTextActive : styles.toggleTextInactive
-                            ]}>
-                              {twoFactorEnabled ? 'Desativar' : 'Ativar'}
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </View>
+                <SecuritySection
+                  formData={formData}
+                  handleChange={handleChange}
+                  handleBlur={handleBlur}
+                  passwordError={passwordError}
+                  confirmPasswordError={confirmPasswordError}
+                />
 
                     <FormNavigation
-                      onPrev={handlePrevTab}
-                      onNext={handleUpdateProfile}
+                  onPrev={tabNavigation.handlePrevTab}
+                  onNext={() => profileUpdate.handleUpdateProfile(formData, tabNavigation.validateCurrentTab)}
                       showNext={true}
                       nextText="Salvar Alterações"
-                      isLoading={isLoading}
+                  isLoading={profileUpdate.isLoading}
                     />
                   </>
                 )}
-              </View>
-            </View>
-          </View>
+          </FormContainer>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -1357,180 +438,6 @@ const styles = StyleSheet.create({
     maxWidth: 800,
     alignSelf: 'center',
     marginTop: 20,
-  },
-  pageHeaderContainer: {
-    marginBottom: 16,
-    alignItems: 'center',
-    zIndex: 2,
-    marginTop: 10,
-  },
-  pageTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  pageSubtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-  },
-  cardWrapper: {
-    marginTop: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
-    zIndex: 1,
-    maxWidth: 1000,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  formCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-    marginBottom: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    position: 'relative',
-    padding: 15,
-  },
-  tabHeaderWrapper: {
-    marginBottom: 5,
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-    backgroundColor: '#f8f8f8',
-    width: '100%',
-  },
-  formContainer: {
-    padding: 20,
-  },
-  tabContent: {
-    flex: 1,
-  },
-  formRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-    marginHorizontal: -10,
-    flexWrap: 'wrap',
-  },
-  formGroup: {
-    flex: 1,
-    marginHorizontal: 10,
-    minWidth: 250,
-  },
-  formLabel: {
-    marginBottom: 8,
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#111',
-  },
-  inputField: {
-    height: 40,
-    borderWidth: 1,
-    borderColor: '#e2e2e2',
-    borderRadius: 4,
-    paddingHorizontal: 12,
-    fontSize: 14,
-    backgroundColor: '#fff',
-  },
-  inputError: {
-    borderColor: '#ef5350',
-  },
-  errorText: {
-    color: '#ef5350',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  securityNote: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 8,
-    fontStyle: 'italic',
-  },
-  twoFactorSection: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#111',
-  },
-  sectionDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  twoFactorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  twoFactorInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    minWidth: 200,
-  },
-  twoFactorLabel: {
-    fontSize: 14,
-    color: '#333',
-    marginRight: 8,
-  },
-  twoFactorIcon: {
-    fontSize: 16,
-  },
-  twoFactorToggleButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 6,
-    minWidth: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toggleButtonActive: {
-    backgroundColor: '#ef5350',
-    borderColor: '#ef5350',
-  },
-  toggleButtonInactive: {
-    backgroundColor: '#4caf50',
-    borderColor: '#4caf50',
-  },
-  toggleButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  toggleTextActive: {
-    color: '#fff',
-  },
-  toggleTextInactive: {
-    color: '#fff',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#e2e2e2',
-    marginVertical: 20,
-  },
-  passwordSection: {
-    flex: 1,
   },
 });
 

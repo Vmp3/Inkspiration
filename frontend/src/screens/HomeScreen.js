@@ -19,8 +19,8 @@ import Footer from '../components/Footer';
 import ActiveFilters from '../components/common/ActiveFilters';
 import MobileFiltersModal from '../components/common/MobileFiltersModal';
 import ProfessionalService from '../services/ProfessionalService';
-
 import toastHelper from '../utils/toastHelper';
+import { homeMessages } from '../components/home/messages';
 import Button from '../components/ui/Button';
 
 const HomeScreen = ({ navigation }) => {

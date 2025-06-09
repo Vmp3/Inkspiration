@@ -138,8 +138,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Adicione media query para tablets e desktops usando responsividade
-// Para tamanhos de tela maiores que 768px
 const mediaQuery = {
   tablet: {
     columnsContainer: {
@@ -151,8 +149,5 @@ const mediaQuery = {
     },
   },
 };
-
-// Em uma implementação real, você precisaria de uma biblioteca como react-native-responsive-screen
-// para aplicar estilos baseados no tamanho da tela
 
 export default Footer; 

@@ -15,6 +15,8 @@ import * as formatters from '../utils/formatters';
 import toastHelper from '../utils/toastHelper';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import PublicAuthService from '../services/PublicAuthService';
+import { authMessages } from '../components/auth/messages';
 
 const ForgotPasswordScreen = () => {
   const navigation = useNavigation();
@@ -42,7 +44,7 @@ const ForgotPasswordScreen = () => {
   const handleBlur = (field) => {
     if (field === 'cpf' && formData.cpf) {
       if (!formatters.validateCPF(formData.cpf)) {
-        setCpfError('CPF inválido');
+        setCpfError(authMessages.forgotPasswordErrors.invalidCpf);
       } else {
         setCpfError('');
       }
@@ -51,46 +53,22 @@ const ForgotPasswordScreen = () => {
 
   const handleSubmit = async () => {
     if (!formData.cpf) {
-      toastHelper.showError('Por favor, informe seu CPF');
+      toastHelper.showError(authMessages.forgotPasswordErrors.requiredCpf);
       return;
     }
 
     if (!formatters.validateCPF(formData.cpf)) {
-      toastHelper.showError('CPF inválido');
+      toastHelper.showError(authMessages.forgotPasswordErrors.invalidCpf);
       return;
     }
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          cpf: formData.cpf.replace(/\D/g, '') 
-        }),
-      });
-
-      if (response.ok) {
+      await PublicAuthService.forgotPassword(formData.cpf.replace(/\D/g, ''));
         setEmailSent(true);
-        toastHelper.showSuccess('Código de recuperação enviado para seu email!');
-      } else {
-        const errorData = await response.text();
-        
-        // Tratar diferentes tipos de erro
-        if (response.status === 404) {
-          toastHelper.showError('CPF não encontrado em nosso sistema');
-        } else if (response.status === 429) {
-          toastHelper.showError('Muitas tentativas. Aguarde 15 minutos para tentar novamente');
-        } else if (errorData.includes('email')) {
-          toastHelper.showError('Erro ao enviar email. Verifique sua conexão e tente novamente');
-        } else {
-          toastHelper.showError(errorData || 'Erro ao processar solicitação');
-        }
-      }
+      toastHelper.showSuccess(authMessages.success.forgotPasswordSuccess);
     } catch (error) {
-      toastHelper.showError('Erro de conexão. Tente novamente.');
+      toastHelper.showError(error.message);
     } finally {
       setLoading(false);
     }
@@ -135,7 +113,7 @@ const ForgotPasswordScreen = () => {
                 </View>
 
                 <Button
-                  label={loading ? "Enviando..." : "Enviar link de recuperação"}
+                  label={loading ? authMessages.loading.forgotPassword : "Enviar link de recuperação"}
                   onPress={handleSubmit}
                   loading={loading}
                   disabled={loading}
@@ -165,7 +143,7 @@ const ForgotPasswordScreen = () => {
                   disabled={loading}
                 >
                   <Text style={[styles.resendText, loading && styles.resendTextDisabled]}>
-                    {loading ? "Reenviando..." : "Reenviar código"}
+                    {loading ? authMessages.loading.resendCode : "Reenviar código"}
                   </Text>
                 </TouchableOpacity>
               </View>

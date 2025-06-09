@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -14,7 +14,16 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import toastHelper from '../utils/toastHelper';
 import ApiService from '../services/ApiService';
-import Input from '../components/ui/Input';
+import TwoFactorService from '../services/TwoFactorService';
+import { professionalMessages } from '../components/professional/messages';
+
+// Componentes
+import StepIndicator from '../components/TwoFactorSetup/StepIndicator';
+import StepHeader from '../components/TwoFactorSetup/StepHeader';
+import QRCodeDisplay from '../components/TwoFactorSetup/QRCodeDisplay';
+import CodeInput from '../components/TwoFactorSetup/CodeInput';
+import NavigationButtons from '../components/TwoFactorSetup/NavigationButtons';
+import RecoverySection from '../components/TwoFactorSetup/RecoverySection';
 
 const TwoFactorSetupScreen = () => {
   const navigation = useNavigation();
@@ -34,6 +43,9 @@ const TwoFactorSetupScreen = () => {
   const [showRecoveryOption, setShowRecoveryOption] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState('');
   const [isLoadingRecovery, setIsLoadingRecovery] = useState(false);
+  const [qrCodeData, setQrCodeData] = useState('');
+  const [error, setError] = useState('');
+  const [isSendingRecovery, setIsSendingRecovery] = useState(false);
 
   useEffect(() => {
     if (action === 'enable' && step === 2) {
@@ -41,28 +53,24 @@ const TwoFactorSetupScreen = () => {
     }
   }, [step, action]);
 
-  const generateQRCode = async () => {
+  const generateQRCode = useCallback(async () => {
     try {
       setIsGeneratingQR(true);
-      const response = await ApiService.post('/two-factor/generate-qr');
-      
-      if (response && response.success) {
-        setQrCode(response.qrCode);
-        setSecretKey(response.secretKey);
-        setIssuer(response.issuer);
-        setAccountName(response.accountName);
-        setOtpAuthUrl(response.otpAuthUrl);
-      } else {
-        toastHelper.showError('Erro ao gerar instruções de configuração');
-        navigation.goBack();
-      }
+      const response = await TwoFactorService.generateQRCode();
+      setQrCodeData(response.qrCodeUrl);
+      setSecretKey(response.secretKey);
+      setIssuer(response.issuer);
+      setAccountName(response.accountName);
+      setOtpAuthUrl(response.otpAuthUrl);
+      setQrCode(response.qrCode);
     } catch (error) {
-      toastHelper.showError('Erro ao gerar instruções de configuração');
+      console.error('Error generating QR code:', error);
+      setError(error.message || professionalMessages.twoFactorErrors.generateQR);
       navigation.goBack();
     } finally {
       setIsGeneratingQR(false);
     }
-  };
+  }, [navigation]);
 
   const handleNextStep = () => {
     if (step < 3) {
@@ -86,10 +94,47 @@ const TwoFactorSetupScreen = () => {
   // Função para remover a máscara
   const unmaskCode = (value) => value.replace(/\D/g, '').slice(0, 6);
 
+  const verifyCode = async (code) => {
+    try {
+      setIsLoading(true);
+      await TwoFactorService.verifyCode(code);
+      setStep(3);
+      toastHelper.showSuccess(professionalMessages.success.twoFactorEnabled);
+    } catch (error) {
+      setError(error.message || professionalMessages.twoFactorErrors.verifyCode);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendRecoveryCode = async () => {
+    try {
+      setIsSendingRecovery(true);
+      await TwoFactorService.sendRecoveryCode();
+      toastHelper.showSuccess(professionalMessages.success.recoverySent);
+    } catch (error) {
+      setError(error.message || professionalMessages.twoFactorErrors.sendRecovery);
+    } finally {
+      setIsSendingRecovery(false);
+    }
+  };
+
+  const verifyRecoveryCode = async (code) => {
+    try {
+      setIsSendingRecovery(true);
+      await TwoFactorService.verifyRecoveryCode(code);
+      toastHelper.showSuccess(professionalMessages.success.recoveryVerified);
+    } catch (error) {
+      setError(error.message || professionalMessages.twoFactorErrors.verifyRecovery);
+    } finally {
+      setIsSendingRecovery(false);
+    }
+  };
+
   const handleVerifyCode = async () => {
     const code = unmaskCode(verificationCode);
     if (!code || code.length !== 6) {
-      toastHelper.showError('Digite um código de 6 dígitos');
+      toastHelper.showError(professionalMessages.twoFactorErrors.invalidCode);
       return;
     }
 
@@ -105,10 +150,10 @@ const TwoFactorSetupScreen = () => {
         toastHelper.showSuccess(response.message);
         navigation.goBack();
       } else {
-        toastHelper.showError(response.message || 'Código inválido');
+        toastHelper.showError(response.message || professionalMessages.twoFactorErrors.verifyCode);
       }
     } catch (error) {
-      toastHelper.showError('Erro ao verificar código');
+      toastHelper.showError(professionalMessages.twoFactorErrors.verifyCode);
     } finally {
       setIsLoading(false);
     }
@@ -120,13 +165,13 @@ const TwoFactorSetupScreen = () => {
       const response = await ApiService.post('/two-factor/send-recovery-code');
       
       if (response && response.success) {
-        toastHelper.showSuccess('Código de recuperação enviado para seu email');
+        toastHelper.showSuccess(professionalMessages.success.recoveryCodeSent);
         setShowRecoveryOption(true);
       } else {
-        toastHelper.showError('Erro ao enviar código de recuperação');
+        toastHelper.showError(professionalMessages.twoFactorErrors.sendRecovery);
       }
     } catch (error) {
-      toastHelper.showError('Erro ao enviar código de recuperação');
+      toastHelper.showError(professionalMessages.twoFactorErrors.sendRecovery);
     } finally {
       setIsLoadingRecovery(false);
     }
@@ -135,7 +180,7 @@ const TwoFactorSetupScreen = () => {
   const handleRecoveryCodeSubmit = async () => {
     const code = unmaskCode(recoveryCode);
     if (!code || code.length !== 6) {
-      toastHelper.showError('Digite um código de 6 dígitos');
+      toastHelper.showError(professionalMessages.twoFactorErrors.invalidCode);
       return;
     }
 
@@ -152,10 +197,10 @@ const TwoFactorSetupScreen = () => {
         }
         navigation.goBack();
       } else {
-        toastHelper.showError(response.message || 'Código de recuperação inválido');
+        toastHelper.showError(response.message || professionalMessages.twoFactorErrors.verifyRecovery);
       }
     } catch (error) {
-      toastHelper.showError('Erro ao validar código de recuperação');
+      toastHelper.showError(professionalMessages.twoFactorErrors.verifyRecovery);
     } finally {
       setIsLoading(false);
     }
@@ -177,20 +222,15 @@ const TwoFactorSetupScreen = () => {
 
   const renderStep1 = () => (
     <View style={styles.stepContainer}>
-      <View style={styles.iconContainer}>
-        <Text style={styles.stepIcon}>🔐</Text>
-      </View>
-      
-      <Text style={styles.stepTitle}>
-        {action === 'enable' ? 'Ativar' : 'Desativar'} Autenticação de Dois Fatores
-      </Text>
-      
-      <Text style={styles.stepDescription}>
-        {action === 'enable' 
-          ? 'A autenticação de dois fatores adiciona uma camada extra de segurança à sua conta. Você precisará do Google Authenticator instalado no seu dispositivo móvel.'
-          : 'Você está prestes a desativar a autenticação de dois fatores. Isso reduzirá a segurança da sua conta.'
+      <StepHeader
+        icon="🔐"
+        title={`${action === 'enable' ? 'Ativar' : 'Desativar'} Autenticação de Dois Fatores`}
+        description={
+          action === 'enable' 
+            ? 'A autenticação de dois fatores adiciona uma camada extra de segurança à sua conta. Você precisará do Google Authenticator instalado no seu dispositivo móvel.'
+            : 'Você está prestes a desativar a autenticação de dois fatores. Isso reduzirá a segurança da sua conta.'
         }
-      </Text>
+      />
 
       {action === 'enable' && (
         <View style={styles.instructionsContainer}>
@@ -201,23 +241,12 @@ const TwoFactorSetupScreen = () => {
         </View>
       )}
 
-      <View style={styles.navigationButtons}>
-        <TouchableOpacity 
-          style={styles.secondaryButton} 
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.secondaryButtonText}>Cancelar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.primaryButton, styles.nextButton]} 
-          onPress={handleNextStep}
-        >
-          <Text style={styles.primaryButtonText}>
-            {action === 'enable' ? 'Começar Configuração' : 'Continuar'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <NavigationButtons
+        onPrev={() => navigation.goBack()}
+        onNext={handleNextStep}
+        prevText="Cancelar"
+        nextText={action === 'enable' ? 'Começar Configuração' : 'Continuar'}
+      />
     </View>
   );
 
@@ -225,154 +254,47 @@ const TwoFactorSetupScreen = () => {
     <View style={styles.stepContainer}>
       {action === 'enable' ? (
         <>
-          <View style={styles.iconContainer}>
-            <Text style={styles.stepIcon}>📋</Text>
-          </View>
-          
-          <Text style={styles.stepTitle}>Instruções de Configuração</Text>
-          
-          <Text style={styles.stepDescription}>
-            Configure o Google Authenticator usando as instruções abaixo ou escaneie um QR Code se disponível.
-          </Text>
+          <StepHeader
+            icon="📋"
+            title="Instruções de Configuração"
+            description="Configure o Google Authenticator usando as instruções abaixo ou escaneie um QR Code se disponível."
+          />
 
           {isGeneratingQR ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#111" />
-              <Text style={styles.loadingText}>Gerando QR Code...</Text>
+              <Text style={styles.loadingText}>{professionalMessages.loading.generatingQR}</Text>
             </View>
           ) : qrCode ? (
-            <View style={styles.qrCodeContainer}>
-              {qrCode.startsWith('data:image/png;base64,') ? (
-                <>
-                  <Text style={styles.qrCodeTitle}>Escaneie o QR Code:</Text>
-                  <Image 
-                    source={{ uri: qrCode }} 
-                    style={styles.qrCodeImage}
-                    resizeMode="contain"
-                    onError={(error) => {}}
-                    onLoad={() => {}}
-                  />
-                  <Text style={styles.qrCodeInstructions}>
-                    Abra o Google Authenticator e escaneie o código acima, ou adicione manualmente.
-                  </Text>
-                </>
-              ) : qrCode.startsWith('data:image/') ? (
-                <>
-                  <Text style={styles.qrCodeTitle}>Escaneie o QR Code:</Text>
-                  <Image 
-                    source={{ uri: qrCode }} 
-                    style={styles.qrCodeImage}
-                    resizeMode="contain"
-                    onError={(error) => {}}
-                    onLoad={() => {}}
-                  />
-                  <Text style={styles.qrCodeInstructions}>
-                    Abra o Google Authenticator e escaneie o código acima, ou adicione manualmente.
-                  </Text>
-                </>
-              ) : (
-                <View style={styles.instructionsContainer}>
-                  <ScrollView style={styles.instructionsScrollView}>
-                    <Text style={styles.instructionsText}>
-                      {qrCode.startsWith('data:text/plain;base64,') 
-                        ? decodeBase64(qrCode.replace('data:text/plain;base64,', ''))
-                        : qrCode
-                      }
-                    </Text>
-                  </ScrollView>
-                </View>
-              )}
-
-              {/* Opção para mostrar código manual */}
-              <View style={styles.manualCodeSection}>
-                <TouchableOpacity 
-                  style={styles.manualCodeButton}
-                  onPress={() => setShowManualCode(!showManualCode)}
-                >
-                  <Text style={styles.manualCodeButtonText}>
-                    {showManualCode ? '🔼 Ocultar código manual' : '🔽 Mostrar código manual'}
-                  </Text>
-                </TouchableOpacity>
-
-                {showManualCode && secretKey && (
-                  <View style={styles.manualCodeContainer}>
-                    <Text style={styles.manualCodeTitle}>Configuração Manual:</Text>
-                    <Text style={styles.manualCodeLabel}>Conta:</Text>
-                    <View style={styles.manualCodeBox}>
-                      <Text style={styles.manualCodeText}>{accountName}</Text>
-                    </View>
-                    
-                    <Text style={styles.manualCodeLabel}>Chave:</Text>
-                    <View style={styles.manualCodeBox}>
-                      <Text style={styles.manualCodeText}>{secretKey}</Text>
-                    </View>
-
-                    <Text style={styles.manualCodeLabel}>Emissor:</Text>
-                    <View style={styles.manualCodeBox}>
-                      <Text style={styles.manualCodeText}>{issuer}</Text>
-                    </View>
-
-                    <Text style={styles.manualCodeLabel}>URL completa (alternativa):</Text>
-                    <View style={styles.manualCodeBox}>
-                      <Text style={styles.manualCodeText}>{otpAuthUrl}</Text>
-                    </View>
-
-                    <Text style={styles.manualCodeInstructions}>
-                      No Google Authenticator: Adicionar conta → Inserir chave de configuração → 
-                      Cole os dados acima nos campos correspondentes. Ou use a URL completa diretamente.
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
+            <QRCodeDisplay
+              qrCode={qrCode}
+              secretKey={secretKey}
+              issuer={issuer}
+              accountName={accountName}
+              otpAuthUrl={otpAuthUrl}
+            />
           ) : (
-            <Text style={styles.errorText}>Erro ao gerar QR Code</Text>
+            <Text style={styles.errorText}>{professionalMessages.twoFactorErrors.generateQR}</Text>
           )}
 
-          <View style={styles.navigationButtons}>
-            <TouchableOpacity 
-              style={styles.secondaryButton} 
-              onPress={handlePrevStep}
-            >
-              <Text style={styles.secondaryButtonText}>Voltar</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.primaryButton, styles.nextButton]} 
-              onPress={handleNextStep}
-              disabled={isGeneratingQR || !qrCode}
-            >
-              <Text style={styles.primaryButtonText}>Próximo</Text>
-            </TouchableOpacity>
-          </View>
+          <NavigationButtons
+            onPrev={handlePrevStep}
+            onNext={handleNextStep}
+            disabled={isGeneratingQR || !qrCode}
+          />
         </>
       ) : (
         <>
-          <View style={styles.iconContainer}>
-            <Text style={styles.stepIcon}>🔓</Text>
-          </View>
-          
-          <Text style={styles.stepTitle}>Confirmar Desativação</Text>
-          
-          <Text style={styles.stepDescription}>
-            Para desativar a autenticação de dois fatores, digite o código atual do seu Google Authenticator.
-          </Text>
+          <StepHeader
+            icon="🔓"
+            title="Confirmar Desativação"
+            description="Para desativar a autenticação de dois fatores, digite o código atual do seu Google Authenticator."
+          />
 
-          <View style={styles.navigationButtons}>
-            <TouchableOpacity 
-              style={styles.secondaryButton} 
-              onPress={handlePrevStep}
-            >
-              <Text style={styles.secondaryButtonText}>Voltar</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.primaryButton, styles.nextButton]} 
-              onPress={handleNextStep}
-            >
-              <Text style={styles.primaryButtonText}>Próximo</Text>
-            </TouchableOpacity>
-          </View>
+          <NavigationButtons
+            onPrev={handlePrevStep}
+            onNext={handleNextStep}
+          />
         </>
       )}
     </View>
@@ -380,88 +302,38 @@ const TwoFactorSetupScreen = () => {
 
   const renderStep3 = () => (
     <View style={styles.stepContainer}>
-      <View style={styles.iconContainer}>
-        <Text style={styles.stepIcon}>🔢</Text>
-      </View>
-      
-      <Text style={styles.stepTitle}>Digite o Código de Verificação</Text>
-      
-      <Text style={styles.stepDescription}>
-        {showRecoveryOption 
-          ? 'Digite o código de 6 dígitos enviado para seu email.'
-          : 'Digite o código de 6 dígitos gerado pelo Google Authenticator.'
+      <StepHeader
+        icon="🔢"
+        title="Digite o Código de Verificação"
+        description={
+          showRecoveryOption 
+            ? 'Digite o código de 6 dígitos enviado para seu email.'
+            : 'Digite o código de 6 dígitos gerado pelo Google Authenticator.'
         }
-      </Text>
+      />
 
-      <View style={styles.codeInputContainer}>
-        <Input
-          placeholder="000 - 000"
-          value={formatCode(showRecoveryOption ? recoveryCode : verificationCode)}
-          onChangeText={text => {
-            const clean = unmaskCode(text);
-            if (showRecoveryOption) setRecoveryCode(clean);
-            else setVerificationCode(clean);
-          }}
-          keyboardType="numeric"
-          maxLength={9} // 6 dígitos + 3 (espaço e hífen)
-          style={styles.codeInput}
-          textAlign="center"
-        />
-      </View>
+      <CodeInput
+        value={showRecoveryOption ? recoveryCode : verificationCode}
+        onChangeText={showRecoveryOption ? setRecoveryCode : setVerificationCode}
+      />
 
       {/* Opção de recuperação por email para desativação */}
       {action === 'disable' && !showRecoveryOption && (
-        <View style={styles.recoverySection}>
-          <Text style={styles.recoveryText}>
-            Perdeu o acesso ao seu celular?
-          </Text>
-          <TouchableOpacity 
-            style={styles.recoveryButton}
-            onPress={handleSendRecoveryCode}
-            disabled={isLoadingRecovery}
-          >
-            {isLoadingRecovery ? (
-              <>
-                <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />
-                <Text style={styles.recoveryButtonText}>Enviando...</Text>
-              </>
-            ) : (
-              <Text style={styles.recoveryButtonText}>
-                Receber código por email
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
+        <RecoverySection
+          onSendRecoveryCode={handleSendRecoveryCode}
+          isLoading={isLoadingRecovery}
+        />
       )}
 
-      <View style={styles.navigationButtons}>
-        <TouchableOpacity 
-          style={styles.secondaryButton} 
-          onPress={showRecoveryOption ? () => setShowRecoveryOption(false) : handlePrevStep}
-        >
-          <Text style={styles.secondaryButtonText}>
-            {showRecoveryOption ? 'Voltar ao código do app' : 'Voltar'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[
-            styles.primaryButton, 
-            styles.nextButton,
-            action === 'disable' && styles.dangerButton
-          ]} 
-          onPress={showRecoveryOption ? handleRecoveryCodeSubmit : handleVerifyCode}
-          disabled={isLoading || (showRecoveryOption ? recoveryCode.length !== 6 : verificationCode.length !== 6)}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.primaryButtonText}>
-              {action === 'enable' ? 'Ativar 2FA' : 'Desativar 2FA'}
-            </Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      <NavigationButtons
+        onPrev={showRecoveryOption ? () => setShowRecoveryOption(false) : handlePrevStep}
+        onNext={showRecoveryOption ? handleRecoveryCodeSubmit : handleVerifyCode}
+        prevText={showRecoveryOption ? 'Voltar ao código do app' : 'Voltar'}
+        nextText={action === 'enable' ? 'Ativar 2FA' : 'Desativar 2FA'}
+        isLoading={isLoading}
+        disabled={showRecoveryOption ? recoveryCode.length !== 6 : verificationCode.length !== 6}
+        isDanger={action === 'disable'}
+      />
     </View>
   );
 
@@ -478,15 +350,7 @@ const TwoFactorSetupScreen = () => {
         </View>
 
         <View style={styles.content}>
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
-              <View style={[
-                styles.progressFill, 
-                { width: `${(step / 3) * 100}%` }
-              ]} />
-            </View>
-            <Text style={styles.progressText}>Passo {step} de 3</Text>
-          </View>
+          <StepIndicator currentStep={step} totalSteps={3} />
 
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
@@ -526,49 +390,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 80,
   },
-  progressContainer: {
-    marginBottom: 28,
-  },
-  progressBar: {
-    width: '100%',
-    height: 2,
-    backgroundColor: '#e2e2e2',
-    borderRadius: 1,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#111',
-    borderRadius: 1,
-  },
-  progressText: {
-    textAlign: 'center',
-    marginTop: 4,
-    fontSize: 10,
-    color: '#666',
-  },
   stepContainer: {
     alignItems: 'center',
-  },
-  iconContainer: {
-    marginBottom: 16,
-  },
-  stepIcon: {
-    fontSize: 36,
-  },
-  stepTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
-    color: '#111',
-  },
-  stepDescription: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 24,
-    color: '#666',
-    lineHeight: 20,
   },
   instructionsContainer: {
     backgroundColor: '#f8f8f8',
@@ -599,167 +422,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
   },
-  instructionsScrollView: {
-    maxHeight: 120,
-  },
-  instructionsText: {
-    fontSize: 11,
-    color: '#444',
-    fontFamily: 'monospace',
-    lineHeight: 14,
-  },
-  codeInputContainer: {
-    width: '100%',
-    marginVertical: 16,
-  },
-  codeInput: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    letterSpacing: 5,
-    height: 48,
-    textAlign: 'center',
-  },
-  navigationButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 24,
-    gap: 12,
-  },
-  primaryButton: {
-    backgroundColor: '#111',
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 6,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  nextButton: {
-    flex: 1,
-  },
-  dangerButton: {
-    backgroundColor: '#ef5350',
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#e2e2e2',
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: '#111',
-    fontSize: 14,
-    fontWeight: '500',
-  },
   errorText: {
     color: '#ef5350',
     fontSize: 12,
     textAlign: 'center',
     marginVertical: 12,
-  },
-  recoverySection: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  recoveryText: {
-    fontSize: 13,
-    color: '#666',
-    marginBottom: 8,
-  },
-  recoveryButton: {
-    backgroundColor: '#111',
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 6,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  recoveryButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  qrCodeContainer: {
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  qrCodeTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#111',
-  },
-  qrCodeImage: {
-    width: 200,
-    height: 200,
-    marginBottom: 10,
-  },
-  qrCodeInstructions: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-  },
-  manualCodeSection: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  manualCodeButton: {
-    backgroundColor: '#111',
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 6,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  manualCodeButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  manualCodeContainer: {
-    backgroundColor: '#f8f8f8',
-    padding: 16,
-    borderRadius: 6,
-    marginVertical: 16,
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#e2e2e2',
-  },
-  manualCodeTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#111',
-  },
-  manualCodeLabel: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    marginBottom: 6,
-    color: '#111',
-  },
-  manualCodeBox: {
-    backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 4,
-    marginBottom: 10,
-  },
-  manualCodeText: {
-    fontSize: 12,
-    color: '#444',
-  },
-  manualCodeInstructions: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
   },
 });
 

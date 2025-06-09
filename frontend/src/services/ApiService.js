@@ -1,3 +1,4 @@
+import axios from 'axios';
 import AuthService from './AuthService';
 
 const API_URL = 'http://localhost:8080';
@@ -5,21 +6,52 @@ const API_URL = 'http://localhost:8080';
 class ApiService {
   constructor() {
     this.authService = AuthService;
+    this.api = axios.create({
+      baseURL: API_URL,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Interceptor para adicionar token de autenticação
+    this.api.interceptors.request.use(
+      async (config) => {
+        const token = await this.authService.getToken();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Interceptor para lidar com respostas
+    this.api.interceptors.response.use(
+      (response) => {
+        // Verificar se há um novo token no header
+        const newToken = response.headers['new-auth-token'];
+        if (newToken) {
+          console.log('Recebido novo token do servidor na resposta');
+          this.authService.setToken(newToken);
+        }
+        return response;
+      },
+      async (error) => {
+        if (error.response?.status === 401) {
+          // Token expirado ou inválido
+          await this.authService.logout();
+        }
+        return Promise.reject(error);
+      }
+    );
   }
 
   async get(endpoint, options = {}) {
     try {
-      const url = `${API_URL}${endpoint}`;
-      const response = await this.authService.fetchWithAuth(url, {
-        method: 'GET',
-        ...options
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
-      }
-      
-      return await response.json();
+      const response = await this.api.get(endpoint, options);
+      return response.data;
     } catch (error) {
       console.error(`Erro na requisição GET para ${endpoint}:`, error);
       throw error;
@@ -28,25 +60,8 @@ class ApiService {
 
   async post(endpoint, data, options = {}) {
     try {
-      const url = `${API_URL}${endpoint}`;
-      const response = await this.authService.fetchWithAuth(url, {
-        method: 'POST',
-        body: JSON.stringify(data),
-        ...options
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erro na requisição: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-      
-      // Verificar se a resposta está vazia
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return await response.json();
-      }
-      
-      return await response.text();
+      const response = await this.api.post(endpoint, data, options);
+      return response.data;
     } catch (error) {
       console.error(`Erro na requisição POST para ${endpoint}:`, error);
       throw error;
@@ -55,24 +70,8 @@ class ApiService {
 
   async put(endpoint, data, options = {}) {
     try {
-      const url = `${API_URL}${endpoint}`;
-      const response = await this.authService.fetchWithAuth(url, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-        ...options
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
-      }
-      
-      // Verificar se a resposta está vazia
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return await response.json();
-      }
-      
-      return await response.text();
+      const response = await this.api.put(endpoint, data, options);
+      return response.data;
     } catch (error) {
       console.error(`Erro na requisição PUT para ${endpoint}:`, error);
       throw error;
@@ -81,27 +80,8 @@ class ApiService {
 
   async delete(endpoint, options = {}) {
     try {
-      const url = `${API_URL}${endpoint}`;
-      const response = await this.authService.fetchWithAuth(url, {
-        method: 'DELETE',
-        ...options
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
-      }
-      
-      // Verificar se a resposta está vazia
-      if (response.status === 204) {
-        return null;
-      }
-      
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return await response.json();
-      }
-      
-      return await response.text();
+      const response = await this.api.delete(endpoint, options);
+      return response.data;
     } catch (error) {
       console.error(`Erro na requisição DELETE para ${endpoint}:`, error);
       throw error;

@@ -3,12 +3,10 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import Input from '../ui/Input';
 import Checkbox from '../ui/Checkbox';
 
-// Componente para o formulário profissional
 const ProfessionalForm = ({ 
   formData, 
   handleChange,
 }) => {
-  // Lista de especialidades disponíveis
   const allSpecialties = [
     "Tradicional",
     "Realista",
@@ -31,12 +29,10 @@ const ProfessionalForm = ({
     { value: '>10', label: 'Mais de 10 anos' },
   ];
 
-  // Função para alternar especialidade
   const toggleSpecialty = (specialty) => {
     handleChange('especialidades', specialty);
   };
 
-  // Função para atualizar rede social
   const updateSocialNetwork = (network, value) => {
     handleChange('redesSociais', { [network]: value });
   };

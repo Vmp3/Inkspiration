@@ -6,7 +6,6 @@ const DistanceSlider = ({ maxDistance, setMaxDistance, onSliderRelease }) => {
   const sliderRef = useRef(null);
   const [isSliderActive, setIsSliderActive] = useState(false);
 
-  // Configuração do Pan Responder para o slider
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onStartShouldSetPanResponderCapture: () => true,
@@ -18,13 +17,10 @@ const DistanceSlider = ({ maxDistance, setMaxDistance, onSliderRelease }) => {
     onPanResponderMove: (evt, gestureState) => {
       if (sliderRef.current) {
         sliderRef.current.measure((fx, fy, width, height, px, py) => {
-          // Calculamos a porcentagem baseada na posição do dedo
           let percentage = Math.max(0, Math.min(100, ((gestureState.moveX - px) / width) * 100));
           
-          // Convertemos a porcentagem para o valor de distância (0-50km)
           const newDistance = Math.round((percentage / 100) * 50);
           
-          // Atualizamos o valor do estado
           setMaxDistance(newDistance);
         });
       }

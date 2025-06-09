@@ -23,15 +23,12 @@ const FiltersPanel = ({
   resetFilters,
   updateActiveFilters,
 }) => {
-  // Check if we're in tablet view (768px-1024px)
   const screenWidth = Dimensions.get('window').width;
   const isTablet = screenWidth >= 768 && screenWidth < 1024;
   
   return (
     <View style={styles.filtersColumn}>
-      {/* Campo de busca com botão */}
       {isTablet ? (
-        // Layout para tablet
         <View style={styles.searchColumn}>
           <View style={styles.searchInputContainer}>
             <SearchInput
@@ -51,7 +48,6 @@ const FiltersPanel = ({
           />
         </View>
       ) : (
-        // Layout para desktop
         <View style={styles.searchRow}>
           <View style={styles.searchInputContainer}>
             <SearchInput
@@ -78,7 +74,6 @@ const FiltersPanel = ({
         </TouchableOpacity>
       </View>
       
-      {/* Localização */}
       <FilterSection title="Localização">
         <SearchInput
           icon="location-on"
@@ -88,17 +83,14 @@ const FiltersPanel = ({
         />
       </FilterSection>
       
-      {/* Distância */}
       <DistanceSlider 
         maxDistance={maxDistance} 
         setMaxDistance={setMaxDistance}
         onSliderRelease={updateActiveFilters}
       />
       
-      {/* Avaliação */}
       <RatingFilter minRating={minRating} setMinRating={setMinRating} />
       
-      {/* Especialidades */}
       <SpecialtiesFilter 
         selectedSpecialties={selectedSpecialties} 
         toggleSpecialty={toggleSpecialty} 

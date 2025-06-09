@@ -15,6 +15,8 @@ import { MaterialIcons, Feather, FontAwesome, Entypo, AntDesign } from '@expo/ve
 import { useAuth } from '../context/AuthContext';
 import ProfessionalService from '../services/ProfessionalService';
 import toastHelper from '../utils/toastHelper';
+import { artistMessages } from '../components/common/messages';
+import { mockReviews } from '../data/reviews';
 
 const Tabs = ({ tabs, activeTab, onTabChange }) => {
   return (
@@ -130,7 +132,7 @@ const ArtistScreen = ({ route }) => {
   const [activeTab, setActiveTab] = useState('portfolio');
   const [isAdmin, setIsAdmin] = useState(false);
   const [deleteReviewId, setDeleteReviewId] = useState(null);
-  const [reviews, setReviews] = useState([]);
+  const [reviews, setReviews] = useState(mockReviews);
   const [artist, setArtist] = useState(null);
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -154,73 +156,15 @@ const ArtistScreen = ({ route }) => {
       setIsAdmin(true);
     }
 
+    if (!artistId) {
+      toastHelper.showError(artistMessages.errors.noArtistId);
+      navigation.goBack();
+      return;
+    }
+
     // Carregar dados do profissional
     loadArtistData();
-
-    // Mock de avaliações (manter por enquanto)
-    setReviews([
-      {
-        id: "1",
-        userName: "Carlos Mendes",
-        userImage: "https://via.placeholder.com/50",
-        rating: 5,
-        comment:
-          "Trabalho incrível! Muito talentoso e cuidadoso. A tatuagem ficou exatamente como eu queria. Recomendo muito!",
-        date: "2 semanas atrás",
-        tattooType: "Tatuagem pequena",
-      },
-      {
-        id: "2",
-        userName: "Ana Oliveira",
-        userImage: "https://via.placeholder.com/50",
-        rating: 5,
-        comment:
-          "Experiência maravilhosa! Super profissional, o estúdio é muito limpo e o resultado final superou minhas expectativas.",
-        date: "1 mês atrás",
-        tattooType: "Tatuagem média",
-      },
-      {
-        id: "3",
-        userName: "Roberto Almeida",
-        userImage: "https://via.placeholder.com/50",
-        rating: 4,
-        comment:
-          "Muito bom! Entendeu perfeitamente o que eu queria. O processo foi tranquilo e o resultado ficou ótimo.",
-        date: "2 meses atrás",
-        tattooType: "Tatuagem grande",
-      },
-      {
-        id: "4",
-        userName: "Fernanda Costa",
-        userImage: "https://via.placeholder.com/50",
-        rating: 5,
-        comment:
-          "Simplesmente perfeito! Um artista incrível, muito atencioso e detalhista. Já estou planejando minha próxima tatuagem!",
-        date: "3 meses atrás",
-        tattooType: "Sessão dia inteiro",
-      },
-      {
-        id: "5",
-        userName: "Lucas Santos",
-        userImage: "https://via.placeholder.com/50",
-        rating: 5,
-        comment:
-          "Melhor tatuador da cidade! Trabalho impecável, ambiente super confortável e higienizado. Recomendo de olhos fechados.",
-        date: "3 meses atrás",
-        tattooType: "Tatuagem grande",
-      },
-      {
-        id: "6",
-        userName: "Juliana Lima",
-        userImage: "https://via.placeholder.com/50",
-        rating: 4,
-        comment:
-          "Ótima experiência! Muito profissional e talentoso. A tatuagem ficou linda, exatamente como eu imaginava.",
-        date: "4 meses atrás",
-        tattooType: "Tatuagem média",
-      },
-    ]);
-  }, [userData, artistId]);
+  }, [artistId, userData, navigation]);
 
   const loadArtistData = async () => {
     try {
@@ -276,7 +220,7 @@ const ArtistScreen = ({ route }) => {
       
       setPortfolioImages(processedImages);
     } catch (error) {
-      toastHelper.showError('Erro ao carregar dados do profissional');
+      toastHelper.showError(artistMessages.errors.loadProfile);
       navigation.goBack();
     } finally {
       setIsLoading(false);
@@ -286,7 +230,7 @@ const ArtistScreen = ({ route }) => {
   const handleDeleteReview = (reviewId) => {
     const updatedReviews = reviews.filter((review) => review.id !== reviewId);
     setReviews(updatedReviews);
-    toastHelper.showSuccess('Avaliação excluída com sucesso');
+    toastHelper.showSuccess(artistMessages.success.reviewDeleted);
   };
 
   const openSocialLink = async (url) => {
@@ -301,10 +245,10 @@ const ArtistScreen = ({ route }) => {
       if (supported) {
         await Linking.openURL(finalUrl);
       } else {
-        toastHelper.showError('Não foi possível abrir o link');
+        toastHelper.showError(artistMessages.errors.openLink);
       }
     } catch (error) {
-      toastHelper.showError('Erro ao abrir o link');
+      toastHelper.showError(artistMessages.errors.linkError);
     }
   };
 
@@ -312,7 +256,7 @@ const ArtistScreen = ({ route }) => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Carregando perfil do profissional...</Text>
+        <Text style={styles.loadingText}>{artistMessages.loading.profile}</Text>
       </View>
     );
   }
@@ -321,7 +265,7 @@ const ArtistScreen = ({ route }) => {
   if (!artist) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Profissional não encontrado</Text>
+        <Text style={styles.errorText}>{artistMessages.errors.notFound}</Text>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Text style={styles.backButtonText}>Voltar</Text>
         </TouchableOpacity>
@@ -351,7 +295,7 @@ const ArtistScreen = ({ route }) => {
         <View style={styles.portfolioGrid}>
           {portfolioImages.length === 0 ? (
             <View style={styles.noImagesContainer}>
-              <Text style={styles.noImagesText}>Nenhuma imagem no portfólio</Text>
+              <Text style={styles.noImagesText}>{artistMessages.info.noImages}</Text>
             </View>
           ) : (
             portfolioImages.map((image, index) => (
