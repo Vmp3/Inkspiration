@@ -19,6 +19,8 @@ import { AuthProvider } from './src/context/AuthContext';
 import ProfessionalRegisterScreen from './src/screens/ProfessionalRegisterScreen';
 import AdminUsersScreen from './src/screens/AdminUsersScreen';
 import ArtistScreen from './src/screens/ArtistScreen';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +31,8 @@ const linking = {
       Home: 'home',
       Login: 'login',
       Register: 'register',
+      ForgotPassword: 'forgot-password',
+      ResetPassword: 'reset-password',
       AdminUsers: 'admin/usuarios',
       Artist: 'artist/:id',
       Main: 'main',
@@ -67,6 +71,8 @@ export default function App() {
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
             <Stack.Screen name="Explore" component={ExploreScreen} />
             <Stack.Screen name="About" component={AboutScreen} />
             <Stack.Screen name="Profile" component={EditProfileScreen} />
@@ -77,7 +83,7 @@ export default function App() {
         </View>
       </NavigationContainer>
 
-      <Toast/>
+      <Toast config={toastConfig} />
     </AuthProvider>
   </SafeAreaProvider>
 </GestureHandlerRootView>

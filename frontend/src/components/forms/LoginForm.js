@@ -4,7 +4,6 @@ import { useNavigation } from '@react-navigation/native';
 import Input from '../ui/Input';
 import Checkbox from '../ui/Checkbox';
 import Button from '../ui/Button';
-import theme from '../../themes/theme';
 
 const LoginForm = ({ 
   formData, 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, View, ActivityIndicator } from 'react-native';
 
 const Button = ({ 
   variant = 'primary', 
@@ -11,8 +11,11 @@ const Button = ({
   size = 'md',
   leftIcon,
   disabled = false,
+  loading = false,
   ...props 
 }) => {
+  const isDisabled = disabled || loading;
+  
   // Determine button style based on variant and size
   const buttonStyles = [
     styles.button,
@@ -21,7 +24,7 @@ const Button = ({
     size === 'lg' ? styles.largeButton : 
     size === 'search' ? styles.searchButton : styles.mediumButton,
     fullWidth && styles.fullWidth,
-    disabled && (variant === 'primary' ? styles.primaryDisabled : styles.secondaryDisabled),
+    isDisabled && (variant === 'primary' ? styles.primaryDisabled : styles.secondaryDisabled),
     style
   ];
 
@@ -32,20 +35,27 @@ const Button = ({
     size === 'sm' ? styles.smallText : 
     size === 'lg' ? styles.largeText : 
     size === 'search' ? styles.searchText : styles.mediumText,
-    disabled && (variant === 'primary' ? styles.primaryTextDisabled : styles.secondaryTextDisabled),
+    isDisabled && (variant === 'primary' ? styles.primaryTextDisabled : styles.secondaryTextDisabled),
     labelStyle
   ];
 
   return (
     <TouchableOpacity 
       style={buttonStyles} 
-      onPress={disabled ? undefined : onPress}
-      activeOpacity={disabled ? 1 : 0.8}
-      disabled={disabled}
+      onPress={isDisabled ? undefined : onPress}
+      activeOpacity={isDisabled ? 1 : 0.8}
+      disabled={isDisabled}
       {...props}
     >
       <View style={styles.contentContainer}>
-        {leftIcon && <View style={styles.iconContainer}>{leftIcon}</View>}
+        {loading && (
+          <ActivityIndicator 
+            size="small" 
+            color={variant === 'primary' ? '#FFFFFF' : '#111827'}
+            style={styles.loadingIcon}
+          />
+        )}
+        {!loading && leftIcon && <View style={styles.iconContainer}>{leftIcon}</View>}
         <Text style={textStyles}>{label}</Text>
       </View>
     </TouchableOpacity>
@@ -131,6 +141,9 @@ const styles = StyleSheet.create({
   },
   secondaryTextDisabled: {
     color: '#9CA3AF', 
+  },
+  loadingIcon: {
+    marginRight: 8,
   },
 });
 
