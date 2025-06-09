@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -31,6 +31,10 @@ const EditProfileScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [experienceDropdownOpen, setExperienceDropdownOpen] = useState(false);
+  
+  // Estados para 2FA
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [isLoadingTwoFactor, setIsLoadingTwoFactor] = useState(true);
   
   // Form validation states
   const [nomeError, setNomeError] = useState('');
@@ -299,7 +303,6 @@ const EditProfileScreen = () => {
         });
       }
     } catch (error) {
-      console.error('Erro ao carregar dados do profissional:', error);
       toastHelper.showError('Erro ao obter informações profissionais');
     }
   };
@@ -310,6 +313,59 @@ const EditProfileScreen = () => {
       loadProfessionalData();
     }
   }, [userData]);
+  
+  // Carregar status do 2FA
+  useEffect(() => {
+    loadTwoFactorStatus();
+  }, []);
+
+  // Recarregar status quando voltar da tela de 2FA
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadTwoFactorStatus();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const loadTwoFactorStatus = async () => {
+    try {
+      setIsLoadingTwoFactor(true);
+      const token = await AsyncStorage.getItem('jwtToken');
+      
+      if (!token) {
+        setTwoFactorEnabled(false);
+        return;
+      }
+
+      const response = await ApiService.get('/two-factor/status');
+      
+      if (response && response.success) {
+        setTwoFactorEnabled(response.enabled || false);
+      } else {
+        setTwoFactorEnabled(false);
+      }
+    } catch (error) {
+      // Definir como false mesmo em caso de erro para mostrar a seção
+      setTwoFactorEnabled(false);
+    } finally {
+      setIsLoadingTwoFactor(false);
+    }
+  };
+
+  const handleTwoFactorToggle = () => {
+    if (twoFactorEnabled) {
+      // Navegar para tela de desativação
+      navigation.navigate('TwoFactorSetup', { 
+        action: 'disable'
+      });
+    } else {
+      // Navegar para tela de ativação
+      navigation.navigate('TwoFactorSetup', { 
+        action: 'enable'
+      });
+    }
+  };
 
   const handleChange = (field, value) => {
     let formattedValue = value;
@@ -366,7 +422,6 @@ const EditProfileScreen = () => {
         }
         break;
       case 'redesSociais':
-        // For nested objects
         return setFormData(prev => ({
           ...prev,
           redesSociais: {
@@ -375,7 +430,6 @@ const EditProfileScreen = () => {
           }
         }));
       case 'especialidades':
-        // Toggle specialty in array
         const specialties = [...formData.especialidades];
         if (specialties.includes(value)) {
           return setFormData(prev => ({
@@ -390,13 +444,11 @@ const EditProfileScreen = () => {
         }
     }
 
-    // Default update for standard fields
     setFormData({
       ...formData,
       [field]: formattedValue,
     });
 
-    // If the field is CEP and has 8 digits (without hyphen), fetch address
     if (field === 'cep' && value.replace(/\D/g, '').length === 8) {
       buscarCep(value);
     }
@@ -949,7 +1001,6 @@ const EditProfileScreen = () => {
       // Redirecionar para a tela inicial
       navigation.navigate('Home');
     } catch (error) {
-      console.error('Erro ao atualizar perfil:', error);
       toastHelper.showError('Ocorreu um erro ao atualizar o perfil. Tente novamente.');
     } finally {
       setIsLoading(false);
@@ -1028,7 +1079,6 @@ const EditProfileScreen = () => {
       // mantendo a imagem existente no servidor
       
     } catch (error) {
-      console.error('Erro ao atualizar dados profissionais:', error);
       toastHelper.showError('Erro ao atualizar dados profissionais');
     }
   };
@@ -1179,57 +1229,100 @@ const EditProfileScreen = () => {
                 {activeTab === 'security' && (
                   <>
                     <View style={styles.tabContent}>
-                      <View style={styles.formRow}>
-                        <View style={styles.formGroup}>
-                          <Text style={styles.formLabel}>Senha Atual</Text>
-                          <Input
-                            placeholder="••••••••"
-                            secureTextEntry
-                            value={formData.senhaAtual}
-                            onChangeText={(text) => handleChange('senhaAtual', text)}
-                            onBlur={() => handleBlur('senhaAtual')}
-                            style={[
-                              styles.inputField,
-                              passwordError && styles.inputError
-                            ]}
-                          />
-                          {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
-                        </View>
-                      </View>
-
-                      <View style={styles.formRow}>
-                        <View style={styles.formGroup}>
-                          <Text style={styles.formLabel}>Nova Senha</Text>
-                          <Input
-                            placeholder="••••••••"
-                            secureTextEntry
-                            value={formData.novaSenha}
-                            onChangeText={(text) => handleChange('novaSenha', text)}
-                            onBlur={() => handleBlur('novaSenha')}
-                            style={styles.inputField}
-                          />
-                        </View>
+                      {/* Seção de Alteração de Senha */}
+                      <View style={styles.passwordSection}>
+                        <Text style={styles.sectionTitle}>Alterar Senha</Text>
                         
-                        <View style={styles.formGroup}>
-                          <Text style={styles.formLabel}>Confirmar Nova Senha</Text>
-                          <Input
-                            placeholder="••••••••"
-                            secureTextEntry
-                            value={formData.confirmarSenha}
-                            onChangeText={(text) => handleChange('confirmarSenha', text)}
-                            onBlur={() => handleBlur('confirmarSenha')}
-                            style={[
-                              styles.inputField,
-                              confirmPasswordError && styles.inputError
-                            ]}
-                          />
-                          {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
+                        <View style={styles.formRow}>
+                          <View style={styles.formGroup}>
+                            <Text style={styles.formLabel}>Senha Atual</Text>
+                            <Input
+                              placeholder="••••••••"
+                              secureTextEntry
+                              value={formData.senhaAtual}
+                              onChangeText={(text) => handleChange('senhaAtual', text)}
+                              onBlur={() => handleBlur('senhaAtual')}
+                              style={[
+                                styles.inputField,
+                                passwordError && styles.inputError
+                              ]}
+                            />
+                            {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+                          </View>
                         </View>
+
+                        <View style={styles.formRow}>
+                          <View style={styles.formGroup}>
+                            <Text style={styles.formLabel}>Nova Senha</Text>
+                            <Input
+                              placeholder="••••••••"
+                              secureTextEntry
+                              value={formData.novaSenha}
+                              onChangeText={(text) => handleChange('novaSenha', text)}
+                              onBlur={() => handleBlur('novaSenha')}
+                              style={styles.inputField}
+                            />
+                          </View>
+                          
+                          <View style={styles.formGroup}>
+                            <Text style={styles.formLabel}>Confirmar Nova Senha</Text>
+                            <Input
+                              placeholder="••••••••"
+                              secureTextEntry
+                              value={formData.confirmarSenha}
+                              onChangeText={(text) => handleChange('confirmarSenha', text)}
+                              onBlur={() => handleBlur('confirmarSenha')}
+                              style={[
+                                styles.inputField,
+                                confirmPasswordError && styles.inputError
+                              ]}
+                            />
+                            {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
+                          </View>
+                        </View>
+
+                        <Text style={styles.securityNote}>
+                          Deixe os campos em branco se não deseja alterar sua senha.
+                        </Text>
                       </View>
 
-                      <Text style={styles.securityNote}>
-                        Deixe os campos em branco se não deseja alterar sua senha.
-                      </Text>
+                      {/* Divisor */}
+                      <View style={styles.divider} />
+
+                      {/* Seção de Autenticação de Dois Fatores */}
+                      <View style={styles.twoFactorSection}>
+                        <Text style={styles.sectionTitle}>Autenticação de Dois Fatores</Text>
+                        <Text style={styles.sectionDescription}>
+                          Adicione uma camada extra de segurança à sua conta usando o Google Authenticator.
+                        </Text>
+                        
+                        <View style={styles.twoFactorRow}>
+                          <View style={styles.twoFactorInfo}>
+                            <Text style={styles.twoFactorLabel}>
+                              Status: {isLoadingTwoFactor ? 'Carregando...' : (twoFactorEnabled ? 'Ativada' : 'Desativada')}
+                            </Text>
+                            <Text style={styles.twoFactorIcon}>
+                              {isLoadingTwoFactor ? '⏳' : (twoFactorEnabled ? '🔒' : '🔓')}
+                            </Text>
+                          </View>
+                          
+                          <TouchableOpacity 
+                            style={[
+                              styles.twoFactorToggleButton,
+                              twoFactorEnabled ? styles.toggleButtonActive : styles.toggleButtonInactive
+                            ]}
+                            onPress={handleTwoFactorToggle}
+                            disabled={isLoadingTwoFactor}
+                          >
+                            <Text style={[
+                              styles.toggleButtonText,
+                              twoFactorEnabled ? styles.toggleTextActive : styles.toggleTextInactive
+                            ]}>
+                              {twoFactorEnabled ? 'Desativar' : 'Ativar'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
                     </View>
 
                     <FormNavigation
@@ -1261,15 +1354,15 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     width: '100%',
-    maxWidth: 900,
+    maxWidth: 800,
     alignSelf: 'center',
-    marginTop: 40,
+    marginTop: 20,
   },
   pageHeaderContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
     alignItems: 'center',
     zIndex: 2,
-    marginTop: 15,
+    marginTop: 10,
   },
   pageTitle: {
     fontSize: 28,
@@ -1284,11 +1377,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   cardWrapper: {
-    marginTop: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 20,
+    marginTop: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 16,
     zIndex: 1,
-    maxWidth: 1200,
+    maxWidth: 1000,
     width: '100%',
     alignSelf: 'center',
   },
@@ -1322,7 +1415,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   formContainer: {
-    padding: 30,
+    padding: 20,
   },
   tabContent: {
     flex: 1,
@@ -1332,10 +1425,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 24,
     marginHorizontal: -10,
+    flexWrap: 'wrap',
   },
   formGroup: {
     flex: 1,
     marginHorizontal: 10,
+    minWidth: 250,
   },
   formLabel: {
     marginBottom: 8,
@@ -1365,7 +1460,78 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 8,
     fontStyle: 'italic',
-  }
+  },
+  twoFactorSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#111',
+  },
+  sectionDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  twoFactorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  twoFactorInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 200,
+  },
+  twoFactorLabel: {
+    fontSize: 14,
+    color: '#333',
+    marginRight: 8,
+  },
+  twoFactorIcon: {
+    fontSize: 16,
+  },
+  twoFactorToggleButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 6,
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleButtonActive: {
+    backgroundColor: '#ef5350',
+    borderColor: '#ef5350',
+  },
+  toggleButtonInactive: {
+    backgroundColor: '#4caf50',
+    borderColor: '#4caf50',
+  },
+  toggleButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  toggleTextActive: {
+    color: '#fff',
+  },
+  toggleTextInactive: {
+    color: '#fff',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e2e2e2',
+    marginVertical: 20,
+  },
+  passwordSection: {
+    flex: 1,
+  },
 });
 
 export default EditProfileScreen; 
