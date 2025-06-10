@@ -37,7 +37,7 @@ const linking = {
       ForgotPassword: 'forgot-password',
       ResetPassword: 'reset-password',
       AdminUsers: 'admin/usuarios',
-      Artist: 'artist/:id',
+      Artist: 'artist/:artistId',
       Booking: 'booking/:professionalId',
       Main: 'main',
       Explore: 'explore',
