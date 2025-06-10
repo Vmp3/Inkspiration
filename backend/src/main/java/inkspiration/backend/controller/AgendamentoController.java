@@ -65,6 +65,9 @@ public class AgendamentoController {
                         "Por favor, selecione outro horário disponível.");
             } else if (errorMessage.contains("Tipo de serviço inválido")) {
                 return ResponseEntity.badRequest().body(errorMessage);
+            } else if (errorMessage.contains("Não é possível agendar consigo mesmo")) {
+                return ResponseEntity.badRequest().body(
+                        "Não é possível agendar um serviço consigo mesmo como profissional.");
             }
             
             return ResponseEntity.badRequest().body(errorMessage);

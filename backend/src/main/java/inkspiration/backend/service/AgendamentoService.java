@@ -61,6 +61,10 @@ public class AgendamentoService {
         Profissional profissional = profissionalRepository.findById(idProfissional)
                 .orElseThrow(() -> new RuntimeException("Profissional não encontrado"));
         
+        if (usuario.getIdUsuario().equals(profissional.getUsuario().getIdUsuario())) {
+            throw new RuntimeException("Não é possível agendar consigo mesmo");
+        }
+        
         TipoServico tipoServico;
         try {
             tipoServico = TipoServico.fromDescricao(tipoServicoStr);
