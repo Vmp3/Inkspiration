@@ -11,6 +11,9 @@ public class UsuarioAutenticarDTO {
     private String senha;
 
     private String role;
+    
+    // Campo opcional para código de 2FA
+    private Integer twoFactorCode;
 
     public UsuarioAutenticarDTO() {
     }
@@ -52,5 +55,13 @@ public class UsuarioAutenticarDTO {
 
     public void setRole(String role) {
         this.role = role;
+    }
+    
+    public Integer getTwoFactorCode() {
+        return twoFactorCode;
+    }
+    
+    public void setTwoFactorCode(Integer twoFactorCode) {
+        this.twoFactorCode = twoFactorCode;
     }
 }
