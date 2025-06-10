@@ -78,10 +78,27 @@ export const AuthProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [isAuthenticated]);
 
-  const login = async (cpf, senha) => {
+  const login = async (cpf, senha, twoFactorCode = null) => {
     try {
       setLoading(true);
-      const result = await AuthService.login(cpf, senha);
+      const result = await AuthService.login(cpf, senha, twoFactorCode);
+      
+      // Se requer 2FA, retornar informação sem fazer login
+      if (!result.success && result.requiresTwoFactor) {
+        return {
+          success: false,
+          requiresTwoFactor: true,
+          message: result.message
+        };
+      }
+      
+      // Se não foi sucesso por outro motivo
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.message || 'Erro no login'
+        };
+      }
       
       // Verificar se o token está realmente disponível
       const token = await AuthService.getToken();
@@ -102,7 +119,10 @@ export const AuthProvider = ({ children }) => {
         console.error('Não foi possível obter os dados do usuário após o login');
       }
       
-      return { success: true };
+      return { 
+        success: true,
+        message: result.message || 'Login realizado com sucesso'
+      };
     } catch (error) {
       console.error('Erro ao fazer login:', error);
       return { 

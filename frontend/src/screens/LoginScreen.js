@@ -15,10 +15,13 @@ const LoginScreen = () => {
   const [formData, setFormData] = useState({
     cpf: '',
     password: '',
+    twoFactorCode: '',
   });
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cpfError, setCpfError] = useState('');
+  const [twoFactorCodeError, setTwoFactorCodeError] = useState('');
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
 
   const handleChange = (field, value) => {
     let formattedValue = value;
@@ -26,6 +29,11 @@ const LoginScreen = () => {
     if (field === 'cpf') {
       formattedValue = formatters.formatCPF(value);
       setCpfError('');
+      setShowTwoFactor(false);
+      setFormData(prev => ({ ...prev, twoFactorCode: '' }));
+    } else if (field === 'twoFactorCode') {
+      formattedValue = value.replace(/\D/g, '').slice(0, 6);
+      setTwoFactorCodeError('');
     }
 
     setFormData(prev => ({ ...prev, [field]: formattedValue }));
@@ -37,6 +45,12 @@ const LoginScreen = () => {
         setCpfError(authMessages.loginErrors.invalidCpf);
       } else {
         setCpfError('');
+      }
+    } else if (field === 'twoFactorCode' && formData.twoFactorCode) {
+      if (formData.twoFactorCode.length !== 6) {
+        setTwoFactorCodeError('Código deve ter 6 dígitos');
+      } else {
+        setTwoFactorCodeError('');
       }
     }
   };
@@ -52,19 +66,30 @@ const LoginScreen = () => {
       return;
     }
 
+    if (showTwoFactor && (!formData.twoFactorCode || formData.twoFactorCode.length !== 6)) {
+      toastHelper.showError('Código de autenticação de dois fatores é obrigatório');
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await login(
         formData.cpf.replace(/\D/g, ''),
-        formData.password
+        formData.password,
+        showTwoFactor ? formData.twoFactorCode : null
       );
 
       if (!result.success) {
-        toastHelper.showError(authMessages.loginErrors.loginFailed);
+        if (result.requiresTwoFactor) {
+          setShowTwoFactor(true);
+          toastHelper.showError(result.message || 'Digite o código de autenticação de dois fatores');
+          return;
+        }
+        toastHelper.showError(result.error || authMessages.loginErrors.loginFailed);
         return;
       }
 
-      toastHelper.showSuccess(authMessages.success.loginSuccess);
+      toastHelper.showSuccess(result.message || authMessages.success.loginSuccess);
 
       // Navegar para a tela principal
       navigation.reset({
@@ -98,6 +123,8 @@ const LoginScreen = () => {
               handleBlur={handleBlur}
               handleSubmit={handleSubmit}
               cpfError={cpfError}
+              twoFactorCodeError={twoFactorCodeError}
+              showTwoFactor={showTwoFactor}
               rememberMe={rememberMe}
               setRememberMe={setRememberMe}
               loading={loading || authLoading}

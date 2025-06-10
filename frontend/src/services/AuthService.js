@@ -15,13 +15,31 @@ class AuthService {
     });
   }
 
-  async login(cpf, senha) {
+  async login(cpf, senha, twoFactorCode = null) {
     try {
       // Limpar qualquer token anterior
       await this.logout();
       
-      const response = await this.api.post('/auth/login', { cpf, senha });
-      const token = response.data;
+      const loginData = { cpf, senha };
+      if (twoFactorCode) {
+        loginData.twoFactorCode = parseInt(twoFactorCode);
+      }
+      
+      const response = await this.api.post('/auth/login', loginData);
+      const responseData = response.data;
+
+      if (responseData.success === false) {
+        if (responseData.requiresTwoFactor) {
+          return {
+            success: false,
+            requiresTwoFactor: true,
+            message: responseData.message
+          };
+        }
+        throw new Error(responseData.message || 'Erro no login');
+      }
+
+      const token = responseData.token || responseData;
 
       if (!token) {
         throw new Error('Servidor retornou um token vazio');
@@ -38,19 +56,42 @@ class AuthService {
         throw new Error('Erro ao validar token recebido do servidor');
       }
       
-      // Armazenar o token e verificar se foi armazenado corretamente
       await this.setToken(token);
       
-      // Verificar se o token foi realmente armazenado
       const storedToken = await this.getToken();
       if (!storedToken) {
         console.error('Falha ao armazenar token após login');
         throw new Error('Falha ao armazenar token de autenticação');
       }
       
-      return { token };
+      return { 
+        success: true,
+        token,
+        message: responseData.message || 'Login realizado com sucesso'
+      };
     } catch (error) {
       console.error('Erro no login:', error);
+      
+      if (error.response && error.response.status === 428) {
+        const responseData = error.response.data;
+        return {
+          success: false,
+          requiresTwoFactor: true,
+          message: responseData.message || 'Código de autenticação de dois fatores é obrigatório'
+        };
+      }
+      
+      if (error.response && error.response.status === 401) {
+        const responseData = error.response.data;
+        if (responseData && responseData.requiresTwoFactor) {
+          return {
+            success: false,
+            requiresTwoFactor: true,
+            message: responseData.message || 'Código de autenticação de dois fatores inválido'
+          };
+        }
+      }
+      
       throw error;
     }
   }

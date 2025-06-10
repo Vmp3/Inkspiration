@@ -10,7 +10,9 @@ const LoginForm = ({
   handleChange, 
   handleBlur, 
   handleSubmit, 
-  cpfError, 
+  cpfError,
+  twoFactorCodeError,
+  showTwoFactor,
   rememberMe, 
   setRememberMe, 
   loading 
@@ -48,6 +50,23 @@ const LoginForm = ({
         />
       </View>
 
+      {showTwoFactor && (
+        <View style={styles.formFieldGroup}>
+          <Text style={styles.formLabel}>Código de Autenticação (2FA)</Text>
+          <Text style={styles.twoFactorHint}>Digite o código de 6 dígitos do seu Google Authenticator</Text>
+          <Input
+            placeholder="123456"
+            value={formData.twoFactorCode}
+            onChangeText={(text) => handleChange('twoFactorCode', text)}
+            onBlur={() => handleBlur('twoFactorCode')}
+            keyboardType="numeric"
+            maxLength={6}
+            style={[styles.inputField, twoFactorCodeError && styles.inputError]}
+          />
+          {twoFactorCodeError ? <Text style={styles.errorText}>{twoFactorCodeError}</Text> : null}
+        </View>
+      )}
+
       <View style={styles.checkboxWrapper}>
         <Checkbox
           checked={rememberMe}
@@ -56,7 +75,7 @@ const LoginForm = ({
         />
       </View>
 
-      <Button 
+      <Button
         variant="primary"
         label={loading ? "" : "Entrar"}
         onPress={handleSubmit} 
@@ -112,6 +131,11 @@ const styles = StyleSheet.create({
     color: '#ff0000',
     fontSize: 12,
     marginTop: 4,
+  },
+  twoFactorHint: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 8,
   },
 });
 
