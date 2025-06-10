@@ -137,6 +137,7 @@ const ArtistScreen = ({ route }) => {
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
+  const [isSamePerson, setIsSamePerson] = useState(false);
   
   const isMobile = screenData.width < 768;
 
@@ -179,6 +180,10 @@ const ArtistScreen = ({ route }) => {
       
       // Buscar dados completos do profissional
       const professionalData = await ProfessionalService.getProfessionalCompleteById(artistId);
+      
+      if (userData?.idUsuario === professionalData.profissional.idUsuario) {
+        setIsSamePerson(true);
+      }
       
       const transformedData = ProfessionalService.transformCompleteProfessionalData(professionalData);
       
@@ -449,14 +454,15 @@ const ArtistScreen = ({ route }) => {
             ))}
           </View>
 
-          {/* Botão de agendar */}
-          <TouchableOpacity 
-            style={styles.scheduleButton}
-            onPress={() => navigation.navigate('Booking', { professionalId: artist.idProfissional })}
-          >
-            <Feather name="calendar" size={20} color="#FFFFFF" style={styles.scheduleIcon} />
-            <Text style={styles.scheduleText}>Agendar</Text>
-          </TouchableOpacity>
+          {!isSamePerson && (
+            <TouchableOpacity 
+              style={styles.scheduleButton}
+              onPress={() => navigation.navigate('Booking', { professionalId: artist.idProfissional })}
+            >
+              <Feather name="calendar" size={20} color="#FFFFFF" style={styles.scheduleIcon} />
+              <Text style={styles.scheduleText}>Agendar</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Serviços */}
           <Card style={styles.servicesCard}>
