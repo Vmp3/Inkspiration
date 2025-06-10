@@ -24,6 +24,7 @@ import MyAppointmentsScreen from './src/screens/MyAppointmentsScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import TwoFactorSetupScreen from './src/screens/TwoFactorSetupScreen';
+import ProtectedRoute from './src/components/ProtectedRoute';
 
 const Stack = createNativeStackNavigator();
 
@@ -51,52 +52,66 @@ const linking = {
   },
 };
 
+const publicRoutes = [
+  'Home',
+  'Login',
+  'Register',
+  'Explore',
+  'Artist',
+  'About',
+  'ForgotPassword',
+  'ResetPassword'
+];
+
 export default function App() {
   return (
-<GestureHandlerRootView style={{ flex: 1 }}>
-  <SafeAreaProvider>
-    <AuthProvider>
-      <NavigationContainer linking={linking}>
-        <StatusBar 
-          backgroundColor="white" 
-          barStyle="dark-content" 
-          translucent={Platform.OS === 'android'} 
-        />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <NavigationContainer linking={linking}>
+            <StatusBar 
+              backgroundColor="white" 
+              barStyle="dark-content" 
+              translucent={Platform.OS === 'android'} 
+            />
+            
+            <View style={{ flex: 1 }}>
+              <SafeAreaView style={{ zIndex: 1000 }}>
+                <Header />
+              </SafeAreaView>
 
-        <View style={{ flex: 1 }}>
-          <SafeAreaView style={{ zIndex: 1000 }}>
-            <Header />
-          </SafeAreaView>
+              <ProtectedRoute publicRoutes={publicRoutes}>
+                <Stack.Navigator
+                  initialRouteName="Home"
+                  screenOptions={{
+                    headerShown: false,
+                  }}
+                >
+                  <Stack.Screen name="Home" component={HomeScreen} />
+                  <Stack.Screen name="Login" component={LoginScreen} />
+                  <Stack.Screen name="Register" component={RegisterScreen} />
+                  <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+                  <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+                  <Stack.Screen name="Explore" component={ExploreScreen} />
+                  <Stack.Screen name="About" component={AboutScreen} />
+                  <Stack.Screen name="Profile" component={EditProfileScreen} />
+                  <Stack.Screen name="Artist" component={ArtistScreen} />
+                  <Stack.Screen name="Booking" component={BookingScreen} />
+                  <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
+                  <Stack.Screen name="ProfessionalRegister" component={ProfessionalRegisterScreen} />
+                  <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} />
+                  <Stack.Screen name="TwoFactorSetup" component={TwoFactorSetupScreen} />
+                </Stack.Navigator>
+              </ProtectedRoute>
+            </View>
 
-          <Stack.Navigator
-            initialRouteName="Home"
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-            <Stack.Screen name="Explore" component={ExploreScreen} />
-            <Stack.Screen name="About" component={AboutScreen} />
-            <Stack.Screen name="Profile" component={EditProfileScreen} />
-            <Stack.Screen name="Artist" component={ArtistScreen} />
-            <Stack.Screen name="Booking" component={BookingScreen} />
-            <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
-            <Stack.Screen name="ProfessionalRegister" component={ProfessionalRegisterScreen} />
-            <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} />
-            <Stack.Screen name="TwoFactorSetup" component={TwoFactorSetupScreen} />
-          </Stack.Navigator>
-        </View>
-      </NavigationContainer>
-
-      <Toast config={toastConfig} />
-    </AuthProvider>
-  </SafeAreaProvider>
-</GestureHandlerRootView>
-)}
+            <Toast config={toastConfig} />
+          </NavigationContainer>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}
 
 const styles = StyleSheet.create({
   toastContainer: {
