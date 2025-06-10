@@ -521,16 +521,6 @@ class AuthService {
       return true; // Em caso de erro, assumir que há problema
     }
   }
-
-  async checkTwoFactorRequirement(cpf) {
-    try {
-      const response = await this.api.post('/auth/check-2fa', { cpf });
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao verificar requisito de 2FA:', error);
-      return { success: true, requiresTwoFactor: false };
-    }
-  }
 }
 
 export default new AuthService(); 

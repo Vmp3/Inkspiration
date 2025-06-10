@@ -188,24 +188,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const checkTwoFactorRequirement = async (cpf) => {
-    try {
-      const result = await AuthService.checkTwoFactorRequirement(cpf);
-      return result;
-    } catch (error) {
-      console.error('Erro ao verificar requisito de 2FA:', error);
-      return { success: true, requiresTwoFactor: false };
-    }
-  };
-
   const value = {
     isAuthenticated,
     userData,
     loading,
     login,
     logout,
-    updateUserData,
-    checkTwoFactorRequirement
+    updateUserData
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
