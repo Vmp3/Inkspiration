@@ -457,7 +457,14 @@ const ArtistScreen = ({ route }) => {
           {!isSamePerson && (
             <TouchableOpacity 
               style={styles.scheduleButton}
-              onPress={() => navigation.navigate('Booking', { professionalId: artist.idProfissional })}
+              onPress={() => {
+                if (!userData) {
+                  toastHelper.showError(artistMessages.errors.loginRequired || 'Faça login para agendar');
+                  navigation.navigate('Login');
+                } else {
+                  navigation.navigate('Booking', { professionalId: artist.idProfissional });
+                }
+              }}
             >
               <Feather name="calendar" size={20} color="#FFFFFF" style={styles.scheduleIcon} />
               <Text style={styles.scheduleText}>Agendar</Text>
