@@ -466,27 +466,28 @@ const ArtistScreen = ({ route }) => {
             ))}
           </Card>
 
-          {/* Redes Sociais */}
-          <Card style={styles.socialCard}>
-            <Text style={styles.sectionTitle}>Redes Sociais</Text>
-            <View style={styles.socialLinks}>
-              {artist.social.instagram && (
-                <SocialMediaItem platform="instagram" username={artist.social.instagram} onPress={() => openSocialLink(`https://instagram.com/${artist.social.instagram}`)} />
-              )}
-              {artist.social.tiktok && (
-                <SocialMediaItem platform="tiktok" username={artist.social.tiktok} onPress={() => openSocialLink(`https://tiktok.com/@${artist.social.tiktok}`)} />
-              )}
-              {artist.social.facebook && (
-                <SocialMediaItem platform="facebook" username={artist.social.facebook} onPress={() => openSocialLink(`https://facebook.com/${artist.social.facebook}`)} />
-              )}
-              {artist.social.twitter && (
-                <SocialMediaItem platform="twitter" username={artist.social.twitter} onPress={() => openSocialLink(`https://twitter.com/${artist.social.twitter}`)} />
-              )}
-              {artist.social.website && (
-                <SocialMediaItem platform="website" username={artist.social.website} onPress={() => openSocialLink(artist.social.website)} />
-              )}
-            </View>
-          </Card>
+          {(artist.social.instagram || artist.social.tiktok || artist.social.facebook || artist.social.twitter || artist.social.website) && (
+            <Card style={styles.socialCard}>
+              <Text style={styles.sectionTitle}>Redes Sociais</Text>
+              <View style={styles.socialLinks}>
+                {artist.social.instagram && (
+                  <SocialMediaItem platform="instagram" username={artist.social.instagram} onPress={() => openSocialLink(`https://instagram.com/${artist.social.instagram}`)} />
+                )}
+                {artist.social.tiktok && (
+                  <SocialMediaItem platform="tiktok" username={artist.social.tiktok} onPress={() => openSocialLink(`https://tiktok.com/@${artist.social.tiktok}`)} />
+                )}
+                {artist.social.facebook && (
+                  <SocialMediaItem platform="facebook" username={artist.social.facebook} onPress={() => openSocialLink(`https://facebook.com/${artist.social.facebook}`)} />
+                )}
+                {artist.social.twitter && (
+                  <SocialMediaItem platform="twitter" username={artist.social.twitter} onPress={() => openSocialLink(`https://twitter.com/${artist.social.twitter}`)} />
+                )}
+                {artist.social.website && (
+                  <SocialMediaItem platform="website" username={artist.social.website} onPress={() => openSocialLink(artist.social.website)} />
+                )}
+              </View>
+            </Card>
+          )}
         </View>
 
         <View style={[styles.rightColumn, isMobile && styles.rightColumnMobile]}>
