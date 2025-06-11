@@ -291,6 +291,11 @@ public class DisponibilidadeService {
             }
         }
         
+        if (data.isEqual(LocalDate.now())) {
+            LocalTime horaAtual = LocalTime.now();
+            horariosDisponiveis.removeIf(horario -> LocalTime.parse(horario).isBefore(horaAtual));
+        }
+        
         return horariosDisponiveis;
     }
 } 
