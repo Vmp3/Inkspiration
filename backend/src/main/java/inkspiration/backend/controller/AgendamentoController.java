@@ -68,6 +68,9 @@ public class AgendamentoController {
             } else if (errorMessage.contains("Não é possível agendar consigo mesmo")) {
                 return ResponseEntity.badRequest().body(
                         "Não é possível agendar um serviço consigo mesmo como profissional.");
+            } else if (errorMessage.contains("Não é possível agendar para datas e horários que já passaram")) {
+                return ResponseEntity.badRequest().body(
+                        "Não é possível agendar para datas e horários que já passaram. Por favor, selecione uma data futura.");
             }
             
             return ResponseEntity.badRequest().body(errorMessage);
@@ -150,6 +153,9 @@ public class AgendamentoController {
                         "Por favor, selecione outro horário disponível.");
             } else if (errorMessage.contains("Tipo de serviço inválido")) {
                 return ResponseEntity.badRequest().body(errorMessage);
+            } else if (errorMessage.contains("Não é possível agendar para datas e horários que já passaram")) {
+                return ResponseEntity.badRequest().body(
+                        "Não é possível agendar para datas e horários que já passaram. Por favor, selecione uma data futura.");
             }
             
             return ResponseEntity.badRequest().body(errorMessage);

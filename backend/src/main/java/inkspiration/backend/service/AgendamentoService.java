@@ -65,6 +65,11 @@ public class AgendamentoService {
             throw new RuntimeException("Não é possível agendar consigo mesmo");
         }
         
+        LocalDateTime agora = LocalDateTime.now();
+        if (dtInicio.isBefore(agora)) {
+            throw new RuntimeException("Não é possível agendar para datas e horários que já passaram");
+        }
+        
         TipoServico tipoServico;
         try {
             tipoServico = TipoServico.fromDescricao(tipoServicoStr);
@@ -155,6 +160,12 @@ public class AgendamentoService {
             LocalDateTime dtInicio) throws Exception {
         
         Agendamento agendamento = buscarPorId(id);
+        
+        // Validar se a data não é passada
+        LocalDateTime agora = LocalDateTime.now();
+        if (dtInicio.isBefore(agora)) {
+            throw new RuntimeException("Não é possível agendar para datas e horários que já passaram");
+        }
         
         TipoServico tipoServico;
         try {
