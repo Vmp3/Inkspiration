@@ -17,6 +17,7 @@ import ProfessionalService from '../services/ProfessionalService';
 import toastHelper from '../utils/toastHelper';
 import { artistMessages } from '../components/common/messages';
 import { mockReviews } from '../data/reviews';
+import DefaultUser from '../../assets/default_user.png'
 
 const Tabs = ({ tabs, activeTab, onTabChange }) => {
   return (
@@ -307,7 +308,7 @@ const ArtistScreen = ({ route }) => {
             portfolioImages.map((image, index) => (
               <PortfolioItem 
                 key={index} 
-                image={image.imagemBase64 || "https://via.placeholder.com/300"} 
+                image={image.imagemBase64 || DefaultUser} 
               />
             ))
           )}

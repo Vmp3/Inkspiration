@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DefaultUser from '../../assets/default_user.png'
 import {
   View,
   Text,
@@ -117,7 +118,7 @@ const MyAppointmentsScreen = () => {
           <View style={styles.artistInfo}>
             <Image
               source={{ 
-                uri: appointment.profissional?.usuario?.imagemPerfil || 'https://via.placeholder.com/48'
+                uri: appointment.profissional?.usuario?.imagemPerfil || DefaultUser
               }}
               style={styles.artistImage}
             />
