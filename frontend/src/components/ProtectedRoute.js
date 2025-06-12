@@ -23,7 +23,11 @@ const ProtectedRoute = ({ children, publicRoutes = [] }) => {
   ]);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated && currentRouteName && !publicRoutesSet.has(currentRouteName)) {
+    if (loading) {
+      return;
+    }
+    
+    if (!isAuthenticated && currentRouteName && !publicRoutesSet.has(currentRouteName)) {
       toastHelper.showError('É necessário fazer login para acessar esta página');
       navigation.navigate('Login');
     }

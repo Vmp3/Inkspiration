@@ -96,14 +96,6 @@ public class ProfissionalCriacaoDTO {
         this.especialidade = especialidade;
     }
 
-    public List<String> getEstilosTatuagem() {
-        return estilosTatuagem;
-    }
-
-    public void setEstilosTatuagem(List<String> estilosTatuagem) {
-        this.estilosTatuagem = estilosTatuagem;
-    }
-
     public List<DisponibilidadeDTO> getDisponibilidades() {
         return disponibilidades;
     }

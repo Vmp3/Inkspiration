@@ -158,10 +158,6 @@ public class ProfissionalService {
         portifolioDTO.setFacebook(dto.getFacebook());
         portifolioDTO.setTwitter(dto.getTwitter());
         
-        if (dto.getEstilosTatuagem() != null && !dto.getEstilosTatuagem().isEmpty()) {
-            // TODO: Adicionar estilos de tatuagem ao portifólio
-        }
-        
         if (isUpdate && profissional.getPortifolio() != null) {
             portifolioDTO.setIdPortifolio(profissional.getPortifolio().getIdPortifolio());
             portifolioService.atualizar(profissional.getPortifolio().getIdPortifolio(), portifolioDTO);

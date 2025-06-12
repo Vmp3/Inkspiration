@@ -35,7 +35,7 @@ import PortfolioForm from '../components/forms/PortfolioForm';
 
 const ProfessionalRegisterScreen = () => {
   const navigation = useNavigation();
-  const { userData, updateUserData } = useAuth();
+  const { userData, updateUserData, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('basic');
   const [isLoading, setIsLoading] = useState(false);
   const [showExperienceOptions, setShowExperienceOptions] = useState(false);
@@ -226,12 +226,16 @@ const ProfessionalRegisterScreen = () => {
   
   // Verificar se o usuário está logado
   useEffect(() => {
+    if (loading) {
+      return;
+    }
+    
     if (!userData) {
       navigation.navigate('Login');
     } else if (userData.role === 'ROLE_PROF') {
       navigation.navigate('Home');
     }
-  }, [userData, navigation]);
+  }, [userData, navigation, loading]);
   
   // Fechar dropdown quando clicar fora do componente
   useEffect(() => {
