@@ -140,9 +140,9 @@ const ProfessionalRegisterScreen = () => {
     },
     {
       day: 'Sábado',
-      available: true,
+      available: false,
       morning: {
-        enabled: true,
+        enabled: false,
         start: '08:00',
         end: '12:00'
       },

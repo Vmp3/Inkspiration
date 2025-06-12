@@ -58,8 +58,8 @@ const useProfessionalData = (userData) => {
       },
       {
         day: 'Sábado',
-        available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
+        available: false,
+        morning: { enabled: false, start: '08:00', end: '12:00' },
         afternoon: { enabled: false, start: '13:00', end: '18:00' }
       },
       {
