@@ -51,7 +51,6 @@ const BasicInfoForm = ({
   
   useEffect(() => {
     if (Platform.OS === 'web') {
-      // Função para remover o z-index:0 dos elementos com a classe .css-view-175oi2r
       const removeZIndexFromViews = () => {
         const cssViewElements = document.querySelectorAll('.css-view-175oi2r');
         cssViewElements.forEach(element => {
@@ -64,7 +63,6 @@ const BasicInfoForm = ({
           const parentElements = [];
           let currentParent = dropdownRef.current.parentElement;
           
-          // Percorre os elementos pais até encontrar o body
           while (currentParent && currentParent !== document.body) {
             parentElements.push(currentParent);
             currentParent = currentParent.parentElement;
@@ -92,6 +90,15 @@ const BasicInfoForm = ({
   const handleExperienceSelect = (option) => {
     setExperience(option);
     setExperienceDropdownOpen(false);
+  };
+
+  const formatarNomeTipo = (nome) => {
+    if (nome === 'SESSAO') return 'Sessão';
+    if (nome.startsWith('TATUAGEM_')) {
+      const tipo = nome.replace('TATUAGEM_', '').toLowerCase();
+      return 'Tatuagem ' + tipo.charAt(0).toUpperCase() + tipo.slice(1);
+    }
+    return nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
   };
 
   return (
@@ -155,11 +162,7 @@ const BasicInfoForm = ({
                 </TouchableOpacity>
                 <View style={styles.tipoServicoTextContainer}>
                   <Text style={styles.checkboxLabel}>
-                    {tipo.nome
-                      .replace('TATUAGEM_', 'Tatuagem ')
-                      .replace('SESSAO', 'Sessão')
-                      .replace(/_/g, ' ')
-                      .replace(/(\w)(\w*)/g, (g0, g1, g2) => g1.toUpperCase() + g2.toLowerCase())} | Duração: {tipo.duracaoHoras} {tipo.duracaoHoras === 1 ? 'hora' : 'horas'}
+                    {formatarNomeTipo(tipo.nome)} | Duração: {tipo.duracaoHoras} {tipo.duracaoHoras === 1 ? 'hora' : 'horas'}
                   </Text>
                 </View>
               </View>
@@ -372,4 +375,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BasicInfoForm; 
+export default BasicInfoForm;
