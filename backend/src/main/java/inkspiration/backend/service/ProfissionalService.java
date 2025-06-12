@@ -51,7 +51,7 @@ public class ProfissionalService {
     }
 
     @Transactional
-    public Profissional criar(ProfissionalDTO dto) {
+    private Profissional criar(ProfissionalDTO dto) {
         // Verifica se o usuário existe
         Usuario usuario = usuarioRepository.findById(dto.getIdUsuario())
             .orElseThrow(() -> new UsuarioException.UsuarioNaoEncontradoException("Usuário não encontrado"));
@@ -84,6 +84,8 @@ public class ProfissionalService {
             profissional.setNota(dto.getNota());
         }
         
+        profissional.setTiposServico(dto.getTiposServico());
+        
         return profissionalRepository.save(profissional);
     }
 
@@ -101,6 +103,10 @@ public class ProfissionalService {
         // Atualiza a nota se fornecida
         if (dto.getNota() != null) {
             profissional.setNota(dto.getNota());
+        }
+        
+        if (dto.getTiposServico() != null && !dto.getTiposServico().isEmpty()) {
+            profissional.setTiposServico(dto.getTiposServico());
         }
         
         return profissionalRepository.save(profissional);
@@ -130,8 +136,14 @@ public class ProfissionalService {
             profissionalDTO.setIdUsuario(dto.getIdUsuario());
             profissionalDTO.setIdEndereco(dto.getIdEndereco());
             profissionalDTO.setNota(new BigDecimal("0.0")); // Nota inicial sempre zero
+            profissionalDTO.setTiposServico(dto.getTiposServico()); // Define os tipos de serviço
             
             profissional = criar(profissionalDTO);
+        }
+        
+        if (isUpdate && dto.getTiposServico() != null && !dto.getTiposServico().isEmpty()) {
+            profissional.setTiposServico(dto.getTiposServico());
+            profissionalRepository.save(profissional);
         }
         
         // 2. Criar ou atualizar o portifólio
@@ -236,7 +248,8 @@ public class ProfissionalService {
             profissional.getIdProfissional(),
             profissional.getUsuario().getIdUsuario(),
             idEndereco,
-            profissional.getNota()
+            profissional.getNota(),
+            profissional.getTiposServico()
         );
     }
     

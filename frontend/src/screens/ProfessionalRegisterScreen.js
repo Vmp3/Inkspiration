@@ -41,6 +41,9 @@ const ProfessionalRegisterScreen = () => {
   const [showExperienceOptions, setShowExperienceOptions] = useState(false);
   const [experienceDropdownOpen, setExperienceDropdownOpen] = useState(false);
   
+  const [tiposServico, setTiposServico] = useState([]);
+  const [tipoServicoSelecionados, setTipoServicoSelecionados] = useState({});
+  
   // Estados para as informações básicas
   const [experience, setExperience] = useState('1-3 anos');
   const [specialties, setSpecialties] = useState({
@@ -259,6 +262,13 @@ const ProfessionalRegisterScreen = () => {
     }));
   };
   
+  const handleTipoServicoChange = (tipoNome) => {
+    setTipoServicoSelecionados(prev => ({
+      ...prev,
+      [tipoNome]: !prev[tipoNome]
+    }));
+  };
+  
   const handleSocialMediaChange = (platform, value) => {
     setSocialMedia(prev => ({
       ...prev,
@@ -396,6 +406,13 @@ const ProfessionalRegisterScreen = () => {
         return;
       }
       
+      const selectedTiposServico = Object.keys(tipoServicoSelecionados).filter(key => tipoServicoSelecionados[key]);
+      if (selectedTiposServico.length === 0) {
+        toastHelper.showError('Selecione pelo menos um tipo de serviço');
+        setIsLoading(false);
+        return;
+      }
+      
       // Validar biografia
       if (!biography || biography.trim().length < 20) {
         toastHelper.showError('A biografia deve conter pelo menos 20 caracteres');
@@ -448,6 +465,7 @@ const ProfessionalRegisterScreen = () => {
         const professionalData = {
           idUsuario: userData.idUsuario,
           idEndereco: userDetails.idEndereco,
+          tiposServico: selectedTiposServico,
           experiencia: experience,
           especialidade: selectedSpecialties.join(', '),
           descricao: biography,
@@ -547,6 +565,10 @@ const ProfessionalRegisterScreen = () => {
                     handleSocialMediaChange={handleSocialMediaChange}
                     experienceDropdownOpen={experienceDropdownOpen}
                     setExperienceDropdownOpen={setExperienceDropdownOpen}
+                    tiposServico={tiposServico}
+                    setTiposServico={setTiposServico}
+                    tipoServicoSelecionados={tipoServicoSelecionados}
+                    handleTipoServicoChange={handleTipoServicoChange}
                   />
                   <View style={styles.formNavigationWrapper}>
                     <FormNavigation

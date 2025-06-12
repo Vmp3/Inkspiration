@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -29,11 +30,13 @@ import inkspiration.backend.dto.ProfissionalCriacaoDTO;
 import inkspiration.backend.dto.ProfissionalDTO;
 import inkspiration.backend.dto.PortifolioDTO;
 import inkspiration.backend.entities.Profissional;
+import inkspiration.backend.enums.TipoServico;
 import inkspiration.backend.service.ImagemService;
 import inkspiration.backend.service.ProfissionalService;
 import inkspiration.backend.service.PortifolioService;
 import inkspiration.backend.service.DisponibilidadeService;
 import inkspiration.backend.security.AuthorizationService;
+import inkspiration.backend.repository.ProfissionalRepository;
 import jakarta.validation.Valid;
 
 @RestController
@@ -44,14 +47,21 @@ public class ProfissionalController {
     private final PortifolioService portifolioService;
     private final DisponibilidadeService disponibilidadeService;
     private final AuthorizationService authorizationService;
+    private final ProfissionalRepository profissionalRepository;
 
     @Autowired
-    public ProfissionalController(ProfissionalService profissionalService, ImagemService imagemService, PortifolioService portifolioService, DisponibilidadeService disponibilidadeService, AuthorizationService authorizationService) {
+    public ProfissionalController(ProfissionalService profissionalService, 
+                                  ImagemService imagemService, 
+                                  PortifolioService portifolioService, 
+                                  DisponibilidadeService disponibilidadeService, 
+                                  AuthorizationService authorizationService,
+                                  ProfissionalRepository profissionalRepository) {
         this.profissionalService = profissionalService;
         this.imagemService = imagemService;
         this.portifolioService = portifolioService;
         this.disponibilidadeService = disponibilidadeService;
         this.authorizationService = authorizationService;
+        this.profissionalRepository = profissionalRepository;
     }
 
     @GetMapping("/profissional")
@@ -106,6 +116,8 @@ public class ProfissionalController {
                         usuarioInfo.put("imagemPerfil", profissional.getUsuario().getImagemPerfil());
                     }
                     profissionalCompleto.put("usuario", usuarioInfo);
+                    
+                    profissionalCompleto.put("tiposServico", profissional.getTiposServico());
                     
                     // Informações do endereço
                     Map<String, Object> enderecoInfo = new HashMap<>();
@@ -175,6 +187,8 @@ public class ProfissionalController {
             usuarioInfo.put("imagemPerfil", profissional.getUsuario().getImagemPerfil());
         }
         profissionalCompleto.put("usuario", usuarioInfo);
+        
+        profissionalCompleto.put("tiposServico", profissional.getTiposServico());
         
         // Informações do endereço
         Map<String, Object> enderecoInfo = new HashMap<>();
@@ -278,6 +292,7 @@ public class ProfissionalController {
             response.put("portfolio", portfolioDto);
             response.put("imagens", imagens);
             response.put("disponibilidades", disponibilidades);
+            response.put("tiposServico", profissional.getTiposServico());
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -294,10 +309,19 @@ public class ProfissionalController {
         return ResponseEntity.ok(existePerfil);
     }
 
-    @PostMapping("/auth/register/profissional")
-    public ResponseEntity<ProfissionalDTO> criar(@RequestBody @Valid ProfissionalDTO dto) {
-        Profissional profissional = profissionalService.criar(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(profissionalService.converterParaDto(profissional));
+    @GetMapping("/tipos-servico")
+    public ResponseEntity<List<Map<String, Object>>> listarTiposServico() {
+        List<Map<String, Object>> tiposServico = Arrays.stream(TipoServico.values())
+            .map(tipo -> {
+                Map<String, Object> tipoMap = new HashMap<>();
+                tipoMap.put("nome", tipo.name());
+                tipoMap.put("descricao", tipo.getDescricao());
+                tipoMap.put("duracaoHoras", tipo.getDuracaoHoras());
+                return tipoMap;
+            })
+            .collect(Collectors.toList());
+            
+        return ResponseEntity.ok(tiposServico);
     }
 
     @PostMapping("/auth/register/profissional-completo")
@@ -365,6 +389,9 @@ public class ProfissionalController {
             @SuppressWarnings("unchecked")
             Map<String, List<Map<String, String>>> disponibilidadesData = (Map<String, List<Map<String, String>>>) requestData.get("disponibilidades");
             
+            @SuppressWarnings("unchecked")
+            List<String> tiposServicoStr = (List<String>) requestData.get("tiposServico");
+            
             // Buscar o profissional existente
             Profissional profissional = profissionalService.buscarPorUsuario(idUsuario);
             
@@ -372,6 +399,19 @@ public class ProfissionalController {
             if (profissionalData != null) {
                 // Atualizar campos do profissional conforme necessário
                 // (implementar lógica de atualização baseada nos dados recebidos)
+            }
+            
+            if (tiposServicoStr != null && !tiposServicoStr.isEmpty()) {
+                try {
+                    List<TipoServico> tiposServico = tiposServicoStr.stream()
+                            .map(TipoServico::valueOf)
+                            .collect(Collectors.toList());
+                    profissional.setTiposServico(tiposServico);
+                    profissionalRepository.save(profissional);
+                } catch (IllegalArgumentException e) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body("Tipo de serviço inválido: " + e.getMessage());
+                }
             }
             
             // Atualizar portfólio se fornecido

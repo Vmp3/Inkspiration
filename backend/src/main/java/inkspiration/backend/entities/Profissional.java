@@ -8,7 +8,18 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Column;
+import jakarta.persistence.Transient;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import inkspiration.backend.enums.TipoServico;
 
 @Entity
 public class Profissional {
@@ -30,6 +41,33 @@ public class Profissional {
     
     @Column(precision = 3, scale = 1)
     private BigDecimal nota;
+    
+    @Column(name = "tipos_servico", length = 500)
+    private String tiposServicoStr;
+    
+    @Transient
+    private List<TipoServico> tiposServico = new ArrayList<>();
+    
+    @PostLoad
+    private void onLoad() {
+        if (tiposServicoStr != null && !tiposServicoStr.isEmpty()) {
+            tiposServico = Arrays.stream(tiposServicoStr.split(","))
+                    .map(TipoServico::valueOf)
+                    .collect(Collectors.toList());
+        }
+    }
+    
+    @PrePersist
+    @PreUpdate
+    private void onSave() {
+        if (tiposServico != null && !tiposServico.isEmpty()) {
+            tiposServicoStr = tiposServico.stream()
+                    .map(Enum::name)
+                    .collect(Collectors.joining(","));
+        } else {
+            tiposServicoStr = "";
+        }
+    }
     
     public Profissional() {}
     
@@ -72,5 +110,21 @@ public class Profissional {
     
     public void setNota(BigDecimal nota) {
         this.nota = nota;
+    }
+    
+    public List<TipoServico> getTiposServico() {
+        return tiposServico;
+    }
+    
+    public void setTiposServico(List<TipoServico> tiposServico) {
+        this.tiposServico = tiposServico != null ? tiposServico : new ArrayList<>();
+    }
+    
+    public String getTiposServicoStr() {
+        return tiposServicoStr;
+    }
+    
+    public void setTiposServicoStr(String tiposServicoStr) {
+        this.tiposServicoStr = tiposServicoStr;
     }
 } 
