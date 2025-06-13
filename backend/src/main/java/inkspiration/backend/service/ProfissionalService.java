@@ -105,7 +105,7 @@ public class ProfissionalService {
             profissional.setNota(dto.getNota());
         }
         
-        if (dto.getTiposServico() != null && !dto.getTiposServico().isEmpty()) {
+        if (dto.getTiposServico() != null) {
             profissional.setTiposServico(dto.getTiposServico());
         }
         
@@ -141,9 +141,12 @@ public class ProfissionalService {
             profissional = criar(profissionalDTO);
         }
         
-        if (isUpdate && dto.getTiposServico() != null && !dto.getTiposServico().isEmpty()) {
+        if (isUpdate) {
             profissional.setTiposServico(dto.getTiposServico());
-            profissionalRepository.save(profissional);
+            profissional = profissionalRepository.save(profissional);
+            
+            profissionalRepository.flush();
+            profissional = profissionalRepository.findById(profissional.getIdProfissional()).orElseThrow();
         }
         
         // 2. Criar ou atualizar o portifólio

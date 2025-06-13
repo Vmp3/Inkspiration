@@ -342,8 +342,12 @@ const EditProfileScreen = () => {
                   socialMedia={professionalData.professionalFormData.socialMedia}
                   handleSocialMediaChange={professionalData.handleSocialMediaChange}
                   handleNextTab={tabNavigation.handleNextTab}
-                      experienceDropdownOpen={experienceDropdownOpen}
-                      setExperienceDropdownOpen={setExperienceDropdownOpen}
+                  experienceDropdownOpen={experienceDropdownOpen}
+                  setExperienceDropdownOpen={setExperienceDropdownOpen}
+                  tiposServico={professionalData.professionalFormData.tiposServico}
+                  setTiposServico={(value) => professionalData.setProfessionalFormData(prev => ({ ...prev, tiposServico: value }))}
+                  tipoServicoSelecionados={professionalData.professionalFormData.tipoServicoSelecionados}
+                  handleTipoServicoChange={professionalData.handleTipoServicoChange}
                     />
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}

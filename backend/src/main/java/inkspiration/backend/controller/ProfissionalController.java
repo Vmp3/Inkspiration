@@ -414,63 +414,36 @@ public class ProfissionalController {
             @SuppressWarnings("unchecked")
             List<String> tiposServicoStr = (List<String>) requestData.get("tiposServico");
             
-            // Buscar o profissional existente
             Profissional profissional = profissionalService.buscarPorUsuario(idUsuario);
             
-            // Atualizar dados básicos do profissional se fornecidos
-            if (profissionalData != null) {
-                // Atualizar campos do profissional conforme necessário
-                // (implementar lógica de atualização baseada nos dados recebidos)
-            }
+            ProfissionalCriacaoDTO dto = new ProfissionalCriacaoDTO();
+            dto.setIdUsuario(idUsuario);
+            dto.setIdEndereco(profissional.getEndereco().getIdEndereco());
             
-            if (tiposServicoStr != null && !tiposServicoStr.isEmpty()) {
+            if (tiposServicoStr != null) {
                 try {
                     List<TipoServico> tiposServico = tiposServicoStr.stream()
                             .map(TipoServico::valueOf)
                             .collect(Collectors.toList());
-                    profissional.setTiposServico(tiposServico);
-                    profissionalRepository.save(profissional);
+                    dto.setTiposServico(tiposServico);
                 } catch (IllegalArgumentException e) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                             .body("Tipo de serviço inválido: " + e.getMessage());
                 }
             }
             
-            // Atualizar portfólio se fornecido
-            if (portfolioData != null && profissional.getPortifolio() != null) {
-                Long portfolioId = profissional.getPortifolio().getIdPortifolio();
-                
-                // Atualizar dados do portfólio
-                PortifolioDTO portfolioDto = new PortifolioDTO();
-                portfolioDto.setIdPortifolio(portfolioId);
-                
-                if (portfolioData.containsKey("descricao")) {
-                    portfolioDto.setDescricao((String) portfolioData.get("descricao"));
-                }
-                if (portfolioData.containsKey("especialidade")) {
-                    portfolioDto.setEspecialidade((String) portfolioData.get("especialidade"));
-                }
-                if (portfolioData.containsKey("experiencia")) {
-                    portfolioDto.setExperiencia((String) portfolioData.get("experiencia"));
-                }
-                if (portfolioData.containsKey("instagram")) {
-                    portfolioDto.setInstagram((String) portfolioData.get("instagram"));
-                }
-                if (portfolioData.containsKey("tiktok")) {
-                    portfolioDto.setTiktok((String) portfolioData.get("tiktok"));
-                }
-                if (portfolioData.containsKey("facebook")) {
-                    portfolioDto.setFacebook((String) portfolioData.get("facebook"));
-                }
-                if (portfolioData.containsKey("twitter")) {
-                    portfolioDto.setTwitter((String) portfolioData.get("twitter"));
-                }
-                if (portfolioData.containsKey("website")) {
-                    portfolioDto.setWebsite((String) portfolioData.get("website"));
-                }
-                
-                portifolioService.atualizar(portfolioId, portfolioDto);
+            if (portfolioData != null) {
+                dto.setDescricao((String) portfolioData.get("descricao"));
+                dto.setEspecialidade((String) portfolioData.get("especialidade"));
+                dto.setExperiencia((String) portfolioData.get("experiencia"));
+                dto.setInstagram((String) portfolioData.get("instagram"));
+                dto.setTiktok((String) portfolioData.get("tiktok"));
+                dto.setFacebook((String) portfolioData.get("facebook"));
+                dto.setTwitter((String) portfolioData.get("twitter"));
+                dto.setWebsite((String) portfolioData.get("website"));
             }
+            
+            profissional = profissionalService.criarProfissionalCompleto(dto);
             
             // Atualizar imagens do portfólio se fornecidas
             if (imagensData != null && profissional.getPortifolio() != null) {
@@ -497,6 +470,8 @@ public class ProfissionalController {
             if (disponibilidadesData != null) {
                 disponibilidadeService.cadastrarDisponibilidade(profissional.getIdProfissional(), disponibilidadesData);
             }
+            
+            profissional = profissionalService.buscarPorId(profissional.getIdProfissional());
             
             // Retornar dados completos atualizados no mesmo formato do endpoint /completo
             return buscarCompletoPorid(profissional.getIdProfissional());

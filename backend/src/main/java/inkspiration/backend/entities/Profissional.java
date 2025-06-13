@@ -50,6 +50,7 @@ public class Profissional {
     
     @PostLoad
     private void onLoad() {
+        tiposServico = new ArrayList<>();
         if (tiposServicoStr != null && !tiposServicoStr.isEmpty()) {
             tiposServico = Arrays.stream(tiposServicoStr.split(","))
                     .map(TipoServico::valueOf)
@@ -118,6 +119,13 @@ public class Profissional {
     
     public void setTiposServico(List<TipoServico> tiposServico) {
         this.tiposServico = tiposServico != null ? tiposServico : new ArrayList<>();
+        if (this.tiposServico != null && !this.tiposServico.isEmpty()) {
+            this.tiposServicoStr = this.tiposServico.stream()
+                    .map(Enum::name)
+                    .collect(Collectors.joining(","));
+        } else {
+            this.tiposServicoStr = "";
+        }
     }
     
     public String getTiposServicoStr() {
