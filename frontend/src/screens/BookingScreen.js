@@ -181,7 +181,8 @@ const BookingScreen = () => {
         idProfissional: professionalId,
         tipoServico: selectedService,
         descricao: description,
-        dtInicio: `${selectedDate}T${selectedTime}:00`
+        dtInicio: `${selectedDate}T${selectedTime}:00`,
+        status: "Agendado"
       };
 
       await AgendamentoService.criarAgendamento(agendamentoData);

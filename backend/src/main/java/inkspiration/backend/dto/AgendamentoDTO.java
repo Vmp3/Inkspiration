@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import inkspiration.backend.entities.Agendamento;
 import inkspiration.backend.enums.TipoServico;
+import inkspiration.backend.enums.StatusAgendamento;
 
 public class AgendamentoDTO {
     private Long idAgendamento;
@@ -13,6 +14,7 @@ public class AgendamentoDTO {
     private LocalDateTime dtFim;
     private Long idProfissional;
     private Long idUsuario;
+    private StatusAgendamento status;
 
     public AgendamentoDTO() {
     }
@@ -25,10 +27,11 @@ public class AgendamentoDTO {
         this.dtFim = agendamento.getDtFim();
         this.idProfissional = agendamento.getProfissional().getIdProfissional();
         this.idUsuario = agendamento.getUsuario().getIdUsuario();
+        this.status = agendamento.getStatus();
     }
 
     public AgendamentoDTO(Long idAgendamento, TipoServico tipoServico, String descricao, 
-                         LocalDateTime dtInicio, LocalDateTime dtFim, Long idProfissional, Long idUsuario) {
+                         LocalDateTime dtInicio, LocalDateTime dtFim, Long idProfissional, Long idUsuario, StatusAgendamento status) {
         this.idAgendamento = idAgendamento;
         this.tipoServico = tipoServico;
         this.descricao = descricao;
@@ -36,6 +39,7 @@ public class AgendamentoDTO {
         this.dtFim = dtFim;
         this.idProfissional = idProfissional;
         this.idUsuario = idUsuario;
+        this.status = status;
     }
 
     public Long getIdAgendamento() {
@@ -92,5 +96,13 @@ public class AgendamentoDTO {
 
     public void setIdUsuario(Long idUsuario) {
         this.idUsuario = idUsuario;
+    }
+
+    public StatusAgendamento getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusAgendamento status) {
+        this.status = status;
     }
 }

@@ -17,6 +17,7 @@ import inkspiration.backend.entities.Agendamento;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.enums.TipoServico;
+import inkspiration.backend.enums.StatusAgendamento;
 import inkspiration.backend.repository.AgendamentoRepository;
 import inkspiration.backend.repository.ProfissionalRepository;
 import inkspiration.backend.repository.UsuarioRepository;
@@ -264,5 +265,18 @@ public class AgendamentoService {
         return listarPorProfissionalEPeriodo(idProfissional, inicio, fim).stream()
                 .map(AgendamentoDTO::new)
                 .collect(Collectors.toList());
+    }
+    
+    @Transactional
+    public Agendamento atualizarStatusAgendamento(Long id, String status) {
+        Agendamento agendamento = buscarPorId(id);
+        
+        try {
+            StatusAgendamento novoStatus = StatusAgendamento.fromDescricao(status);
+            agendamento.setStatus(novoStatus);
+            return agendamentoRepository.save(agendamento);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Status inválido. Opções válidas: Agendado, Cancelado, Concluído");
+        }
     }
 } 

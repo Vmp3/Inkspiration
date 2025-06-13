@@ -16,6 +16,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import inkspiration.backend.enums.TipoServico;
+import inkspiration.backend.enums.StatusAgendamento;
 
 @Entity
 public class Agendamento {
@@ -46,6 +47,11 @@ public class Agendamento {
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @NotNull(message = "Status é obrigatório")
+    private StatusAgendamento status = StatusAgendamento.AGENDADO;
     
     public Agendamento() {}
     
@@ -103,5 +109,13 @@ public class Agendamento {
     
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
+    }
+
+    public StatusAgendamento getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusAgendamento status) {
+        this.status = status;
     }
 } 

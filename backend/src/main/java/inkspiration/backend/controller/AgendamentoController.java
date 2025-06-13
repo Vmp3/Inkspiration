@@ -200,4 +200,16 @@ public class AgendamentoController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> atualizarStatusAgendamento(
+            @PathVariable Long id,
+            @RequestParam String status) {
+        try {
+            Agendamento agendamento = agendamentoService.atualizarStatusAgendamento(id, status);
+            return ResponseEntity.ok(new AgendamentoDTO(agendamento));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 } 

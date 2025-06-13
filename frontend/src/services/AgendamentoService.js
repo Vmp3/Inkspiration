@@ -28,7 +28,11 @@ class AgendamentoService {
 
   async criarAgendamento(dadosAgendamento) {
     try {
-      return await ApiService.post('/agendamentos', dadosAgendamento);
+      const dadosComStatus = {
+        ...dadosAgendamento,
+        status: "Agendado"
+      };
+      return await ApiService.post('/agendamentos', dadosComStatus);
     } catch (error) {
       console.error('Erro ao criar agendamento:', error);
       throw error;
@@ -86,6 +90,15 @@ class AgendamentoService {
       return response;
     } catch (error) {
       console.error('Erro ao buscar meus agendamentos:', error);
+      throw error;
+    }
+  }
+
+  async atualizarStatusAgendamento(id, novoStatus) {
+    try {
+      return await ApiService.put(`/agendamentos/${id}/status?status=${novoStatus}`);
+    } catch (error) {
+      console.error('Erro ao atualizar status do agendamento:', error);
       throw error;
     }
   }

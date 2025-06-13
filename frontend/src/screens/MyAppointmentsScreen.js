@@ -101,12 +101,72 @@ const MyAppointmentsScreen = () => {
     setSelectedAppointment(appointment);
   };
 
+  const handleStatusUpdate = async (appointment, newStatus) => {
+    try {
+      await AgendamentoService.atualizarStatusAgendamento(appointment.idAgendamento, newStatus);
+      toastHelper.showSuccess('Status atualizado com sucesso!');
+      handleRefresh();
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+      toastHelper.showError('Erro ao atualizar status do agendamento');
+    }
+  };
+
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case 'Agendado':
+        return {
+          badge: styles.scheduledBadge,
+          text: styles.scheduledText
+        };
+      case 'Cancelado':
+        return {
+          badge: styles.canceledBadge,
+          text: styles.canceledText
+        };
+      case 'Concluído':
+        return {
+          badge: styles.completedBadge,
+          text: styles.completedText
+        };
+      default:
+        return {
+          badge: styles.scheduledBadge,
+          text: styles.scheduledText
+        };
+    }
+  };
+
+  const renderStatusOptions = (appointment) => {
+    return (
+      <View style={styles.statusOptionsContainer}>
+        <TouchableOpacity
+          style={styles.statusOption}
+          onPress={() => handleStatusUpdate(appointment, 'Agendado')}
+        >
+          <Text style={styles.statusOptionText}>Agendado</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.statusOption}
+          onPress={() => handleStatusUpdate(appointment, 'Cancelado')}
+        >
+          <Text style={styles.statusOptionText}>Cancelado</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.statusOption}
+          onPress={() => handleStatusUpdate(appointment, 'Concluído')}
+        >
+          <Text style={styles.statusOptionText}>Concluído</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   const renderAppointmentCard = (appointment) => {
     console.log('Renderizando card para agendamento:', appointment); // Debug
     if (!appointment) return null;
 
-    const isCompleted = new Date(appointment.dtInicio) < new Date();
-    const status = isCompleted ? 'concluído' : 'agendado';
+    const statusStyle = getStatusStyle(appointment.status);
 
     return (
       <TouchableOpacity
@@ -156,17 +216,12 @@ const MyAppointmentsScreen = () => {
         </View>
 
         <View style={styles.statusContainer}>
-          <View style={[
-            styles.statusBadge,
-            status === 'concluído' ? styles.completedBadge : styles.scheduledBadge
-          ]}>
-            <Text style={[
-              styles.statusText,
-              status === 'concluído' ? styles.completedText : styles.scheduledText
-            ]}>
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+          <View style={[styles.statusBadge, statusStyle.badge]}>
+            <Text style={[styles.statusText, statusStyle.text]}>
+              {appointment.status || 'Agendado'}
             </Text>
           </View>
+          {renderStatusOptions(appointment)}
         </View>
       </TouchableOpacity>
     );
@@ -380,21 +435,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 16,
   },
-  scheduledBadge: {
-    backgroundColor: '#e0f2fe',
-  },
-  completedBadge: {
-    backgroundColor: '#dcfce7',
-  },
   statusText: {
     fontSize: 14,
     fontWeight: '500',
-  },
-  scheduledText: {
-    color: '#0369a1',
-  },
-  completedText: {
-    color: '#15803d',
   },
   loadingContainer: {
     flex: 1,
@@ -448,6 +491,40 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     color: '#64748b',
+  },
+  statusOptionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+    gap: 8,
+  },
+  statusOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#f1f5f9',
+  },
+  statusOptionText: {
+    fontSize: 12,
+    color: '#64748b',
+  },
+  canceledBadge: {
+    backgroundColor: '#fee2e2',
+  },
+  canceledText: {
+    color: '#dc2626',
+  },
+  completedBadge: {
+    backgroundColor: '#dcfce7',
+  },
+  completedText: {
+    color: '#15803d',
+  },
+  scheduledBadge: {
+    backgroundColor: '#e0f2fe',
+  },
+  scheduledText: {
+    color: '#0369a1',
   },
 });
 
