@@ -197,7 +197,6 @@ public class AuthenticationController {
             // Buscar o usuário pelo CPF
             Usuario usuario = usuarioService.buscarPorCpf(cpf);
             if (usuario == null) {
-                // Por segurança, não informamos se o usuário existe ou não
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", true);
                 response.put("requiresTwoFactor", false);
