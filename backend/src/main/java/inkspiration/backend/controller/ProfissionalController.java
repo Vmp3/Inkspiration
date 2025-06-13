@@ -324,6 +324,28 @@ public class ProfissionalController {
         return ResponseEntity.ok(tiposServico);
     }
 
+    @GetMapping("/tipos-servico/{idProfissional}")
+    public ResponseEntity<List<Map<String, Object>>> listarTiposServicoPorProfissional(@PathVariable Long idProfissional) {
+        try {
+            Profissional profissional = profissionalService.buscarPorId(idProfissional);
+            List<Map<String, Object>> tiposServico = profissional.getTiposServico().stream()
+                .map(tipo -> {
+                    Map<String, Object> tipoMap = new HashMap<>();
+                    tipoMap.put("tipo", tipo.getDescricao());
+                    tipoMap.put("duracaoHoras", tipo.getDuracaoHoras());
+                    tipoMap.put("exemplo", tipo.name().startsWith("TATUAGEM_") ? 
+                        "Tatuagem " + tipo.name().replace("TATUAGEM_", "").toLowerCase() + " - " + tipo.getDuracaoHoras() + " horas" :
+                        "Sessão completa - " + tipo.getDuracaoHoras() + " horas");
+                    return tipoMap;
+                })
+                .collect(Collectors.toList());
+                
+            return ResponseEntity.ok(tiposServico);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @PostMapping("/auth/register/profissional-completo")
     public ResponseEntity<?> criarProfissionalCompleto(@RequestBody @Valid ProfissionalCriacaoDTO dto) {
         try {

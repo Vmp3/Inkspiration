@@ -35,11 +35,11 @@ class AgendamentoService {
     }
   }
 
-  async buscarTiposServico() {
+  async buscarTiposServicoPorProfissional(idProfissional) {
     try {
-      return await ApiService.get('/agendamentos/tipos-servico');
+      return await ApiService.get(`/tipos-servico/${idProfissional}`);
     } catch (error) {
-      console.error('Erro ao buscar tipos de serviço:', error);
+      console.error('Erro ao buscar tipos de serviço do profissional:', error);
       throw error;
     }
   }

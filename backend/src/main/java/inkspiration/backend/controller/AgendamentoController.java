@@ -162,37 +162,6 @@ public class AgendamentoController {
         }
     }
     
-    @GetMapping("/tipos-servico")
-    public ResponseEntity<?> listarTiposServico() {
-        try {
-            List<Map<String, Object>> tiposServico = List.of(
-                Map.of(
-                    "tipo", TipoServico.TATUAGEM_PEQUENA.getDescricao(),
-                    "duracaoHoras", TipoServico.TATUAGEM_PEQUENA.getDuracaoHoras(),
-                    "exemplo", "Tatuagem pequena - 2 horas"
-                ),
-                Map.of(
-                    "tipo", TipoServico.TATUAGEM_MEDIA.getDescricao(),
-                    "duracaoHoras", TipoServico.TATUAGEM_MEDIA.getDuracaoHoras(),
-                    "exemplo", "Tatuagem média - 4 horas"
-                ),
-                Map.of(
-                    "tipo", TipoServico.TATUAGEM_GRANDE.getDescricao(),
-                    "duracaoHoras", TipoServico.TATUAGEM_GRANDE.getDuracaoHoras(),
-                    "exemplo", "Tatuagem grande - 6 horas"
-                ),
-                Map.of(
-                    "tipo", TipoServico.SESSAO.getDescricao(),
-                    "duracaoHoras", TipoServico.SESSAO.getDuracaoHoras(),
-                    "exemplo", "Sessão completa - 8 horas"
-                )
-            );
-            return ResponseEntity.ok(tiposServico);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-    
     @DeleteMapping("/{id}")
     public ResponseEntity<?> excluirAgendamento(@PathVariable Long id) {
         try {

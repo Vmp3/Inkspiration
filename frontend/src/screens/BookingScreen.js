@@ -109,7 +109,7 @@ const BookingScreen = () => {
       const professionalData = await ProfessionalService.getProfessionalCompleteById(professionalId);
       setProfessional(professionalData);
 
-      const servicesData = await AgendamentoService.buscarTiposServico();
+      const servicesData = await AgendamentoService.buscarTiposServicoPorProfissional(professionalId);
       setServices(servicesData);
 
       const today = new Date().toISOString().split('T')[0];
