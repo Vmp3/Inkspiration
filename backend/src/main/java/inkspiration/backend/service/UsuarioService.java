@@ -89,6 +89,8 @@ public class UsuarioService {
         // Associa o usuarioAutenticar ao usuário
         usuario.setUsuarioAutenticar(usuarioAuth);
         
+        usuario.setCreatedAt(java.time.LocalDateTime.now());
+        
         // Salva o usuário com suas associações
         usuario = repository.save(usuario);
         
@@ -335,6 +337,14 @@ public class UsuarioService {
     public Usuario buscarPorCpf(String cpf) {
         return repository.findByCpf(cpf)
             .orElseThrow(() -> new UsuarioException.UsuarioNaoEncontradoException("Usuário não encontrado"));
+    }
+
+    public Usuario buscarPorEmailOptional(String email) {
+        return repository.findByEmail(email).orElse(null);
+    }
+    
+    public Usuario buscarPorCpfOptional(String cpf) {
+        return repository.findByCpf(cpf).orElse(null);
     }
 
     public void salvar(Usuario usuario) {

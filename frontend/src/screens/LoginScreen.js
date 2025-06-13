@@ -85,7 +85,8 @@ const LoginScreen = () => {
           toastHelper.showError(result.message || 'Digite o código de autenticação de dois fatores');
           return;
         }
-        toastHelper.showError(result.error || authMessages.loginErrors.loginFailed);
+        const errorMessage = result.error || result.message || authMessages.loginErrors.loginFailed;
+        toastHelper.showError(errorMessage);
         return;
       }
 
@@ -97,7 +98,9 @@ const LoginScreen = () => {
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
-      toastHelper.showError(authMessages.loginErrors.serverError);
+      // Priorizar mensagem do erro se disponível
+      const errorMessage = error.message || authMessages.loginErrors.serverError;
+      toastHelper.showError(errorMessage);
     } finally {
       setLoading(false);
     }

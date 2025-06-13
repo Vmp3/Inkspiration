@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -29,6 +29,13 @@ const RegisterScreen = () => {
   const [birthDateError, setBirthDateError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  
+  // Estados para verificação de email
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+  const [isResendingCode, setIsResendingCode] = useState(false);
   
   const [formData, setFormData] = useState({
     // Dados pessoais
@@ -452,19 +459,58 @@ const RegisterScreen = () => {
         role: 'user'
       };
 
-      await PublicAuthService.register(userData);
+      // Chamar endpoint de verificação de email ao invés de criar usuário diretamente
+      await PublicAuthService.requestEmailVerification(userData);
 
-      // Exibe mensagem de sucesso
-      toastHelper.showSuccess(authMessages.success.registerSuccess);
+      setVerificationEmail(formData.email);
 
-      // Aguarda um momento para mostrar o toast antes de navegar
-      setTimeout(() => {
-        navigation.navigate('Login');
-      }, 1000);
+      toastHelper.showSuccess('Email de verificação enviado! Verifique sua caixa de entrada.');
+      setShowVerificationModal(true);
+
     } catch (error) {
       toastHelper.showError(error.message || authMessages.registerErrors.serverError);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    if (!verificationCode.trim()) {
+      toastHelper.showError('Por favor, insira o código de verificação.');
+      return;
+    }
+
+    try {
+      setIsVerifyingEmail(true);
+
+      await PublicAuthService.verifyEmail(verificationEmail, verificationCode);
+
+      // Exibe mensagem de sucesso
+      toastHelper.showSuccess('Conta criada com sucesso!');
+
+      setShowVerificationModal(false);
+      setTimeout(() => {
+        navigation.navigate('Login');
+      }, 1000);
+
+    } catch (error) {
+      toastHelper.showError(error.message || 'Código de verificação inválido ou expirado.');
+    } finally {
+      setIsVerifyingEmail(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      setIsResendingCode(true);
+
+      await PublicAuthService.resendVerificationCode(verificationEmail);
+      toastHelper.showSuccess('Código reenviado com sucesso!');
+
+    } catch (error) {
+      toastHelper.showError(error.message || 'Erro ao reenviar código.');
+    } finally {
+      setIsResendingCode(false);
     }
   };
 
@@ -560,6 +606,68 @@ const RegisterScreen = () => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Modal de Verificação de Email */}
+      <Modal
+        visible={showVerificationModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowVerificationModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Verificação de Email</Text>
+              <Text style={styles.modalSubtitle}>
+                Enviamos um código de 6 dígitos para{'\n'}
+                <Text style={styles.emailText}>{verificationEmail}</Text>
+              </Text>
+            </View>
+
+            <View style={styles.modalBody}>
+              <Text style={styles.inputLabel}>Código de Verificação</Text>
+              <TextInput
+                style={styles.codeInput}
+                value={verificationCode}
+                onChangeText={setVerificationCode}
+                placeholder="000000"
+                keyboardType="numeric"
+                maxLength={6}
+                textAlign="center"
+              />
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.verifyButton]}
+                  onPress={handleVerifyEmail}
+                  disabled={isVerifyingEmail}
+                >
+                  <Text style={styles.verifyButtonText}>
+                    {isVerifyingEmail ? 'Verificando...' : 'Verificar'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.resendButton]}
+                  onPress={handleResendCode}
+                  disabled={isResendingCode}
+                >
+                  <Text style={styles.resendButtonText}>
+                    {isResendingCode ? 'Reenviando...' : 'Reenviar Código'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setShowVerificationModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -644,6 +752,101 @@ const styles = StyleSheet.create({
     color: '#000',
     fontWeight: '500',
     textDecorationLine: 'underline',
+  },
+  // Estilos do Modal de Verificação
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalHeader: {
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  emailText: {
+    fontWeight: '600',
+    color: '#111',
+  },
+  modalBody: {
+    padding: 24,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111',
+    marginBottom: 8,
+  },
+  codeInput: {
+    textAlign: 'center',
+    borderWidth: 2,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 16,
+    fontSize: 24,
+    fontWeight: 'bold',
+    letterSpacing: 8,
+    marginBottom: 24,
+    backgroundColor: '#f9f9f9',
+  },
+  modalButtons: {
+    gap: 12,
+  },
+  modalButton: {
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  verifyButton: {
+    backgroundColor: '#111',
+  },
+  verifyButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  resendButton: {
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  resendButtonText: {
+    color: '#111',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  cancelButton: {
+    backgroundColor: 'transparent',
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontSize: 16,
   },
 });
 

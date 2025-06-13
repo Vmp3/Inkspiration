@@ -82,6 +82,65 @@ class PublicAuthService {
       throw new Error('Ocorreu um erro ao cadastrar. Tente novamente.');
     }
   }
+
+  async requestEmailVerification(userData) {
+    try {
+      const response = await ApiService.post('/auth/request-verification', userData);
+      return response;
+    } catch (error) {
+      if (error.response) {
+        const data = error.response.data;
+        
+        if (data.message) {
+          throw new Error(data.message);
+        }
+        
+        throw new Error(data || 'Erro ao enviar email de verificação. Tente novamente.');
+      }
+      throw new Error('Erro ao enviar email de verificação. Tente novamente.');
+    }
+  }
+
+  async verifyEmail(email, code) {
+    try {
+      const response = await ApiService.post('/auth/verify-email', {
+        email,
+        code
+      });
+      return response;
+    } catch (error) {
+      if (error.response) {
+        const data = error.response.data;
+        
+        if (data.message) {
+          throw new Error(data.message);
+        }
+        
+        throw new Error(data || 'Código de verificação inválido ou expirado.');
+      }
+      throw new Error('Erro ao verificar email. Tente novamente.');
+    }
+  }
+
+  async resendVerificationCode(email) {
+    try {
+      const response = await ApiService.post('/auth/resend-verification', {
+        email
+      });
+      return response;
+    } catch (error) {
+      if (error.response) {
+        const data = error.response.data;
+        
+        if (data.message) {
+          throw new Error(data.message);
+        }
+        
+        throw new Error(data || 'Erro ao reenviar código de verificação.');
+      }
+      throw new Error('Erro ao reenviar código de verificação. Tente novamente.');
+    }
+  }
 }
 
 export default new PublicAuthService(); 

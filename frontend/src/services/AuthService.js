@@ -90,6 +90,12 @@ class AuthService {
             message: responseData.message || 'Código de autenticação de dois fatores inválido'
           };
         }
+        throw new Error(responseData?.error || responseData || 'Credenciais inválidas');
+      }
+      
+      if (error.response && error.response.data) {
+        const responseData = error.response.data;
+        throw new Error(responseData?.error || responseData?.message || responseData || 'Erro no login');
       }
       
       throw error;
