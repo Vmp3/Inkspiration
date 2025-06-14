@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import inkspiration.backend.dto.AgendamentoDTO;
+import inkspiration.backend.dto.AgendamentoCompletoDTO;
 import inkspiration.backend.entities.Agendamento;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
@@ -278,5 +279,35 @@ public class AgendamentoService {
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Status inválido. Opções válidas: Agendado, Cancelado, Concluído");
         }
+    }
+    
+    public Page<AgendamentoCompletoDTO> listarAgendamentosFuturos(Long idUsuario, Pageable pageable) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        
+        LocalDateTime agora = LocalDateTime.now();
+        Page<Agendamento> agendamentosPage = agendamentoRepository.findByUsuarioAndDtFimAfterOrderByDtInicioAsc(
+                usuario, agora, pageable);
+        
+        List<AgendamentoCompletoDTO> agendamentosDTO = agendamentosPage.getContent().stream()
+                .map(AgendamentoCompletoDTO::new)
+                .collect(Collectors.toList());
+        
+        return new PageImpl<>(agendamentosDTO, pageable, agendamentosPage.getTotalElements());
+    }
+    
+    public Page<AgendamentoCompletoDTO> listarAgendamentosPassados(Long idUsuario, Pageable pageable) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        
+        LocalDateTime agora = LocalDateTime.now();
+        Page<Agendamento> agendamentosPage = agendamentoRepository.findByUsuarioAndDtFimBeforeOrderByDtInicioDesc(
+                usuario, agora, pageable);
+        
+        List<AgendamentoCompletoDTO> agendamentosDTO = agendamentosPage.getContent().stream()
+                .map(AgendamentoCompletoDTO::new)
+                .collect(Collectors.toList());
+        
+        return new PageImpl<>(agendamentosDTO, pageable, agendamentosPage.getTotalElements());
     }
 } 

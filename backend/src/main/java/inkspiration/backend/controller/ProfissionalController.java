@@ -47,7 +47,6 @@ public class ProfissionalController {
     private final PortifolioService portifolioService;
     private final DisponibilidadeService disponibilidadeService;
     private final AuthorizationService authorizationService;
-    private final ProfissionalRepository profissionalRepository;
 
     @Autowired
     public ProfissionalController(ProfissionalService profissionalService, 
@@ -61,7 +60,6 @@ public class ProfissionalController {
         this.portifolioService = portifolioService;
         this.disponibilidadeService = disponibilidadeService;
         this.authorizationService = authorizationService;
-        this.profissionalRepository = profissionalRepository;
     }
 
     @GetMapping("/profissional")
@@ -394,10 +392,6 @@ public class ProfissionalController {
         try {
             // Verifica se o usuário pode editar este perfil profissional
             authorizationService.requireUserAccessOrAdmin(idUsuario);
-            
-            // Extrair dados profissionais
-            @SuppressWarnings("unchecked")
-            Map<String, Object> profissionalData = (Map<String, Object>) requestData.get("profissional");
             
             // Extrair dados do portfólio
             @SuppressWarnings("unchecked")

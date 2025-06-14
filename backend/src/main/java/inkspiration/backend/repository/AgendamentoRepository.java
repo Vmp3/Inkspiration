@@ -37,4 +37,11 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
             @Param("fim") LocalDateTime fim);
             
     Optional<Agendamento> findByUsuarioAndProfissional(Usuario usuario, Profissional profissional);
+
+    // Novos métodos para agendamentos futuros e passados
+    Page<Agendamento> findByUsuarioAndDtFimAfterOrderByDtInicioAsc(
+            Usuario usuario, LocalDateTime dataReferencia, Pageable pageable);
+            
+    Page<Agendamento> findByUsuarioAndDtFimBeforeOrderByDtInicioDesc(
+            Usuario usuario, LocalDateTime dataReferencia, Pageable pageable);
 } 

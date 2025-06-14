@@ -2,7 +2,6 @@ package inkspiration.backend.controller;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,9 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import inkspiration.backend.dto.AgendamentoDTO;
+import inkspiration.backend.dto.AgendamentoCompletoDTO;
 import inkspiration.backend.dto.AgendamentoRequestDTO;
 import inkspiration.backend.entities.Agendamento;
-import inkspiration.backend.enums.TipoServico;
 import inkspiration.backend.service.AgendamentoService;
 
 @RestController
@@ -208,6 +207,64 @@ public class AgendamentoController {
         try {
             Agendamento agendamento = agendamentoService.atualizarStatusAgendamento(id, status);
             return ResponseEntity.ok(new AgendamentoDTO(agendamento));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/meus-agendamentos/futuros")
+    public ResponseEntity<?> listarMeusAgendamentosFuturos(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            if (authentication instanceof JwtAuthenticationToken) {
+                JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+                Jwt jwt = jwtAuth.getToken();
+                Long userId = jwt.getClaim("userId");
+                
+                if (userId == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body("Token não contém informações do usuário");
+                }
+                
+                Pageable pageable = PageRequest.of(page, size);
+                Page<AgendamentoCompletoDTO> agendamentosPage = agendamentoService.listarAgendamentosFuturos(userId, pageable);
+                
+                return ResponseEntity.ok(agendamentosPage);
+            }
+            
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Autenticação inválida");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/meus-agendamentos/passados")
+    public ResponseEntity<?> listarMeusAgendamentosPassados(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            if (authentication instanceof JwtAuthenticationToken) {
+                JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+                Jwt jwt = jwtAuth.getToken();
+                Long userId = jwt.getClaim("userId");
+                
+                if (userId == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body("Token não contém informações do usuário");
+                }
+                
+                Pageable pageable = PageRequest.of(page, size);
+                Page<AgendamentoCompletoDTO> agendamentosPage = agendamentoService.listarAgendamentosPassados(userId, pageable);
+                
+                return ResponseEntity.ok(agendamentosPage);
+            }
+            
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Autenticação inválida");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

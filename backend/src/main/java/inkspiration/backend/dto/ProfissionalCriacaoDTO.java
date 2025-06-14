@@ -16,7 +16,6 @@ public class ProfissionalCriacaoDTO {
     private String descricao;
     private String experiencia;
     private String especialidade;
-    private List<String> estilosTatuagem;
     private String website;
     private String tiktok;
     private String instagram;
@@ -39,7 +38,6 @@ public class ProfissionalCriacaoDTO {
         this.descricao = descricao;
         this.experiencia = experiencia;
         this.especialidade = especialidade;
-        this.estilosTatuagem = estilosTatuagem;
         this.disponibilidades = disponibilidades;
         this.website = website;
         this.tiktok = tiktok;
