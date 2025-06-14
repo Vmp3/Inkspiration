@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -257,10 +258,30 @@ public class DisponibilidadeService {
         int duracaoHoras = tipoServico.getDuracaoHoras();
         
         List<Map<String, String>> horariosDia = disponibilidade.get(nomeDia);
-        for (Map<String, String> horario : horariosDia) {
-            if (horario.containsKey("inicio") && horario.containsKey("fim")) {
-                LocalTime inicioTrabalho = LocalTime.parse(horario.get("inicio"));
-                LocalTime fimTrabalho = LocalTime.parse(horario.get("fim"));
+        List<Map<String, String>> periodosConsolidados = new ArrayList<>();
+        
+        if (!horariosDia.isEmpty()) {
+            Map<String, String> periodoAtual = new HashMap<>(horariosDia.get(0));
+            
+            for (int i = 1; i < horariosDia.size(); i++) {
+                Map<String, String> proximoPeriodo = horariosDia.get(i);
+                LocalTime fimAtual = LocalTime.parse(periodoAtual.get("fim"));
+                LocalTime inicioProximo = LocalTime.parse(proximoPeriodo.get("inicio"));
+                
+                if (inicioProximo.minusMinutes(1).equals(fimAtual) || inicioProximo.equals(fimAtual)) {
+                    periodoAtual.put("fim", proximoPeriodo.get("fim"));
+                } else {
+                    periodosConsolidados.add(new HashMap<>(periodoAtual));
+                    periodoAtual = new HashMap<>(proximoPeriodo);
+                }
+            }
+            periodosConsolidados.add(periodoAtual);
+        }
+        
+        for (Map<String, String> periodo : periodosConsolidados) {
+            if (periodo.containsKey("inicio") && periodo.containsKey("fim")) {
+                LocalTime inicioTrabalho = LocalTime.parse(periodo.get("inicio"));
+                LocalTime fimTrabalho = LocalTime.parse(periodo.get("fim"));
                 
                 LocalTime horarioLimite = fimTrabalho.minusHours(duracaoHoras);
                 
