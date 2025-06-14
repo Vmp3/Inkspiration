@@ -71,7 +71,12 @@ const useProfessionalData = (userData) => {
     ],
     biography: '',
     portfolioImages: [],
-    profileImage: null
+    profileImage: userData?.imagemPerfil ? {
+      uri: userData.imagemPerfil,
+      base64: userData.imagemPerfil,
+      type: 'image/jpeg',
+      name: 'profile.jpg'
+    } : null
   });
 
   // Carregar dados profissionais
@@ -169,7 +174,12 @@ const useProfessionalData = (userData) => {
             type: 'image/jpeg',
             name: `portfolio_${img.idImagem || Date.now()}.jpg`
           })),
-          profileImage: null
+          profileImage: userData?.imagemPerfil ? {
+            uri: userData.imagemPerfil,
+            base64: userData.imagemPerfil,
+            type: 'image/jpeg',
+            name: 'profile.jpg'
+          } : null
         });
       }
     } catch (error) {
@@ -298,13 +308,23 @@ const useProfessionalData = (userData) => {
   
   const pickImage = async (imageType, index = null) => {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
+      // Configurações diferentes para imagem de perfil vs portfólio
+      const imagePickerOptions = {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [1, 1],
         quality: 0.8,
         base64: true
-      });
+      };
+
+      // Para imagem de perfil, usar aspect ratio circular
+      if (imageType === 'profile') {
+        imagePickerOptions.aspect = [1, 1]; // Quadrado para facilitar o crop circular
+        imagePickerOptions.allowsMultipleSelection = false;
+      } else {
+        imagePickerOptions.aspect = [4, 3]; // Para portfólio, formato mais livre
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync(imagePickerOptions);
       if (!result.canceled) {
         const selectedImage = result.assets[0];
         const imageUri = selectedImage.uri;
@@ -350,6 +370,19 @@ const useProfessionalData = (userData) => {
   useEffect(() => {
     if (userData?.role === 'ROLE_PROF') {
       loadProfessionalData();
+    }
+    
+    // Atualizar imagem de perfil quando userData mudar
+    if (userData?.imagemPerfil) {
+      setProfessionalFormData(prev => ({
+        ...prev,
+        profileImage: {
+          uri: userData.imagemPerfil,
+          base64: userData.imagemPerfil,
+          type: 'image/jpeg',
+          name: 'profile.jpg'
+        }
+      }));
     }
   }, [userData]);
 

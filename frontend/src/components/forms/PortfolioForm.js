@@ -14,6 +14,36 @@ const PortfolioForm = ({
   return (
     <View style={styles.tabContent}>
       <View style={styles.formGroup}>
+        <Text style={styles.label}>Foto de Perfil</Text>
+        <View style={styles.profileSection}>
+          <TouchableOpacity 
+            style={styles.profileImageContainer}
+            onPress={() => pickImage('profile')}
+          >
+            {profileImage ? (
+              <Image 
+                source={{ uri: profileImage.uri }}
+                style={styles.profileImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.profileImagePlaceholder}>
+                <Feather name="user-plus" size={32} color="#999" />
+              </View>
+            )}
+          </TouchableOpacity>
+          <View style={styles.profileImageInfo}>
+            <Text style={styles.profileImageText}>
+              {profileImage ? 'Toque para alterar sua foto' : 'Toque para adicionar sua foto'}
+            </Text>
+            <Text style={styles.profileImageSubtext}>
+              Recomendado: imagem quadrada, máximo 5MB
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.formGroup}>
         <Text style={styles.label}>Biografia</Text>
         <TextInput
           style={styles.biographyInput}
@@ -63,32 +93,6 @@ const PortfolioForm = ({
             </View>
           ))}
         </View>
-      </View>
-      
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Foto de Perfil</Text>
-        <TouchableOpacity 
-          style={styles.profileImageContainer}
-          onPress={() => pickImage('profile')}
-        >
-          {profileImage ? (
-            <Image 
-              source={{ uri: profileImage.uri }}
-              style={styles.profileImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.profileImagePlaceholder}>
-              <Feather name="upload" size={24} color="#666" />
-              <Text style={styles.profileImageText}>
-                Arraste e solte uma imagem aqui, ou clique para selecionar
-              </Text>
-              <Text style={styles.profileImageSubtext}>
-                Recomendado: formato quadrado, máximo 5MB
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -158,34 +162,46 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
   profileImageContainer: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderStyle: 'dashed',
-    borderRadius: 8,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#E5E7EB',
+    borderStyle: 'solid',
     overflow: 'hidden',
+    backgroundColor: '#F9FAFB',
+    marginRight: 20,
   },
   profileImage: {
     width: '100%',
-    height: 200,
+    height: '100%',
   },
   profileImagePlaceholder: {
-    height: 200,
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    backgroundColor: '#F3F4F6',
+  },
+  profileImageInfo: {
+    flex: 1,
   },
   profileImageText: {
-    textAlign: 'center',
-    marginVertical: 8,
-    color: '#666',
-    fontSize: 14,
+    fontSize: 16,
+    color: '#374151',
+    fontWeight: '500',
+    marginBottom: 4,
   },
   profileImageSubtext: {
-    textAlign: 'center',
-    color: '#999',
-    fontSize: 12,
-    marginBottom: 16,
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
   },
   removeImageButton: {
     position: 'absolute',
