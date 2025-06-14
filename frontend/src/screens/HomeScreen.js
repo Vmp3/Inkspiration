@@ -82,7 +82,8 @@ const HomeScreen = ({ navigation }) => {
   const loadProfessionals = async () => {
     try {
       setIsLoading(true);
-      const professionals = await ProfessionalService.getTransformedCompleteProfessionals();
+      const response = await ProfessionalService.getTransformedCompleteProfessionals(0);
+      const professionals = response.content || [];
       setAllArtists(professionals);
       setFilteredArtists(professionals);
       setDisplayedArtists(professionals.slice(0, 6));
@@ -404,8 +405,7 @@ const HomeScreen = ({ navigation }) => {
         setLocationTerm={setLocationTerm}
         minRating={minRating}
         setMinRating={setMinRating}
-        maxDistance={0}
-        setMaxDistance={() => {}}
+
         selectedSpecialties={selectedSpecialties}
         toggleSpecialty={toggleSpecialty}
         handleSearch={handleSearch}

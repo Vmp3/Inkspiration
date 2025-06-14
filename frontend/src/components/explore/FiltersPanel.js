@@ -4,7 +4,6 @@ import Input from '../ui/Input';
 import SearchInput from '../ui/SearchInput';
 import RatingFilter from './RatingFilter';
 import SpecialtiesFilter from './SpecialtiesFilter';
-import DistanceSlider from './DistanceSlider';
 import FilterSection from './FilterSection';
 import Button from '../ui/Button';
 
@@ -15,8 +14,6 @@ const FiltersPanel = ({
   setLocationTerm,
   minRating,
   setMinRating,
-  maxDistance,
-  setMaxDistance,
   selectedSpecialties,
   toggleSpecialty,
   handleSearch,
@@ -82,13 +79,6 @@ const FiltersPanel = ({
           onChangeText={setLocationTerm}
         />
       </FilterSection>
-      
-      <DistanceSlider 
-        maxDistance={maxDistance} 
-        setMaxDistance={setMaxDistance}
-        onSliderRelease={updateActiveFilters}
-      />
-      
       <RatingFilter minRating={minRating} setMinRating={setMinRating} />
       
       <SpecialtiesFilter 
