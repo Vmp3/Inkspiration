@@ -141,7 +141,6 @@ public class UsuarioService {
             if (repository.existsByEmail(dto.getEmail())) {
                 throw new UsuarioException.EmailJaExisteException("Email já cadastrado");
             }
-            precisaRevogarToken = true;
         }
         
         // Verifica se o CPF está sendo alterado
@@ -313,11 +312,11 @@ public class UsuarioService {
     }
 
     private void atualizarToken(Usuario usuario, String novoToken) {
-        String tokenAntigo = usuario.getTokenAtual();
-        if (tokenAntigo != null) {
-            TokenRevogado tokenRevogado = new TokenRevogado(tokenAntigo);
+        if (usuario.getTokenAtual() != null) {
+            TokenRevogado tokenRevogado = new TokenRevogado(usuario.getTokenAtual());
             tokenRevogadoRepository.save(tokenRevogado);
         }
+        
         usuario.setTokenAtual(novoToken);
         repository.save(usuario);
     }
