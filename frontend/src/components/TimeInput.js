@@ -1,7 +1,29 @@
 import React from 'react';
 import { View, TextInput, StyleSheet, Platform } from 'react-native';
+import toastHelper from '../utils/toastHelper';
 
-export const TimeInput = ({ value, onChange, disabled }) => {
+export const TimeInput = ({ value, onChange, disabled, period, type }) => {
+  const validateTime = (timeStr) => {
+    if (!timeStr || timeStr.length < 5) return true;
+    
+    const [hours, minutes] = timeStr.split(':').map(num => parseInt(num, 10));
+    const time = hours * 60 + minutes;
+
+    if (period === 'morning') {
+      if (time > 11 * 60 + 59) {
+        toastHelper.showError('Horário da manhã deve ser entre 00:00 e 11:59');
+        return false;
+      }
+    } else if (period === 'afternoon') {
+      if (time < 12 * 60) {
+        toastHelper.showError('Horário da tarde deve ser entre 12:00 e 23:59');
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   const handleChange = (text) => {
     let formattedText = text.replace(/[^0-9]/g, '');
     
@@ -36,7 +58,13 @@ export const TimeInput = ({ value, onChange, disabled }) => {
       formattedText = `${formattedText.slice(0, 2)}:${formattedText.slice(2, 4)}`;
     }
     
-    onChange(formattedText);
+    if (formattedText.length === 5) {
+      if (validateTime(formattedText)) {
+        onChange(formattedText);
+      }
+    } else {
+      onChange(formattedText);
+    }
   };
 
   return (
@@ -80,4 +108,4 @@ const styles = StyleSheet.create({
   webInput: {
     outlineStyle: 'none',
   }
-}); 
+});

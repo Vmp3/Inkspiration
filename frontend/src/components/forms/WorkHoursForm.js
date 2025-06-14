@@ -2,8 +2,38 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { TimeInput } from '../TimeInput';
+import toastHelper from '../../utils/toastHelper';
 
 const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleNextTab }) => {
+  const validateEndTime = (startTime, endTime, period) => {
+    if (!startTime || !endTime || startTime.length < 5 || endTime.length < 5) return true;
+    
+    const [startHours, startMinutes] = startTime.split(':').map(num => parseInt(num, 10));
+    const [endHours, endMinutes] = endTime.split(':').map(num => parseInt(num, 10));
+    
+    const startInMinutes = startHours * 60 + startMinutes;
+    const endInMinutes = endHours * 60 + endMinutes;
+    
+    if (endInMinutes <= startInMinutes) {
+      toastHelper.showError(`O horário de fim deve ser maior que o horário de início no período da ${period === 'morning' ? 'manhã' : 'tarde'}`);
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleTimeChange = (index, period, field, value) => {
+    const dayPeriod = workHours[index][period];
+    
+    if (field === 'end' && dayPeriod.start) {
+      if (!validateEndTime(dayPeriod.start, value, period)) {
+        return;
+      }
+    }
+    
+    handleWorkHourChange(index, period, field, value);
+  };
+
   return (
     <View style={styles.tabContent}>
       <Text style={styles.workHoursTitle}>Horário de Trabalho</Text>
@@ -41,14 +71,18 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
                   <View style={styles.timeInputContainer}>
                     <TimeInput
                       value={day.morning.start}
-                      onChange={(value) => handleWorkHourChange(index, 'morning', 'start', value)}
+                      onChange={(value) => handleTimeChange(index, 'morning', 'start', value)}
                       disabled={!day.morning.enabled}
+                      period="morning"
+                      type="start"
                     />
                     <Text style={styles.timeInputSeparator}>às</Text>
                     <TimeInput
                       value={day.morning.end}
-                      onChange={(value) => handleWorkHourChange(index, 'morning', 'end', value)}
+                      onChange={(value) => handleTimeChange(index, 'morning', 'end', value)}
                       disabled={!day.morning.enabled}
+                      period="morning"
+                      type="end"
                     />
                   </View>
                 </View>
@@ -67,14 +101,18 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
                   <View style={styles.timeInputContainer}>
                     <TimeInput
                       value={day.afternoon.start}
-                      onChange={(value) => handleWorkHourChange(index, 'afternoon', 'start', value)}
+                      onChange={(value) => handleTimeChange(index, 'afternoon', 'start', value)}
                       disabled={!day.afternoon.enabled}
+                      period="afternoon"
+                      type="start"
                     />
                     <Text style={styles.timeInputSeparator}>às</Text>
                     <TimeInput
                       value={day.afternoon.end}
-                      onChange={(value) => handleWorkHourChange(index, 'afternoon', 'end', value)}
+                      onChange={(value) => handleTimeChange(index, 'afternoon', 'end', value)}
                       disabled={!day.afternoon.enabled}
+                      period="afternoon"
+                      type="end"
                     />
                   </View>
                 </View>

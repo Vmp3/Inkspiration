@@ -73,13 +73,13 @@ const ProfessionalRegisterScreen = () => {
       available: true,
       morning: {
         enabled: true,
-        start: '08:00',
-        end: '12:00'
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: true,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     },
     {
@@ -87,13 +87,13 @@ const ProfessionalRegisterScreen = () => {
       available: true,
       morning: {
         enabled: true,
-        start: '08:00',
-        end: '12:00'
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: true,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     },
     {
@@ -101,13 +101,13 @@ const ProfessionalRegisterScreen = () => {
       available: true,
       morning: {
         enabled: true,
-        start: '08:00',
-        end: '12:00'
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: true,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     },
     {
@@ -115,13 +115,13 @@ const ProfessionalRegisterScreen = () => {
       available: true,
       morning: {
         enabled: true,
-        start: '08:00',
-        end: '12:00'
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: true,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     },
     {
@@ -129,13 +129,13 @@ const ProfessionalRegisterScreen = () => {
       available: true,
       morning: {
         enabled: true,
-        start: '08:00',
-        end: '12:00'
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: true,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     },
     {
@@ -143,13 +143,13 @@ const ProfessionalRegisterScreen = () => {
       available: false,
       morning: {
         enabled: false,
-        start: '08:00',
-        end: '12:00'
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: false,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     },
     {
@@ -157,13 +157,13 @@ const ProfessionalRegisterScreen = () => {
       available: false,
       morning: {
         enabled: false,
-        start: '08:00',
-        end: '12:00'
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: false,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     }
   ]);

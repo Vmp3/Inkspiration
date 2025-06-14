@@ -29,44 +29,44 @@ const useProfessionalData = (userData) => {
       {
         day: 'Segunda',
         available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+        morning: { enabled: true, start: '07:00', end: '11:00' },
+        afternoon: { enabled: true, start: '13:00', end: '20:00' }
       },
       {
         day: 'Terça',
         available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+        morning: { enabled: true, start: '07:00', end: '11:00' },
+        afternoon: { enabled: true, start: '13:00', end: '20:00' }
       },
       {
         day: 'Quarta',
         available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+        morning: { enabled: true, start: '07:00', end: '11:00' },
+        afternoon: { enabled: true, start: '13:00', end: '20:00' }
       },
       {
         day: 'Quinta',
         available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+        morning: { enabled: true, start: '07:00', end: '11:00' },
+        afternoon: { enabled: true, start: '13:00', end: '20:00' }
       },
       {
         day: 'Sexta',
         available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+        morning: { enabled: true, start: '07:00', end: '11:00' },
+        afternoon: { enabled: true, start: '13:00', end: '20:00' }
       },
       {
         day: 'Sábado',
         available: false,
-        morning: { enabled: false, start: '08:00', end: '12:00' },
-        afternoon: { enabled: false, start: '13:00', end: '18:00' }
+        morning: { enabled: false, start: '07:00', end: '11:00' },
+        afternoon: { enabled: false, start: '13:00', end: '20:00' }
       },
       {
         day: 'Domingo',
         available: false,
-        morning: { enabled: false, start: '08:00', end: '12:00' },
-        afternoon: { enabled: false, start: '13:00', end: '18:00' }
+        morning: { enabled: false, start: '07:00', end: '11:00' },
+        afternoon: { enabled: false, start: '13:00', end: '20:00' }
       }
     ],
     biography: '',
