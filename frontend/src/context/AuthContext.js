@@ -73,15 +73,15 @@ export const AuthProvider = ({ children }) => {
       };
       
       verifyTokenIntegrity();
-    }, 30000); // 30 segundos
+    }, 30000);
     
     return () => clearInterval(interval);
   }, [isAuthenticated]);
 
-  const login = async (cpf, senha, twoFactorCode = null) => {
+  const login = async (cpf, senha, twoFactorCode = null, rememberMe = false) => {
     try {
       setLoading(true);
-      const result = await AuthService.login(cpf, senha, twoFactorCode);
+      const result = await AuthService.login(cpf, senha, twoFactorCode, rememberMe);
       
       // Se requer 2FA, retornar informação sem fazer login
       if (!result.success && result.requiresTwoFactor) {

@@ -76,7 +76,8 @@ const LoginScreen = () => {
       const result = await login(
         formData.cpf.replace(/\D/g, ''),
         formData.password,
-        showTwoFactor ? formData.twoFactorCode : null
+        showTwoFactor ? formData.twoFactorCode : null,
+        rememberMe
       );
 
       if (!result.success) {
