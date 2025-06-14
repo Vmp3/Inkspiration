@@ -19,6 +19,14 @@ const LoginForm = ({
 }) => {
   const navigation = useNavigation();
   
+  const handleKeyPress = (event) => {
+    // Suporte para React Native Web e React Native
+    const key = event.nativeEvent?.key || event.key;
+    if (key === 'Enter' && !loading) {
+      handleSubmit();
+    }
+  };
+  
   return (
     <View style={styles.form}>
       <View style={styles.formFieldGroup}>
@@ -28,6 +36,7 @@ const LoginForm = ({
           value={formData.cpf}
           onChangeText={(text) => handleChange('cpf', text)}
           onBlur={() => handleBlur('cpf')}
+          onKeyPress={handleKeyPress}
           keyboardType="numeric"
           style={[styles.inputField, cpfError && styles.inputError]}
         />
@@ -45,6 +54,7 @@ const LoginForm = ({
           placeholder="••••••••"
           value={formData.password}
           onChangeText={(text) => handleChange('password', text)}
+          onKeyPress={handleKeyPress}
           secureTextEntry
           style={styles.inputField}
         />
@@ -59,6 +69,7 @@ const LoginForm = ({
             value={formData.twoFactorCode}
             onChangeText={(text) => handleChange('twoFactorCode', text)}
             onBlur={() => handleBlur('twoFactorCode')}
+            onKeyPress={handleKeyPress}
             keyboardType="numeric"
             maxLength={6}
             style={[styles.inputField, twoFactorCodeError && styles.inputError]}

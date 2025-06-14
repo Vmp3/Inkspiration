@@ -92,8 +92,11 @@ public class AuthenticationController {
         }
         
         // Gerar token JWT após validação completa
-        String token = authService.authenticate(authentication);
-        System.out.println("Token gerado para usuário com CPF: " + loginDTO.getCpf());
+        // Usar o valor de rememberMe do DTO, defaultando para false se null
+        Boolean rememberMe = loginDTO.getRememberMe() != null ? loginDTO.getRememberMe() : false;
+        String token = authService.authenticate(authentication, rememberMe);
+        System.out.println("Token gerado para usuário com CPF: " + loginDTO.getCpf() + 
+                          " (Remember Me: " + rememberMe + ")");
         
         // Salva o novo token no usuário
         if (usuario != null) {

@@ -14,6 +14,9 @@ public class UsuarioAutenticarDTO {
     
     // Campo opcional para código de 2FA
     private Integer twoFactorCode;
+    
+    // Campo opcional para "Lembrar de mim"
+    private Boolean rememberMe;
 
     public UsuarioAutenticarDTO() {
     }
@@ -63,5 +66,13 @@ public class UsuarioAutenticarDTO {
     
     public void setTwoFactorCode(Integer twoFactorCode) {
         this.twoFactorCode = twoFactorCode;
+    }
+    
+    public Boolean getRememberMe() {
+        return rememberMe;
+    }
+    
+    public void setRememberMe(Boolean rememberMe) {
+        this.rememberMe = rememberMe;
     }
 }

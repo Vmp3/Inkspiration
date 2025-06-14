@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,6 +13,7 @@ import SecurityForm from '../components/forms/SecurityForm';
 import FormNavigation from '../components/ui/FormNavigation';
 import PublicAuthService from '../services/PublicAuthService';
 import { authMessages } from '../components/auth/messages';
+import { useEmailTimeout, EMAIL_TIMEOUT_CONFIG } from '../components/ui/EmailTimeout';
 
 const RegisterScreen = () => {
   const navigation = useNavigation();
@@ -29,13 +30,25 @@ const RegisterScreen = () => {
   const [birthDateError, setBirthDateError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
-  
-  // Estados para verificação de email
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [verificationEmail, setVerificationEmail] = useState('');
   const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
-  const [isResendingCode, setIsResendingCode] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  const emailTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.DEFAULT_TIMEOUT);
+  const resendTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.RESEND_TIMEOUT);
+
+  // Effect para controlar o countdown do reenvio
+  useEffect(() => {
+    let interval;
+    if (resendCooldown > 0) {
+      interval = setInterval(() => {
+        setResendCooldown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [resendCooldown]);
   
   const [formData, setFormData] = useState({
     // Dados pessoais
@@ -429,46 +442,58 @@ const RegisterScreen = () => {
   const handleRegister = async () => {
     if (!validateForm()) return;
 
+    setIsLoading(true);
+    setErrorMessage('');
+
+    // Formatar data de nascimento para o formato esperado pelo backend (DD/MM/YYYY)
+    const dataNascFormatada = formatDateToBackend(formData.dataNascimento);
+    
+    // Preparar objeto de endereço conforme esperado pelo backend
+    const endereco = {
+      cep: formData.cep,
+      rua: formData.rua,
+      numero: formData.numero,
+      complemento: formData.complemento || '',
+      bairro: formData.bairro,
+      cidade: formData.cidade,
+      estado: formData.estado
+    };
+
+    // Preparar dados para envio conforme o DTO do backend
+    const userData = {
+      nome: `${formData.nome} ${formData.sobrenome}`.trim(),
+      cpf: formData.cpf.replace(/[^\d]/g, ''),
+      email: formData.email,
+      dataNascimento: dataNascFormatada,
+      telefone: formData.telefone,
+      senha: formData.senha,
+      endereco: endereco,
+      role: 'user'
+    };
+
     try {
-      setIsLoading(true);
-      setErrorMessage('');
-
-      // Formatar data de nascimento para o formato esperado pelo backend (DD/MM/YYYY)
-      const dataNascFormatada = formatDateToBackend(formData.dataNascimento);
+      // Mostrar mensagem de loading específica para envio de email
+      toastHelper.showInfo('Enviando email de confirmação...');
       
-      // Preparar objeto de endereço conforme esperado pelo backend
-      const endereco = {
-        cep: formData.cep,
-        rua: formData.rua,
-        numero: formData.numero,
-        complemento: formData.complemento || '',
-        bairro: formData.bairro,
-        cidade: formData.cidade,
-        estado: formData.estado
-      };
-
-      // Preparar dados para envio conforme o DTO do backend
-      const userData = {
-        nome: `${formData.nome} ${formData.sobrenome}`.trim(),
-        cpf: formData.cpf.replace(/[^\d]/g, ''),
-        email: formData.email,
-        dataNascimento: dataNascFormatada,
-        telefone: formData.telefone,
-        senha: formData.senha,
-        endereco: endereco,
-        role: 'user'
-      };
-
-      // Chamar endpoint de verificação de email ao invés de criar usuário diretamente
-      await PublicAuthService.requestEmailVerification(userData);
-
-      setVerificationEmail(formData.email);
-
-      toastHelper.showSuccess('Email de verificação enviado! Verifique sua caixa de entrada.');
-      setShowVerificationModal(true);
-
+      await emailTimeout.executeWithTimeout(
+        () => PublicAuthService.requestEmailVerification(userData),
+        {
+          successMessage: 'Email de verificação enviado! Verifique sua caixa de entrada.',
+          timeoutMessage: 'Tempo limite para envio do email esgotado. Verifique sua conexão e tente novamente.',
+          errorMessage: authMessages.registerErrors.serverError,
+          onSuccess: () => {
+            setVerificationEmail(formData.email);
+            setShowVerificationModal(true);
+          },
+          onTimeout: () => {
+            setIsLoading(false);
+          },
+          onError: () => {
+            setIsLoading(false);
+          }
+        }
+      );
     } catch (error) {
-      toastHelper.showError(error.message || authMessages.registerErrors.serverError);
     } finally {
       setIsLoading(false);
     }
@@ -501,16 +526,24 @@ const RegisterScreen = () => {
   };
 
   const handleResendCode = async () => {
+    if (resendCooldown > 0) {
+      toastHelper.showWarning(`Aguarde ${resendCooldown} segundos para reenviar novamente.`);
+      return;
+    }
+
     try {
-      setIsResendingCode(true);
-
-      await PublicAuthService.resendVerificationCode(verificationEmail);
-      toastHelper.showSuccess('Código reenviado com sucesso!');
-
+      await resendTimeout.executeWithTimeout(
+        () => PublicAuthService.resendVerificationCode(verificationEmail),
+        {
+          successMessage: 'Código reenviado com sucesso!',
+          timeoutMessage: 'Tempo limite para reenvio do código esgotado. Tente novamente.',
+          errorMessage: 'Erro ao reenviar código.',
+          onSuccess: () => {
+            setResendCooldown(60);
+          }
+        }
+      );
     } catch (error) {
-      toastHelper.showError(error.message || 'Erro ao reenviar código.');
-    } finally {
-      setIsResendingCode(false);
     }
   };
 
@@ -648,12 +681,24 @@ const RegisterScreen = () => {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.resendButton]}
+                  style={[
+                    styles.modalButton, 
+                    styles.resendButton,
+                    (resendTimeout.isLoading || resendCooldown > 0) && styles.resendButtonDisabled
+                  ]}
                   onPress={handleResendCode}
-                  disabled={isResendingCode}
+                  disabled={resendTimeout.isLoading || resendCooldown > 0}
                 >
-                  <Text style={styles.resendButtonText}>
-                    {isResendingCode ? 'Reenviando...' : 'Reenviar Código'}
+                  <Text style={[
+                    styles.resendButtonText,
+                    (resendTimeout.isLoading || resendCooldown > 0) && styles.resendButtonTextDisabled
+                  ]}>
+                    {resendTimeout.isLoading 
+                      ? 'Reenviando...' 
+                      : resendCooldown > 0 
+                      ? `Reenviar em ${resendCooldown}s` 
+                      : 'Reenviar Código'
+                    }
                   </Text>
                 </TouchableOpacity>
 
@@ -840,6 +885,12 @@ const styles = StyleSheet.create({
     color: '#111',
     fontSize: 16,
     fontWeight: '500',
+  },
+  resendButtonDisabled: {
+    opacity: 0.5,
+  },
+  resendButtonTextDisabled: {
+    color: '#999',
   },
   cancelButton: {
     backgroundColor: 'transparent',

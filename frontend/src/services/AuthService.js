@@ -15,12 +15,12 @@ class AuthService {
     });
   }
 
-  async login(cpf, senha, twoFactorCode = null) {
+  async login(cpf, senha, twoFactorCode = null, rememberMe = false) {
     try {
       // Limpar qualquer token anterior
       await this.logout();
       
-      const loginData = { cpf, senha };
+      const loginData = { cpf, senha, rememberMe };
       if (twoFactorCode) {
         loginData.twoFactorCode = parseInt(twoFactorCode);
       }

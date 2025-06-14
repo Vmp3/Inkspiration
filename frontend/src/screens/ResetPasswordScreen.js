@@ -16,6 +16,7 @@ import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import PublicAuthService from '../services/PublicAuthService';
 import { authMessages } from '../components/auth/messages';
+import { useEmailTimeout, EMAIL_TIMEOUT_CONFIG } from '../components/ui/EmailTimeout';
 
 const ResetPasswordScreen = () => {
   const navigation = useNavigation();
@@ -31,6 +32,9 @@ const ResetPasswordScreen = () => {
   const [codeError, setCodeError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  
+  // Hook para timeout de email
+  const resendTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.RESEND_TIMEOUT);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -120,14 +124,17 @@ const ResetPasswordScreen = () => {
   };
 
   const handleResendCode = async () => {
-    setLoading(true);
     try {
-      await PublicAuthService.forgotPassword(cpf);
-      toastHelper.showSuccess(authMessages.success.codeResent);
+      await resendTimeout.executeWithTimeout(
+        () => PublicAuthService.forgotPassword(cpf),
+        {
+          successMessage: authMessages.success.codeResent,
+          timeoutMessage: 'Tempo limite para reenvio do código esgotado. Tente novamente.',
+          errorMessage: 'Erro ao reenviar código.',
+        }
+      );
     } catch (error) {
-      toastHelper.showError(error.message);
-    } finally {
-      setLoading(false);
+      // Erro já tratado pelo hook
     }
   };
 
@@ -197,12 +204,12 @@ const ResetPasswordScreen = () => {
               />
 
               <TouchableOpacity 
-                style={[styles.resendButton, loading && styles.resendButtonDisabled]}
+                style={[styles.resendButton, resendTimeout.isLoading && styles.resendButtonDisabled]}
                 onPress={handleResendCode}
-                disabled={loading}
+                disabled={resendTimeout.isLoading}
               >
-                <Text style={[styles.resendText, loading && styles.resendTextDisabled]}>
-                  {loading ? "Reenviando..." : "Não recebeu o código? Reenviar"}
+                <Text style={[styles.resendText, resendTimeout.isLoading && styles.resendTextDisabled]}>
+                  {resendTimeout.isLoading ? "Reenviando..." : "Não recebeu o código? Reenviar"}
                 </Text>
               </TouchableOpacity>
             </View>

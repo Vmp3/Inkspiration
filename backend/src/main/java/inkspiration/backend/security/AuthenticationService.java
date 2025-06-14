@@ -21,6 +21,10 @@ public class AuthenticationService {
         return jwtService.generateToken(authentication);
     }
     
+    public String authenticate(Authentication authentication, Boolean rememberMe) {
+        return jwtService.generateToken(authentication, rememberMe);
+    }
+    
     public boolean isTokenRevoked(String token) {
         return tokenRevogadoRepository.existsByToken(token);
     }
