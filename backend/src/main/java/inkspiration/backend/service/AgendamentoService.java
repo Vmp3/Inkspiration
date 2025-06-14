@@ -304,10 +304,24 @@ public class AgendamentoService {
         Page<Agendamento> agendamentosPage = agendamentoRepository.findByUsuarioAndDtFimBeforeOrderByDtInicioDesc(
                 usuario, agora, pageable);
         
-        List<AgendamentoCompletoDTO> agendamentosDTO = agendamentosPage.getContent().stream()
+        List<Agendamento> agendamentosAtualizados = agendamentosPage.getContent().stream()
+                .map(this::atualizarStatusSeNecessario)
+                .collect(Collectors.toList());
+        
+        List<AgendamentoCompletoDTO> agendamentosDTO = agendamentosAtualizados.stream()
                 .map(AgendamentoCompletoDTO::new)
                 .collect(Collectors.toList());
         
         return new PageImpl<>(agendamentosDTO, pageable, agendamentosPage.getTotalElements());
+    }
+
+    @Transactional
+    private Agendamento atualizarStatusSeNecessario(Agendamento agendamento) {
+        if (agendamento.getStatus() == StatusAgendamento.AGENDADO && 
+            agendamento.getDtFim().isBefore(LocalDateTime.now())) {
+            agendamento.setStatus(StatusAgendamento.CONCLUIDO);
+            return agendamentoRepository.save(agendamento);
+        }
+        return agendamento;
     }
 } 

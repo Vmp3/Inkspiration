@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import inkspiration.backend.entities.Agendamento;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
+import inkspiration.backend.enums.StatusAgendamento;
 
 @Repository
 public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> {
@@ -22,26 +23,28 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
     Page<Agendamento> findByUsuario(Usuario usuario, Pageable pageable);
     Page<Agendamento> findByProfissional(Profissional profissional, Pageable pageable);
     
-    @Query("SELECT COUNT(a) > 0 FROM Agendamento a WHERE a.profissional.idProfissional = :profissionalId " +
-           "AND ((a.dtInicio <= :fim AND a.dtFim >= :inicio))")
-    boolean existsConflitingSchedule(
-            @Param("profissionalId") Long profissionalId, 
-            @Param("inicio") LocalDateTime inicio, 
+    @Query("SELECT a FROM Agendamento a WHERE a.profissional.idProfissional = :idProfissional " +
+           "AND ((a.dtInicio BETWEEN :inicio AND :fim) OR (a.dtFim BETWEEN :inicio AND :fim))")
+    List<Agendamento> findByProfissionalAndPeriod(
+            @Param("idProfissional") Long idProfissional,
+            @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim);
     
-    @Query("SELECT a FROM Agendamento a WHERE a.profissional.idProfissional = :profissionalId " +
-           "AND a.dtInicio >= :inicio AND a.dtFim <= :fim")
-    List<Agendamento> findByProfissionalAndPeriod(
-            @Param("profissionalId") Long profissionalId, 
-            @Param("inicio") LocalDateTime inicio, 
+    @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Agendamento a " +
+           "WHERE a.profissional.idProfissional = :idProfissional " +
+           "AND ((a.dtInicio BETWEEN :inicio AND :fim) OR (a.dtFim BETWEEN :inicio AND :fim))")
+    boolean existsConflitingSchedule(
+            @Param("idProfissional") Long idProfissional,
+            @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim);
-            
+    
     Optional<Agendamento> findByUsuarioAndProfissional(Usuario usuario, Profissional profissional);
 
-    // Novos métodos para agendamentos futuros e passados
     Page<Agendamento> findByUsuarioAndDtFimAfterOrderByDtInicioAsc(
             Usuario usuario, LocalDateTime dataReferencia, Pageable pageable);
             
     Page<Agendamento> findByUsuarioAndDtFimBeforeOrderByDtInicioDesc(
             Usuario usuario, LocalDateTime dataReferencia, Pageable pageable);
+
+    List<Agendamento> findByStatusAndDtFimBefore(StatusAgendamento status, LocalDateTime data);
 } 

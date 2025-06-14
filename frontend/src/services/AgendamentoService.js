@@ -30,7 +30,7 @@ class AgendamentoService {
     try {
       const dadosComStatus = {
         ...dadosAgendamento,
-        status: "Agendado"
+        status: "AGENDADO"
       };
       return await ApiService.post('/agendamentos', dadosComStatus);
     } catch (error) {
@@ -96,7 +96,15 @@ class AgendamentoService {
 
   async atualizarStatusAgendamento(id, novoStatus) {
     try {
-      return await ApiService.put(`/agendamentos/${id}/status?status=${novoStatus}`);
+      const statusMap = {
+        'Agendado': 'AGENDADO',
+        'Cancelado': 'CANCELADO',
+        'Concluído': 'CONCLUIDO',
+        'Concluido': 'CONCLUIDO'
+      };
+
+      const statusFormatado = statusMap[novoStatus] || novoStatus.toUpperCase();
+      return await ApiService.put(`/agendamentos/${id}/status?status=${statusFormatado}`);
     } catch (error) {
       console.error('Erro ao atualizar status do agendamento:', error);
       throw error;
