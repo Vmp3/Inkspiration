@@ -126,13 +126,13 @@ const useProfessionalData = (userData) => {
 
         // Transformar horários de trabalho
         const workHours = [
-          { day: 'Segunda', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Terça', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Quarta', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Quinta', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Sexta', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Sábado', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Domingo', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } }
+          { day: 'Segunda', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Terça', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Quarta', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Quinta', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Sexta', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Sábado', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Domingo', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } }
         ];
 
         if (disponibilidades && Object.keys(disponibilidades).length > 0) {
@@ -145,13 +145,25 @@ const useProfessionalData = (userData) => {
               horarios.forEach(horario => {
                 if (horario && horario.inicio && horario.fim) {
                   const startHour = parseInt(horario.inicio.split(':')[0]);
-                  if (startHour < 13) {
+                  const endHour = parseInt(horario.fim.split(':')[0]);
+                  
+                  if (endHour <= 12) {
                     workHours[dayIndex].morning.enabled = true;
                     workHours[dayIndex].morning.start = horario.inicio;
                     workHours[dayIndex].morning.end = horario.fim;
-                  } else {
+                  }
+                  else if (startHour >= 12) {
                     workHours[dayIndex].afternoon.enabled = true;
                     workHours[dayIndex].afternoon.start = horario.inicio;
+                    workHours[dayIndex].afternoon.end = horario.fim;
+                  }
+                  else {
+                    workHours[dayIndex].morning.enabled = true;
+                    workHours[dayIndex].morning.start = horario.inicio;
+                    workHours[dayIndex].morning.end = "11:59";
+                    
+                    workHours[dayIndex].afternoon.enabled = true;
+                    workHours[dayIndex].afternoon.start = "12:00";
                     workHours[dayIndex].afternoon.end = horario.fim;
                   }
                 }
@@ -225,7 +237,7 @@ const useProfessionalData = (userData) => {
 
       const portfolioData = {
         descricao: professionalFormData.biography,
-        especialidade: selectedSpecialties.join(', '),
+        especialidade: especialidades,
         experiencia: professionalFormData.experience,
         instagram: professionalFormData.socialMedia.instagram || null,
         tiktok: professionalFormData.socialMedia.tiktok || null,
