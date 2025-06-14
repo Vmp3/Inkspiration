@@ -99,9 +99,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   searchButton: {
-    height: 40, // Match the SearchInput height
-    paddingVertical: 0, // Remove vertical padding to maintain the exact height
-    paddingHorizontal: 16, // Smaller horizontal padding
+    height: 40,
+    paddingVertical: 0,
+    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },

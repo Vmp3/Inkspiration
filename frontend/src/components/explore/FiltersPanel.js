@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import Input from '../ui/Input';
-import SearchInput from '../ui/SearchInput';
+
 import RatingFilter from './RatingFilter';
 import SpecialtiesFilter from './SpecialtiesFilter';
 import FilterSection from './FilterSection';
@@ -28,11 +28,13 @@ const FiltersPanel = ({
       {isTablet ? (
         <View style={styles.searchColumn}>
           <View style={styles.searchInputContainer}>
-            <SearchInput
+            <Input
               icon="search"
               placeholder="Buscar artistas"
               value={searchTerm}
               onChangeText={setSearchTerm}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
             />
           </View>
           <Button
@@ -47,11 +49,13 @@ const FiltersPanel = ({
       ) : (
         <View style={styles.searchRow}>
           <View style={styles.searchInputContainer}>
-            <SearchInput
+            <Input
               icon="search"
               placeholder="Buscar artistas"
               value={searchTerm}
               onChangeText={setSearchTerm}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
             />
           </View>
           <Button
@@ -72,11 +76,13 @@ const FiltersPanel = ({
       </View>
       
       <FilterSection title="Localização">
-        <SearchInput
+        <Input
           icon="location-on"
           placeholder="Sua localização"
           value={locationTerm}
           onChangeText={setLocationTerm}
+          onSubmitEditing={handleSearch}
+          returnKeyType="search"
         />
       </FilterSection>
       <RatingFilter minRating={minRating} setMinRating={setMinRating} />

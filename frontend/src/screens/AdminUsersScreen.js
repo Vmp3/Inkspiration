@@ -15,7 +15,7 @@ import PortifolioService from '../services/PortifolioService';
 import toastHelper from '../utils/toastHelper';
 import { adminMessages } from '../components/admin/messages';
 
-import SearchInput from '../components/ui/SearchInput';
+import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
@@ -251,13 +251,14 @@ const AdminUsersScreen = () => {
 
           {/* Barra de busca */}
           <View style={styles.searchContainer}>
-            <SearchInput
+            <Input
               placeholder="Buscar usuários por nome"
               value={searchTerm}
               onChangeText={setSearchTerm}
               icon="search"
               style={styles.searchInput}
               onSubmitEditing={handleSearch}
+              returnKeyType="search"
             />
             <Button
               variant="primary"

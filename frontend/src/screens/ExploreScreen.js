@@ -12,7 +12,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import Footer from '../components/Footer';
 import Input from '../components/ui/Input';
-import SearchInput from '../components/ui/SearchInput';
 import FilterButton from '../components/FilterButton';
 import ProfessionalService from '../services/ProfessionalService';
 import toastHelper from '../utils/toastHelper';
@@ -246,20 +245,24 @@ const ExploreScreen = ({ navigation }) => {
               {isMobile && (
                 <View style={styles.mobileSearchContainer}>
                   <View style={styles.mobileInputWrapper}>
-                    <SearchInput
+                    <Input
                       icon="search"
                       placeholder="Buscar artistas"
                       value={searchTerm}
                       onChangeText={setSearchTerm}
+                      onSubmitEditing={handleSearch}
+                      returnKeyType="search"
                     />
                   </View>
                   
                   <View style={styles.mobileInputWrapper}>
-                    <SearchInput
+                    <Input
                       icon="location-on"
                       placeholder="Sua localização"
                       value={locationTerm}
                       onChangeText={setLocationTerm}
+                      onSubmitEditing={handleSearch}
+                      returnKeyType="search"
                     />
                   </View>
                   
