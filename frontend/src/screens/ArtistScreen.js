@@ -8,7 +8,8 @@ import {
   TouchableOpacity, 
   FlatList, 
   Dimensions,
-  Linking
+  Linking,
+  Modal
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons, Feather, FontAwesome, Entypo, AntDesign } from '@expo/vector-icons';
@@ -60,7 +61,7 @@ const Card = ({ children, style }) => {
   );
 };
 
-const PortfolioItem = ({ image }) => {
+const PortfolioItem = ({ image, onPress }) => {
   // Função para processar a imagem base64
   const processBase64Image = (base64String) => {    
     // Se já tem o prefixo data:image, usar diretamente
@@ -75,7 +76,7 @@ const PortfolioItem = ({ image }) => {
   const imageUri = processBase64Image(image);
 
   return (
-    <View style={styles.portfolioItem}>
+    <TouchableOpacity style={styles.portfolioItem} onPress={() => onPress(imageUri)} activeOpacity={0.8}>
       <Image
         source={{ uri: imageUri }}
         style={styles.portfolioImage}
@@ -84,7 +85,7 @@ const PortfolioItem = ({ image }) => {
       <View style={styles.portfolioPlaceholder}>
         <Feather name="image" size={24} color="#D1D5DB" />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -137,6 +138,8 @@ const ArtistScreen = ({ route }) => {
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showImageModal, setShowImageModal] = useState(false);
   
   const isMobile = screenData.width < 768;
 
@@ -252,6 +255,16 @@ const ArtistScreen = ({ route }) => {
     }
   };
 
+  const handleImagePress = (imageUri) => {
+    setSelectedImage(imageUri);
+    setShowImageModal(true);
+  };
+
+  const closeImageModal = () => {
+    setShowImageModal(false);
+    setSelectedImage(null);
+  };
+
   // Mostrar loading enquanto carrega os dados
   if (isLoading) {
     return (
@@ -301,7 +314,8 @@ const ArtistScreen = ({ route }) => {
             portfolioImages.map((image, index) => (
               <PortfolioItem 
                 key={index} 
-                image={image.imagemBase64 || "https://via.placeholder.com/300"} 
+                image={image.imagemBase64 || "https://via.placeholder.com/300"}
+                onPress={handleImagePress}
               />
             ))
           )}
@@ -503,6 +517,40 @@ const ArtistScreen = ({ route }) => {
           {renderActiveTab()}
         </View>
       </View>
+
+      {/* Modal de Imagem Ampliada */}
+      <Modal
+        visible={showImageModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeImageModal}
+      >
+        <View style={styles.imageModalContainer}>
+          <TouchableOpacity 
+            style={styles.imageModalBackdrop} 
+            onPress={closeImageModal}
+            activeOpacity={1}
+          >
+            <View style={styles.imageModalContent}>
+              <TouchableOpacity 
+                style={styles.closeButton} 
+                onPress={closeImageModal}
+                activeOpacity={0.7}
+              >
+                <Feather name="x" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              
+              {selectedImage && (
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={styles.expandedImage}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -683,27 +731,37 @@ const styles = StyleSheet.create({
   portfolioGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    padding: 4,
   },
   portfolioItem: {
-    width: '33.33%',
+    width: '20%',
     aspectRatio: 1,
     position: 'relative',
     backgroundColor: '#F3F4F6',
+    padding: 3,
   },
   portfolioImage: {
     width: '100%',
     height: '100%',
     position: 'absolute',
-    top: 0,
-    left: 0,
+    top: 2,
+    left: 2,
+    right: 2,
+    bottom: 2,
     zIndex: 2,
+    borderRadius: 4,
   },
   portfolioPlaceholder: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 2,
+    left: 2,
+    right: 2,
+    bottom: 2,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F3F4F6',
     zIndex: 1,
+    borderRadius: 4,
   },
   badge: {
     backgroundColor: '#F3F4F6',
@@ -889,6 +947,41 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 300,
     width: '100%',
+  },
+  // Estilos do Modal de Imagem
+  imageModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageModalBackdrop: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageModalContent: {
+    width: '90%',
+    height: '80%',
+    position: 'relative',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 3,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expandedImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
   },
 });
 
