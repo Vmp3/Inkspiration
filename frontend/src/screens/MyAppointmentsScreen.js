@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import DefaultUser from '../../assets/default_user.png'
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
   Dimensions,
   SafeAreaView,
@@ -14,20 +12,23 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import Footer from '../components/Footer';
+import AppointmentCard from '../components/AppointmentCard';
 
 const MyAppointmentsScreen = () => {
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isLoadingMoreFuture, setIsLoadingMoreFuture] = useState(false);
+  const [isLoadingMorePast, setIsLoadingMorePast] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [appointments, setAppointments] = useState([]);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [hasMorePages, setHasMorePages] = useState(true);
+  const [futureAppointments, setFutureAppointments] = useState([]);
+  const [pastAppointments, setPastAppointments] = useState([]);
+  const [currentFuturePage, setCurrentFuturePage] = useState(0);
+  const [currentPastPage, setCurrentPastPage] = useState(0);
+  const [hasMoreFuturePages, setHasMoreFuturePages] = useState(true);
+  const [hasMorePastPages, setHasMorePastPages] = useState(true);
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
 
   const isMobile = screenData.width < 768;
@@ -45,51 +46,93 @@ const MyAppointmentsScreen = () => {
     loadAppointments();
   }, []);
 
-  const loadAppointments = async (page = 0, shouldRefresh = false) => {
+  const loadAppointments = async (shouldRefresh = false) => {
     try {
-      if (page === 0) {
-        setIsLoading(true);
-      } else {
-        setIsLoadingMore(true);
-      }
-
-      const response = await AgendamentoService.listarMeusAgendamentos(page);
-      console.log('Resposta da API:', response); // Debug
-
-      // Garantir que temos um array de agendamentos
-      const newAppointments = Array.isArray(response) ? response : (response?.content || []);
-      
-      // Debug dos novos agendamentos
-      console.log('Novos agendamentos:', newAppointments);
-
-      setHasMorePages(response?.last === false);
-      
-      if (shouldRefresh || page === 0) {
-        setAppointments(newAppointments);
-      } else {
-        setAppointments(prev => [...prev, ...newAppointments]);
-      }
-      
-      setCurrentPage(page);
+      setIsLoading(true);
+      await Promise.all([
+        loadFutureAppointments(0, shouldRefresh),
+        loadPastAppointments(0, shouldRefresh)
+      ]);
     } catch (error) {
       console.error('Erro ao carregar agendamentos:', error);
       toastHelper.showError('Erro ao carregar seus agendamentos');
     } finally {
       setIsLoading(false);
-      setIsLoadingMore(false);
       setIsRefreshing(false);
     }
   };
 
-  const handleLoadMore = () => {
-    if (!isLoadingMore && hasMorePages) {
-      loadAppointments(currentPage + 1);
+  const loadFutureAppointments = async (page = 0, shouldRefresh = false) => {
+    try {
+      if (page === 0) {
+        setIsLoading(true);
+      } else {
+        setIsLoadingMoreFuture(true);
+      }
+
+      const response = await AgendamentoService.listarMeusAgendamentosFuturos(page);
+      const newAppointments = response?.content || [];
+      
+      setHasMoreFuturePages(!response?.last);
+      
+      if (shouldRefresh || page === 0) {
+        setFutureAppointments(newAppointments);
+      } else {
+        setFutureAppointments(prev => [...prev, ...newAppointments]);
+      }
+      
+      setCurrentFuturePage(page);
+    } catch (error) {
+      console.error('Erro ao carregar agendamentos futuros:', error);
+      throw error;
+    } finally {
+      setIsLoadingMoreFuture(false);
+    }
+  };
+
+  const loadPastAppointments = async (page = 0, shouldRefresh = false) => {
+    try {
+      if (page === 0) {
+        setIsLoading(true);
+      } else {
+        setIsLoadingMorePast(true);
+      }
+
+      const response = await AgendamentoService.listarMeusAgendamentosPassados(page);
+      const newAppointments = response?.content || [];
+      
+      setHasMorePastPages(!response?.last);
+      
+      if (shouldRefresh || page === 0) {
+        setPastAppointments(newAppointments);
+      } else {
+        setPastAppointments(prev => [...prev, ...newAppointments]);
+      }
+      
+      setCurrentPastPage(page);
+    } catch (error) {
+      console.error('Erro ao carregar agendamentos passados:', error);
+      throw error;
+    } finally {
+      setIsLoadingMorePast(false);
+    }
+  };
+
+  const handleLoadMoreFuture = () => {
+    if (!isLoadingMoreFuture && hasMoreFuturePages) {
+      loadFutureAppointments(currentFuturePage + 1);
+    }
+  };
+
+  const handleLoadMorePast = () => {
+    if (!isLoadingMorePast && hasMorePastPages) {
+      loadPastAppointments(currentPastPage + 1);
     }
   };
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    loadAppointments(0, true);
+    loadAppointments(true);
   };
 
   const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
@@ -98,147 +141,28 @@ const MyAppointmentsScreen = () => {
   };
 
   const handleAppointmentPress = (appointment) => {
-    setSelectedAppointment(appointment);
-  };
-
-  const handleStatusUpdate = async (appointment, newStatus) => {
-    try {
-      await AgendamentoService.atualizarStatusAgendamento(appointment.idAgendamento, newStatus);
-      toastHelper.showSuccess('Status atualizado com sucesso!');
-      handleRefresh();
-    } catch (error) {
-      console.error('Erro ao atualizar status:', error);
-      toastHelper.showError('Erro ao atualizar status do agendamento');
-    }
-  };
-
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case 'Agendado':
-        return {
-          badge: styles.scheduledBadge,
-          text: styles.scheduledText
-        };
-      case 'Cancelado':
-        return {
-          badge: styles.canceledBadge,
-          text: styles.canceledText
-        };
-      case 'Concluído':
-        return {
-          badge: styles.completedBadge,
-          text: styles.completedText
-        };
-      default:
-        return {
-          badge: styles.scheduledBadge,
-          text: styles.scheduledText
-        };
-    }
-  };
-
-  const renderStatusOptions = (appointment) => {
-    return (
-      <View style={styles.statusOptionsContainer}>
-        <TouchableOpacity
-          style={styles.statusOption}
-          onPress={() => handleStatusUpdate(appointment, 'Agendado')}
-        >
-          <Text style={styles.statusOptionText}>Agendado</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.statusOption}
-          onPress={() => handleStatusUpdate(appointment, 'Cancelado')}
-        >
-          <Text style={styles.statusOptionText}>Cancelado</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.statusOption}
-          onPress={() => handleStatusUpdate(appointment, 'Concluído')}
-        >
-          <Text style={styles.statusOptionText}>Concluído</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  const renderAppointmentCard = (appointment) => {
-    console.log('Renderizando card para agendamento:', appointment); // Debug
-    if (!appointment) return null;
-
-    const statusStyle = getStatusStyle(appointment.status);
-
-    return (
-      <TouchableOpacity
-        key={appointment.idAgendamento}
-        style={styles.appointmentCard}
-        onPress={() => handleAppointmentPress(appointment)}
-      >
-        <View style={styles.cardHeader}>
-          <View style={styles.artistInfo}>
-            <Image
-              source={{ 
-                uri: appointment.profissional?.usuario?.imagemPerfil || DefaultUser
-              }}
-              style={styles.artistImage}
-            />
-            <View>
-              <Text style={styles.artistName}>
-                {appointment.profissional?.usuario?.nome || 'Nome não disponível'}
-              </Text>
-              <Text style={styles.serviceDetail}>
-                {appointment.tipoServico || 'Serviço não especificado'}
-              </Text>
-            </View>
-          </View>
-          <MaterialIcons name="chevron-right" size={24} color="#64748b" />
-        </View>
-
-        <View style={styles.appointmentDetails}>
-          <View style={styles.detailItem}>
-            <MaterialIcons name="event" size={16} color="#64748b" />
-            <Text style={styles.detailText}>
-              {format(new Date(appointment.dtInicio), "dd 'de' MMMM", { locale: ptBR })}
-            </Text>
-          </View>
-          <View style={styles.detailItem}>
-            <MaterialIcons name="access-time" size={16} color="#64748b" />
-            <Text style={styles.detailText}>
-              {format(new Date(appointment.dtInicio), 'HH:mm')}
-            </Text>
-          </View>
-          <View style={styles.detailItem}>
-            <MaterialIcons name="location-on" size={16} color="#64748b" />
-            <Text style={styles.detailText}>
-              {appointment.profissional?.endereco || 'Local não informado'}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.statusContainer}>
-          <View style={[styles.statusBadge, statusStyle.badge]}>
-            <Text style={[styles.statusText, statusStyle.text]}>
-              {appointment.status || 'Agendado'}
-            </Text>
-          </View>
-          {renderStatusOptions(appointment)}
-        </View>
-      </TouchableOpacity>
-    );
   };
 
   const renderFutureAppointments = () => {
-    console.log('Renderizando agendamentos futuros. Total de agendamentos:', appointments.length); // Debug
-    const futureAppointments = appointments.filter(
-      appointment => new Date(appointment.dtInicio) >= new Date()
-    );
-    console.log('Agendamentos futuros filtrados:', futureAppointments.length); // Debug
-
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Agendamentos Futuros</Text>
         {futureAppointments.length > 0 ? (
-          futureAppointments.map(appointment => renderAppointmentCard(appointment))
+          <>
+            {futureAppointments.map(appointment => (
+              <AppointmentCard
+                key={appointment.idAgendamento}
+                appointment={appointment}
+                onPress={() => handleAppointmentPress(appointment)}
+              />
+            ))}
+            {isLoadingMoreFuture && (
+              <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color="#111" />
+                <Text style={styles.loadingMoreText}>Carregando mais agendamentos...</Text>
+              </View>
+            )}
+          </>
         ) : (
           <Text style={styles.emptyText}>Você não possui agendamentos futuros.</Text>
         )}
@@ -247,17 +171,25 @@ const MyAppointmentsScreen = () => {
   };
 
   const renderPastAppointments = () => {
-    console.log('Renderizando agendamentos passados. Total de agendamentos:', appointments.length); // Debug
-    const pastAppointments = appointments.filter(
-      appointment => new Date(appointment.dtInicio) < new Date()
-    );
-    console.log('Agendamentos passados filtrados:', pastAppointments.length); // Debug
-
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Histórico de Agendamentos</Text>
         {pastAppointments.length > 0 ? (
-          pastAppointments.map(appointment => renderAppointmentCard(appointment))
+          <>
+            {pastAppointments.map(appointment => (
+              <AppointmentCard
+                key={appointment.idAgendamento}
+                appointment={appointment}
+                onPress={() => handleAppointmentPress(appointment)}
+              />
+            ))}
+            {isLoadingMorePast && (
+              <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color="#111" />
+                <Text style={styles.loadingMoreText}>Carregando mais agendamentos...</Text>
+              </View>
+            )}
+          </>
         ) : (
           <Text style={styles.emptyText}>Você não possui histórico de agendamentos.</Text>
         )}
@@ -290,7 +222,8 @@ const MyAppointmentsScreen = () => {
         }
         onScroll={({ nativeEvent }) => {
           if (isCloseToBottom(nativeEvent)) {
-            handleLoadMore();
+            handleLoadMoreFuture();
+            handleLoadMorePast();
           }
         }}
         scrollEventThrottle={400}
@@ -306,7 +239,7 @@ const MyAppointmentsScreen = () => {
         </View>
 
         <View style={styles.content}>
-          {appointments.length === 0 ? (
+          {futureAppointments.length === 0 && pastAppointments.length === 0 ? (
             <View style={styles.emptyState}>
               <MaterialIcons name="event" size={48} color="#64748b" />
               <Text style={styles.emptyStateTitle}>Nenhum agendamento encontrado</Text>
@@ -324,12 +257,6 @@ const MyAppointmentsScreen = () => {
             <>
               {renderFutureAppointments()}
               {renderPastAppointments()}
-              {isLoadingMore && (
-                <View style={styles.loadingMoreContainer}>
-                  <ActivityIndicator size="small" color="#111" />
-                  <Text style={styles.loadingMoreText}>Carregando mais agendamentos...</Text>
-                </View>
-              )}
             </>
           )}
         </View>
@@ -373,71 +300,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#111',
     marginBottom: 16,
-  },
-  appointmentCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  artistInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  artistImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginRight: 12,
-  },
-  artistName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111',
-  },
-  serviceDetail: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 2,
-  },
-  appointmentDetails: {
-    marginBottom: 16,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  detailText: {
-    fontSize: 14,
-    color: '#64748b',
-    marginLeft: 8,
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '500',
   },
   loadingContainer: {
     flex: 1,
@@ -491,40 +353,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     color: '#64748b',
-  },
-  statusOptionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 8,
-    gap: 8,
-  },
-  statusOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#f1f5f9',
-  },
-  statusOptionText: {
-    fontSize: 12,
-    color: '#64748b',
-  },
-  canceledBadge: {
-    backgroundColor: '#fee2e2',
-  },
-  canceledText: {
-    color: '#dc2626',
-  },
-  completedBadge: {
-    backgroundColor: '#dcfce7',
-  },
-  completedText: {
-    color: '#15803d',
-  },
-  scheduledBadge: {
-    backgroundColor: '#e0f2fe',
-  },
-  scheduledText: {
-    color: '#0369a1',
   },
 });
 

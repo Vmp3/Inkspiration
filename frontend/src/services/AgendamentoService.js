@@ -102,6 +102,26 @@ class AgendamentoService {
       throw error;
     }
   }
+
+  async listarMeusAgendamentosFuturos(page = 0, size = 5) {
+    try {
+      const response = await ApiService.get(`/agendamentos/meus-agendamentos/futuros?page=${page}&size=${size}`);
+      return response;
+    } catch (error) {
+      console.error('Erro ao buscar agendamentos futuros:', error);
+      throw error;
+    }
+  }
+
+  async listarMeusAgendamentosPassados(page = 0, size = 5) {
+    try {
+      const response = await ApiService.get(`/agendamentos/meus-agendamentos/passados?page=${page}&size=${size}`);
+      return response;
+    } catch (error) {
+      console.error('Erro ao buscar agendamentos passados:', error);
+      throw error;
+    }
+  }
 }
 
 export default new AgendamentoService(); 
