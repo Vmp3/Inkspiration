@@ -41,6 +41,7 @@ const ExploreScreen = ({ navigation }) => {
   const [isFilterDropdownVisible, setIsFilterDropdownVisible] = useState(false);
   const [filterButtonPosition, setFilterButtonPosition] = useState({ top: 0, left: 0 });
   const filterButtonRef = useRef(null);
+  const scrollViewRef = useRef(null);
   
   // Estado para resultados paginados
   const [displayedArtists, setDisplayedArtists] = useState([]);
@@ -180,8 +181,8 @@ const ExploreScreen = ({ navigation }) => {
   // Função para mudança de página, responsável por scrollar para o topo da página
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: 0, animated: true });
     }
   };
 
@@ -189,7 +190,7 @@ const ExploreScreen = ({ navigation }) => {
     <View style={styles.container}>
       <StatusBar style="dark" />
       
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} ref={scrollViewRef}>
         <View style={styles.content}>
           {/* Título da página */}
           <View style={[styles.pageHeader, isMobile && styles.pageHeaderMobile]}>
