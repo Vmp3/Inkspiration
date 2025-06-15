@@ -33,7 +33,7 @@ const ExploreScreen = ({ navigation }) => {
   const [locationTerm, setLocationTerm] = useState('');
   const [minRating, setMinRating] = useState(0);
   const [selectedSpecialties, setSelectedSpecialties] = useState([]);
-  const [sortBy, setSortBy] = useState('relevancia');
+  const [sortBy, setSortBy] = useState('melhorAvaliacao');
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const [activeFilters, setActiveFilters] = useState([]);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
@@ -67,14 +67,12 @@ const ExploreScreen = ({ navigation }) => {
   }, []);
   useEffect(() => {
     loadProfessionals();
-  }, [currentPage, sortBy, minRating, selectedSpecialties]);
+  }, [currentPage, sortBy]);
 
-  // Resetar página quando filtros mudarem (exceto mudança manual de página)
+  // Carregar profissionais na primeira renderização
   useEffect(() => {
-    if (currentPage !== 0) {
-      setCurrentPage(0);
-    }
-  }, [sortBy, minRating, selectedSpecialties]);
+    loadProfessionals();
+  }, []);
 
   const loadProfessionals = async () => {
     try {
@@ -118,11 +116,8 @@ const ExploreScreen = ({ navigation }) => {
 
   // Função de busca
   const handleSearch = () => {
-    if (currentPage === 0) {
-      loadProfessionals();
-    } else {
-      setCurrentPage(0);
-    }
+    setCurrentPage(0);
+    loadProfessionals();
   };
 
   // Atualizar filtros ativos
@@ -152,11 +147,7 @@ const ExploreScreen = ({ navigation }) => {
     setMinRating(0);
     setSelectedSpecialties([]);
     setActiveFilters([]);
-    if (currentPage === 0) {
-      loadProfessionals();
-    } else {
-      setCurrentPage(0);
-    }
+    handleSearch();
   };
   
   // Remover filtro específico
@@ -166,21 +157,9 @@ const ExploreScreen = ({ navigation }) => {
     } else if (filter.type === 'specialty') {
       setSelectedSpecialties(prev => prev.filter(s => s !== filter.value));
     }
-    if (currentPage === 0) {
-      loadProfessionals();
-    } else {
-      setCurrentPage(0);
-    }
+    // Fazer busca após remover filtro
+    handleSearch();
   };
-
-
-  useEffect(() => {
-    if (selectedSpecialties.length > 0 || minRating > 0) {
-      updateActiveFilters();
-    }
-  }, [minRating, selectedSpecialties]);
-
-
 
   // Função para lidar com o clique no botão de filtros
   const handleFilterPress = () => {
@@ -278,11 +257,11 @@ const ExploreScreen = ({ navigation }) => {
               )}
               
               {/* Filtros e dropdown de relevância */}
-              <View style={styles.filtersAndRelevanceRow}>
-                {/* Lado esquerdo - Filtros */}
-                <View style={styles.filtersContainer}>
+              <View style={[styles.filtersAndRelevanceRow, isMobile && styles.filtersAndRelevanceRowMobile]}>
+                {/* Filtros */}
+                <View style={[styles.filtersContainer, isMobile && styles.filtersContainerMobile]}>
                   {isMobile && (
-                    <View ref={filterButtonRef}>
+                    <View ref={filterButtonRef} style={styles.filterButton}>
                       <FilterButton 
                         onPress={handleFilterPress} 
                         filterCount={activeFilters.length} 
@@ -290,8 +269,8 @@ const ExploreScreen = ({ navigation }) => {
                     </View>
                   )}
                   
-                  {/* Filtros ativos (sempre visíveis) */}
-                  <View style={styles.activeFiltersContainer}>
+                  {/* Filtros ativos */}
+                  <View style={[styles.activeFiltersContainer, isMobile && styles.activeFiltersContainerMobile]}>
                     <ActiveFilters 
                       activeFilters={activeFilters} 
                       removeFilter={removeFilter} 
@@ -300,8 +279,8 @@ const ExploreScreen = ({ navigation }) => {
                   </View>
                 </View>
                 
-                {/* Lado direito - Dropdown de relevância */}
-                <View style={styles.relevanceContainer}>
+                {/* Dropdown de relevância */}
+                <View style={[styles.relevanceContainer, isMobile && styles.relevanceContainerMobile]}>
                   <SortByDropdown 
                     sortBy={sortBy} 
                     setSortBy={setSortBy} 
@@ -473,9 +452,7 @@ const styles = StyleSheet.create({
   
   // Filtros e dropdown de relevância
   filtersAndRelevanceRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     width: '100%',
     marginBottom: 16,
     zIndex: 100,
@@ -483,19 +460,24 @@ const styles = StyleSheet.create({
   },
   filtersContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flexWrap: 'wrap',
-    flex: 1,
+    width: '100%',
     zIndex: 101,
+    marginBottom: 8,
+    gap: 8,
   },
   relevanceContainer: {
     alignItems: 'flex-end',
     zIndex: 101,
+    alignSelf: 'flex-end',
+    width: '100%',
   },
   activeFiltersContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginLeft: 8,
+    width: '100%',
+    maxWidth: '100%',
   },
   artistsGridContainer: {
     width: '100%',
@@ -529,6 +511,37 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  filtersAndRelevanceRowMobile: {
+    flexDirection: 'column',
+    width: '100%',
+    marginBottom: 16,
+    zIndex: 100,
+    position: 'relative',
+  },
+  filtersContainerMobile: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    width: '100%',
+    zIndex: 101,
+    marginBottom: 8,
+    gap: 8,
+  },
+  relevanceContainerMobile: {
+    alignItems: 'flex-end',
+    zIndex: 101,
+    alignSelf: 'flex-end',
+    width: '100%',
+  },
+  activeFiltersContainerMobile: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: '100%',
+    maxWidth: '100%',
+  },
+  filterButton: {
+    marginBottom: 8,
   },
 });
 

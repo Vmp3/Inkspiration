@@ -11,9 +11,9 @@ const SortByDropdown = ({
   const buttonRef = useRef(null);
 
   const sortOptions = [
-    { value: 'relevancia', label: 'Relevância' },
     { value: 'melhorAvaliacao', label: 'Melhor Avaliação' },
-    { value: 'maisRecente', label: 'Mais Recente' }
+    { value: 'maisRecente', label: 'Mais Recente' },
+    { value: 'maisAntigo', label: 'Mais Antigos' }
   ];
 
   useEffect(() => {
@@ -44,7 +44,7 @@ const SortByDropdown = ({
 
   const getCurrentLabel = () => {
     const option = sortOptions.find(opt => opt.value === sortBy);
-    return option ? option.label : 'Relevância';
+    return option ? option.label : 'Melhor Avaliação';
   };
 
   return (

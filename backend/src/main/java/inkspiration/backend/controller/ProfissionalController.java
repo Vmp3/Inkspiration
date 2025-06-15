@@ -91,7 +91,7 @@ public class ProfissionalController {
             @RequestParam(required = false) String locationTerm,
             @RequestParam(defaultValue = "0") double minRating,
             @RequestParam(required = false) String[] selectedSpecialties,
-            @RequestParam(defaultValue = "relevancia") String sortBy) {
+            @RequestParam(defaultValue = "melhorAvaliacao") String sortBy) {
         
         // Endpoint público para listar profissionais com informações completas (portfolio, endereço, nota)
         Pageable pageable = PageRequest.of(page, size);

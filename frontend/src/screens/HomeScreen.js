@@ -74,7 +74,7 @@ const HomeScreen = ({ navigation }) => {
 
   useEffect(() => {
     loadProfessionals();
-  }, [minRating, selectedSpecialties]);
+  }, []);
 
   const loadProfessionals = async () => {
     try {
@@ -159,7 +159,8 @@ const HomeScreen = ({ navigation }) => {
     } else if (filter.type === 'specialty') {
       setSelectedSpecialties(prev => prev.filter(s => s !== filter.value));
     }
-    // Os dados serão recarregados pelo useEffect quando os filtros mudarem
+    // Fazer busca após remover filtro
+    handleSearch();
   };
 
   // Renderização dos itens de artista
@@ -378,7 +379,6 @@ const HomeScreen = ({ navigation }) => {
         setLocationTerm={setLocationTerm}
         minRating={minRating}
         setMinRating={setMinRating}
-
         selectedSpecialties={selectedSpecialties}
         toggleSpecialty={toggleSpecialty}
         handleSearch={handleSearch}
