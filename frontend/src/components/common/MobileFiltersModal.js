@@ -5,7 +5,7 @@ import Input from '../ui/Input';
 import FilterSection from '../explore/FilterSection';
 import RatingFilter from '../explore/RatingFilter';
 import SpecialtiesFilter from '../explore/SpecialtiesFilter';
-import DistanceSlider from '../explore/DistanceSlider';
+import Button from '../ui/Button';
 
 const MobileFiltersModal = ({
   visible,
@@ -16,8 +16,6 @@ const MobileFiltersModal = ({
   setLocationTerm,
   minRating,
   setMinRating,
-  maxDistance,
-  setMaxDistance,
   selectedSpecialties,
   toggleSpecialty,
   handleSearch,
@@ -25,6 +23,11 @@ const MobileFiltersModal = ({
   applyFilters,
   updateActiveFilters,
 }) => {
+  const applyAndClose = () => {
+    applyFilters();
+    onClose();
+  };
+
   return (
     <Modal
       visible={visible}
@@ -63,16 +66,7 @@ const MobileFiltersModal = ({
               />
             </FilterSection>
             
-            {/* Distância - exibir apenas quando o maxDistance não for 0 */}
-            {maxDistance > 0 && (
-              <DistanceSlider 
-                maxDistance={maxDistance} 
-                setMaxDistance={setMaxDistance}
-                onSliderRelease={updateActiveFilters}
-              />
-            )}
-            
-            {/* Avaliação */}
+            {/* Avaliação mínima */}
             <RatingFilter minRating={minRating} setMinRating={setMinRating} />
             
             {/* Especialidades */}
@@ -83,25 +77,18 @@ const MobileFiltersModal = ({
           </ScrollView>
           
           <View style={styles.modalFooter}>
-            <TouchableOpacity 
-              style={styles.modalCancelButton}
-              onPress={() => {
-                resetFilters();
-                onClose();
-              }}
-            >
-              <Text style={styles.modalCancelButtonText}>Limpar todos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.modalApplyButton}
-              onPress={() => {
-                applyFilters();
-                handleSearch();
-                onClose();
-              }}
-            >
-              <Text style={styles.modalApplyButtonText}>Aplicar filtros</Text>
-            </TouchableOpacity>
+            <Button
+              variant="outline"
+              label="Limpar todos"
+              onPress={resetFilters}
+              style={styles.clearButton}
+            />
+            <Button
+              variant="primary"
+              label="Aplicar filtros"
+              onPress={applyAndClose}
+              style={styles.applyButton}
+            />
           </View>
         </View>
       </View>
@@ -151,7 +138,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
   },
-  modalCancelButton: {
+  clearButton: {
     flex: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
@@ -160,23 +147,13 @@ const styles = StyleSheet.create({
     marginRight: 8,
     alignItems: 'center',
   },
-  modalCancelButtonText: {
-    fontSize: 16,
-    color: '#111827',
-    fontWeight: '500',
-  },
-  modalApplyButton: {
+  applyButton: {
     flex: 1,
     backgroundColor: '#000000',
     borderRadius: 6,
     paddingVertical: 12,
     marginLeft: 8,
     alignItems: 'center',
-  },
-  modalApplyButtonText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '500',
   },
 });
 

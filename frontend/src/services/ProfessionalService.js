@@ -45,9 +45,31 @@ class ProfessionalService {
     }
   }
 
-  async getAllProfessionalsComplete(page = 0) {
+  async getAllProfessionalsComplete(page = 0, filters = {}) {
     try {
-      const response = await PublicApiService.get(`/profissional/completo?page=${page}`);
+      const params = new URLSearchParams();
+      params.append('page', page);
+      params.append('size', 9);
+      
+      if (filters.searchTerm) {
+        params.append('searchTerm', filters.searchTerm);
+      }
+      if (filters.locationTerm) {
+        params.append('locationTerm', filters.locationTerm);
+      }
+      if (filters.minRating && filters.minRating > 0) {
+        params.append('minRating', filters.minRating);
+      }
+      if (filters.selectedSpecialties && filters.selectedSpecialties.length > 0) {
+        filters.selectedSpecialties.forEach(specialty => {
+          params.append('selectedSpecialties', specialty);
+        });
+      }
+      if (filters.sortBy) {
+        params.append('sortBy', filters.sortBy);
+      }
+      
+      const response = await PublicApiService.get(`/profissional/completo?${params.toString()}`);
       return response;
     } catch (error) {
       console.error('Erro ao buscar profissionais completos:', error);
@@ -171,10 +193,22 @@ class ProfessionalService {
   }
 
   // Método para buscar e transformar todos os profissionais completos
-  async getTransformedCompleteProfessionals(page = 0) {
+  async getTransformedCompleteProfessionals(page = 0, filters = {}) {
     try {
-      const professionals = await this.getAllProfessionalsComplete(page);
-      return professionals.map(professional => this.transformCompleteProfessionalData(professional));
+      const response = await this.getAllProfessionalsComplete(page, filters);
+      const transformedProfessionals = response.content.map(professional => 
+        this.transformCompleteProfessionalData(professional)
+      );
+      
+      return {
+        content: transformedProfessionals,
+        totalElements: response.totalElements,
+        totalPages: response.totalPages,
+        currentPage: response.currentPage,
+        size: response.size,
+        hasNext: response.hasNext,
+        hasPrevious: response.hasPrevious
+      };
     } catch (error) {
       console.error('Erro ao buscar e transformar profissionais completos:', error);
       throw error;
