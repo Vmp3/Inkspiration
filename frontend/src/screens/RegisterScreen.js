@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as formatters from '../utils/formatters';
 import toastHelper from '../utils/toastHelper';
+import { useAuth } from '../context/AuthContext';
 
 import TabHeader from '../components/ui/TabHeader';
 import PersonalForm from '../components/forms/PersonalForm';
@@ -17,6 +18,14 @@ import { useEmailTimeout, EMAIL_TIMEOUT_CONFIG } from '../components/ui/EmailTim
 
 const RegisterScreen = () => {
   const navigation = useNavigation();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigation.replace('Home');
+    }
+  }, [isAuthenticated, authLoading, navigation]);
+
   const [activeTab, setActiveTab] = useState('personal');
   const [isArtist, setIsArtist] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

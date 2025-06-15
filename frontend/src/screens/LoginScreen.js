@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as formatters from '../utils/formatters';
@@ -10,7 +10,13 @@ import { authMessages } from '../components/auth/messages';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
-  const { login, loading: authLoading } = useAuth();
+  const { login, loading: authLoading, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigation.replace('Home');
+    }
+  }, [isAuthenticated, authLoading, navigation]);
   
   const [formData, setFormData] = useState({
     cpf: '',
