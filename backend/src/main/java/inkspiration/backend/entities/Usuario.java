@@ -2,6 +2,7 @@ package inkspiration.backend.entities;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -14,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 
 @Entity
 public class Usuario {
@@ -56,6 +58,11 @@ public class Usuario {
     private String role;
 
     public Usuario() {}
+    
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+    }
     
     // Getters e Setters
     public Long getIdUsuario() {

@@ -107,7 +107,32 @@ public class EmailService {
         }
     }
 
+    private String truncateNameForEmail(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return "Usuário";
+        }
+        
+        // Remove caracteres especiais que podem quebrar HTML
+        String cleanName = name.replaceAll("[<>\"'&]", "");
+        
+        // Trunca nomes muito longos
+        if (cleanName.length() > 30) {
+            String[] parts = cleanName.split(" ");
+            if (parts.length > 1) {
+                // Preserva primeiro e ultimo nome
+                return parts[0] + " " + parts[parts.length - 1];
+            } else {
+                // Trunca nome único
+                return cleanName.substring(0, 27) + "...";
+            }
+        }
+        
+        return cleanName;
+    }
+
     private String createPasswordResetEmailTemplate(String userName, String code) {
+        String safeName = truncateNameForEmail(userName);
+        
         return String.format("""
             <!DOCTYPE html>
             <html lang=\"pt-BR\">
@@ -127,7 +152,7 @@ public class EmailService {
                     
                     <!-- Content -->
                     <div style=\"padding: 40px 30px;\">
-                        <h2 style=\"color: #111; margin: 0 0 20px 0; font-size: 22px; font-weight: 600;\">
+                        <h2 style=\"color: #111; margin: 0 0 20px 0; font-size: 22px; font-weight: 600; word-break: break-word; overflow-wrap: break-word;\">
                             Olá, %s!
                         </h2>
                         
@@ -168,10 +193,11 @@ public class EmailService {
                 </div>
             </body>
             </html>
-            """, userName, code);
+            """, safeName, code);
     }
 
     private String createPasswordResetConfirmationTemplate(String userName) {
+        String safeName = truncateNameForEmail(userName);
         return String.format("""
             <!DOCTYPE html>
             <html lang=\"pt-BR\">
@@ -201,7 +227,7 @@ public class EmailService {
                             Senha Alterada com Sucesso!
                         </h2>
                         
-                        <p style=\"color: #222; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;\">
+                        <p style=\"color: #222; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; word-break: break-word; overflow-wrap: break-word;\">
                             Olá <strong>%s</strong>,
                         </p>
                         
@@ -229,10 +255,11 @@ public class EmailService {
                 </div>
             </body>
             </html>
-            """, userName);
+            """, safeName);
     }
 
     private String createTwoFactorRecoveryTemplate(String userName, String code) {
+        String safeName = truncateNameForEmail(userName);
         return String.format("""
             <!DOCTYPE html>
             <html lang=\"pt-BR\">
@@ -252,7 +279,7 @@ public class EmailService {
                     
                     <!-- Content -->
                     <div style=\"padding: 40px 30px;\">
-                        <h2 style=\"color: #111; margin: 0 0 20px 0; font-size: 22px; font-weight: 600;\">
+                        <h2 style=\"color: #111; margin: 0 0 20px 0; font-size: 22px; font-weight: 600; word-break: break-word; overflow-wrap: break-word;\">
                             Olá, %s!
                         </h2>
                         
@@ -293,10 +320,11 @@ public class EmailService {
                 </div>
             </body>
             </html>
-            """, userName, code);
+            """, safeName, code);
     }
 
     private String createEmailVerificationTemplate(String userName, String code) {
+        String safeName = truncateNameForEmail(userName);
         return String.format("""
             <!DOCTYPE html>
             <html lang=\"pt-BR\">
@@ -316,7 +344,7 @@ public class EmailService {
                     
                     <!-- Content -->
                     <div style=\"padding: 40px 30px;\">
-                        <h2 style=\"color: #111; margin: 0 0 20px 0; font-size: 22px; font-weight: 600;\">
+                        <h2 style=\"color: #111; margin: 0 0 20px 0; font-size: 22px; font-weight: 600; word-break: break-word; overflow-wrap: break-word;\">
                             Bem-vindo, %s!
                         </h2>
                         
@@ -357,6 +385,6 @@ public class EmailService {
                 </div>
             </body>
             </html>
-            """, userName, code);
+            """, safeName, code);
     }
 } 

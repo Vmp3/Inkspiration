@@ -15,6 +15,7 @@ import { useNavigation, useNavigationState } from '@react-navigation/native';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import toastHelper from '../utils/toastHelper';
+import textUtils from '../utils/textUtils';
 
 const Header = () => {
   const navigation = useNavigation();
@@ -130,7 +131,7 @@ const Header = () => {
 
   
   const getInitial = (name) => {
-    return name && typeof name === 'string' ? name.charAt(0).toUpperCase() : '?';
+    return textUtils.getInitials(name);
   };
 
   const dynamicOverlayStyles = {
@@ -304,8 +305,8 @@ const Header = () => {
                   </View>
                   
                   {!isMobile && (
-                    <Text style={styles.userName}>
-                      {userData?.nome ? userData.nome.split(' ')[0] : 'Carregando...'}
+                    <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
+                      {userData?.nome ? textUtils.truncateName(userData.nome.split(' ')[0], 15) : 'Carregando...'}
                     </Text>
                   )}
                 </TouchableOpacity>

@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import UserService from '../services/UserService';
 import PortifolioService from '../services/PortifolioService';
 import toastHelper from '../utils/toastHelper';
+import textUtils from '../utils/textUtils';
 import { adminMessages } from '../components/admin/messages';
 
 import Input from '../components/ui/Input';
@@ -173,7 +174,7 @@ const AdminUsersScreen = () => {
   };
 
   const getInitials = (name) => {
-    return name ? name.charAt(0).toUpperCase() : '?';
+    return textUtils.getInitials(name);
   };
 
   const renderUserItem = (user) => {
@@ -193,7 +194,9 @@ const AdminUsersScreen = () => {
             />
             <View style={styles.userDetails}>
               <View style={styles.userHeader}>
-                <Text style={styles.userName}>{user.nome}</Text>
+                <Text style={styles.userName} numberOfLines={2} ellipsizeMode="tail">
+                  {textUtils.truncateName(user.nome, 30)}
+                </Text>
                 <View style={styles.badges}>
                   <Badge variant={getBadgeVariant(user.role)}>
                     {getBadgeText(user.role)}
@@ -201,7 +204,9 @@ const AdminUsersScreen = () => {
                 </View>
               </View>
               <Text style={styles.userCpf}>CPF: {user.cpf}</Text>
-              <Text style={styles.userEmail}>{user.email}</Text>
+              <Text style={styles.userEmail} numberOfLines={1} ellipsizeMode="tail">
+                {textUtils.truncateText(user.email, 35)}
+              </Text>
             </View>
           </View>
 
