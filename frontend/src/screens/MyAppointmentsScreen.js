@@ -8,7 +8,8 @@ import {
   ActivityIndicator,
   Dimensions,
   SafeAreaView,
-  RefreshControl
+  RefreshControl,
+  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -16,6 +17,7 @@ import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import Footer from '../components/Footer';
 import AppointmentCard from '../components/AppointmentCard';
+import AppointmentDetailsModal from '../components/AppointmentDetailsModal';
 
 const MyAppointmentsScreen = () => {
   const navigation = useNavigation();
@@ -30,6 +32,8 @@ const MyAppointmentsScreen = () => {
   const [hasMoreFuturePages, setHasMoreFuturePages] = useState(true);
   const [hasMorePastPages, setHasMorePastPages] = useState(true);
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const isMobile = screenData.width < 768;
 
@@ -141,6 +145,23 @@ const MyAppointmentsScreen = () => {
   };
 
   const handleAppointmentPress = (appointment) => {
+    if (appointment.status === 'AGENDADO') {
+      setSelectedAppointment(appointment);
+      setIsModalVisible(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+    setSelectedAppointment(null);
+  };
+
+  const handleEditAppointment = () => {
+    Alert.alert('Editar agendamento', 'Esta funcionalidade será implementada em breve.');
+  };
+
+  const handleCancelAppointment = () => {
+    Alert.alert('Cancelar agendamento', 'Esta funcionalidade será implementada em breve.');
   };
 
   const renderFutureAppointments = () => {
@@ -262,6 +283,14 @@ const MyAppointmentsScreen = () => {
         </View>
         <Footer />
       </ScrollView>
+
+      <AppointmentDetailsModal
+        visible={isModalVisible}
+        appointment={selectedAppointment}
+        onClose={handleCloseModal}
+        onEdit={handleEditAppointment}
+        onCancel={handleCancelAppointment}
+      />
     </SafeAreaView>
   );
 };
