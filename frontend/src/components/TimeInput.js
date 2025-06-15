@@ -1,22 +1,44 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, TextInput, StyleSheet, Platform } from 'react-native';
 import toastHelper from '../utils/toastHelper';
 
-export const TimeInput = ({ value, onChange, disabled, period, type }) => {
+export const TimeInput = ({ value, onChange, disabled, period, type, startTime }) => {
+  const [isValid, setIsValid] = useState(true);
+
+  useEffect(() => {
+    if (value && value.length === 5) {
+      const validationResult = validateTime(value);
+      setIsValid(validationResult);
+    } else if (value && value.length > 0 && value.length < 5) {
+      setIsValid(true);
+    } else {
+      setIsValid(true);
+    }
+  }, [value, startTime]);
+  
   const validateTime = (timeStr) => {
-    if (!timeStr || timeStr.length < 5) return true;
+    if (!timeStr || timeStr.length < 5) {
+      return timeStr.length === 0;
+    }
     
     const [hours, minutes] = timeStr.split(':').map(num => parseInt(num, 10));
     const time = hours * 60 + minutes;
 
     if (period === 'morning') {
       if (time > 11 * 60 + 59) {
-        toastHelper.showError('Horário da manhã deve ser entre 00:00 e 11:59');
         return false;
       }
     } else if (period === 'afternoon') {
       if (time < 12 * 60) {
-        toastHelper.showError('Horário da tarde deve ser entre 12:00 e 23:59');
+        return false;
+      }
+    }
+    
+    if (type === 'end' && startTime && startTime.length === 5) {
+      const [startHours, startMinutes] = startTime.split(':').map(num => parseInt(num, 10));
+      const startInMinutes = startHours * 60 + startMinutes;
+      
+      if (time <= startInMinutes) {
         return false;
       }
     }
@@ -27,16 +49,8 @@ export const TimeInput = ({ value, onChange, disabled, period, type }) => {
   const handleChange = (text) => {
     let formattedText = text.replace(/[^0-9]/g, '');
     
-    // Limita as horas a 23 e os minutos a 59
     if (formattedText.length >= 1) {
-      const hour = parseInt(formattedText.slice(0, 2), 10);
       
-      // Se o primeiro dígito for maior que 2, ajusta para 0
-      if (formattedText.length === 1 && parseInt(formattedText[0], 10) > 2) {
-        formattedText = '0' + formattedText[0];
-      }
-      
-      // Se as horas forem maiores que 23, ajusta para 23
       if (formattedText.length >= 2) {
         const hourStr = formattedText.slice(0, 2);
         if (parseInt(hourStr, 10) > 23) {
@@ -44,7 +58,6 @@ export const TimeInput = ({ value, onChange, disabled, period, type }) => {
         }
       }
       
-      // Se os minutos forem maiores que 59, ajusta para 59
       if (formattedText.length >= 4) {
         const minStr = formattedText.slice(2, 4);
         if (parseInt(minStr, 10) > 59) {
@@ -53,18 +66,11 @@ export const TimeInput = ({ value, onChange, disabled, period, type }) => {
       }
     }
     
-    // Formata para hh:mm
     if (formattedText.length > 2) {
       formattedText = `${formattedText.slice(0, 2)}:${formattedText.slice(2, 4)}`;
     }
     
-    if (formattedText.length === 5) {
-      if (validateTime(formattedText)) {
-        onChange(formattedText);
-      }
-    } else {
-      onChange(formattedText);
-    }
+    onChange(formattedText);
   };
 
   return (
@@ -73,7 +79,8 @@ export const TimeInput = ({ value, onChange, disabled, period, type }) => {
         style={[
           styles.input,
           disabled && styles.disabledInput,
-          Platform.OS === 'web' && styles.webInput
+          Platform.OS === 'web' && styles.webInput,
+          value && value.length === 5 && !isValid && styles.invalidInput
         ]}
         value={value}
         onChangeText={handleChange}
@@ -104,6 +111,11 @@ const styles = StyleSheet.create({
   disabledInput: {
     backgroundColor: '#f0f0f0',
     color: '#999',
+  },
+  invalidInput: {
+    borderColor: '#ff3333',
+    backgroundColor: '#fff0f0',
+    color: '#ff0000',
   },
   webInput: {
     outlineStyle: 'none',

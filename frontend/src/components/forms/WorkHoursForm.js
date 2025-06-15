@@ -1,12 +1,39 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { TimeInput } from '../TimeInput';
 import toastHelper from '../../utils/toastHelper';
 
 const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleNextTab }) => {
+  const isTimeComplete = (time) => {
+    return time && time.length === 5;
+  };
+  
+  const validateTimeFormat = (time, period) => {
+    if (!isTimeComplete(time)) {
+      return false;
+    }
+    
+    const [hours, minutes] = time.split(':').map(num => parseInt(num, 10));
+    const timeInMinutes = hours * 60 + minutes;
+    
+    if (period === 'morning' && timeInMinutes > 11 * 60 + 59) {
+      return false;
+    } else if (period === 'afternoon' && timeInMinutes < 12 * 60) {
+      return false;
+    }
+    
+    return true;
+  };
+
   const validateEndTime = (startTime, endTime, period) => {
-    if (!startTime || !endTime || startTime.length < 5 || endTime.length < 5) return true;
+    if (!isTimeComplete(startTime) || !isTimeComplete(endTime)) {
+      return false;
+    }
+    
+    if (!validateTimeFormat(startTime, period) || !validateTimeFormat(endTime, period)) {
+      return false;
+    }
     
     const [startHours, startMinutes] = startTime.split(':').map(num => parseInt(num, 10));
     const [endHours, endMinutes] = endTime.split(':').map(num => parseInt(num, 10));
@@ -15,7 +42,6 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
     const endInMinutes = endHours * 60 + endMinutes;
     
     if (endInMinutes <= startInMinutes) {
-      toastHelper.showError(`O horário de fim deve ser maior que o horário de início no período da ${period === 'morning' ? 'manhã' : 'tarde'}`);
       return false;
     }
     
@@ -23,14 +49,6 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
   };
 
   const handleTimeChange = (index, period, field, value) => {
-    const dayPeriod = workHours[index][period];
-    
-    if (field === 'end' && dayPeriod.start) {
-      if (!validateEndTime(dayPeriod.start, value, period)) {
-        return;
-      }
-    }
-    
     handleWorkHourChange(index, period, field, value);
   };
 
@@ -83,6 +101,7 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
                       disabled={!day.morning.enabled}
                       period="morning"
                       type="end"
+                      startTime={day.morning.start}
                     />
                   </View>
                 </View>
@@ -113,6 +132,7 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
                       disabled={!day.afternoon.enabled}
                       period="afternoon"
                       type="end"
+                      startTime={day.afternoon.start}
                     />
                   </View>
                 </View>
