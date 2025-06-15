@@ -284,6 +284,9 @@ public class ProfissionalService {
         } else if ("maisRecente".equals(sortBy)) {
             filteredProfissionais.sort((a, b) -> 
                 Long.compare(b.getIdProfissional(), a.getIdProfissional()));
+        } else if ("maisAntigo".equals(sortBy)) {
+            filteredProfissionais.sort((a, b) -> 
+                Long.compare(a.getIdProfissional(), b.getIdProfissional()));
         } else {
             // Ordenação por relevância (padrão)
             filteredProfissionais.sort((a, b) -> {
