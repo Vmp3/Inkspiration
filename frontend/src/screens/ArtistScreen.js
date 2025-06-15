@@ -16,6 +16,7 @@ import { MaterialIcons, Feather, FontAwesome, Entypo, AntDesign } from '@expo/ve
 import { useAuth } from '../context/AuthContext';
 import ProfessionalService from '../services/ProfessionalService';
 import toastHelper from '../utils/toastHelper';
+import textUtils from '../utils/textUtils';
 import { artistMessages } from '../components/common/messages';
 import { mockReviews } from '../data/reviews';
 
@@ -120,7 +121,9 @@ const SocialMediaItem = ({ platform, username, onPress }) => {
       activeOpacity={0.7}
     >
       {getIcon()}
-      <Text style={styles.socialText}>{username}</Text>
+      <Text style={styles.socialText} numberOfLines={1} ellipsizeMode="tail">
+        {textUtils.truncateText(username, 20)}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -440,7 +443,9 @@ const ArtistScreen = ({ route }) => {
             />
             
             <View style={styles.profileInfo}>
-              <Text style={styles.artistName}>{artist.name}</Text>
+              <Text style={styles.artistName} numberOfLines={2} ellipsizeMode="tail">
+                {textUtils.truncateName(artist.name, 15)}
+              </Text>
               <Text style={styles.artistTitle}>{artist.title}</Text>
               <View style={styles.ratingRow}>
                 <MaterialIcons name="star" size={16} color="#FACC15" />
@@ -448,7 +453,9 @@ const ArtistScreen = ({ route }) => {
               </View>
               <View style={styles.locationRow}>
                 <Feather name="map-pin" size={16} color="#6B7280" />
-                <Text style={styles.locationText}>{artist.location}</Text>
+                <Text style={styles.locationText} numberOfLines={1} ellipsizeMode="tail">
+                  {textUtils.truncateText(artist.location, 30)}
+                </Text>
               </View>
             </View>
           </View>

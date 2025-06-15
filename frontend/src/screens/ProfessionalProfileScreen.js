@@ -12,6 +12,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import ApiService from '../services/ApiService';
 import toastHelper from '../utils/toastHelper';
+import textUtils from '../utils/textUtils';
 import { professionalMessages } from '../components/professional/messages';
 
 const ProfessionalProfileScreen = () => {
@@ -160,7 +161,9 @@ const ProfessionalProfileScreen = () => {
         </View>
         
         <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{profissional.usuario?.nome || 'Nome não disponível'}</Text>
+          <Text style={styles.profileName} numberOfLines={2} ellipsizeMode="tail">
+            {textUtils.truncateName(profissional.usuario?.nome || 'Nome não disponível', 30)}
+          </Text>
           <Text style={styles.profileExperience}>Experiência: {profissional.portifolio?.experiencia || 'Não informada'}</Text>
           <View style={styles.ratingContainer}>
             <Feather name="star" size={16} color="#FFD700" />
@@ -187,35 +190,45 @@ const ProfessionalProfileScreen = () => {
           {profissional.portifolio?.instagram && (
             <TouchableOpacity style={styles.socialItem}>
               <Feather name="instagram" size={20} color="#000" />
-              <Text style={styles.socialText}>{profissional.portifolio.instagram}</Text>
+              <Text style={styles.socialText} numberOfLines={1} ellipsizeMode="tail">
+                {textUtils.truncateText(profissional.portifolio.instagram, 25)}
+              </Text>
             </TouchableOpacity>
           )}
           
           {profissional.portifolio?.tiktok && (
             <TouchableOpacity style={styles.socialItem}>
               <Feather name="music" size={20} color="#000" />
-              <Text style={styles.socialText}>{profissional.portifolio.tiktok}</Text>
+              <Text style={styles.socialText} numberOfLines={1} ellipsizeMode="tail">
+                {textUtils.truncateText(profissional.portifolio.tiktok, 25)}
+              </Text>
             </TouchableOpacity>
           )}
           
           {profissional.portifolio?.facebook && (
             <TouchableOpacity style={styles.socialItem}>
               <Feather name="facebook" size={20} color="#000" />
-              <Text style={styles.socialText}>{profissional.portifolio.facebook}</Text>
+              <Text style={styles.socialText} numberOfLines={1} ellipsizeMode="tail">
+                {textUtils.truncateText(profissional.portifolio.facebook, 25)}
+              </Text>
             </TouchableOpacity>
           )}
           
           {profissional.portifolio?.twitter && (
             <TouchableOpacity style={styles.socialItem}>
               <Feather name="twitter" size={20} color="#000" />
-              <Text style={styles.socialText}>{profissional.portifolio.twitter}</Text>
+              <Text style={styles.socialText} numberOfLines={1} ellipsizeMode="tail">
+                {textUtils.truncateText(profissional.portifolio.twitter, 25)}
+              </Text>
             </TouchableOpacity>
           )}
           
           {profissional.portifolio?.website && (
             <TouchableOpacity style={styles.socialItem}>
               <Feather name="globe" size={20} color="#000" />
-              <Text style={styles.socialText}>{profissional.portifolio.website}</Text>
+              <Text style={styles.socialText} numberOfLines={1} ellipsizeMode="tail">
+                {textUtils.truncateText(profissional.portifolio.website, 25)}
+              </Text>
             </TouchableOpacity>
           )}
           
