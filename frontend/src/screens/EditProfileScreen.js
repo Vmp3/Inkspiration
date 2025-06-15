@@ -305,6 +305,14 @@ const EditProfileScreen = () => {
                   return;
                 }
               }
+              
+              if (tabNavigation.activeTab === 'basic-info') {
+                const isValid = tabNavigation.validateCurrentTab();
+                if (!isValid) {
+                  return;
+                }
+              }
+              
               tabNavigation.setActiveTab(tabId);
             }}
           >
@@ -365,6 +373,7 @@ const EditProfileScreen = () => {
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
+                  nextDisabled={!tabNavigation.validateCurrentTab()}
                     />
                   </>
                 )}

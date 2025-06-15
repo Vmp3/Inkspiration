@@ -131,7 +131,6 @@ export const useFormValidation = () => {
     }
     
     if (isArtist && formData.especialidades.length === 0) {
-      toastHelper.showError('Selecione pelo menos uma especialidade');
       return false;
     }
     
@@ -141,9 +140,19 @@ export const useFormValidation = () => {
   const validateBasicInfoTab = (professionalFormData) => {
     const selectedSpecialties = Object.keys(professionalFormData.specialties).filter(key => professionalFormData.specialties[key]);
     if (selectedSpecialties.length === 0) {
-      toastHelper.showError('Selecione pelo menos uma especialidade');
       return false;
     }
+    
+    if (professionalFormData.tipoServicoSelecionados) {
+      const selectedServices = Object.keys(professionalFormData.tipoServicoSelecionados).filter(
+        key => professionalFormData.tipoServicoSelecionados[key]
+      );
+      
+      if (selectedServices.length === 0) {
+        return false;
+      }
+    }
+    
     return true;
   };
   

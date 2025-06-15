@@ -33,6 +33,14 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
         return false;
       }
     }
+    
+    if (currentTab === 'basic-info') {
+      const isValid = validation.validateBasicInfoTab(professionalFormData);
+      if (!isValid) {
+        return false;
+      }
+    }
+    
     return true;
   };
 
