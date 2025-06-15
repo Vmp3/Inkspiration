@@ -274,6 +274,20 @@ public class AgendamentoService {
         
         try {
             StatusAgendamento novoStatus = StatusAgendamento.fromDescricao(status);
+            
+            if (novoStatus == StatusAgendamento.CANCELADO && agendamento.getStatus() != StatusAgendamento.AGENDADO) {
+                throw new RuntimeException("Somente agendamentos com status 'Agendado' podem ser cancelados");
+            }
+            
+            if (novoStatus == StatusAgendamento.CANCELADO) {
+                LocalDateTime agora = LocalDateTime.now();
+                LocalDateTime dataLimite = agendamento.getDtInicio().minusDays(3);
+                
+                if (agora.isAfter(dataLimite)) {
+                    throw new RuntimeException("O cancelamento só é permitido com no mínimo 3 dias de antecedência");
+                }
+            }
+            
             agendamento.setStatus(novoStatus);
             return agendamentoRepository.save(agendamento);
         } catch (IllegalArgumentException e) {

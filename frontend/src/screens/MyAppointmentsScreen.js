@@ -13,11 +13,13 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { differenceInDays } from 'date-fns';
 import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import Footer from '../components/Footer';
 import AppointmentCard from '../components/AppointmentCard';
 import AppointmentDetailsModal from '../components/AppointmentDetailsModal';
+import CancelAppointmentModal from '../components/CancelAppointmentModal';
 
 const MyAppointmentsScreen = () => {
   const navigation = useNavigation();
@@ -34,6 +36,8 @@ const MyAppointmentsScreen = () => {
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isMobile = screenData.width < 768;
 
@@ -161,7 +165,54 @@ const MyAppointmentsScreen = () => {
   };
 
   const handleCancelAppointment = () => {
-    Alert.alert('Cancelar agendamento', 'Esta funcionalidade será implementada em breve.');
+    const today = new Date();
+    const appointmentDate = new Date(selectedAppointment.dtInicio);
+    const daysDiff = differenceInDays(appointmentDate, today);
+    
+    if (daysDiff < 3) {
+      Alert.alert(
+        "Não é possível cancelar",
+        "O cancelamento só é permitido com no mínimo 3 dias de antecedência.",
+        [{ text: "OK", onPress: () => handleCloseModal() }]
+      );
+      return;
+    }
+    
+    setIsModalVisible(false);
+    setIsCancelModalVisible(true);
+  };
+
+  const handleCloseCancelModal = () => {
+    setIsCancelModalVisible(false);
+    setSelectedAppointment(null);
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      await AgendamentoService.atualizarStatusAgendamento(
+        selectedAppointment.idAgendamento,
+        'CANCELADO'
+      );
+      
+      toastHelper.showSuccess('Agendamento cancelado com sucesso');
+      setIsCancelModalVisible(false);
+      setSelectedAppointment(null);
+      
+      loadAppointments(true);
+    } catch (error) {
+      console.error('Erro ao cancelar agendamento:', error);
+      
+      let errorMessage = 'Erro ao cancelar o agendamento';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      toastHelper.showError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderFutureAppointments = () => {
@@ -290,6 +341,12 @@ const MyAppointmentsScreen = () => {
         onClose={handleCloseModal}
         onEdit={handleEditAppointment}
         onCancel={handleCancelAppointment}
+      />
+
+      <CancelAppointmentModal
+        visible={isCancelModalVisible}
+        onClose={handleCloseCancelModal}
+        onConfirm={handleConfirmCancel}
       />
     </SafeAreaView>
   );
