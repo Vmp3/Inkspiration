@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
 import SectionTitle from './SectionTitle';
 import ChecklistItem from './ChecklistItem';
 import aboutScreen from '../../../assets/aboutScreen.png';
