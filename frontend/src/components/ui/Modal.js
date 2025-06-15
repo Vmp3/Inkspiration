@@ -48,20 +48,24 @@ const Modal = ({
               </View>
             )}
             
-            <View style={styles.footer}>
-              <Button
-                title={cancelText}
-                onPress={onClose}
-                variant="secondary"
-                style={styles.button}
-              />
-              <Button
-                title={confirmText}
-                onPress={onConfirm}
-                variant={confirmVariant}
-                style={styles.button}
-              />
-            </View>
+            {props.children}
+            
+            {!props.children && (
+              <View style={styles.footer}>
+                <Button
+                  title={cancelText}
+                  onPress={onClose}
+                  variant="secondary"
+                  style={styles.button}
+                />
+                <Button
+                  title={confirmText}
+                  onPress={onConfirm}
+                  variant={confirmVariant}
+                  style={styles.button}
+                />
+              </View>
+            )}
           </View>
         </Pressable>
       </View>

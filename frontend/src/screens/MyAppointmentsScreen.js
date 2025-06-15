@@ -16,6 +16,8 @@ import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import Footer from '../components/Footer';
 import AppointmentCard from '../components/AppointmentCard';
+import Modal from '../components/ui/Modal';
+import Input from '../components/ui/Input';
 
 const MyAppointmentsScreen = () => {
   const navigation = useNavigation();
@@ -30,6 +32,10 @@ const MyAppointmentsScreen = () => {
   const [hasMoreFuturePages, setHasMoreFuturePages] = useState(true);
   const [hasMorePastPages, setHasMorePastPages] = useState(true);
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [reviewStars, setReviewStars] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
 
   const isMobile = screenData.width < 768;
 
@@ -143,6 +149,27 @@ const MyAppointmentsScreen = () => {
   const handleAppointmentPress = (appointment) => {
   };
 
+  const handleOpenReviewModal = (appointment) => {
+    setSelectedAppointment(appointment);
+    setShowReviewModal(true);
+    setReviewStars(0);
+    setReviewComment('');
+  };
+
+  const handleCloseReviewModal = () => {
+    setShowReviewModal(false);
+    setSelectedAppointment(null);
+    setReviewStars(0);
+    setReviewComment('');
+  };
+
+  const handleSendReview = () => {
+    setShowReviewModal(false);
+    setSelectedAppointment(null);
+    setReviewStars(0);
+    setReviewComment('');
+  };
+
   const renderFutureAppointments = () => {
     return (
       <View style={styles.section}>
@@ -177,11 +204,18 @@ const MyAppointmentsScreen = () => {
         {pastAppointments.length > 0 ? (
           <>
             {pastAppointments.map(appointment => (
-              <AppointmentCard
-                key={appointment.idAgendamento}
-                appointment={appointment}
-                onPress={() => handleAppointmentPress(appointment)}
-              />
+              <View key={appointment.idAgendamento}>
+                <AppointmentCard
+                  appointment={appointment}
+                  onPress={() => handleAppointmentPress(appointment)}
+                />
+                <TouchableOpacity
+                  style={{ alignSelf: 'flex-end', marginBottom: 12, backgroundColor: '#2563eb', borderRadius: 6, paddingVertical: 6, paddingHorizontal: 16 }}
+                  onPress={() => handleOpenReviewModal(appointment)}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '600' }}>Avaliação</Text>
+                </TouchableOpacity>
+              </View>
             ))}
             {isLoadingMorePast && (
               <View style={styles.loadingMoreContainer}>
@@ -262,6 +296,67 @@ const MyAppointmentsScreen = () => {
         </View>
         <Footer />
       </ScrollView>
+      {showReviewModal && selectedAppointment && (
+        <Modal
+          visible={showReviewModal}
+          onClose={handleCloseReviewModal}
+          title="Avaliar Artista"
+          description={`Compartilhe sua experiência com ${selectedAppointment.nomeProfissional}`}
+          confirmText={undefined}
+          cancelText={undefined}
+          onConfirm={undefined}
+          confirmVariant={undefined}
+        >
+          <View style={{ alignItems: 'center', paddingHorizontal: 8, paddingTop: 8, width: 320 }}>
+            <Text style={{ fontWeight: '500', fontSize: 16, alignSelf: 'flex-start', marginBottom: 8 }}>Sua Nota</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 20 }}>
+              {[1,2,3,4,5].map((star) => (
+                <TouchableOpacity key={star} onPress={() => setReviewStars(star)}>
+                  <View style={{ position: 'relative', marginHorizontal: 4, width: 38, height: 38, alignItems: 'center', justifyContent: 'center' }}>
+                    {/* Estrela "borda" */}
+                    <MaterialIcons
+                      name="star"
+                      size={38}
+                      color="#6B7280"
+                      style={{ position: 'absolute', top: 0, left: 0 }}
+                    />
+                    {/* Estrela "preenchida" */}
+                    <MaterialIcons
+                      name="star"
+                      size={32}
+                      color={star <= reviewStars ? '#FFD700' : '#E5E7EB'}
+                      style={{ position: 'absolute', top: 3, left: 3 }}
+                    />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={{ fontWeight: '500', fontSize: 16, alignSelf: 'flex-start', marginBottom: 8 }}>Seu comentário (opcional)</Text>
+            <Input
+              placeholder="Conte como foi sua experiência..."
+              value={reviewComment}
+              onChangeText={setReviewComment}
+              multiline
+              numberOfLines={4}
+              style={{ minHeight: 80, width: '100%', marginBottom: 24 }}
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 8 }}>
+              <TouchableOpacity
+                style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24 }}
+                onPress={handleCloseReviewModal}
+              >
+                <Text style={{ color: '#111', fontWeight: '600', fontSize: 16 }}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ backgroundColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24 }}
+                onPress={handleSendReview}
+              >
+                <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>Enviar avaliação</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 };
