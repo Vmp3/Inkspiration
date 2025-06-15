@@ -31,11 +31,6 @@ const WhyChooseSection = ({ isMobile }) => {
       description: "Artistas verificados e avaliados pela comunidade.",
     },
     {
-      icon: "chat",
-      title: "Comunicação",
-      description: "Chat direto com artistas para discutir seu projeto.",
-    },
-    {
       icon: "access-time",
       title: "Conveniência",
       description: "Agendamento online fácil e rápido.",
