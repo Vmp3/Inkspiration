@@ -24,6 +24,9 @@ public class UsuarioAutenticar {
 
     public UsuarioAutenticar(Long idUsuarioAutenticar, String cpf, String senha, String role) {
         this.idUsuarioAutenticar = idUsuarioAutenticar;
+        if (cpf == null || cpf.trim().isEmpty()) {
+            throw new IllegalArgumentException("CPF não pode ser nulo ou vazio");
+        }
         this.cpf = cpf.replaceAll("[^0-9]", "");
         this.senha = Hashing.hash(senha);
         this.role = role;
@@ -31,6 +34,9 @@ public class UsuarioAutenticar {
 
     public UsuarioAutenticar(UsuarioAutenticarDTO dto) {
         this.idUsuarioAutenticar = dto.getIdUsuarioAutenticar();
+        if (dto.getCpf() == null || dto.getCpf().trim().isEmpty()) {
+            throw new IllegalArgumentException("CPF não pode ser nulo ou vazio");
+        }
         this.cpf = dto.getCpf().replaceAll("[^0-9]", "");
         this.senha = Hashing.hash(dto.getSenha());
         this.role = dto.getRole();
@@ -49,6 +55,9 @@ public class UsuarioAutenticar {
         return cpf;
     }
     public void setCpf(String cpf) {
+        if (cpf == null || cpf.trim().isEmpty()) {
+            throw new IllegalArgumentException("CPF não pode ser nulo ou vazio");
+        }
         this.cpf = cpf.replaceAll("[^0-9]", "");
     }
     public String getSenha() {

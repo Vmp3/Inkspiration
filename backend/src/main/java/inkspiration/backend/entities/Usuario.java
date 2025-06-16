@@ -86,6 +86,9 @@ public class Usuario {
     }
     
     public void setCpf(String cpf) {
+        if (cpf == null || cpf.trim().isEmpty()) {
+            throw new IllegalArgumentException("CPF não pode ser nulo ou vazio");
+        }
         this.cpf = cpf.replaceAll("[^0-9]", "");
     }
 
@@ -94,6 +97,9 @@ public class Usuario {
     }
 
     public void setEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("Email não pode ser nulo ou vazio");
+        }
         this.email = email;
     }
 
@@ -126,6 +132,9 @@ public class Usuario {
     }
     
     public void setEndereco(Endereco endereco) {
+        if (endereco == null) {
+            throw new IllegalArgumentException("Endereço não pode ser nulo");
+        }
         this.endereco = endereco;
     }
     

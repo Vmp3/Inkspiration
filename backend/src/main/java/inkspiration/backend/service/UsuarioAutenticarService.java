@@ -21,7 +21,11 @@ public class UsuarioAutenticarService {
     }
 
     public boolean authenticate(String cpf, String senha) {
-        UsuarioAutenticar usuarioAutenticar = repository.findByCpf(cpf).orElse(null);
+        if (cpf == null || senha == null) {
+            return false;
+        }
+        String cpfLimpo = cpf.replaceAll("[^0-9]", "");
+        UsuarioAutenticar usuarioAutenticar = repository.findByCpf(cpfLimpo).orElse(null);
         if (usuarioAutenticar != null) {
             return Hashing.matches(senha, usuarioAutenticar.getSenha());
         }

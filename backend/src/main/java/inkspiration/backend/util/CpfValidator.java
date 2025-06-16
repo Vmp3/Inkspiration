@@ -3,6 +3,10 @@ package inkspiration.backend.util;
 public class CpfValidator {
     
     public static boolean isValid(String cpf) {
+        if (cpf == null || cpf.trim().isEmpty()) {
+            return false;
+        }
+        
         // Remove non-numeric characters
         cpf = cpf.replaceAll("[^0-9]", "");
         
