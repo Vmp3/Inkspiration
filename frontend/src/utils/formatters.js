@@ -49,6 +49,30 @@ const formatBirthDate = (value) => {
   return `${validDay.toString().padStart(2, '0')}/${validMonth.toString().padStart(2, '0')}/${year}`;
 };
 
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now - date);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffMonths / 12);
+
+  if (diffDays === 0) {
+    return 'Hoje';
+  } else if (diffDays === 1) {
+    return 'Ontem';
+  } else if (diffDays < 7) {
+    return `${diffDays} dias atrás`;
+  } else if (diffMonths < 1) {
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} ${weeks === 1 ? 'semana' : 'semanas'} atrás`;
+  } else if (diffYears < 1) {
+    return `${diffMonths} ${diffMonths === 1 ? 'mês' : 'meses'} atrás`;
+  } else {
+    return `${diffYears} ${diffYears === 1 ? 'ano' : 'anos'} atrás`;
+  }
+};
+
 const validateEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
@@ -141,6 +165,7 @@ export {
   formatCEP,
   formatPhone,
   formatBirthDate,
+  formatDate,
   validateEmail,
   validateCPF,
   validatePhone,
