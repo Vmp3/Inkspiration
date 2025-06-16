@@ -21,6 +21,7 @@ import AppointmentCard from '../components/AppointmentCard';
 import AppointmentDetailsModal from '../components/AppointmentDetailsModal';
 import CancelAppointmentModal from '../components/CancelAppointmentModal';
 import EditAppointmentModal from '../components/EditAppointmentModal';
+import CompletedAppointmentDetailsModal from '../components/CompletedAppointmentDetailsModal';
 
 const MyAppointmentsScreen = () => {
   const navigation = useNavigation();
@@ -37,6 +38,7 @@ const MyAppointmentsScreen = () => {
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isCompletedModalVisible, setIsCompletedModalVisible] = useState(false);
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -151,13 +153,24 @@ const MyAppointmentsScreen = () => {
   };
 
   const handleAppointmentPress = (appointment) => {
-    console.log('Dados do agendamento selecionado:', appointment);
     setSelectedAppointment(appointment);
-    setIsModalVisible(true);
+    
+    if (appointment.status?.toUpperCase() === 'CONCLUIDO') {
+      setIsCompletedModalVisible(true);
+    } else if (appointment.status?.toUpperCase() === 'AGENDADO') {
+      setIsModalVisible(true);
+    } else {
+      setIsModalVisible(true);
+    }
   };
 
   const handleCloseModal = () => {
     setIsModalVisible(false);
+    setSelectedAppointment(null);
+  };
+  
+  const handleCloseCompletedModal = () => {
+    setIsCompletedModalVisible(false);
     setSelectedAppointment(null);
   };
 
@@ -359,6 +372,12 @@ const MyAppointmentsScreen = () => {
         onClose={handleCloseModal}
         onEdit={handleEditAppointment}
         onCancel={handleCancelAppointment}
+      />
+      
+      <CompletedAppointmentDetailsModal
+        visible={isCompletedModalVisible}
+        appointment={selectedAppointment}
+        onClose={handleCloseCompletedModal}
       />
 
       <CancelAppointmentModal

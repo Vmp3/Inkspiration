@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DefaultUser from '../../assets/default_user.png';
 
-const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCancel }) => {
+const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose }) => {
   if (!appointment) return null;
 
   const formatDate = (date) => {
@@ -82,6 +82,10 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
       case 'CONCLUIDO': return 'Concluído';
       default: return status || 'Agendado';
     }
+  };
+
+  const handleRateAppointment = () => {
+    // TODO: implementar avaliação
   };
 
   return (
@@ -182,18 +186,11 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
 
           <View style={styles.buttonRow}>
             <TouchableOpacity 
-              style={styles.editButton} 
-              onPress={onEdit}
+              style={styles.rateButton} 
+              onPress={handleRateAppointment}
             >
-              <MaterialIcons name="edit" size={20} color="#000" />
-              <Text style={styles.editButtonText}>Editar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.cancelButton} 
-              onPress={onCancel}
-            >
-              <MaterialIcons name="cancel" size={20} color="#E11D48" />
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
+              <MaterialIcons name="star" size={20} color="#000" />
+              <Text style={styles.rateButtonText}>Avaliação</Text>
             </TouchableOpacity>
           </View>
 
@@ -320,8 +317,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
     padding: 16,
+    justifyContent: 'center',
   },
-  editButton: {
+  rateButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -329,29 +327,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 16,
-    marginRight: 8,
-    flex: 1,
+    width: '80%',
   },
-  editButtonText: {
+  rateButtonText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#000',
-    marginLeft: 6,
-  },
-  cancelButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF1F2',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    flex: 1,
-  },
-  cancelButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#E11D48',
     marginLeft: 6,
   },
   closeButton: {
@@ -368,4 +349,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AppointmentDetailsModal; 
+export default CompletedAppointmentDetailsModal; 
