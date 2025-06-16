@@ -8,7 +8,8 @@ import {
   TouchableOpacity, 
   FlatList, 
   Dimensions,
-  Linking
+  Linking,
+  ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons, Feather, FontAwesome, Entypo, AntDesign } from '@expo/vector-icons';
@@ -18,6 +19,8 @@ import toastHelper from '../utils/toastHelper';
 import { artistMessages } from '../components/common/messages';
 import { mockReviews } from '../data/reviews';
 import DefaultUser from '../../assets/default_user.png'
+import AvaliacaoService from '../services/AvaliacaoService';
+import { formatDate } from '../utils/formatters';
 
 const Tabs = ({ tabs, activeTab, onTabChange }) => {
   return (
@@ -133,12 +136,15 @@ const ArtistScreen = ({ route }) => {
   const [activeTab, setActiveTab] = useState('portfolio');
   const [isAdmin, setIsAdmin] = useState(false);
   const [deleteReviewId, setDeleteReviewId] = useState(null);
-  const [reviews, setReviews] = useState(mockReviews);
+  const [reviews, setReviews] = useState([]);
   const [artist, setArtist] = useState(null);
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
   const [isSamePerson, setIsSamePerson] = useState(false);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [currentReviewPage, setCurrentReviewPage] = useState(0);
+  const [hasMoreReviews, setHasMoreReviews] = useState(true);
   
   const isMobile = screenData.width < 768;
 
@@ -234,11 +240,59 @@ const ArtistScreen = ({ route }) => {
     }
   };
 
-  const handleDeleteReview = (reviewId) => {
-    const updatedReviews = reviews.filter((review) => review.id !== reviewId);
-    setReviews(updatedReviews);
-    toastHelper.showSuccess(artistMessages.success.reviewDeleted);
+  const loadReviews = async (page = 0, shouldRefresh = false) => {
+    try {
+      setIsLoadingReviews(true);
+      const response = await AvaliacaoService.listarPorProfissional(artist.idProfissional, page);
+      
+      const newReviews = response.map(review => ({
+        id: review.idAvaliacao,
+        userName: review.agendamento.usuario.nome,
+        userImage: review.agendamento.usuario.fotoPerfil || DefaultUser,
+        rating: review.rating,
+        comment: review.descricao,
+        date: formatDate(review.agendamento.dataHora),
+        tattooType: review.agendamento.tipoTatuagem
+      }));
+
+      if (shouldRefresh || page === 0) {
+        setReviews(newReviews);
+      } else {
+        setReviews(prev => [...prev, ...newReviews]);
+      }
+
+      setHasMoreReviews(newReviews.length === 10);
+      setCurrentReviewPage(page);
+    } catch (error) {
+      console.error('Erro ao carregar avaliações:', error);
+      toastHelper.showError('Erro ao carregar avaliações');
+    } finally {
+      setIsLoadingReviews(false);
+    }
   };
+
+  const handleLoadMoreReviews = () => {
+    if (!isLoadingReviews && hasMoreReviews) {
+      loadReviews(currentReviewPage + 1);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    try {
+      await AvaliacaoService.excluirAvaliacao(reviewId);
+      toastHelper.showSuccess('Avaliação excluída com sucesso');
+      loadReviews(0, true);
+    } catch (error) {
+      console.error('Erro ao excluir avaliação:', error);
+      toastHelper.showError('Erro ao excluir avaliação');
+    }
+  };
+
+  useEffect(() => {
+    if (artist) {
+      loadReviews(0, true);
+    }
+  }, [artist]);
 
   const openSocialLink = async (url) => {
     try {
@@ -342,7 +396,7 @@ const ArtistScreen = ({ route }) => {
 
           <FlatList
             data={reviews}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <View style={styles.reviewCard}>
                 <View style={styles.reviewHeader}>
@@ -376,6 +430,16 @@ const ArtistScreen = ({ route }) => {
                   <Text style={styles.serviceType}>{item.tattooType}</Text>
                 </View>
               </View>
+            )}
+            onEndReached={handleLoadMoreReviews}
+            onEndReachedThreshold={0.1}
+            ListFooterComponent={() => (
+              isLoadingReviews ? (
+                <View style={styles.loadingMoreContainer}>
+                  <ActivityIndicator size="small" color="#111" />
+                  <Text style={styles.loadingMoreText}>Carregando mais avaliações...</Text>
+                </View>
+              ) : null
             )}
             style={styles.reviewsList}
           />
@@ -905,6 +969,17 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 300,
     width: '100%',
+  },
+  loadingMoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  loadingMoreText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginLeft: 8,
   },
 });
 
