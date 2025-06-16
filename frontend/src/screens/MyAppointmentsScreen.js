@@ -157,7 +157,7 @@ const MyAppointmentsScreen = () => {
     
     if (appointment.status?.toUpperCase() === 'CONCLUIDO') {
       setIsCompletedModalVisible(true);
-    } else if (appointment.status?.toUpperCase() === 'AGENDADO') {
+    } else if (appointment.status?.toUpperCase() === 'CANCELADO') {
       setIsModalVisible(true);
     } else {
       setIsModalVisible(true);

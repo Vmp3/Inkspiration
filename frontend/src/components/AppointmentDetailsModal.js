@@ -83,6 +83,23 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
       default: return status || 'Agendado';
     }
   };
+  
+  const isCanceled = appointment.status?.toUpperCase() === 'CANCELADO';
+  
+  const getStatusBadgeStyle = () => {
+    switch(appointment.status?.toUpperCase()) {
+      case 'AGENDADO': 
+        return { backgroundColor: '#E0F2FE', textColor: '#0369A1' };
+      case 'CANCELADO': 
+        return { backgroundColor: '#FEE2E2', textColor: '#DC2626' };
+      case 'CONCLUIDO': 
+        return { backgroundColor: '#DCFCE7', textColor: '#16A34A' };
+      default: 
+        return { backgroundColor: '#E0F2FE', textColor: '#0369A1' };
+    }
+  };
+  
+  const statusStyle = getStatusBadgeStyle();
 
   return (
     <Modal
@@ -174,28 +191,32 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
 
             <View style={styles.statusSection}>
               <Text style={styles.statusLabel}>Status</Text>
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>{getStatusLabel(appointment.status)}</Text>
+              <View style={[styles.statusBadge, { backgroundColor: statusStyle.backgroundColor }]}>
+                <Text style={[styles.statusText, { color: statusStyle.textColor }]}>
+                  {getStatusLabel(appointment.status)}
+                </Text>
               </View>
             </View>
           </ScrollView>
 
-          <View style={styles.buttonRow}>
-            <TouchableOpacity 
-              style={styles.editButton} 
-              onPress={onEdit}
-            >
-              <MaterialIcons name="edit" size={20} color="#000" />
-              <Text style={styles.editButtonText}>Editar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.cancelButton} 
-              onPress={onCancel}
-            >
-              <MaterialIcons name="cancel" size={20} color="#E11D48" />
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
+          {!isCanceled && (
+            <View style={styles.buttonRow}>
+              <TouchableOpacity 
+                style={styles.editButton} 
+                onPress={onEdit}
+              >
+                <MaterialIcons name="edit" size={20} color="#000" />
+                <Text style={styles.editButtonText}>Editar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.cancelButton} 
+                onPress={onCancel}
+              >
+                <MaterialIcons name="cancel" size={20} color="#E11D48" />
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <TouchableOpacity 
             style={styles.closeButton} 
