@@ -4,10 +4,12 @@ class AgendamentoService {
   
   async buscarHorariosDisponiveis(idProfissional, data, tipoServico) {
     try {
+      const tipoServicoFormatado = this.formatarTipoServico(tipoServico);
+      
       const params = new URLSearchParams({
         idProfissional: idProfissional.toString(),
         data: data,
-        tipoServico: tipoServico
+        tipoServico: tipoServicoFormatado
       });
       
       const endpoint = `/disponibilidades/verificar?${params.toString()}`;
@@ -24,6 +26,17 @@ class AgendamentoService {
       }
       throw error;
     }
+  }
+
+  formatarTipoServico(tipoServico) {
+    const mapeamento = {
+      'TATUAGEM_PEQUENA': 'pequena',
+      'TATUAGEM_MEDIA': 'media',
+      'TATUAGEM_GRANDE': 'grande',
+      'SESSAO': 'sessao'
+    };
+    
+    return mapeamento[tipoServico] || tipoServico;
   }
 
   async criarAgendamento(dadosAgendamento) {
@@ -68,7 +81,15 @@ class AgendamentoService {
 
   async atualizarAgendamento(id, dadosAgendamento) {
     try {
-      return await ApiService.put(`/agendamentos/${id}`, dadosAgendamento);
+      const tipoServicoFormatado = this.formatarTipoServico(dadosAgendamento.tipoServico);
+      
+      const dadosParaEnvio = {
+        tipoServico: tipoServicoFormatado,
+        descricao: dadosAgendamento.descricao,
+        dtInicio: dadosAgendamento.dtInicio
+      };
+      
+      return await ApiService.put(`/agendamentos/${id}`, dadosParaEnvio);
     } catch (error) {
       console.error('Erro ao atualizar agendamento:', error);
       throw error;

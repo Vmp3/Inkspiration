@@ -27,6 +27,7 @@ import jakarta.validation.Valid;
 import inkspiration.backend.dto.AgendamentoDTO;
 import inkspiration.backend.dto.AgendamentoCompletoDTO;
 import inkspiration.backend.dto.AgendamentoRequestDTO;
+import inkspiration.backend.dto.AgendamentoUpdateDTO;
 import inkspiration.backend.entities.Agendamento;
 import inkspiration.backend.service.AgendamentoService;
 
@@ -132,11 +133,26 @@ public class AgendamentoController {
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizarAgendamento(
             @PathVariable Long id,
-            @Valid @RequestBody AgendamentoRequestDTO request) {
+            @Valid @RequestBody AgendamentoUpdateDTO request,
+            Authentication authentication) {
         
         try {
+            if (!(authentication instanceof JwtAuthenticationToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Autenticação inválida");
+            }
+            
+            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+            Jwt jwt = jwtAuth.getToken();
+            Long userId = jwt.getClaim("userId");
+            
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Token não contém informações do usuário");
+            }
+            
             Agendamento agendamento = agendamentoService.atualizarAgendamento(
-                    id, request.getTipoServico(), request.getDescricao(), 
+                    id, userId, request.getTipoServico(), request.getDescricao(), 
                     request.getDtInicio());
             return ResponseEntity.ok(new AgendamentoDTO(agendamento));
         } catch (Exception e) {
@@ -155,6 +171,9 @@ public class AgendamentoController {
             } else if (errorMessage.contains("Não é possível agendar para datas e horários que já passaram")) {
                 return ResponseEntity.badRequest().body(
                         "Não é possível agendar para datas e horários que já passaram. Por favor, selecione uma data futura.");
+            } else if (errorMessage.contains("Não autorizado")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                        "Você não tem permissão para editar este agendamento.");
             }
             
             return ResponseEntity.badRequest().body(errorMessage);
@@ -203,11 +222,38 @@ public class AgendamentoController {
     @PutMapping("/{id}/status")
     public ResponseEntity<?> atualizarStatusAgendamento(
             @PathVariable Long id,
-            @RequestParam String status) {
+            @RequestParam String status,
+            Authentication authentication) {
         try {
-            Agendamento agendamento = agendamentoService.atualizarStatusAgendamento(id, status);
+            if (!(authentication instanceof JwtAuthenticationToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Autenticação inválida");
+            }
+            
+            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+            Jwt jwt = jwtAuth.getToken();
+            Long userId = jwt.getClaim("userId");
+            
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Token não contém informações do usuário");
+            }
+            
+            Agendamento agendamento = agendamentoService.atualizarStatusAgendamento(id, userId, status);
             return ResponseEntity.ok(new AgendamentoDTO(agendamento));
         } catch (Exception e) {
+            String errorMessage = e.getMessage();
+            
+            if (errorMessage.contains("Não autorizado")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                        "Você não tem permissão para atualizar este agendamento.");
+            } else if (errorMessage.contains("3 dias de antecedência")) {
+                return ResponseEntity.badRequest().body(
+                        "O cancelamento só é permitido com no mínimo 3 dias de antecedência.");
+            } else if (errorMessage.contains("Somente agendamentos com status")) {
+                return ResponseEntity.badRequest().body(errorMessage);
+            }
+            
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

@@ -158,12 +158,15 @@ public class AgendamentoService {
     }
     
     @Transactional
-    public Agendamento atualizarAgendamento(Long id, String tipoServicoStr, String descricao,
+    public Agendamento atualizarAgendamento(Long id, Long idUsuarioLogado, String tipoServicoStr, String descricao,
             LocalDateTime dtInicio) throws Exception {
         
         Agendamento agendamento = buscarPorId(id);
         
-        // Validar se a data não é passada
+        if (!agendamento.getUsuario().getIdUsuario().equals(idUsuarioLogado)) {
+            throw new RuntimeException("Não autorizado: este agendamento não pertence ao usuário logado");
+        }
+        
         LocalDateTime agora = LocalDateTime.now();
         if (dtInicio.isBefore(agora)) {
             throw new RuntimeException("Não é possível agendar para datas e horários que já passaram");
@@ -269,8 +272,12 @@ public class AgendamentoService {
     }
     
     @Transactional
-    public Agendamento atualizarStatusAgendamento(Long id, String status) {
+    public Agendamento atualizarStatusAgendamento(Long id, Long idUsuarioLogado, String status) {
         Agendamento agendamento = buscarPorId(id);
+        
+        if (!agendamento.getUsuario().getIdUsuario().equals(idUsuarioLogado)) {
+            throw new RuntimeException("Não autorizado: este agendamento não pertence ao usuário logado");
+        }
         
         try {
             StatusAgendamento novoStatus = StatusAgendamento.fromDescricao(status);

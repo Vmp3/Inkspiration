@@ -20,6 +20,7 @@ import Footer from '../components/Footer';
 import AppointmentCard from '../components/AppointmentCard';
 import AppointmentDetailsModal from '../components/AppointmentDetailsModal';
 import CancelAppointmentModal from '../components/CancelAppointmentModal';
+import EditAppointmentModal from '../components/EditAppointmentModal';
 
 const MyAppointmentsScreen = () => {
   const navigation = useNavigation();
@@ -38,6 +39,7 @@ const MyAppointmentsScreen = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
   const isMobile = screenData.width < 768;
 
@@ -149,10 +151,9 @@ const MyAppointmentsScreen = () => {
   };
 
   const handleAppointmentPress = (appointment) => {
-    if (appointment.status === 'AGENDADO') {
-      setSelectedAppointment(appointment);
-      setIsModalVisible(true);
-    }
+    console.log('Dados do agendamento selecionado:', appointment);
+    setSelectedAppointment(appointment);
+    setIsModalVisible(true);
   };
 
   const handleCloseModal = () => {
@@ -161,7 +162,28 @@ const MyAppointmentsScreen = () => {
   };
 
   const handleEditAppointment = () => {
-    Alert.alert('Editar agendamento', 'Esta funcionalidade será implementada em breve.');
+    if (!selectedAppointment) return;
+    
+    const today = new Date();
+    const appointmentDate = new Date(selectedAppointment.dtInicio);
+    const daysDiff = differenceInDays(appointmentDate, today);
+    
+    if (daysDiff < 3) {
+      toastHelper.showError("A edição só é permitida com no mínimo 3 dias de antecedência.");
+      return;
+    }
+    
+    setIsModalVisible(false);
+    setIsEditModalVisible(true);
+  };
+
+  const handleEditSuccess = () => {
+    loadAppointments(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalVisible(false);
+    setSelectedAppointment(null);
   };
 
   const handleCancelAppointment = () => {
@@ -170,11 +192,7 @@ const MyAppointmentsScreen = () => {
     const daysDiff = differenceInDays(appointmentDate, today);
     
     if (daysDiff < 3) {
-      Alert.alert(
-        "Não é possível cancelar",
-        "O cancelamento só é permitido com no mínimo 3 dias de antecedência.",
-        [{ text: "OK", onPress: () => handleCloseModal() }]
-      );
+      toastHelper.showError("O cancelamento só é permitido com no mínimo 3 dias de antecedência.");
       return;
     }
     
@@ -347,6 +365,13 @@ const MyAppointmentsScreen = () => {
         visible={isCancelModalVisible}
         onClose={handleCloseCancelModal}
         onConfirm={handleConfirmCancel}
+      />
+
+      <EditAppointmentModal
+        visible={isEditModalVisible}
+        appointment={selectedAppointment}
+        onClose={handleCloseEditModal}
+        onSuccess={handleEditSuccess}
       />
     </SafeAreaView>
   );
