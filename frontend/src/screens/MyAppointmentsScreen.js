@@ -18,6 +18,7 @@ import Footer from '../components/Footer';
 import AppointmentCard from '../components/AppointmentCard';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
+import AvaliacaoService from '../services/AvaliacaoService';
 
 const MyAppointmentsScreen = () => {
   const navigation = useNavigation();
@@ -163,11 +164,28 @@ const MyAppointmentsScreen = () => {
     setReviewComment('');
   };
 
-  const handleSendReview = () => {
-    setShowReviewModal(false);
-    setSelectedAppointment(null);
-    setReviewStars(0);
-    setReviewComment('');
+  const handleSendReview = async () => {
+    try {
+      if (reviewStars === 0) {
+        toastHelper.showError('Por favor, selecione uma nota para o artista');
+        return;
+      }
+
+      await AvaliacaoService.criarAvaliacao(
+        selectedAppointment.idAgendamento,
+        reviewComment,
+        reviewStars
+      );
+
+      toastHelper.showSuccess('Avaliação enviada com sucesso!');
+      handleCloseReviewModal();
+      
+      // Recarregar os agendamentos para atualizar a lista
+      loadAppointments(true);
+    } catch (error) {
+      console.error('Erro ao enviar avaliação:', error);
+      toastHelper.showError('Erro ao enviar avaliação. Tente novamente.');
+    }
   };
 
   const renderFutureAppointments = () => {
@@ -304,7 +322,7 @@ const MyAppointmentsScreen = () => {
           description={`Compartilhe sua experiência com ${selectedAppointment.nomeProfissional}`}
           confirmText={undefined}
           cancelText={undefined}
-          onConfirm={undefined}
+          onConfirm={handleSendReview}
           confirmVariant={undefined}
         >
           <View style={{ alignItems: 'center', paddingHorizontal: 8, paddingTop: 8, width: 320 }}>
