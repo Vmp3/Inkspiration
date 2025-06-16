@@ -334,14 +334,14 @@ class ProfissionalControllerTest {
     void testDeletar_AdminSuccess() throws Exception {
         // Arrange
         when(profissionalService.buscarPorId(1L)).thenReturn(profissional);
-        doNothing().when(authorizationService).requireAdmin();
+        doNothing().when(authorizationService).requireUserAccessOrAdmin(profissional.getUsuario().getIdUsuario());
         doNothing().when(profissionalService).deletar(1L);
 
         // Act & Assert
         mockMvc.perform(delete("/profissional/deletar/{id}", 1L))
                 .andExpect(status().isNoContent());
 
-        verify(authorizationService).requireAdmin();
+        verify(authorizationService).requireUserAccessOrAdmin(profissional.getUsuario().getIdUsuario());
         verify(profissionalService).deletar(1L);
     }
 
