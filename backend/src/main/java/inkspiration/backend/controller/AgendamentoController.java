@@ -7,7 +7,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -313,6 +315,46 @@ public class AgendamentoController {
                     .body("Autenticação inválida");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/relatorios/exportar-pdf")
+    public ResponseEntity<byte[]> exportarAgendamentosPDF(
+            @RequestParam(required = true) Integer ano,
+            Authentication authentication) {
+        try {
+            if (!(authentication instanceof JwtAuthenticationToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Autenticação inválida".getBytes());
+            }
+            
+            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+            Jwt jwt = jwtAuth.getToken();
+            Long userId = jwt.getClaim("userId");
+            
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Token não contém informações do usuário".getBytes());
+            }
+            
+            byte[] pdfBytes = agendamentoService.gerarPDFAgendamentos(userId, ano);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.add("Content-Disposition", "attachment; filename=agendamentos-" + ano + ".pdf");
+            headers.add("Content-Length", String.valueOf(pdfBytes.length));
+            
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            String errorMessage = e.getMessage();
+            
+            if (errorMessage.contains("Nenhum agendamento concluído encontrado")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(errorMessage.getBytes());
+            }
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Erro ao gerar PDF: " + errorMessage).getBytes());
         }
     }
 } 

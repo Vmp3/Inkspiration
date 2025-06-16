@@ -22,6 +22,7 @@ import AppointmentDetailsModal from '../components/AppointmentDetailsModal';
 import CancelAppointmentModal from '../components/CancelAppointmentModal';
 import EditAppointmentModal from '../components/EditAppointmentModal';
 import CompletedAppointmentDetailsModal from '../components/CompletedAppointmentDetailsModal';
+import ExportAppointmentsModal from '../components/ExportAppointmentsModal';
 
 const MyAppointmentsScreen = () => {
   const navigation = useNavigation();
@@ -42,6 +43,7 @@ const MyAppointmentsScreen = () => {
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isExportModalVisible, setIsExportModalVisible] = useState(false);
   const [pageSize] = useState(5);
 
   const isMobile = screenData.width < 768;
@@ -407,13 +409,23 @@ const MyAppointmentsScreen = () => {
         }
       >
         <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <MaterialIcons name="arrow-back" size={24} color="#111" />
+            </TouchableOpacity>
+            <Text style={styles.pageTitle}>Meus Agendamentos</Text>
+          </View>
+          
           <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            style={styles.exportButton}
+            onPress={() => setIsExportModalVisible(true)}
           >
-            <MaterialIcons name="arrow-back" size={24} color="#111" />
+            <MaterialIcons name="file-download" size={20} color="#111" />
+            <Text style={styles.exportButtonText}>Exportar</Text>
           </TouchableOpacity>
-          <Text style={styles.pageTitle}>Meus Agendamentos</Text>
         </View>
 
         <View style={styles.content}>
@@ -467,6 +479,11 @@ const MyAppointmentsScreen = () => {
         onClose={handleCloseEditModal}
         onSuccess={handleEditSuccess}
       />
+      
+      <ExportAppointmentsModal
+        visible={isExportModalVisible}
+        onClose={() => setIsExportModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -482,9 +499,14 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backButton: {
     marginRight: 16,
@@ -493,6 +515,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#111',
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  exportButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111',
+    marginLeft: 4,
   },
   content: {
     padding: 16,

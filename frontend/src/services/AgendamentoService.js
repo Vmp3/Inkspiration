@@ -151,6 +151,26 @@ class AgendamentoService {
       throw error;
     }
   }
+
+  async exportarAgendamentosPDF(ano) {
+    try {
+      console.log(`Solicitando PDF para o ano ${ano}`);
+      
+      const response = await ApiService.get(`/agendamentos/relatorios/exportar-pdf?ano=${ano}`, {
+        responseType: 'blob',
+        headers: {
+          'Accept': 'application/pdf'
+        }
+      });
+      
+      console.log("Resposta da API:", response);
+      
+      return response;
+    } catch (error) {
+      console.error('Erro ao exportar agendamentos para PDF:', error);
+      throw error;
+    }
+  }
 }
 
 export default new AgendamentoService(); 

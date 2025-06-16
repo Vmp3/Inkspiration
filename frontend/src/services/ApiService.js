@@ -51,6 +51,11 @@ class ApiService {
   async get(endpoint, options = {}) {
     try {
       const response = await this.api.get(endpoint, options);
+      
+      if (options.responseType === 'blob') {
+        return response;
+      }
+      
       return response.data;
     } catch (error) {
       console.error(`Erro na requisição GET para ${endpoint}:`, error);
