@@ -134,20 +134,20 @@ class AgendamentoService {
 
   async listarMeusAgendamentosFuturos(page = 0, size = 5) {
     try {
-      const response = await ApiService.get(`/agendamentos/meus-agendamentos/futuros?page=${page}&size=${size}`);
+      const response = await ApiService.get(`/agendamentos/meus-agendamentos/futuros?page=${page}&size=${size}&sort=dtInicio,asc`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar agendamentos futuros:', error);
+      console.error('Erro ao listar agendamentos futuros:', error);
       throw error;
     }
   }
 
   async listarMeusAgendamentosPassados(page = 0, size = 5) {
     try {
-      const response = await ApiService.get(`/agendamentos/meus-agendamentos/passados?page=${page}&size=${size}`);
+      const response = await ApiService.get(`/agendamentos/meus-agendamentos/passados?page=${page}&size=${size}&sort=dtInicio,desc`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar agendamentos passados:', error);
+      console.error('Erro ao listar agendamentos passados:', error);
       throw error;
     }
   }
