@@ -17,7 +17,6 @@ import inkspiration.backend.dto.AgendamentoCompletoDTO;
 import inkspiration.backend.entities.Agendamento;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
-import inkspiration.backend.entities.Endereco;
 import inkspiration.backend.enums.TipoServico;
 import inkspiration.backend.enums.StatusAgendamento;
 import inkspiration.backend.repository.AgendamentoRepository;

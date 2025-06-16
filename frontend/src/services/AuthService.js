@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080';
+const API_URL = 'http://10.0.2.2:8080';
 
 const TOKEN_KEY = 'jwtToken';
 

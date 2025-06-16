@@ -154,8 +154,6 @@ class AgendamentoService {
 
   async exportarAgendamentosPDF(ano) {
     try {
-      console.log(`Solicitando PDF para o ano ${ano}`);
-      
       const response = await ApiService.get(`/agendamentos/relatorios/exportar-pdf?ano=${ano}`, {
         responseType: 'blob',
         headers: {
@@ -163,13 +161,31 @@ class AgendamentoService {
         }
       });
       
-      console.log("Resposta da API:", response);
+      if (response.data instanceof Blob) {
+        const base64Data = await this.blobToBase64(response.data);
+        return {
+          ...response,
+          data: base64Data
+        };
+      }
       
       return response;
     } catch (error) {
       console.error('Erro ao exportar agendamentos para PDF:', error);
       throw error;
     }
+  }
+
+  blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 }
 

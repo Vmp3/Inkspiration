@@ -5,12 +5,12 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
-  ActivityIndicator,
-  Platform
+  ActivityIndicator
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import AgendamentoService from '../services/AgendamentoService';
+import PDFExportService from '../services/PDFExportService';
 import toastHelper from '../utils/toastHelper';
 
 const ExportAppointmentsModal = ({ visible, onClose }) => {
@@ -39,46 +39,14 @@ const ExportAppointmentsModal = ({ visible, onClose }) => {
   const handleExportPDF = async () => {
     try {
       setIsLoading(true);
-      console.log("Iniciando exportação de PDF para o ano:", selectedYear);
       
       const response = await AgendamentoService.exportarAgendamentosPDF(selectedYear);
-      console.log("Resposta recebida:", response);
+      const filename = `agendamentos-${selectedYear}.pdf`;
       
-      if (Platform.OS === 'web') {
-        console.log("Processando download no ambiente web");
-        
-        if (!response.data) {
-          throw new Error("Dados do PDF não recebidos");
-        }
-        
-        const blob = new Blob([response.data], { type: 'application/pdf' });
-        console.log("Blob criado:", blob);
-        
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `agendamentos-${selectedYear}.pdf`);
-        document.body.appendChild(link);
-        console.log("Link de download criado");
-        
-        link.click();
-        console.log("Download iniciado");
-        
-        setTimeout(() => {
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(link);
-          console.log("Recursos de download liberados");
-        }, 100);
-        
-        toastHelper.showSuccess('PDF gerado com sucesso!');
-      } else {
-        toastHelper.showSuccess('PDF gerado com sucesso!');
-      }
+      await PDFExportService.exportToPDF(response, filename);
       
       onClose();
     } catch (error) {
-      console.error('Erro ao exportar agendamentos:', error);
-      
       let errorMessage = 'Erro ao gerar o PDF. Tente novamente.';
       
       if (error.response?.status === 404) {
