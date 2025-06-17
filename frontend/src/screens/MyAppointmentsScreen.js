@@ -8,10 +8,12 @@ import {
   ActivityIndicator,
   Dimensions,
   SafeAreaView,
-  RefreshControl
+  RefreshControl,
+  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { differenceInDays } from 'date-fns';
 import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import Footer from '../components/Footer';
@@ -19,12 +21,17 @@ import AppointmentCard from '../components/AppointmentCard';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import AvaliacaoService from '../services/AvaliacaoService';
+import AppointmentDetailsModal from '../components/AppointmentDetailsModal';
+import CancelAppointmentModal from '../components/CancelAppointmentModal';
+import EditAppointmentModal from '../components/EditAppointmentModal';
+import CompletedAppointmentDetailsModal from '../components/CompletedAppointmentDetailsModal';
+import ExportAppointmentsModal from '../components/ExportAppointmentsModal';
 
 const MyAppointmentsScreen = () => {
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMoreFuture, setIsLoadingMoreFuture] = useState(false);
-  const [isLoadingMorePast, setIsLoadingMorePast] = useState(false);
+  const [isLoadingFuture, setIsLoadingFuture] = useState(false);
+  const [isLoadingPast, setIsLoadingPast] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [futureAppointments, setFutureAppointments] = useState([]);
   const [pastAppointments, setPastAppointments] = useState([]);
@@ -37,6 +44,13 @@ const MyAppointmentsScreen = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [reviewStars, setReviewStars] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isCompletedModalVisible, setIsCompletedModalVisible] = useState(false);
+  const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isExportModalVisible, setIsExportModalVisible] = useState(false);
+  const [pageSize] = useState(5);
 
   const isMobile = screenData.width < 768;
 
@@ -71,69 +85,75 @@ const MyAppointmentsScreen = () => {
 
   const loadFutureAppointments = async (page = 0, shouldRefresh = false) => {
     try {
-      if (page === 0) {
+      if (page === 0 && !shouldRefresh) {
         setIsLoading(true);
       } else {
-        setIsLoadingMoreFuture(true);
+        setIsLoadingFuture(true);
       }
 
-      const response = await AgendamentoService.listarMeusAgendamentosFuturos(page);
+      const response = await AgendamentoService.listarMeusAgendamentosFuturos(page, pageSize);
       const newAppointments = response?.content || [];
       
       setHasMoreFuturePages(!response?.last);
       
-      if (shouldRefresh || page === 0) {
-        setFutureAppointments(newAppointments);
-      } else {
-        setFutureAppointments(prev => [...prev, ...newAppointments]);
-      }
+      setFutureAppointments(newAppointments);
       
       setCurrentFuturePage(page);
     } catch (error) {
       console.error('Erro ao carregar agendamentos futuros:', error);
       throw error;
     } finally {
-      setIsLoadingMoreFuture(false);
+      setIsLoadingFuture(false);
+      setIsLoading(false);
     }
   };
 
   const loadPastAppointments = async (page = 0, shouldRefresh = false) => {
     try {
-      if (page === 0) {
+      if (page === 0 && !shouldRefresh) {
         setIsLoading(true);
       } else {
-        setIsLoadingMorePast(true);
+        setIsLoadingPast(true);
       }
 
-      const response = await AgendamentoService.listarMeusAgendamentosPassados(page);
+      const response = await AgendamentoService.listarMeusAgendamentosPassados(page, pageSize);
       const newAppointments = response?.content || [];
       
       setHasMorePastPages(!response?.last);
       
-      if (shouldRefresh || page === 0) {
-        setPastAppointments(newAppointments);
-      } else {
-        setPastAppointments(prev => [...prev, ...newAppointments]);
-      }
+      setPastAppointments(newAppointments);
       
       setCurrentPastPage(page);
     } catch (error) {
       console.error('Erro ao carregar agendamentos passados:', error);
       throw error;
     } finally {
-      setIsLoadingMorePast(false);
+      setIsLoadingPast(false);
+      setIsLoading(false);
     }
   };
 
-  const handleLoadMoreFuture = () => {
-    if (!isLoadingMoreFuture && hasMoreFuturePages) {
+  const handleNextFuturePage = () => {
+    if (!isLoadingFuture && hasMoreFuturePages) {
       loadFutureAppointments(currentFuturePage + 1);
     }
   };
 
-  const handleLoadMorePast = () => {
-    if (!isLoadingMorePast && hasMorePastPages) {
+  const handlePrevFuturePage = () => {
+    if (!isLoadingFuture && currentFuturePage > 0) {
+      loadFutureAppointments(currentFuturePage - 1);
+    }
+  };
+
+  const handleNextPastPage = () => {
+    if (!isLoadingPast && hasMorePastPages) {
       loadPastAppointments(currentPastPage + 1);
+    }
+  };
+
+  const handlePrevPastPage = () => {
+    if (!isLoadingPast && currentPastPage > 0) {
+      loadPastAppointments(currentPastPage - 1);
     }
   };
 
@@ -142,12 +162,98 @@ const MyAppointmentsScreen = () => {
     loadAppointments(true);
   };
 
-  const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
-    const paddingToBottom = 20;
-    return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+  const handleAppointmentPress = (appointment) => {
+    setSelectedAppointment(appointment);
+    
+    if (appointment.status?.toUpperCase() === 'CONCLUIDO') {
+      setIsCompletedModalVisible(true);
+    } else if (appointment.status?.toUpperCase() === 'CANCELADO') {
+      setIsModalVisible(true);
+    } else {
+      setIsModalVisible(true);
+    }
   };
 
-  const handleAppointmentPress = (appointment) => {
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+    setSelectedAppointment(null);
+  };
+  
+  const handleCloseCompletedModal = () => {
+    setIsCompletedModalVisible(false);
+    setSelectedAppointment(null);
+  };
+
+  const handleEditAppointment = () => {
+    if (!selectedAppointment) return;
+    
+    const today = new Date();
+    const appointmentDate = new Date(selectedAppointment.dtInicio);
+    const daysDiff = differenceInDays(appointmentDate, today);
+    
+    if (daysDiff < 3) {
+      toastHelper.showError("A edição só é permitida com no mínimo 3 dias de antecedência.");
+      return;
+    }
+    
+    setIsModalVisible(false);
+    setIsEditModalVisible(true);
+  };
+
+  const handleEditSuccess = () => {
+    loadAppointments(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalVisible(false);
+    setSelectedAppointment(null);
+  };
+
+  const handleCancelAppointment = () => {
+    const today = new Date();
+    const appointmentDate = new Date(selectedAppointment.dtInicio);
+    const daysDiff = differenceInDays(appointmentDate, today);
+    
+    if (daysDiff < 3) {
+      toastHelper.showError("O cancelamento só é permitido com no mínimo 3 dias de antecedência.");
+      return;
+    }
+    
+    setIsModalVisible(false);
+    setIsCancelModalVisible(true);
+  };
+
+  const handleCloseCancelModal = () => {
+    setIsCancelModalVisible(false);
+    setSelectedAppointment(null);
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      await AgendamentoService.atualizarStatusAgendamento(
+        selectedAppointment.idAgendamento,
+        'CANCELADO'
+      );
+      
+      toastHelper.showSuccess('Agendamento cancelado com sucesso');
+      setIsCancelModalVisible(false);
+      setSelectedAppointment(null);
+      
+      loadAppointments(true);
+    } catch (error) {
+      console.error('Erro ao cancelar agendamento:', error);
+      
+      let errorMessage = 'Erro ao cancelar o agendamento';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      toastHelper.showError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleOpenReviewModal = (appointment) => {
@@ -191,7 +297,46 @@ const MyAppointmentsScreen = () => {
   const renderFutureAppointments = () => {
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Agendamentos Futuros</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Agendamentos Futuros</Text>
+          
+          {!isLoading && futureAppointments.length > 0 && (
+            <View style={styles.paginationContainer}>
+              <TouchableOpacity 
+                style={[
+                  styles.paginationButton, 
+                  currentFuturePage === 0 && styles.paginationButtonDisabled
+                ]}
+                onPress={handlePrevFuturePage}
+                disabled={currentFuturePage === 0 || isLoadingFuture}
+              >
+                <MaterialIcons 
+                  name="chevron-left" 
+                  size={24} 
+                  color={currentFuturePage === 0 ? "#CBD5E1" : "#111"} 
+                />
+              </TouchableOpacity>
+              
+              <Text style={styles.paginationText}>{currentFuturePage + 1}</Text>
+              
+              <TouchableOpacity 
+                style={[
+                  styles.paginationButton, 
+                  !hasMoreFuturePages && styles.paginationButtonDisabled
+                ]}
+                onPress={handleNextFuturePage}
+                disabled={!hasMoreFuturePages || isLoadingFuture}
+              >
+                <MaterialIcons 
+                  name="chevron-right" 
+                  size={24} 
+                  color={!hasMoreFuturePages ? "#CBD5E1" : "#111"} 
+                />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+        
         {futureAppointments.length > 0 ? (
           <>
             {futureAppointments.map(appointment => (
@@ -201,10 +346,11 @@ const MyAppointmentsScreen = () => {
                 onPress={() => handleAppointmentPress(appointment)}
               />
             ))}
-            {isLoadingMoreFuture && (
+            
+            {isLoadingFuture && (
               <View style={styles.loadingMoreContainer}>
                 <ActivityIndicator size="small" color="#111" />
-                <Text style={styles.loadingMoreText}>Carregando mais agendamentos...</Text>
+                <Text style={styles.loadingMoreText}>Carregando agendamentos...</Text>
               </View>
             )}
           </>
@@ -218,7 +364,46 @@ const MyAppointmentsScreen = () => {
   const renderPastAppointments = () => {
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Histórico de Agendamentos</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Histórico de Agendamentos</Text>
+          
+          {!isLoading && pastAppointments.length > 0 && (
+            <View style={styles.paginationContainer}>
+              <TouchableOpacity 
+                style={[
+                  styles.paginationButton, 
+                  currentPastPage === 0 && styles.paginationButtonDisabled
+                ]}
+                onPress={handlePrevPastPage}
+                disabled={currentPastPage === 0 || isLoadingPast}
+              >
+                <MaterialIcons 
+                  name="chevron-left" 
+                  size={24} 
+                  color={currentPastPage === 0 ? "#CBD5E1" : "#111"} 
+                />
+              </TouchableOpacity>
+              
+              <Text style={styles.paginationText}>{currentPastPage + 1}</Text>
+              
+              <TouchableOpacity 
+                style={[
+                  styles.paginationButton, 
+                  !hasMorePastPages && styles.paginationButtonDisabled
+                ]}
+                onPress={handleNextPastPage}
+                disabled={!hasMorePastPages || isLoadingPast}
+              >
+                <MaterialIcons 
+                  name="chevron-right" 
+                  size={24} 
+                  color={!hasMorePastPages ? "#CBD5E1" : "#111"} 
+                />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+        
         {pastAppointments.length > 0 ? (
           <>
             {pastAppointments.map(appointment => (
@@ -235,10 +420,11 @@ const MyAppointmentsScreen = () => {
                 </TouchableOpacity>
               </View>
             ))}
-            {isLoadingMorePast && (
+            
+            {isLoadingPast && (
               <View style={styles.loadingMoreContainer}>
                 <ActivityIndicator size="small" color="#111" />
-                <Text style={styles.loadingMoreText}>Carregando mais agendamentos...</Text>
+                <Text style={styles.loadingMoreText}>Carregando agendamentos...</Text>
               </View>
             )}
           </>
@@ -272,22 +458,25 @@ const MyAppointmentsScreen = () => {
             tintColor="#111"
           />
         }
-        onScroll={({ nativeEvent }) => {
-          if (isCloseToBottom(nativeEvent)) {
-            handleLoadMoreFuture();
-            handleLoadMorePast();
-          }
-        }}
-        scrollEventThrottle={400}
       >
         <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <MaterialIcons name="arrow-back" size={24} color="#111" />
+            </TouchableOpacity>
+            <Text style={styles.pageTitle}>Meus Agendamentos</Text>
+          </View>
+          
           <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            style={styles.exportButton}
+            onPress={() => setIsExportModalVisible(true)}
           >
-            <MaterialIcons name="arrow-back" size={24} color="#111" />
+            <MaterialIcons name="file-download" size={20} color="#111" />
+            <Text style={styles.exportButtonText}>Exportar</Text>
           </TouchableOpacity>
-          <Text style={styles.pageTitle}>Meus Agendamentos</Text>
         </View>
 
         <View style={styles.content}>
@@ -375,6 +564,38 @@ const MyAppointmentsScreen = () => {
           </View>
         </Modal>
       )}
+
+      <AppointmentDetailsModal
+        visible={isModalVisible}
+        appointment={selectedAppointment}
+        onClose={handleCloseModal}
+        onEdit={handleEditAppointment}
+        onCancel={handleCancelAppointment}
+      />
+      
+      <CompletedAppointmentDetailsModal
+        visible={isCompletedModalVisible}
+        appointment={selectedAppointment}
+        onClose={handleCloseCompletedModal}
+      />
+
+      <CancelAppointmentModal
+        visible={isCancelModalVisible}
+        onClose={handleCloseCancelModal}
+        onConfirm={handleConfirmCancel}
+      />
+
+      <EditAppointmentModal
+        visible={isEditModalVisible}
+        appointment={selectedAppointment}
+        onClose={handleCloseEditModal}
+        onSuccess={handleEditSuccess}
+      />
+      
+      <ExportAppointmentsModal
+        visible={isExportModalVisible}
+        onClose={() => setIsExportModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -390,9 +611,14 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backButton: {
     marginRight: 16,
@@ -402,17 +628,36 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#111',
   },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  exportButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111',
+    marginLeft: 4,
+  },
   content: {
     padding: 16,
   },
   section: {
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
     color: '#111',
-    marginBottom: 16,
   },
   loadingContainer: {
     flex: 1,
@@ -466,6 +711,29 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     color: '#64748b',
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  paginationButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  paginationButtonDisabled: {
+    backgroundColor: '#F8FAFC',
+  },
+  paginationText: {
+    fontSize: 14,
+    color: '#64748B',
+    marginHorizontal: 8,
+    minWidth: 20,
+    textAlign: 'center',
   },
 });
 

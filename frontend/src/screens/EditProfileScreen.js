@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import axios from 'axios';
 import * as formatters from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
+import toastHelper from '../utils/toastHelper';
 
 import PersonalForm from '../components/forms/PersonalForm';
 import AddressForm from '../components/forms/AddressForm';
@@ -294,6 +295,26 @@ const EditProfileScreen = () => {
             tabs={tabNavigation.getTabs()}
             activeTab={tabNavigation.activeTab}
             setActiveTab={tabNavigation.setActiveTab}
+            onTabPress={(tabId) => {
+              if (tabNavigation.activeTab === 'hours') {
+                const isValid = professionalData.professionalFormData.workHours ? 
+                  tabNavigation.validateCurrentTab() : true;
+                
+                if (!isValid) {
+                  toastHelper.showError('Corrija os horários inválidos antes de continuar.');
+                  return;
+                }
+              }
+              
+              if (tabNavigation.activeTab === 'basic-info') {
+                const isValid = tabNavigation.validateCurrentTab();
+                if (!isValid) {
+                  return;
+                }
+              }
+              
+              tabNavigation.setActiveTab(tabId);
+            }}
           >
             {tabNavigation.activeTab === 'personal' && (
                   <>
@@ -352,6 +373,7 @@ const EditProfileScreen = () => {
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
+                  nextDisabled={!tabNavigation.validateCurrentTab()}
                     />
                   </>
                 )}
@@ -367,6 +389,7 @@ const EditProfileScreen = () => {
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
+                  nextDisabled={!tabNavigation.isHoursValid}
                     />
                   </>
                 )}

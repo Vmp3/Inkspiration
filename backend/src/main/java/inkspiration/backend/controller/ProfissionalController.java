@@ -91,10 +91,19 @@ public class ProfissionalController {
     }
 
     @GetMapping("/profissional/completo")
-    public ResponseEntity<List<Map<String, Object>>> listarCompleto(@RequestParam(defaultValue = "0") int page) {
+    public ResponseEntity<Map<String, Object>> listarCompleto(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "9") int size,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String locationTerm,
+            @RequestParam(defaultValue = "0") double minRating,
+            @RequestParam(required = false) String[] selectedSpecialties,
+            @RequestParam(defaultValue = "melhorAvaliacao") String sortBy) {
+        
         // Endpoint público para listar profissionais com informações completas (portfolio, endereço, nota)
-        Pageable pageable = PageRequest.of(page, 10);
-        Page<Profissional> profissionais = profissionalService.listar(pageable);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Profissional> profissionais = profissionalService.listarComFiltros(
+            pageable, searchTerm, locationTerm, minRating, selectedSpecialties, sortBy);
         
         List<Map<String, Object>> profissionaisCompletos = profissionais.getContent().stream()
                 .map(profissional -> {
@@ -160,8 +169,18 @@ public class ProfissionalController {
                     return profissionalCompleto;
                 })
                 .collect(Collectors.toList());
-                
-        return ResponseEntity.ok(profissionaisCompletos);
+        
+        // Retornar dados paginados
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", profissionaisCompletos);
+        response.put("totalElements", profissionais.getTotalElements());
+        response.put("totalPages", profissionais.getTotalPages());
+        response.put("currentPage", profissionais.getNumber());
+        response.put("size", profissionais.getSize());
+        response.put("hasNext", profissionais.hasNext());
+        response.put("hasPrevious", profissionais.hasPrevious());
+        
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/profissional/completo/{id}")

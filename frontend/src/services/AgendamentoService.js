@@ -4,10 +4,12 @@ class AgendamentoService {
   
   async buscarHorariosDisponiveis(idProfissional, data, tipoServico) {
     try {
+      const tipoServicoFormatado = this.formatarTipoServico(tipoServico);
+      
       const params = new URLSearchParams({
         idProfissional: idProfissional.toString(),
         data: data,
-        tipoServico: tipoServico
+        tipoServico: tipoServicoFormatado
       });
       
       const endpoint = `/disponibilidades/verificar?${params.toString()}`;
@@ -24,6 +26,17 @@ class AgendamentoService {
       }
       throw error;
     }
+  }
+
+  formatarTipoServico(tipoServico) {
+    const mapeamento = {
+      'TATUAGEM_PEQUENA': 'pequena',
+      'TATUAGEM_MEDIA': 'media',
+      'TATUAGEM_GRANDE': 'grande',
+      'SESSAO': 'sessao'
+    };
+    
+    return mapeamento[tipoServico] || tipoServico;
   }
 
   async criarAgendamento(dadosAgendamento) {
@@ -68,7 +81,15 @@ class AgendamentoService {
 
   async atualizarAgendamento(id, dadosAgendamento) {
     try {
-      return await ApiService.put(`/agendamentos/${id}`, dadosAgendamento);
+      const tipoServicoFormatado = this.formatarTipoServico(dadosAgendamento.tipoServico);
+      
+      const dadosParaEnvio = {
+        tipoServico: tipoServicoFormatado,
+        descricao: dadosAgendamento.descricao,
+        dtInicio: dadosAgendamento.dtInicio
+      };
+      
+      return await ApiService.put(`/agendamentos/${id}`, dadosParaEnvio);
     } catch (error) {
       console.error('Erro ao atualizar agendamento:', error);
       throw error;
@@ -113,22 +134,58 @@ class AgendamentoService {
 
   async listarMeusAgendamentosFuturos(page = 0, size = 5) {
     try {
-      const response = await ApiService.get(`/agendamentos/meus-agendamentos/futuros?page=${page}&size=${size}`);
+      const response = await ApiService.get(`/agendamentos/meus-agendamentos/futuros?page=${page}&size=${size}&sort=dtInicio,asc`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar agendamentos futuros:', error);
+      console.error('Erro ao listar agendamentos futuros:', error);
       throw error;
     }
   }
 
   async listarMeusAgendamentosPassados(page = 0, size = 5) {
     try {
-      const response = await ApiService.get(`/agendamentos/meus-agendamentos/passados?page=${page}&size=${size}`);
+      const response = await ApiService.get(`/agendamentos/meus-agendamentos/passados?page=${page}&size=${size}&sort=dtInicio,desc`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar agendamentos passados:', error);
+      console.error('Erro ao listar agendamentos passados:', error);
       throw error;
     }
+  }
+
+  async exportarAgendamentosPDF(ano) {
+    try {
+      const response = await ApiService.get(`/agendamentos/relatorios/exportar-pdf?ano=${ano}`, {
+        responseType: 'blob',
+        headers: {
+          'Accept': 'application/pdf'
+        }
+      });
+      
+      if (response.data instanceof Blob) {
+        const base64Data = await this.blobToBase64(response.data);
+        return {
+          ...response,
+          data: base64Data
+        };
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Erro ao exportar agendamentos para PDF:', error);
+      throw error;
+    }
+  }
+
+  blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 }
 

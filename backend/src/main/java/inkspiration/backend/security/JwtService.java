@@ -27,24 +27,36 @@ public class JwtService {
     private final JwtEncoder encoder;
     private final JwtDecoder jwtDecoder;
     private final TokenRevogadoRepository tokenRevogadoRepository;
-    private final JwtConfig jwtConfig;
     private final UsuarioRepository usuarioRepository;
     
     @Value("${api.security.token.expiration:720}")
     private int expiration;
+    
+    // Configuração da duração do token padrão em minutos (padrão: 720 = 12 horas)
+    @Value("${jwt.token.expiration.default:720}")
+    private long defaultTokenExpirationMinutes;
+    
+    // Configuração da duração do token "Lembrar de mim" em minutos (padrão: 43200 = 30 dias)
+    @Value("${jwt.token.expiration.remember-me:43200}")
+    private long rememberMeTokenExpirationMinutes;
 
     @Autowired
     public JwtService(JwtEncoder encoder, JwtDecoder jwtDecoder, TokenRevogadoRepository tokenRevogadoRepository, JwtConfig jwtConfig, UsuarioRepository usuarioRepository) {
         this.encoder = encoder;
         this.jwtDecoder = jwtDecoder;
         this.tokenRevogadoRepository = tokenRevogadoRepository;
-        this.jwtConfig = jwtConfig;
         this.usuarioRepository = usuarioRepository;
     }
 
     public String generateToken(Authentication authentication) {
+        return generateToken(authentication, null);
+    }
+    
+    public String generateToken(Authentication authentication, Boolean rememberMe) {
         Instant now = ZonedDateTime.now(ZoneId.of("America/Sao_Paulo")).toInstant();
-        long expiry = jwtConfig.getExpirySeconds();
+        long expiry = (rememberMe != null && rememberMe) ? 
+            rememberMeTokenExpirationMinutes * 60 : 
+            defaultTokenExpirationMinutes * 60;
         
         String scope = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)

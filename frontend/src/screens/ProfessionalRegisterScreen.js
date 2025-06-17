@@ -382,10 +382,69 @@ const ProfessionalRegisterScreen = () => {
     }
   };
   
+  const validateBasicTab = () => {
+    const selectedSpecialties = Object.keys(specialties).filter(key => specialties[key]);
+    if (selectedSpecialties.length === 0) {
+      return false;
+    }
+    
+    if (tipoServicoSelecionados) {
+      const selectedServices = Object.keys(tipoServicoSelecionados).filter(
+        key => tipoServicoSelecionados[key]
+      );
+      
+      if (selectedServices.length === 0) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+  
+  const validateWorkHours = () => {
+    const hasWorkHours = workHours.some(day => 
+      day.available && (day.morning.enabled || day.afternoon.enabled)
+    );
+    
+    for (const day of workHours) {
+      if (!day.available) continue;
+      
+      if (day.morning.enabled) {
+        if (!day.morning.start || day.morning.start.length < 5 || !day.morning.end || day.morning.end.length < 5) {
+          return false;
+        }
+        
+        const [startHours, startMinutes] = day.morning.start.split(':').map(num => parseInt(num, 10));
+        const [endHours, endMinutes] = day.morning.end.split(':').map(num => parseInt(num, 10));
+        
+        if (endHours * 60 + endMinutes <= startHours * 60 + startMinutes) {
+          return false;
+        }
+      }
+      
+      if (day.afternoon.enabled) {
+        if (!day.afternoon.start || day.afternoon.start.length < 5 || !day.afternoon.end || day.afternoon.end.length < 5) {
+          return false;
+        }
+        
+        const [startHours, startMinutes] = day.afternoon.start.split(':').map(num => parseInt(num, 10));
+        const [endHours, endMinutes] = day.afternoon.end.split(':').map(num => parseInt(num, 10));
+        
+        if (endHours * 60 + endMinutes <= startHours * 60 + startMinutes) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  };
+  
   const handleNextTab = () => {
     if (activeTab === 'basic') {
+      if (!validateBasicTab()) return;
       setActiveTab('hours');
     } else if (activeTab === 'hours') {
+      if (!validateWorkHours()) return;
       setActiveTab('portfolio');
     }
   };
@@ -402,10 +461,8 @@ const ProfessionalRegisterScreen = () => {
     setIsLoading(true);
     
     try {
-      // Validar se pelo menos uma especialidade foi selecionada
       const selectedSpecialties = Object.keys(specialties).filter(key => specialties[key]);
       if (selectedSpecialties.length === 0) {
-        toastHelper.showError('Selecione pelo menos uma especialidade');
         setIsLoading(false);
         return;
       }
@@ -556,7 +613,21 @@ const ProfessionalRegisterScreen = () => {
           
           <View style={styles.cardWrapper}>
             <View style={styles.card}>
-              <TabHeader tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+              <TabHeader 
+                tabs={tabs} 
+                activeTab={activeTab} 
+                setActiveTab={(tabId) => {
+                  if (activeTab === 'basic' && tabId !== 'basic') {
+                    if (!validateBasicTab()) return;
+                  }
+                  
+                  if (activeTab === 'hours' && tabId !== 'hours' && tabId !== 'basic') {
+                    if (!validateWorkHours()) return;
+                  }
+                  
+                  setActiveTab(tabId);
+                }} 
+              />
               
               {activeTab === 'basic' && (
                 <View style={styles.tabContentWrapper}>
@@ -579,6 +650,7 @@ const ProfessionalRegisterScreen = () => {
                       onNext={handleNextTab}
                       showPrev={false}
                       nextText="Próximo"
+                      nextDisabled={!validateBasicTab()}
                     />
                   </View>
                 </View>
@@ -595,6 +667,7 @@ const ProfessionalRegisterScreen = () => {
                       onPrev={handlePrevTab}
                       onNext={handleNextTab}
                       nextText="Próximo"
+                      nextDisabled={!validateWorkHours()}
                     />
                   </View>
                 </View>

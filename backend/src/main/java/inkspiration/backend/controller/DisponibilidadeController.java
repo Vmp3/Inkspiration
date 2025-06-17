@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import inkspiration.backend.dto.DisponibilidadeDTO;
 import inkspiration.backend.enums.TipoServico;
+import inkspiration.backend.exception.DisponibilidadeException;
 import inkspiration.backend.service.DisponibilidadeService;
 import inkspiration.backend.security.AuthorizationService;
 import inkspiration.backend.service.ProfissionalService;
@@ -53,10 +54,12 @@ public class DisponibilidadeController {
             DisponibilidadeDTO disponibilidadeDTO = disponibilidadeService.cadastrarDisponibilidadeDTO(
                     idProfissional, horarios);
             return ResponseEntity.status(HttpStatus.CREATED).body(disponibilidadeDTO);
+        } catch (DisponibilidadeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro de validação", "mensagem", e.getMessage()));
         } catch (JsonProcessingException e) {
-            return ResponseEntity.badRequest().body("Erro ao processar JSON: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro ao processar JSON", "mensagem", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro", "mensagem", e.getMessage()));
         }
     }
     
@@ -67,9 +70,9 @@ public class DisponibilidadeController {
                     disponibilidadeService.obterDisponibilidade(idProfissional);
             return ResponseEntity.ok(disponibilidade);
         } catch (JsonProcessingException e) {
-            return ResponseEntity.badRequest().body("Erro ao processar JSON: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro ao processar JSON", "mensagem", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro", "mensagem", e.getMessage()));
         }
     }
     
@@ -86,7 +89,7 @@ public class DisponibilidadeController {
             DisponibilidadeDTO disponibilidadeDTO = disponibilidadeService.buscarPorProfissionalDTO(idProfissional);
             return ResponseEntity.ok(disponibilidadeDTO);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro", "mensagem", e.getMessage()));
         }
     }
     
@@ -101,7 +104,7 @@ public class DisponibilidadeController {
             try {
                 tipoServicoEnum = TipoServico.fromDescricao(tipoServico);
             } catch (IllegalArgumentException e) {
-                return ResponseEntity.badRequest().body(Map.of(
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                     "erro", "Tipo de serviço inválido",
                     "mensagem", "Tipos válidos: pequena, media, grande, sessao"
                 ));
@@ -117,9 +120,11 @@ public class DisponibilidadeController {
             
             return ResponseEntity.ok(horariosDisponiveis);
         } catch (JsonProcessingException e) {
-            return ResponseEntity.badRequest().body("Erro ao processar JSON: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro ao processar JSON", "mensagem", e.getMessage()));
+        } catch (DisponibilidadeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro de validação", "mensagem", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro", "mensagem", e.getMessage()));
         }
     }
 } 

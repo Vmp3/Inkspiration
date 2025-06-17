@@ -22,6 +22,19 @@ import inkspiration.backend.enums.StatusAgendamento;
 import inkspiration.backend.repository.AgendamentoRepository;
 import inkspiration.backend.repository.ProfissionalRepository;
 import inkspiration.backend.repository.UsuarioRepository;
+import java.io.ByteArrayOutputStream;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
+import java.awt.Color;
+import java.time.format.DateTimeFormatter;
 
 @Service
 public class AgendamentoService {
@@ -158,12 +171,15 @@ public class AgendamentoService {
     }
     
     @Transactional
-    public Agendamento atualizarAgendamento(Long id, String tipoServicoStr, String descricao,
+    public Agendamento atualizarAgendamento(Long id, Long idUsuarioLogado, String tipoServicoStr, String descricao,
             LocalDateTime dtInicio) throws Exception {
         
         Agendamento agendamento = buscarPorId(id);
         
-        // Validar se a data não é passada
+        if (!agendamento.getUsuario().getIdUsuario().equals(idUsuarioLogado)) {
+            throw new RuntimeException("Não autorizado: este agendamento não pertence ao usuário logado");
+        }
+        
         LocalDateTime agora = LocalDateTime.now();
         if (dtInicio.isBefore(agora)) {
             throw new RuntimeException("Não é possível agendar para datas e horários que já passaram");
@@ -269,11 +285,29 @@ public class AgendamentoService {
     }
     
     @Transactional
-    public Agendamento atualizarStatusAgendamento(Long id, String status) {
+    public Agendamento atualizarStatusAgendamento(Long id, Long idUsuarioLogado, String status) {
         Agendamento agendamento = buscarPorId(id);
+        
+        if (!agendamento.getUsuario().getIdUsuario().equals(idUsuarioLogado)) {
+            throw new RuntimeException("Não autorizado: este agendamento não pertence ao usuário logado");
+        }
         
         try {
             StatusAgendamento novoStatus = StatusAgendamento.fromDescricao(status);
+            
+            if (novoStatus == StatusAgendamento.CANCELADO && agendamento.getStatus() != StatusAgendamento.AGENDADO) {
+                throw new RuntimeException("Somente agendamentos com status 'Agendado' podem ser cancelados");
+            }
+            
+            if (novoStatus == StatusAgendamento.CANCELADO) {
+                LocalDateTime agora = LocalDateTime.now();
+                LocalDateTime dataLimite = agendamento.getDtInicio().minusDays(3);
+                
+                if (agora.isAfter(dataLimite)) {
+                    throw new RuntimeException("O cancelamento só é permitido com no mínimo 3 dias de antecedência");
+                }
+            }
+            
             agendamento.setStatus(novoStatus);
             return agendamentoRepository.save(agendamento);
         } catch (IllegalArgumentException e) {
@@ -323,5 +357,184 @@ public class AgendamentoService {
             return agendamentoRepository.save(agendamento);
         }
         return agendamento;
+    }
+    
+    public byte[] gerarPDFAgendamentos(Long idUsuario, Integer ano) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        
+        try {
+            List<Agendamento> agendamentos = agendamentoRepository.findByUsuarioIdAndStatusAndAno(
+                idUsuario, StatusAgendamento.CONCLUIDO, ano);
+            
+            if (agendamentos.isEmpty()) {
+                throw new Exception("Nenhum agendamento concluído encontrado para o ano " + ano);
+            }
+            
+            List<AgendamentoCompletoDTO> agendamentosDTO = agendamentos.stream()
+                .map(AgendamentoCompletoDTO::new)
+                .collect(Collectors.toList());
+            
+            Document document = new Document(com.lowagie.text.PageSize.A4);
+            PdfWriter writer = PdfWriter.getInstance(document, out);
+            
+            document.addCreator("Inkspiration App");
+            document.addAuthor("Inkspiration");
+            document.addSubject("Relatório de Agendamentos");
+            document.addTitle("Agendamentos Concluídos - " + ano);
+            
+            document.open();
+            
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, Color.BLACK);
+            Paragraph title = new Paragraph("Agendamentos Concluídos - " + ano, titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(20);
+            document.add(title);
+            
+            Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK);
+            Paragraph info = new Paragraph("Total de agendamentos concluídos: " + agendamentosDTO.size(), normalFont);
+            info.setAlignment(Element.ALIGN_LEFT);
+            info.setSpacingAfter(20);
+            document.add(info);
+            
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+            
+            for (AgendamentoCompletoDTO agendamento : agendamentosDTO) {
+                try {
+                    Font sectionFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, Color.BLACK);
+                    String titleText = "Agendamento #" + agendamento.getIdAgendamento();
+                    if (agendamento.getDtInicio() != null) {
+                        titleText += " - " + dateFormatter.format(agendamento.getDtInicio());
+                    }
+                    
+                    Paragraph sectionTitle = new Paragraph(titleText, sectionFont);
+                    sectionTitle.setSpacingBefore(15);
+                    sectionTitle.setSpacingAfter(10);
+                    document.add(sectionTitle);
+                    
+                    PdfPTable table = new PdfPTable(2);
+                    table.setWidthPercentage(100);
+                    table.setSpacingBefore(10f);
+                    table.setSpacingAfter(10f);
+                    
+                    float[] columnWidths = {1f, 3f};
+                    table.setWidths(columnWidths);
+                    
+                    Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.WHITE);
+                    Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK);
+                    
+                    addTableRow(table, "Profissional", 
+                        agendamento.getNomeProfissional() != null ? agendamento.getNomeProfissional() : "Não especificado", 
+                        headerFont, cellFont);
+                    
+                    String tipoServico = "Não especificado";
+                    if (agendamento.getTipoServico() != null) {
+                        switch (agendamento.getTipoServico()) {
+                            case TATUAGEM_PEQUENA:
+                                tipoServico = "Tatuagem Pequena";
+                                break;
+                            case TATUAGEM_MEDIA:
+                                tipoServico = "Tatuagem Média";
+                                break;
+                            case TATUAGEM_GRANDE:
+                                tipoServico = "Tatuagem Grande";
+                                break;
+                            case SESSAO:
+                                tipoServico = "Sessão";
+                                break;
+                            default:
+                                tipoServico = agendamento.getTipoServico().getDescricao();
+                        }
+                    }
+                    addTableRow(table, "Serviço", tipoServico, headerFont, cellFont);
+                    
+                    if (agendamento.getDtInicio() != null) {
+                        addTableRow(table, "Data", dateFormatter.format(agendamento.getDtInicio()), headerFont, cellFont);
+                    }
+                    
+                    String horario = "Não especificado";
+                    if (agendamento.getDtInicio() != null) {
+                        horario = timeFormatter.format(agendamento.getDtInicio());
+                        if (agendamento.getDtFim() != null) {
+                            horario += " - " + timeFormatter.format(agendamento.getDtFim());
+                        }
+                    }
+                    addTableRow(table, "Horário", horario, headerFont, cellFont);
+                    
+                    String endereco = "Endereço não disponível";
+                    
+                    if (agendamento.getRua() != null) {
+                        endereco = agendamento.getRua();
+                        if (agendamento.getNumero() != null) {
+                            endereco += ", " + agendamento.getNumero();
+                        }
+                        
+                        if (agendamento.getComplemento() != null && !agendamento.getComplemento().isEmpty()) {
+                            endereco += "\n" + agendamento.getComplemento();
+                        }
+                        
+                        if (agendamento.getBairro() != null && !agendamento.getBairro().isEmpty()) {
+                            endereco += "\n" + agendamento.getBairro();
+                        }
+                        
+                        if (agendamento.getCidade() != null) {
+                            endereco += "\n" + agendamento.getCidade();
+                            if (agendamento.getEstado() != null) {
+                                endereco += "/" + agendamento.getEstado();
+                            }
+                        }
+                        
+                        if (agendamento.getCep() != null) {
+                            endereco += "\nCEP: " + agendamento.getCep();
+                        }
+                    }
+                    
+                    addTableRow(table, "Local", endereco, headerFont, cellFont);
+                    
+                    if (agendamento.getDescricao() != null && !agendamento.getDescricao().isEmpty()) {
+                        addTableRow(table, "Descrição", agendamento.getDescricao(), headerFont, cellFont);
+                    }
+                    
+                    document.add(table);
+                    
+                    Paragraph separator = new Paragraph("------------------------------------------------------");
+                    separator.setAlignment(Element.ALIGN_CENTER);
+                    document.add(separator);
+                } catch (Exception e) {
+                    System.err.println("Erro ao processar agendamento #" + agendamento.getIdAgendamento() + ": " + e.getMessage());
+                }
+            }
+            
+            Paragraph footer = new Paragraph("Relatório gerado em: " + 
+                java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
+                FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10, Color.GRAY));
+            footer.setAlignment(Element.ALIGN_CENTER);
+            document.add(footer);
+            
+            document.close();
+            writer.close();
+            
+            return out.toByteArray();
+            
+        } catch (DocumentException e) {
+            throw new Exception("Erro ao gerar PDF: " + e.getMessage());
+        } finally {
+            try {
+                out.close();
+            } catch (Exception e) {
+            }
+        }
+    }
+    
+    private void addTableRow(PdfPTable table, String header, String value, Font headerFont, Font cellFont) {
+        PdfPCell headerCell = new PdfPCell(new Phrase(header, headerFont));
+        headerCell.setBackgroundColor(new Color(44, 62, 80));
+        headerCell.setPadding(5);
+        
+        PdfPCell valueCell = new PdfPCell(new Phrase(value, cellFont));
+        valueCell.setPadding(5);
+        
+        table.addCell(headerCell);
+        table.addCell(valueCell);
     }
 } 

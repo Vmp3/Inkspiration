@@ -86,12 +86,10 @@ export const useFormValidation = () => {
   };
 
   const validateSecurityTab = (formData) => {
-    // Se não está alterando a senha, retorna true
     if (!formData.senhaAtual && !formData.novaSenha && !formData.confirmarSenha) {
       return true;
     }
     
-    // Se está alterando a senha parcialmente
     if ((formData.senhaAtual || formData.novaSenha || formData.confirmarSenha) && 
         !(formData.senhaAtual && formData.novaSenha && formData.confirmarSenha)) {
       
@@ -133,7 +131,6 @@ export const useFormValidation = () => {
     }
     
     if (isArtist && formData.especialidades.length === 0) {
-      toastHelper.showError('Selecione pelo menos uma especialidade');
       return false;
     }
     
@@ -143,10 +140,53 @@ export const useFormValidation = () => {
   const validateBasicInfoTab = (professionalFormData) => {
     const selectedSpecialties = Object.keys(professionalFormData.specialties).filter(key => professionalFormData.specialties[key]);
     if (selectedSpecialties.length === 0) {
-      toastHelper.showError('Selecione pelo menos uma especialidade');
       return false;
     }
+    
+    if (professionalFormData.tipoServicoSelecionados) {
+      const selectedServices = Object.keys(professionalFormData.tipoServicoSelecionados).filter(
+        key => professionalFormData.tipoServicoSelecionados[key]
+      );
+      
+      if (selectedServices.length === 0) {
+        return false;
+      }
+    }
+    
     return true;
+  };
+  
+  const validateTimeFormat = (time, period) => {
+    if (!time || time.length < 5) {
+      return false;
+    }
+    
+    const [hours, minutes] = time.split(':').map(num => parseInt(num, 10));
+    const timeInMinutes = hours * 60 + minutes;
+    
+    if (period === 'morning') {
+      if (timeInMinutes > 11 * 60 + 59) {
+        return false;
+      }
+    } else if (period === 'afternoon') {
+      if (timeInMinutes < 12 * 60) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+  
+  const validateStartEndTime = (startTime, endTime) => {
+    if (!startTime || !endTime || startTime.length < 5 || endTime.length < 5) return false;
+    
+    const [startHours, startMinutes] = startTime.split(':').map(num => parseInt(num, 10));
+    const [endHours, endMinutes] = endTime.split(':').map(num => parseInt(num, 10));
+    
+    const startInMinutes = startHours * 60 + startMinutes;
+    const endInMinutes = endHours * 60 + endMinutes;
+    
+    return endInMinutes > startInMinutes;
   };
   
   const validateWorkHoursTab = (professionalFormData) => {
@@ -157,6 +197,39 @@ export const useFormValidation = () => {
       toastHelper.showError('Defina pelo menos um horário de disponibilidade');
       return false;
     }
+    
+    for (const day of professionalFormData.workHours) {
+      if (!day.available) continue;
+      
+      if (day.morning.enabled) {
+        if (!validateTimeFormat(day.morning.start, 'morning')) {
+          return false;
+        }
+        
+        if (!validateTimeFormat(day.morning.end, 'morning')) {
+          return false;
+        }
+        
+        if (!validateStartEndTime(day.morning.start, day.morning.end)) {
+          return false;
+        }
+      }
+      
+      if (day.afternoon.enabled) {
+        if (!validateTimeFormat(day.afternoon.start, 'afternoon')) {
+          return false;
+        }
+        
+        if (!validateTimeFormat(day.afternoon.end, 'afternoon')) {
+          return false;
+        }
+        
+        if (!validateStartEndTime(day.afternoon.start, day.afternoon.end)) {
+          return false;
+        }
+      }
+    }
+    
     return true;
   };
   

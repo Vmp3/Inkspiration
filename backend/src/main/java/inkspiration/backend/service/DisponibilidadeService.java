@@ -20,6 +20,7 @@ import inkspiration.backend.entities.Agendamento;
 import inkspiration.backend.entities.Disponibilidade;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.enums.TipoServico;
+import inkspiration.backend.exception.DisponibilidadeException.HorarioInvalidoException;
 import inkspiration.backend.repository.AgendamentoRepository;
 import inkspiration.backend.repository.DisponibilidadeRepository;
 import inkspiration.backend.repository.ProfissionalRepository;
@@ -64,6 +65,73 @@ public class DisponibilidadeService {
     }
     
     /**
+     * Valida os horários informados conforme as regras:
+     * - Horários da manhã devem estar entre 00:00 e 11:59
+     * - Horários da tarde devem estar entre 12:00 e 23:59
+     * - Horário de fim não pode ser menor que o horário de início
+     * - Não pode enviar um horário de início sem o de fim ou vice-versa
+     *
+     * @param horarios Mapa de dias da semana para lista de períodos com horários
+     * @throws HorarioInvalidoException Se algum horário não seguir as regras
+     */
+    private void validarHorarios(Map<String, List<Map<String, String>>> horarios) {
+        for (Map.Entry<String, List<Map<String, String>>> entry : horarios.entrySet()) {
+            String dia = entry.getKey();
+            List<Map<String, String>> periodos = entry.getValue();
+            
+            for (Map<String, String> periodo : periodos) {
+                // Verificar se ambos início e fim estão presentes
+                if (!periodo.containsKey("inicio") || !periodo.containsKey("fim")) {
+                    throw new HorarioInvalidoException("Horário incompleto para " + dia + ": início e fim devem ser informados");
+                }
+                
+                String inicioStr = periodo.get("inicio");
+                String fimStr = periodo.get("fim");
+                
+                if (inicioStr == null || inicioStr.isEmpty() || fimStr == null || fimStr.isEmpty()) {
+                    throw new HorarioInvalidoException("Horário incompleto para " + dia + ": início e fim devem ser informados");
+                }
+                
+                try {
+                    LocalTime inicio = LocalTime.parse(inicioStr);
+                    LocalTime fim = LocalTime.parse(fimStr);
+                    
+                    // Verificar se fim é maior que início
+                    if (!fim.isAfter(inicio)) {
+                        throw new HorarioInvalidoException("Horário inválido para " + dia + ": o fim deve ser maior que o início");
+                    }
+                    
+                    // Verificar se é manhã (00:00-11:59) ou tarde (12:00-23:59)
+                    LocalTime meiodia = LocalTime.of(12, 0);
+                    
+                    if (inicio.isBefore(meiodia) && fim.isAfter(meiodia)) {
+                        throw new HorarioInvalidoException("Horário inválido para " + dia + ": o período deve ser inteiramente de manhã (00:00-11:59) ou de tarde (12:00-23:59)");
+                    }
+                    
+                    // Adicionar outras verificações específicas para manhã e tarde
+                    if (inicio.isBefore(meiodia)) {
+                        // Período da manhã
+                        if (inicio.isBefore(LocalTime.of(0, 0)) || fim.isAfter(LocalTime.of(11, 59))) {
+                            throw new HorarioInvalidoException("Horário de manhã inválido para " + dia + ": deve estar entre 00:00 e 11:59");
+                        }
+                    } else {
+                        // Período da tarde
+                        if (inicio.isBefore(LocalTime.of(12, 0)) || fim.isAfter(LocalTime.of(23, 59))) {
+                            throw new HorarioInvalidoException("Horário de tarde inválido para " + dia + ": deve estar entre 12:00 e 23:59");
+                        }
+                    }
+                    
+                } catch (Exception e) {
+                    if (e instanceof HorarioInvalidoException) {
+                        throw (HorarioInvalidoException) e;
+                    }
+                    throw new HorarioInvalidoException("Formato de horário inválido para " + dia + ": " + e.getMessage(), e);
+                }
+            }
+        }
+    }
+    
+    /**
      * Cadastra ou atualiza a disponibilidade de um profissional.
      * 
      * @param idProfissional ID do profissional
@@ -75,6 +143,8 @@ public class DisponibilidadeService {
             throws JsonProcessingException {
         Profissional profissional = profissionalRepository.findById(idProfissional)
                 .orElseThrow(() -> new RuntimeException("Profissional não encontrado"));
+        
+        validarHorarios(horarios);
         
         // Converter Map para JSON
         String horarioJson = objectMapper.writeValueAsString(horarios);

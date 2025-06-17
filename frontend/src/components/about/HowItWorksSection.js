@@ -41,7 +41,7 @@ const HowItWorksSection = ({ isMobile }) => {
           style={cardStyle}
           icon="event"
           title="Agende"
-          description="Marque sua sessão diretamente pela plataforma, converse com o artista sobre seu projeto e prepare-se para sua nova tatuagem."
+          description="Marque sua sessão diretamente pela plataforma com profissionais qualificados."
         />
       </View>
     </View>
