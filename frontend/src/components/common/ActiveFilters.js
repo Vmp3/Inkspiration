@@ -33,7 +33,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    marginBottom: 16,
+    width: '100%',
+    maxWidth: '100%',
   },
   filterBadge: {
     flexDirection: 'row',
@@ -44,11 +45,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginRight: 8,
     marginBottom: 8,
+    maxWidth: 200,
   },
   filterBadgeText: {
     fontSize: 14,
     color: '#111827',
     marginRight: 8,
+    flexShrink: 1,
   },
   filterBadgeCloseButton: {
     width: 16,

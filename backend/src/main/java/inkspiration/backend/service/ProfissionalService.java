@@ -5,10 +5,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -203,11 +205,114 @@ public class ProfissionalService {
     }
     
     public boolean existePerfil(Long idUsuario) {
-        return profissionalRepository.existsByUsuario_IdUsuario(idUsuario);
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+            .orElseThrow(() -> new UsuarioException.UsuarioNaoEncontradoException("Usuário não encontrado"));
+        return profissionalRepository.existsByUsuario(usuario);
     }
 
     public Page<Profissional> listar(Pageable pageable) {
         return profissionalRepository.findAll(pageable);
+    }
+
+    public Page<Profissional> listarComFiltros(Pageable pageable, String searchTerm, String locationTerm, 
+                                             double minRating, String[] selectedSpecialties, String sortBy) {
+        // Buscar TODOS os profissionais primeiro (sem paginação)
+        List<Profissional> allProfissionais = profissionalRepository.findAll();
+        
+        // Aplicar filtros manualmente
+        List<Profissional> filteredProfissionais = allProfissionais.stream()
+            .filter(profissional -> {
+                // Filtro por nome (searchTerm)
+                if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+                    String nome = profissional.getUsuario() != null ? profissional.getUsuario().getNome() : "";
+                    if (!nome.toLowerCase().contains(searchTerm.toLowerCase())) {
+                        return false;
+                    }
+                }
+                
+                // Filtro por localização (locationTerm)
+                if (locationTerm != null && !locationTerm.trim().isEmpty()) {
+                    String location = "";
+                    if (profissional.getEndereco() != null) {
+                        location = profissional.getEndereco().getCidade() + ", " + profissional.getEndereco().getEstado();
+                    }
+                    if (!location.toLowerCase().contains(locationTerm.toLowerCase())) {
+                        return false;
+                    }
+                }
+                
+                // Filtro por avaliação mínima
+                if (minRating > 0) {
+                    double rating = profissional.getNota() != null ? profissional.getNota().doubleValue() : 0.0;
+                    if (rating < minRating) {
+                        return false;
+                    }
+                }
+                
+                // Filtro por especialidades
+                if (selectedSpecialties != null && selectedSpecialties.length > 0) {
+                    String especialidades = "";
+                    if (profissional.getPortifolio() != null && profissional.getPortifolio().getEspecialidade() != null) {
+                        especialidades = profissional.getPortifolio().getEspecialidade().toLowerCase();
+                    }
+                    
+                    boolean hasSpecialty = false;
+                    for (String specialty : selectedSpecialties) {
+                        if (especialidades.contains(specialty.toLowerCase())) {
+                            hasSpecialty = true;
+                            break;
+                        }
+                    }
+                    if (!hasSpecialty) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            })
+            .collect(Collectors.toList());
+        
+        // Aplicar ordenação
+        if ("melhorAvaliacao".equals(sortBy)) {
+            filteredProfissionais.sort((a, b) -> {
+                double ratingA = a.getNota() != null ? a.getNota().doubleValue() : 0.0;
+                double ratingB = b.getNota() != null ? b.getNota().doubleValue() : 0.0;
+                return Double.compare(ratingB, ratingA);
+            });
+        } else if ("maisRecente".equals(sortBy)) {
+            filteredProfissionais.sort((a, b) -> 
+                Long.compare(b.getIdProfissional(), a.getIdProfissional()));
+        } else if ("maisAntigo".equals(sortBy)) {
+            filteredProfissionais.sort((a, b) -> 
+                Long.compare(a.getIdProfissional(), b.getIdProfissional()));
+        } else {
+            // Ordenação por relevância (padrão)
+            filteredProfissionais.sort((a, b) -> {
+                double ratingA = a.getNota() != null ? a.getNota().doubleValue() : 0.0;
+                double ratingB = b.getNota() != null ? b.getNota().doubleValue() : 0.0;
+                int ratingComparison = Double.compare(ratingB, ratingA);
+                if (ratingComparison != 0) {
+                    return ratingComparison;
+                }
+                // Em caso de empate, ordenar por nome
+                String nameA = a.getUsuario() != null ? a.getUsuario().getNome() : "";
+                String nameB = b.getUsuario() != null ? b.getUsuario().getNome() : "";
+                return nameA.compareToIgnoreCase(nameB);
+            });
+        }
+        
+        // Implementar paginação manual nos resultados filtrados
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), filteredProfissionais.size());
+        
+        // Verificar se o índice start está dentro dos limites
+        if (start >= filteredProfissionais.size()) {
+            return new PageImpl<>(new ArrayList<>(), pageable, filteredProfissionais.size());
+        }
+        
+        List<Profissional> pagedProfissionais = filteredProfissionais.subList(start, end);
+        
+        return new PageImpl<>(pagedProfissionais, pageable, filteredProfissionais.size());
     }
 
     @Transactional

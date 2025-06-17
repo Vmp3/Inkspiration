@@ -12,7 +12,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import Footer from '../components/Footer';
 import Input from '../components/ui/Input';
-import SearchInput from '../components/ui/SearchInput';
 import FilterButton from '../components/FilterButton';
 import ProfessionalService from '../services/ProfessionalService';
 import toastHelper from '../utils/toastHelper';
@@ -22,7 +21,7 @@ import Button from '../components/ui/Button';
 // Componentes de exploração
 import FiltersPanel from '../components/explore/FiltersPanel';
 import ActiveFilters from '../components/common/ActiveFilters';
-import RelevanceDropdown from '../components/explore/RelevanceDropdown';
+import SortByDropdown from '../components/explore/SortByDropdown';
 import ArtistsGrid from '../components/explore/ArtistsGrid';
 import Pagination from '../components/common/Pagination';
 import MobileFiltersModal from '../components/common/MobileFiltersModal';
@@ -33,25 +32,26 @@ const ExploreScreen = ({ navigation }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [locationTerm, setLocationTerm] = useState('');
   const [minRating, setMinRating] = useState(0);
-  const [maxDistance, setMaxDistance] = useState(15);
   const [selectedSpecialties, setSelectedSpecialties] = useState([]);
-  const [sortBy, setSortBy] = useState('relevancia');
+  const [sortBy, setSortBy] = useState('melhorAvaliacao');
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const [activeFilters, setActiveFilters] = useState([]);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
-  const [showRelevanceDropdown, setShowRelevanceDropdown] = useState(false);
+
   const [isFilterDropdownVisible, setIsFilterDropdownVisible] = useState(false);
   const [filterButtonPosition, setFilterButtonPosition] = useState({ top: 0, left: 0 });
   const filterButtonRef = useRef(null);
+  const scrollViewRef = useRef(null);
   
-  // Estado para resultados filtrados
-  const [allArtists, setAllArtists] = useState([]);
-  const [filteredArtists, setFilteredArtists] = useState([]);
+  // Estado para resultados paginados
   const [displayedArtists, setDisplayedArtists] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Detectar tamanho da tela para responsividade
   useEffect(() => {
     const updateLayout = () => {
       const { width } = Dimensions.get('window');
@@ -66,8 +66,11 @@ const ExploreScreen = ({ navigation }) => {
       }
     };
   }, []);
+  useEffect(() => {
+    loadProfessionals();
+  }, [currentPage, sortBy]);
 
-  // Carregar profissionais do backend
+  // Carregar profissionais na primeira renderização
   useEffect(() => {
     loadProfessionals();
   }, []);
@@ -75,71 +78,47 @@ const ExploreScreen = ({ navigation }) => {
   const loadProfessionals = async () => {
     try {
       setIsLoading(true);
-      const professionals = await ProfessionalService.getTransformedCompleteProfessionals();
-      setAllArtists(professionals);
-      setFilteredArtists(professionals);
-      setDisplayedArtists(professionals);
+      const filters = {
+        searchTerm: searchTerm.trim() || null,
+        locationTerm: locationTerm.trim() || null,
+        minRating,
+        selectedSpecialties,
+        sortBy
+      };
+      
+      const response = await ProfessionalService.getTransformedCompleteProfessionals(currentPage, filters);
+      setDisplayedArtists(response.content);
+      setTotalPages(response.totalPages);
+      setTotalElements(response.totalElements);
+      setHasNext(response.hasNext);
+      setHasPrevious(response.hasPrevious);
+      updateActiveFilters();
     } catch (error) {
       console.error('Erro ao carregar profissionais:', error);
       toastHelper.showError('Erro ao carregar profissionais');
-      // Em caso de erro, usar array vazio
-      setAllArtists([]);
-      setFilteredArtists([]);
       setDisplayedArtists([]);
+      setTotalPages(0);
+      setTotalElements(0);
+      setHasNext(false);
+      setHasPrevious(false);
     } finally {
       setIsLoading(false);
     }
   };
   
-  // Valores derivados baseados na largura da tela
   const isMobile = screenWidth < 768;
   
-  // Update the numColumns calculation to work better on Android
   const numColumns = (() => {
-    // For mobile devices (width < 768), always show 1 column
     if (screenWidth < 768) {
       return 1;
     }
-    // For larger screens, show 3 columns
     return 3;
   })();
 
   // Função de busca
   const handleSearch = () => {
-    const artistResults = allArtists.filter((artist) => {
-      const matchesSearch = 
-        searchTerm === "" || 
-        artist.name.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesLocation = 
-        locationTerm === "" || 
-        artist.location.toLowerCase().includes(locationTerm.toLowerCase());
-
-      return matchesSearch && matchesLocation;
-    });
-
-    setFilteredArtists(artistResults);
-    applyFilters(artistResults);
-    updateActiveFilters();
-    setCurrentPage(1);
-  };
-
-  // Aplicar filtros
-  const applyFilters = (artists = filteredArtists) => {
-    const artistResults = artists.filter((artist) => {
-      const matchesRating = artist.rating >= minRating;
-      const matchesSpecialties =
-        selectedSpecialties.length === 0 ||
-        selectedSpecialties.some((specialty) => artist.specialties.includes(specialty));
-
-      return matchesRating && matchesSpecialties;
-    });
-
-    // Aplicar ordenação aos resultados filtrados
-    const sortedResults = sortArtists(artistResults);
-    
-    setDisplayedArtists(sortedResults);
-    updateActiveFilters();
+    setCurrentPage(0);
+    loadProfessionals();
   };
 
   // Atualizar filtros ativos
@@ -148,10 +127,6 @@ const ExploreScreen = ({ navigation }) => {
     
     if (minRating > 0) {
       filters.push({ type: 'rating', value: `${minRating}★` });
-    }
-    
-    if (maxDistance !== 15) {
-      filters.push({ type: 'distance', value: `Distância: ${maxDistance}km` });
     }
     
     selectedSpecialties.forEach(specialty => {
@@ -171,75 +146,21 @@ const ExploreScreen = ({ navigation }) => {
   // Resetar filtros
   const resetFilters = () => {
     setMinRating(0);
-    setMaxDistance(15);
     setSelectedSpecialties([]);
     setActiveFilters([]);
+    handleSearch();
   };
   
   // Remover filtro específico
   const removeFilter = (filter) => {
     if (filter.type === 'rating') {
       setMinRating(0);
-    } else if (filter.type === 'distance') {
-      setMaxDistance(15);
     } else if (filter.type === 'specialty') {
       setSelectedSpecialties(prev => prev.filter(s => s !== filter.value));
     }
-    updateActiveFilters();
+    // Fazer busca após remover filtro
+    handleSearch();
   };
-
-  // Efeito para aplicar filtros quando eles mudam
-  useEffect(() => {
-    applyFilters();
-  }, [minRating, selectedSpecialties]);
-
-  // Função para ordenar os artistas com base no critério de ordenação
-  const sortArtists = (artists) => {
-    const sortedArtists = [...artists];
-    
-    if (sortBy === 'melhorAvaliacao') {
-      sortedArtists.sort((a, b) => b.rating - a.rating);
-    } else if (sortBy === 'maisRecente') {
-      sortedArtists.sort((a, b) => parseInt(b.id) - parseInt(a.id));
-    } else {
-      sortedArtists.sort((a, b) => {
-        // Primeiro por avaliação
-        const ratingDiff = b.rating - a.rating;
-        if (ratingDiff !== 0) return ratingDiff;
-        
-        // Em caso de empate, ordenar por nome
-        return a.name.localeCompare(b.name);
-      });
-    }
-    
-    return sortedArtists;
-  };
-  
-  // Efeito para reordenar artistas quando o critério de ordenação muda
-  useEffect(() => {
-    setDisplayedArtists(sortArtists(displayedArtists));
-  }, [sortBy]);
-
-  // Efeito para fechar o dropdown quando o usuário clicar fora dele
-  useEffect(() => {
-    const handlePressOutside = () => {
-      if (showRelevanceDropdown) {
-        setShowRelevanceDropdown(false);
-      }
-    };
-
-    // Em React Native para Web poderia usar esse approach
-    if (Platform?.OS === 'web' && typeof document !== 'undefined') {
-      if (showRelevanceDropdown) {
-        document.addEventListener('mousedown', handlePressOutside);
-      }
-      return () => {
-        document.removeEventListener('mousedown', handlePressOutside);
-      };
-    }
-
-    return () => {};
-  }, [showRelevanceDropdown]);
 
   // Função para lidar com o clique no botão de filtros
   const handleFilterPress = () => {
@@ -257,11 +178,19 @@ const ExploreScreen = ({ navigation }) => {
     }
   };
 
+  // Função para mudança de página, responsável por scrollar para o topo da página
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: 0, animated: true });
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
       
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} ref={scrollViewRef}>
         <View style={styles.content}>
           {/* Título da página */}
           <View style={[styles.pageHeader, isMobile && styles.pageHeaderMobile]}>
@@ -279,8 +208,6 @@ const ExploreScreen = ({ navigation }) => {
                 setLocationTerm={setLocationTerm}
                 minRating={minRating}
                 setMinRating={setMinRating}
-                maxDistance={maxDistance}
-                setMaxDistance={setMaxDistance}
                 selectedSpecialties={selectedSpecialties}
                 toggleSpecialty={toggleSpecialty}
                 handleSearch={handleSearch}
@@ -298,20 +225,24 @@ const ExploreScreen = ({ navigation }) => {
               {isMobile && (
                 <View style={styles.mobileSearchContainer}>
                   <View style={styles.mobileInputWrapper}>
-                    <SearchInput
+                    <Input
                       icon="search"
                       placeholder="Buscar artistas"
                       value={searchTerm}
                       onChangeText={setSearchTerm}
+                      onSubmitEditing={handleSearch}
+                      returnKeyType="search"
                     />
                   </View>
                   
                   <View style={styles.mobileInputWrapper}>
-                    <SearchInput
+                    <Input
                       icon="location-on"
                       placeholder="Sua localização"
                       value={locationTerm}
                       onChangeText={setLocationTerm}
+                      onSubmitEditing={handleSearch}
+                      returnKeyType="search"
                     />
                   </View>
                   
@@ -327,11 +258,11 @@ const ExploreScreen = ({ navigation }) => {
               )}
               
               {/* Filtros e dropdown de relevância */}
-              <View style={styles.filtersAndRelevanceRow}>
-                {/* Lado esquerdo - Filtros */}
-                <View style={styles.filtersContainer}>
+              <View style={[styles.filtersAndRelevanceRow, isMobile && styles.filtersAndRelevanceRowMobile]}>
+                {/* Filtros */}
+                <View style={[styles.filtersContainer, isMobile && styles.filtersContainerMobile]}>
                   {isMobile && (
-                    <View ref={filterButtonRef}>
+                    <View ref={filterButtonRef} style={styles.filterButton}>
                       <FilterButton 
                         onPress={handleFilterPress} 
                         filterCount={activeFilters.length} 
@@ -339,8 +270,8 @@ const ExploreScreen = ({ navigation }) => {
                     </View>
                   )}
                   
-                  {/* Filtros ativos (sempre visíveis) */}
-                  <View style={styles.activeFiltersContainer}>
+                  {/* Filtros ativos */}
+                  <View style={[styles.activeFiltersContainer, isMobile && styles.activeFiltersContainerMobile]}>
                     <ActiveFilters 
                       activeFilters={activeFilters} 
                       removeFilter={removeFilter} 
@@ -349,13 +280,11 @@ const ExploreScreen = ({ navigation }) => {
                   </View>
                 </View>
                 
-                {/* Lado direito - Dropdown de relevância */}
-                <View style={styles.relevanceContainer}>
-                  <RelevanceDropdown 
+                {/* Dropdown de relevância */}
+                <View style={[styles.relevanceContainer, isMobile && styles.relevanceContainerMobile]}>
+                  <SortByDropdown 
                     sortBy={sortBy} 
                     setSortBy={setSortBy} 
-                    showDropdown={showRelevanceDropdown} 
-                    setShowDropdown={setShowRelevanceDropdown} 
                   />
                 </View>
               </View>
@@ -386,7 +315,8 @@ const ExploreScreen = ({ navigation }) => {
               {displayedArtists.length > 0 && (
                 <Pagination 
                   currentPage={currentPage} 
-                  setCurrentPage={setCurrentPage} 
+                  setCurrentPage={handlePageChange} 
+                  totalPages={totalPages} 
                 />
               )}
             </View>
@@ -406,13 +336,11 @@ const ExploreScreen = ({ navigation }) => {
         setLocationTerm={setLocationTerm}
         minRating={minRating}
         setMinRating={setMinRating}
-        maxDistance={maxDistance}
-        setMaxDistance={setMaxDistance}
         selectedSpecialties={selectedSpecialties}
         toggleSpecialty={toggleSpecialty}
         handleSearch={handleSearch}
         resetFilters={resetFilters}
-        applyFilters={applyFilters}
+        applyFilters={loadProfessionals}
         updateActiveFilters={updateActiveFilters}
       />
 
@@ -425,7 +353,7 @@ const ExploreScreen = ({ navigation }) => {
         selectedSpecialties={selectedSpecialties}
         toggleSpecialty={toggleSpecialty}
         resetFilters={resetFilters}
-        applyFilters={applyFilters}
+        applyFilters={loadProfessionals}
         anchorPosition={filterButtonPosition}
       />
     </View>
@@ -525,9 +453,7 @@ const styles = StyleSheet.create({
   
   // Filtros e dropdown de relevância
   filtersAndRelevanceRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     width: '100%',
     marginBottom: 16,
     zIndex: 100,
@@ -535,19 +461,24 @@ const styles = StyleSheet.create({
   },
   filtersContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flexWrap: 'wrap',
-    flex: 1,
+    width: '100%',
     zIndex: 101,
+    marginBottom: 8,
+    gap: 8,
   },
   relevanceContainer: {
     alignItems: 'flex-end',
     zIndex: 101,
+    alignSelf: 'flex-end',
+    width: '100%',
   },
   activeFiltersContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginLeft: 8,
+    width: '100%',
+    maxWidth: '100%',
   },
   artistsGridContainer: {
     width: '100%',
@@ -581,6 +512,37 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  filtersAndRelevanceRowMobile: {
+    flexDirection: 'column',
+    width: '100%',
+    marginBottom: 16,
+    zIndex: 100,
+    position: 'relative',
+  },
+  filtersContainerMobile: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    width: '100%',
+    zIndex: 101,
+    marginBottom: 8,
+    gap: 8,
+  },
+  relevanceContainerMobile: {
+    alignItems: 'flex-end',
+    zIndex: 101,
+    alignSelf: 'flex-end',
+    width: '100%',
+  },
+  activeFiltersContainerMobile: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: '100%',
+    maxWidth: '100%',
+  },
+  filterButton: {
+    marginBottom: 8,
   },
 });
 
