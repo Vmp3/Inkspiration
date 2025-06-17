@@ -76,7 +76,9 @@ const useProfessionalData = (userData) => {
       base64: userData.imagemPerfil,
       type: 'image/jpeg',
       name: 'profile.jpg'
-    } : null
+    } : null,
+    tiposServico: [],
+    tipoServicoSelecionados: {}
   });
 
   // Carregar dados profissionais
@@ -199,7 +201,9 @@ const useProfessionalData = (userData) => {
             base64: userData.imagemPerfil,
             type: 'image/jpeg',
             name: 'profile.jpg'
-          } : null
+          } : null,
+          tiposServico: allTiposServico,
+          tipoServicoSelecionados: tipoServicoSelecionados
         }));
       }
     } catch (error) {
