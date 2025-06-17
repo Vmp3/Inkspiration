@@ -200,7 +200,7 @@ const useProfessionalData = (userData) => {
             type: 'image/jpeg',
             name: 'profile.jpg'
           } : null
-        });
+        }));
       }
     } catch (error) {
       toastHelper.showError('Erro ao obter informações profissionais');
