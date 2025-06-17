@@ -142,6 +142,17 @@ const ArtistScreen = ({ route }) => {
   
   const isMobile = screenData.width < 768;
 
+  const mapServiceType = (serviceType) => {
+    const serviceTypeMap = {
+      'TATUAGEM_PEQUENA': 'Tatuagem Pequena',
+      'TATUAGEM_MEDIA': 'Tatuagem Média', 
+      'TATUAGEM_GRANDE': 'Tatuagem Grande',
+      'SESSAO': 'Sessão'
+    };
+    
+    return serviceTypeMap[serviceType] || serviceType;
+  };
+
   useEffect(() => {
     const onChange = (result) => {
       setScreenData(result.window);
@@ -201,6 +212,12 @@ const ArtistScreen = ({ route }) => {
         };
       });
       
+      const mappedServices = professionalData.profissional.tiposServico 
+        ? professionalData.profissional.tiposServico.map(serviceType => ({
+            name: mapServiceType(serviceType)
+          }))
+        : [];
+
       setArtist({
         ...transformedData,
         idProfissional: artistId,
@@ -210,12 +227,7 @@ const ArtistScreen = ({ route }) => {
         profileImage: transformedData.coverImage,
         coverImage: transformedData.coverImage,
         portfolio: processedImages,
-        services: [
-          { name: "Tatuagem Pequena" },
-          { name: "Tatuagem Média" },
-          { name: "Tatuagem Grande" },
-          { name: "Sessão Dia Inteiro" },
-        ],
+        services: mappedServices,
         social: {
           instagram: transformedData.instagram,
           facebook: transformedData.facebook,
@@ -373,7 +385,7 @@ const ArtistScreen = ({ route }) => {
 
                 <View style={styles.reviewFooter}>
                   <Text style={styles.serviceLabel}>Serviço:</Text>
-                  <Text style={styles.serviceType}>{item.tattooType}</Text>
+                  <Text style={styles.serviceType}>{mapServiceType(item.tattooType)}</Text>
                 </View>
               </View>
             )}
@@ -475,9 +487,13 @@ const ArtistScreen = ({ route }) => {
           {/* Serviços */}
           <Card style={styles.servicesCard}>
             <Text style={styles.sectionTitle}>Serviços</Text>
-            {artist.services.map((service, index) => (
-              <Text key={index} style={styles.serviceItem}>{service.name}</Text>
-            ))}
+            {artist.services.length === 0 ? (
+              <Text style={styles.noServicesText}>Nenhum serviço cadastrado</Text>
+            ) : (
+              artist.services.map((service, index) => (
+                <Text key={index} style={styles.serviceItem}>{service.name}</Text>
+              ))
+            )}
           </Card>
 
           {(artist.social.instagram || artist.social.tiktok || artist.social.facebook || artist.social.twitter || artist.social.website) && (
@@ -888,6 +904,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',
+  },
+  noServicesText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontStyle: 'italic',
   },
   pageWrapperMobile: {
     flexDirection: 'column',
