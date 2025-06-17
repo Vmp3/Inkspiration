@@ -1,14 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-
-const API_URL = 'http://localhost:8080';
+import { API_CONFIG } from '../config/apiConfig';
 
 const TOKEN_KEY = 'jwtToken';
 
 class AuthService {
   constructor() {
     this.api = axios.create({
-      baseURL: API_URL,
+      baseURL: API_CONFIG.BASE_URL,
+      timeout: API_CONFIG.TIMEOUT,
       headers: {
         'Content-Type': 'application/json',
       },
