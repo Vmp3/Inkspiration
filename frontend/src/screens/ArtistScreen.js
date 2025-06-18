@@ -9,7 +9,8 @@ import {
   FlatList, 
   Dimensions,
   Linking,
-  Modal
+  Modal,
+  ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons, Feather, FontAwesome, Entypo, AntDesign } from '@expo/vector-icons';
@@ -441,55 +442,66 @@ const ArtistScreen = ({ route }) => {
             </View>
           </View>
 
-          <FlatList
-            data={reviews}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <View style={styles.reviewCard}>
-                <View style={styles.reviewHeader}>
-                  <View style={styles.reviewerInfo}>
-                    <Image
-                      source={{ uri: item.userImage }}
-                      style={styles.reviewerImage}
-                    />
-                    <View>
-                      <Text style={styles.reviewerName}>{item.userName}</Text>
-                      <Text style={styles.reviewDate}>{item.date}</Text>
+          {isLoadingReviews ? (
+            <View style={{ alignItems: 'center', marginTop: 32 }}>
+              <ActivityIndicator size="small" color="#111" />
+              <Text style={{ marginTop: 12, color: '#6B7280' }}>Carregando avaliações...</Text>
+            </View>
+          ) : reviews.length === 0 ? (
+            <View style={{ alignItems: 'center', marginTop: 32 }}>
+              <Text style={{ color: '#6B7280', fontSize: 16 }}>Ainda não há avaliações para este artista.</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={reviews}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <View style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <View style={styles.reviewerInfo}>
+                      <Image
+                        source={{ uri: item.userImage }}
+                        style={styles.reviewerImage}
+                      />
+                      <View>
+                        <Text style={styles.reviewerName}>{item.userName}</Text>
+                        <Text style={styles.reviewDate}>{item.date}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.reviewActions}>
+                      {renderStars(item.rating)}
+                      {isAdmin && (
+                        <TouchableOpacity
+                          style={styles.deleteButton}
+                          onPress={() => handleDeleteReview(item.id)}
+                        >
+                          <Feather name="trash-2" size={16} color="#EF4444" />
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </View>
-                  <View style={styles.reviewActions}>
-                    {renderStars(item.rating)}
-                    {isAdmin && (
-                      <TouchableOpacity
-                        style={styles.deleteButton}
-                        onPress={() => handleDeleteReview(item.id)}
-                      >
-                        <Feather name="trash-2" size={16} color="#EF4444" />
-                      </TouchableOpacity>
-                    )}
+
+                  <Text style={styles.reviewComment}>{item.comment}</Text>
+
+                  <View style={styles.reviewFooter}>
+                    <Text style={styles.serviceLabel}>Serviço:</Text>
+                    <Text style={styles.serviceType}>{mapServiceType(item.tattooType)}</Text>
                   </View>
                 </View>
-
-                <Text style={styles.reviewComment}>{item.comment}</Text>
-
-                <View style={styles.reviewFooter}>
-                  <Text style={styles.serviceLabel}>Serviço:</Text>
-                  <Text style={styles.serviceType}>{mapServiceType(item.tattooType)}</Text>
-                </View>
-              </View>
-            )}
-            onEndReached={handleLoadMoreReviews}
-            onEndReachedThreshold={0.1}
-            ListFooterComponent={() => (
-              isLoadingReviews ? (
-                <View style={styles.loadingMoreContainer}>
-                  <ActivityIndicator size="small" color="#111" />
-                  <Text style={styles.loadingMoreText}>Carregando mais avaliações...</Text>
-                </View>
-              ) : null
-            )}
-            style={styles.reviewsList}
-          />
+              )}
+              onEndReached={handleLoadMoreReviews}
+              onEndReachedThreshold={0.1}
+              ListFooterComponent={() => (
+                isLoadingReviews ? (
+                  <View style={styles.loadingMoreContainer}>
+                    <ActivityIndicator size="small" color="#111" />
+                    <Text style={styles.loadingMoreText}>Carregando mais avaliações...</Text>
+                  </View>
+                ) : null
+              )}
+              style={styles.reviewsList}
+            />
+          )}
         </View>
       </View>
     );
