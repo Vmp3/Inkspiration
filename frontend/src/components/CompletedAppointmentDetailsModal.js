@@ -16,6 +16,8 @@ import DefaultUser from '../../assets/default_user.png';
 const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose }) => {
   if (!appointment) return null;
 
+  const [showReviewModal, setShowReviewModal] = React.useState(false);
+
   const formatDate = (date) => {
     return format(new Date(date), "d 'de' MMMM 'de' yyyy", { locale: ptBR });
   };
@@ -85,7 +87,11 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose }) => 
   };
 
   const handleRateAppointment = () => {
-    // TODO: implementar avaliação
+    setShowReviewModal(true);
+  };
+
+  const handleCloseReviewModal = () => {
+    setShowReviewModal(false);
   };
 
   return (
