@@ -425,4 +425,45 @@ public class AgendamentoController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @GetMapping("/profissional/relatorios/exportar-pdf")
+    public ResponseEntity<byte[]> exportarAtendimentosPDF(
+            @RequestParam(required = true) Integer ano,
+            @RequestParam(required = true) Integer mes,
+            Authentication authentication) {
+        try {
+            if (!(authentication instanceof JwtAuthenticationToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Autenticação inválida".getBytes());
+            }
+            
+            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+            Jwt jwt = jwtAuth.getToken();
+            Long userId = jwt.getClaim("userId");
+            
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Token não contém informações do usuário".getBytes());
+            }
+            
+            byte[] pdfBytes = agendamentoService.gerarPDFAtendimentos(userId, ano, mes);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.add("Content-Disposition", "attachment; filename=atendimentos-" + String.format("%02d", mes) + "-" + ano + ".pdf");
+            headers.add("Content-Length", String.valueOf(pdfBytes.length));
+            
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            String errorMessage = e.getMessage();
+            
+            if (errorMessage.contains("Nenhum atendimento concluído encontrado")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(errorMessage.getBytes());
+            }
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Erro ao gerar PDF: " + errorMessage).getBytes());
+        }
+    }
 } 

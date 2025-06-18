@@ -207,6 +207,30 @@ class AgendamentoService {
       throw error;
     }
   }
+
+  async exportarAtendimentosPDF(ano, mes) {
+    try {
+      const response = await ApiService.get(`/agendamentos/profissional/relatorios/exportar-pdf?ano=${ano}&mes=${mes}`, {
+        responseType: 'blob',
+        headers: {
+          'Accept': 'application/pdf'
+        }
+      });
+      
+      if (response.data instanceof Blob) {
+        const base64Data = await this.blobToBase64(response.data);
+        return {
+          ...response,
+          data: base64Data
+        };
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Erro ao exportar atendimentos para PDF:', error);
+      throw error;
+    }
+  }
 }
 
 export default new AgendamentoService(); 

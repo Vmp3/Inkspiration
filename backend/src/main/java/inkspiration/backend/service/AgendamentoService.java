@@ -635,4 +635,162 @@ public class AgendamentoService {
         table.addCell(headerCell);
         table.addCell(valueCell);
     }
+
+    public byte[] gerarPDFAtendimentos(Long idUsuario, Integer ano, Integer mes) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Document document = null;
+        PdfWriter writer = null;
+        
+        try {
+            Usuario usuario = usuarioRepository.findById(idUsuario)
+                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+            
+            Profissional profissional = profissionalRepository.findByUsuario(usuario)
+                    .orElseThrow(() -> new RuntimeException("Profissional não encontrado"));
+            
+            List<Agendamento> atendimentos = agendamentoRepository.findByProfissionalIdAndStatusAndAnoMes(
+                profissional.getIdProfissional(), StatusAgendamento.CONCLUIDO, ano, mes);
+            
+            if (atendimentos.isEmpty()) {
+                throw new Exception("Nenhum atendimento concluído encontrado para " + String.format("%02d", mes) + "/" + ano);
+            }
+            
+            List<AgendamentoCompletoDTO> atendimentosDTO = atendimentos.stream()
+                .map(AgendamentoCompletoDTO::new)
+                .collect(Collectors.toList());
+            
+            document = new Document(com.lowagie.text.PageSize.A4);
+            writer = PdfWriter.getInstance(document, out);
+            
+            document.addCreator("Inkspiration App");
+            document.addAuthor("Inkspiration");
+            document.addSubject("Relatório de Atendimentos");
+            document.addTitle("Atendimentos Concluídos - " + String.format("%02d", mes) + "/" + ano);
+            
+            document.open();
+            
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, Color.BLACK);
+            String[] meses = {"", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+                             "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
+            String mesNome = mes <= 12 ? meses[mes] : "Mês " + mes;
+            
+            Paragraph title = new Paragraph("Atendimentos Concluídos - " + mesNome + "/" + ano, titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(20);
+            document.add(title);
+            
+            Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK);
+            Paragraph info = new Paragraph("Total de atendimentos concluídos: " + atendimentosDTO.size(), normalFont);
+            info.setAlignment(Element.ALIGN_LEFT);
+            info.setSpacingAfter(20);
+            document.add(info);
+            
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+            
+            for (AgendamentoCompletoDTO atendimento : atendimentosDTO) {
+                try {
+                    Font sectionFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, Color.BLACK);
+                    String titleText = "Atendimento #" + atendimento.getIdAgendamento();
+                    if (atendimento.getDtInicio() != null) {
+                        titleText += " - " + dateFormatter.format(atendimento.getDtInicio());
+                    }
+                    
+                    Paragraph sectionTitle = new Paragraph(titleText, sectionFont);
+                    sectionTitle.setSpacingBefore(15);
+                    sectionTitle.setSpacingAfter(10);
+                    document.add(sectionTitle);
+                    
+                    PdfPTable table = new PdfPTable(2);
+                    table.setWidthPercentage(100);
+                    table.setSpacingBefore(10f);
+                    table.setSpacingAfter(10f);
+                    
+                    float[] columnWidths = {1f, 3f};
+                    table.setWidths(columnWidths);
+                    
+                    Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.WHITE);
+                    Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK);
+                    
+                    addTableRow(table, "Cliente", 
+                        atendimento.getNomeUsuario() != null ? atendimento.getNomeUsuario() : "Não especificado", 
+                        headerFont, cellFont);
+                    
+                    String tipoServico = "Não especificado";
+                    if (atendimento.getTipoServico() != null) {
+                        switch (atendimento.getTipoServico()) {
+                            case TATUAGEM_PEQUENA:
+                                tipoServico = "Tatuagem Pequena";
+                                break;
+                            case TATUAGEM_MEDIA:
+                                tipoServico = "Tatuagem Média";
+                                break;
+                            case TATUAGEM_GRANDE:
+                                tipoServico = "Tatuagem Grande";
+                                break;
+                            case SESSAO:
+                                tipoServico = "Sessão";
+                                break;
+                            default:
+                                tipoServico = atendimento.getTipoServico().getDescricao();
+                        }
+                    }
+                    addTableRow(table, "Serviço", tipoServico, headerFont, cellFont);
+                    
+                    if (atendimento.getDtInicio() != null) {
+                        addTableRow(table, "Data", dateFormatter.format(atendimento.getDtInicio()), headerFont, cellFont);
+                    }
+                    
+                    String horario = "Não especificado";
+                    if (atendimento.getDtInicio() != null) {
+                        horario = timeFormatter.format(atendimento.getDtInicio());
+                        if (atendimento.getDtFim() != null) {
+                            horario += " - " + timeFormatter.format(atendimento.getDtFim());
+                        }
+                    }
+                    addTableRow(table, "Horário", horario, headerFont, cellFont);
+                    
+                    if (atendimento.getDescricao() != null && !atendimento.getDescricao().isEmpty()) {
+                        addTableRow(table, "Descrição", atendimento.getDescricao(), headerFont, cellFont);
+                    }
+                    
+                    document.add(table);
+                    
+                    Paragraph separator = new Paragraph("------------------------------------------------------");
+                    separator.setAlignment(Element.ALIGN_CENTER);
+                    document.add(separator);
+                } catch (Exception e) {
+                    System.err.println("Erro ao processar atendimento #" + atendimento.getIdAgendamento() + ": " + e.getMessage());
+                }
+            }
+            
+            Paragraph footer = new Paragraph("Relatório gerado em: " + 
+                java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
+                FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10, Color.GRAY));
+            footer.setAlignment(Element.ALIGN_CENTER);
+            document.add(footer);
+            
+            document.close();
+            writer.close();
+            
+            return out.toByteArray();
+            
+        } catch (DocumentException e) {
+            throw new Exception("Erro ao gerar PDF: " + e.getMessage());
+        } finally {
+            try {
+                if (document != null && document.isOpen()) {
+                    document.close();
+                }
+                if (writer != null) {
+                    writer.close();
+                }
+                if (out != null) {
+                    out.close();
+                }
+            } catch (Exception e) {
+                System.err.println("Erro ao fechar recursos PDF: " + e.getMessage());
+            }
+        }
+    }
 } 

@@ -21,6 +21,7 @@ import AppointmentCard from '../components/AppointmentCard';
 import AppointmentDetailsModal from '../components/AppointmentDetailsModal';
 import CompletedAppointmentDetailsModal from '../components/CompletedAppointmentDetailsModal';
 import CancelAppointmentModal from '../components/CancelAppointmentModal';
+import ExportAttendancesModal from '../components/ExportAttendancesModal';
 import { useAuth } from '../context/AuthContext';
 
 const MyAttendancesScreen = () => {
@@ -41,6 +42,7 @@ const MyAttendancesScreen = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isCompletedModalVisible, setIsCompletedModalVisible] = useState(false);
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
+  const [isExportModalVisible, setIsExportModalVisible] = useState(false);
   const [pageSize] = useState(5);
 
   const isMobile = screenData.width < 768;
@@ -407,13 +409,23 @@ const MyAttendancesScreen = () => {
         }
       >
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+          <View style={styles.headerLeft}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <MaterialIcons name="arrow-back" size={24} color="#111" />
+            </TouchableOpacity>
+            <Text style={styles.title}>Meus Atendimentos</Text>
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.exportButton}
+            onPress={() => setIsExportModalVisible(true)}
           >
-            <MaterialIcons name="arrow-back" size={24} color="#111" />
+            <MaterialIcons name="file-download" size={20} color="#111" />
+            <Text style={styles.exportButtonText}>Exportar</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Meus Atendimentos</Text>
         </View>
 
         <View style={styles.content}>
@@ -466,6 +478,11 @@ const MyAttendancesScreen = () => {
           />
         </>
       )}
+
+      <ExportAttendancesModal
+        visible={isExportModalVisible}
+        onClose={() => setIsExportModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -481,10 +498,15 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backButton: {
     marginRight: 16,
@@ -493,6 +515,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#111',
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  exportButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111',
+    marginLeft: 4,
   },
   content: {
     padding: 16,
