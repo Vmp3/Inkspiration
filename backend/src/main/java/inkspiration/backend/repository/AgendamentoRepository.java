@@ -45,6 +45,12 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
             
     Page<Agendamento> findByUsuarioAndDtFimBeforeOrderByDtInicioDesc(
             Usuario usuario, LocalDateTime dataReferencia, Pageable pageable);
+            
+    Page<Agendamento> findByProfissionalAndDtFimAfterOrderByDtInicioAsc(
+            Profissional profissional, LocalDateTime dataReferencia, Pageable pageable);
+            
+    Page<Agendamento> findByProfissionalAndDtFimBeforeOrderByDtInicioDesc(
+            Profissional profissional, LocalDateTime dataReferencia, Pageable pageable);
 
     List<Agendamento> findByStatusAndDtFimBefore(StatusAgendamento status, LocalDateTime data);
 

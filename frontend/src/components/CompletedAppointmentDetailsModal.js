@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DefaultUser from '../../assets/default_user.png';
 
-const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose }) => {
+const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isProfessional = false }) => {
   if (!appointment) return null;
 
   const formatDate = (date) => {
@@ -104,20 +104,34 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose }) => 
 
           <ScrollView style={styles.modalContent}>
             <View style={styles.artistInfo}>
-              <Image
-                source={appointment.imagemPerfilProfissional ? 
-                  { uri: appointment.imagemPerfilProfissional } : 
-                  DefaultUser
-                }
-                style={styles.artistImage}
-              />
+              {!isProfessional && (
+                <Image
+                  source={appointment.imagemPerfilProfissional ? 
+                    { uri: appointment.imagemPerfilProfissional } : 
+                    DefaultUser
+                  }
+                  style={styles.artistImage}
+                />
+              )}
+              {isProfessional && (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarText}>
+                    {appointment.nomeUsuario ? appointment.nomeUsuario.charAt(0).toUpperCase() : 'U'}
+                  </Text>
+                </View>
+              )}
               <View>
                 <Text style={styles.artistName}>
-                  {appointment.nomeProfissional || 'Nome não disponível'}
+                  {isProfessional ? 
+                    (appointment.nomeUsuario || 'Nome não disponível') :
+                    (appointment.nomeProfissional || 'Nome não disponível')
+                  }
                 </Text>
                 <View style={styles.badgeContainer}>
                   <MaterialIcons name="person" size={12} color="#64748B" />
-                  <Text style={styles.badgeText}>Tatuador</Text>
+                  <Text style={styles.badgeText}>
+                    {isProfessional ? 'Cliente' : 'Tatuador'}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -184,15 +198,17 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose }) => 
             </View>
           </ScrollView>
 
-          <View style={styles.buttonRow}>
-            <TouchableOpacity 
-              style={styles.rateButton} 
-              onPress={handleRateAppointment}
-            >
-              <MaterialIcons name="star" size={20} color="#000" />
-              <Text style={styles.rateButtonText}>Avaliação</Text>
-            </TouchableOpacity>
-          </View>
+          {!isProfessional && (
+            <View style={styles.buttonRow}>
+              <TouchableOpacity 
+                style={styles.rateButton} 
+                onPress={handleRateAppointment}
+              >
+                <MaterialIcons name="star" size={20} color="#000" />
+                <Text style={styles.rateButtonText}>Avaliação</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <TouchableOpacity 
             style={styles.closeButton} 
@@ -250,6 +266,20 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     marginRight: 12,
+  },
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#64748B',
   },
   artistName: {
     fontSize: 16,

@@ -361,4 +361,62 @@ public class AgendamentoController {
                     .body(("Erro ao gerar PDF: " + errorMessage).getBytes());
         }
     }
+
+    @GetMapping("/profissional/meus-atendimentos/futuros")
+    public ResponseEntity<?> listarMeusAtendimentosFuturos(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            if (authentication instanceof JwtAuthenticationToken) {
+                JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+                Jwt jwt = jwtAuth.getToken();
+                Long userId = jwt.getClaim("userId");
+                
+                if (userId == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body("Token não contém informações do usuário");
+                }
+                
+                Pageable pageable = PageRequest.of(page, size);
+                Page<AgendamentoCompletoDTO> atendimentosPage = agendamentoService.listarAtendimentosFuturos(userId, pageable);
+                
+                return ResponseEntity.ok(atendimentosPage);
+            }
+            
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Autenticação inválida");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/profissional/meus-atendimentos/passados")
+    public ResponseEntity<?> listarMeusAtendimentosPassados(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            if (authentication instanceof JwtAuthenticationToken) {
+                JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+                Jwt jwt = jwtAuth.getToken();
+                Long userId = jwt.getClaim("userId");
+                
+                if (userId == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body("Token não contém informações do usuário");
+                }
+                
+                Pageable pageable = PageRequest.of(page, size);
+                Page<AgendamentoCompletoDTO> atendimentosPage = agendamentoService.listarAtendimentosPassados(userId, pageable);
+                
+                return ResponseEntity.ok(atendimentosPage);
+            }
+            
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Autenticação inválida");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 } 

@@ -380,6 +380,46 @@ public class AgendamentoService {
         return agendamento;
     }
     
+    public Page<AgendamentoCompletoDTO> listarAtendimentosFuturos(Long idUsuario, Pageable pageable) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        
+        Profissional profissional = profissionalRepository.findByUsuario(usuario)
+                .orElseThrow(() -> new RuntimeException("Profissional não encontrado"));
+        
+        LocalDateTime agora = LocalDateTime.now();
+        Page<Agendamento> atendimentosPage = agendamentoRepository.findByProfissionalAndDtFimAfterOrderByDtInicioAsc(
+                profissional, agora, pageable);
+        
+        List<AgendamentoCompletoDTO> atendimentosDTO = atendimentosPage.getContent().stream()
+                .map(AgendamentoCompletoDTO::new)
+                .collect(Collectors.toList());
+        
+        return new PageImpl<>(atendimentosDTO, pageable, atendimentosPage.getTotalElements());
+    }
+    
+    public Page<AgendamentoCompletoDTO> listarAtendimentosPassados(Long idUsuario, Pageable pageable) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        
+        Profissional profissional = profissionalRepository.findByUsuario(usuario)
+                .orElseThrow(() -> new RuntimeException("Profissional não encontrado"));
+        
+        LocalDateTime agora = LocalDateTime.now();
+        Page<Agendamento> atendimentosPage = agendamentoRepository.findByProfissionalAndDtFimBeforeOrderByDtInicioDesc(
+                profissional, agora, pageable);
+        
+        List<Agendamento> atendimentosAtualizados = atendimentosPage.getContent().stream()
+                .map(this::atualizarStatusSeNecessario)
+                .collect(Collectors.toList());
+        
+        List<AgendamentoCompletoDTO> atendimentosDTO = atendimentosAtualizados.stream()
+                .map(AgendamentoCompletoDTO::new)
+                .collect(Collectors.toList());
+        
+        return new PageImpl<>(atendimentosDTO, pageable, atendimentosPage.getTotalElements());
+    }
+    
     public byte[] gerarPDFAgendamentos(Long idUsuario, Integer ano) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Document document = null;

@@ -13,7 +13,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DefaultUser from '../../assets/default_user.png';
 
-const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCancel }) => {
+
+const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCancel, isProfessional = false, showEditButton = true, showCancelButton = true }) => {
   if (!appointment) return null;
 
   const formatDate = (date) => {
@@ -117,20 +118,34 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
 
           <ScrollView style={styles.modalContent}>
             <View style={styles.artistInfo}>
-              <Image
-                source={appointment.imagemPerfilProfissional ? 
-                  { uri: appointment.imagemPerfilProfissional } : 
-                  DefaultUser
-                }
-                style={styles.artistImage}
-              />
+              {!isProfessional && (
+                <Image
+                  source={appointment.imagemPerfilProfissional ? 
+                    { uri: appointment.imagemPerfilProfissional } : 
+                    DefaultUser
+                  }
+                  style={styles.artistImage}
+                />
+              )}
+              {isProfessional && (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarText}>
+                    {appointment.nomeUsuario ? appointment.nomeUsuario.charAt(0).toUpperCase() : 'U'}
+                  </Text>
+                </View>
+              )}
               <View>
                 <Text style={styles.artistName}>
-                  {appointment.nomeProfissional || 'Nome não disponível'}
+                  {isProfessional ? 
+                    (appointment.nomeUsuario || 'Nome não disponível') :
+                    (appointment.nomeProfissional || 'Nome não disponível')
+                  }
                 </Text>
                 <View style={styles.badgeContainer}>
                   <MaterialIcons name="person" size={12} color="#64748B" />
-                  <Text style={styles.badgeText}>Tatuador</Text>
+                  <Text style={styles.badgeText}>
+                    {isProfessional ? 'Cliente' : 'Tatuador'}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -199,22 +214,26 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
             </View>
           </ScrollView>
 
-          {!isCanceled && (
+          {!isCanceled && (showEditButton || showCancelButton) && (
             <View style={styles.buttonRow}>
-              <TouchableOpacity 
-                style={styles.editButton} 
-                onPress={onEdit}
-              >
-                <MaterialIcons name="edit" size={20} color="#000" />
-                <Text style={styles.editButtonText}>Editar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.cancelButton} 
-                onPress={onCancel}
-              >
-                <MaterialIcons name="cancel" size={20} color="#E11D48" />
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
+              {showEditButton && (
+                <TouchableOpacity 
+                  style={[styles.editButton, !showCancelButton && { marginRight: 0 }]} 
+                  onPress={onEdit}
+                >
+                  <MaterialIcons name="edit" size={20} color="#000" />
+                  <Text style={styles.editButtonText}>Editar</Text>
+                </TouchableOpacity>
+              )}
+              {showCancelButton && (
+                <TouchableOpacity 
+                  style={[styles.cancelButton, !showEditButton && { marginLeft: 0 }]} 
+                  onPress={onCancel}
+                >
+                  <MaterialIcons name="cancel" size={20} color="#E11D48" />
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
 
@@ -274,6 +293,20 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     marginRight: 12,
+  },
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#64748B',
   },
   artistName: {
     fontSize: 16,

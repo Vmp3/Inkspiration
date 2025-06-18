@@ -187,6 +187,26 @@ class AgendamentoService {
       reader.readAsDataURL(blob);
     });
   }
+
+  async listarMeusAtendimentosFuturos(page = 0, size = 5) {
+    try {
+      const response = await ApiService.get(`/agendamentos/profissional/meus-atendimentos/futuros?page=${page}&size=${size}&sort=dtInicio,asc`);
+      return response;
+    } catch (error) {
+      console.error('Erro ao listar atendimentos futuros:', error);
+      throw error;
+    }
+  }
+
+  async listarMeusAtendimentosPassados(page = 0, size = 5) {
+    try {
+      const response = await ApiService.get(`/agendamentos/profissional/meus-atendimentos/passados?page=${page}&size=${size}&sort=dtInicio,desc`);
+      return response;
+    } catch (error) {
+      console.error('Erro ao listar atendimentos passados:', error);
+      throw error;
+    }
+  }
 }
 
 export default new AgendamentoService(); 
