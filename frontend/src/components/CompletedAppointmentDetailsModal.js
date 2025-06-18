@@ -13,6 +13,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DefaultUser from '../../assets/default_user.png';
 import Input from './ui/Input';
+import AvaliacaoService from '../services/AvaliacaoService';
+import toastHelper from '../utils/toastHelper';
 
 const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose }) => {
   if (!appointment) return null;
@@ -20,6 +22,7 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose }) => 
   const [showReviewModal, setShowReviewModal] = React.useState(false);
   const [reviewStars, setReviewStars] = React.useState(0);
   const [reviewComment, setReviewComment] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const formatDate = (date) => {
     return format(new Date(date), "d 'de' MMMM 'de' yyyy", { locale: ptBR });
@@ -95,6 +98,28 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose }) => 
 
   const handleCloseReviewModal = () => {
     setShowReviewModal(false);
+  };
+
+  const handleSendReview = async () => {
+    if (reviewStars === 0) {
+      toastHelper.showError('Por favor, selecione uma nota para o artista');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await AvaliacaoService.criarAvaliacao(
+        appointment.idAgendamento,
+        reviewComment,
+        reviewStars
+      );
+      toastHelper.showSuccess('Avaliação enviada com sucesso!');
+      handleCloseReviewModal();
+      onClose(); // Fecha o modal de detalhes também
+    } catch (error) {
+      toastHelper.showError('Erro ao enviar avaliação. Tente novamente.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -256,14 +281,18 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose }) => 
           <TouchableOpacity
             style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24 }}
             onPress={handleCloseReviewModal}
+            disabled={isSubmitting}
           >
             <Text style={{ color: '#111', fontWeight: '600', fontSize: 16 }}>Cancelar</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={{ backgroundColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24 }}
-            onPress={handleCloseReviewModal}
+            style={{ backgroundColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24, opacity: isSubmitting ? 0.7 : 1 }}
+            onPress={handleSendReview}
+            disabled={isSubmitting}
           >
-            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>Enviar avaliação</Text>
+            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
+              {isSubmitting ? 'Enviando...' : 'Enviar avaliação'}
+            </Text>
           </TouchableOpacity>
         </View>
       </Modal>
