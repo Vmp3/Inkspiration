@@ -36,6 +36,8 @@ const EditProfileScreen = () => {
   const [phoneError, setPhoneError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [bioError, setBioError] = useState('');
+  const [biographyError, setBiographyError] = useState('');
   
   // Form data state
   const [formData, setFormData] = useState({
@@ -112,6 +114,25 @@ const EditProfileScreen = () => {
     }
   }, [userData]);
 
+  const validateBio = (text) => {
+    if (!text || text.trim().length === 0) {
+      return 'Biografia é obrigatória';
+    }
+    if (text.trim().length < 20) {
+      return 'Biografia deve ter pelo menos 20 caracteres';
+    }
+    if (text.trim().length > 500) {
+      return 'Biografia deve ter no máximo 500 caracteres';
+    }
+    return '';
+  };
+
+  const handleBiographyChange = (text) => {
+    professionalData.setBiography(text);
+    const error = validateBio(text);
+    setBiographyError(error);
+  };
+
   const handleChange = (field, value) => {
     let formattedValue = value;
     
@@ -147,6 +168,14 @@ const EditProfileScreen = () => {
         break;
       case 'email':
         setEmailError('');
+        break;
+      case 'bio':
+        setBioError('');
+        const bioValidationError = validateBio(value);
+        if (bioValidationError) {
+          setBioError(bioValidationError);
+        }
+        formattedValue = value;
         break;
       case 'senhaAtual':
       case 'novaSenha':
@@ -399,6 +428,8 @@ const EditProfileScreen = () => {
                     <PortfolioForm 
                   biography={professionalData.professionalFormData.biography}
                   setBiography={professionalData.setBiography}
+                  biographyError={biographyError}
+                  handleBiographyChange={handleBiographyChange}
                   portfolioImages={professionalData.professionalFormData.portfolioImages}
                   profileImage={professionalData.professionalFormData.profileImage}
                   handleAddPortfolioImage={professionalData.handleAddPortfolioImage}
@@ -417,6 +448,7 @@ const EditProfileScreen = () => {
                     <ProfessionalForm 
                       formData={formData}
                       handleChange={handleChange}
+                      bioError={bioError}
                     />
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}

@@ -170,6 +170,7 @@ const ProfessionalRegisterScreen = () => {
   
   // Estado para portfólio
   const [biography, setBiography] = useState('');
+  const [biographyError, setBiographyError] = useState('');
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [profileImage, setProfileImage] = useState(null);
   
@@ -278,6 +279,25 @@ const ProfessionalRegisterScreen = () => {
       ...prev,
       [platform]: value
     }));
+  };
+
+  const validateBiography = (text) => {
+    if (!text || text.trim().length === 0) {
+      return 'Biografia é obrigatória';
+    }
+    if (text.trim().length < 20) {
+      return 'Biografia deve ter pelo menos 20 caracteres';
+    }
+    if (text.trim().length > 500) {
+      return 'Biografia deve ter no máximo 500 caracteres';
+    }
+    return '';
+  };
+
+  const handleBiographyChange = (text) => {
+    setBiography(text);
+    const error = validateBiography(text);
+    setBiographyError(error);
   };
   
   const handleWorkHourChange = (index, period, field, value) => {
@@ -438,6 +458,12 @@ const ProfessionalRegisterScreen = () => {
     
     return true;
   };
+
+  const validatePortfolioTab = () => {
+    return biography.trim().length >= 20 && 
+           biography.trim().length <= 500 && 
+           biographyError === '';
+  };
   
   const handleNextTab = () => {
     if (activeTab === 'basic') {
@@ -446,6 +472,11 @@ const ProfessionalRegisterScreen = () => {
     } else if (activeTab === 'hours') {
       if (!validateWorkHours()) return;
       setActiveTab('portfolio');
+    } else if (activeTab === 'portfolio') {
+      if (!validatePortfolioTab()) {
+        toastHelper.showError('Preencha todos os campos obrigatórios do portfólio');
+        return;
+      }
     }
   };
   
@@ -678,6 +709,8 @@ const ProfessionalRegisterScreen = () => {
                   <PortfolioForm 
                     biography={biography}
                     setBiography={setBiography}
+                    biographyError={biographyError}
+                    handleBiographyChange={handleBiographyChange}
                     portfolioImages={portfolioImages}
                     profileImage={profileImage}
                     handleAddPortfolioImage={handleAddPortfolioImage}
