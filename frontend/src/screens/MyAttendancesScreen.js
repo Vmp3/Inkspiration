@@ -399,6 +399,7 @@ const MyAttendancesScreen = () => {
           <ActivityIndicator size="large" color="#111" />
           <Text style={styles.loadingText}>Carregando seus atendimentos...</Text>
         </View>
+        <Footer />
       </SafeAreaView>
     );
   }
@@ -452,8 +453,8 @@ const MyAttendancesScreen = () => {
             </>
           )}
         </View>
-        <Footer />
       </ScrollView>
+      <Footer />
 
       {selectedAttendance && (
         <>
@@ -492,6 +493,7 @@ const MyAttendancesScreen = () => {
         onClose={() => setIsExportModalVisible(false)}
       />
     </SafeAreaView>
+    
   );
 };
 

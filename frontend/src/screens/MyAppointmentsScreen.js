@@ -399,6 +399,7 @@ const MyAppointmentsScreen = () => {
           <ActivityIndicator size="large" color="#111" />
           <Text style={styles.loadingText}>Carregando agendamentos...</Text>
         </View>
+        <Footer />
       </SafeAreaView>
     );
   }
@@ -458,8 +459,9 @@ const MyAppointmentsScreen = () => {
             </>
           )}
         </View>
-        <Footer />
       </ScrollView>
+
+      <Footer />
 
       <AppointmentDetailsModal
         visible={isModalVisible}
