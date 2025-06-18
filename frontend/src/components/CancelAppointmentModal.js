@@ -28,11 +28,6 @@ const CancelAppointmentModal = ({ visible, onClose, onConfirm }) => {
             </Text>
           </View>
           
-          <Text style={styles.infoText}>
-            Se precisar reagendar, recomendamos editar o agendamento em vez
-            de cancelá-lo.
-          </Text>
-          
           <View style={styles.buttonRow}>
             <TouchableOpacity 
               style={styles.backButton} 
