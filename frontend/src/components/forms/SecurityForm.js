@@ -4,7 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import Input from '../ui/Input';
 import Checkbox from '../ui/Checkbox';
 import FormNavigation from '../ui/FormNavigation';
-import ApiService from '../../services/ApiService';
+import TermsAndPolicies from './TermsAndPolicies';
 
 const SecurityForm = ({ 
   formData, 
@@ -106,9 +106,7 @@ const SecurityForm = ({
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={true}>
-              <Text style={styles.modalText}>
-                {`Definir texto dos termos de uso`}
-              </Text>
+              <TermsAndPolicies type="terms" />
             </ScrollView>
             <View style={styles.modalFooter}>
               <TouchableOpacity 
@@ -138,9 +136,7 @@ const SecurityForm = ({
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={true}>
-              <Text style={styles.modalText}>
-                {`Definir texto da política de privacidade`}
-              </Text>
+              <TermsAndPolicies type="privacy" />
             </ScrollView>
             <View style={styles.modalFooter}>
               <TouchableOpacity 
