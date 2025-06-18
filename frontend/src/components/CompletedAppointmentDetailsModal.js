@@ -196,6 +196,15 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isPro
                 <Text style={styles.statusText}>{getStatusLabel(appointment.status)}</Text>
               </View>
             </View>
+
+            {/* TODO: Implementar avaliação para agendamentos concluídos no contexto de profissional */}
+            {isProfessional && appointment.status?.toUpperCase() === 'CONCLUIDO' && (
+              <View style={styles.todoSection}>
+                <Text style={styles.todoText}>
+                  TODO: Implementar visualização da avaliação do cliente
+                </Text>
+              </View>
+            )}
           </ScrollView>
 
           {!isProfessional && (
@@ -376,6 +385,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#64748B',
+  },
+  todoSection: {
+    padding: 16,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  todoText: {
+    fontSize: 14,
+    color: '#92400E',
+    fontStyle: 'italic',
   },
 });
 

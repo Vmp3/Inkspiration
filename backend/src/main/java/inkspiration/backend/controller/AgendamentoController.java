@@ -1,6 +1,7 @@
 package inkspiration.backend.controller;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -245,7 +246,12 @@ public class AgendamentoController {
                         .body("Token não contém informações do usuário");
             }
             
-            Agendamento agendamento = agendamentoService.atualizarStatusAgendamento(id, userId, status);
+            String scope = jwt.getClaimAsString("scope");
+            List<String> roles = new ArrayList<>();
+            if (scope != null) {
+                roles.add(scope);
+            }
+            Agendamento agendamento = agendamentoService.atualizarStatusAgendamento(id, userId, status, roles);
             return ResponseEntity.ok(new AgendamentoDTO(agendamento));
         } catch (Exception e) {
             String errorMessage = e.getMessage();

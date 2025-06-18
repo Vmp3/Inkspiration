@@ -11,7 +11,7 @@ import {
   RefreshControl,
   Alert
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { differenceInDays } from 'date-fns';
 import AgendamentoService from '../services/AgendamentoService';
@@ -20,9 +20,12 @@ import Footer from '../components/Footer';
 import AppointmentCard from '../components/AppointmentCard';
 import AppointmentDetailsModal from '../components/AppointmentDetailsModal';
 import CompletedAppointmentDetailsModal from '../components/CompletedAppointmentDetailsModal';
+import CancelAppointmentModal from '../components/CancelAppointmentModal';
+import { useAuth } from '../context/AuthContext';
 
 const MyAttendancesScreen = () => {
   const navigation = useNavigation();
+  const { userData } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingFuture, setIsLoadingFuture] = useState(false);
   const [isLoadingPast, setIsLoadingPast] = useState(false);
@@ -37,6 +40,7 @@ const MyAttendancesScreen = () => {
   const [selectedAttendance, setSelectedAttendance] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isCompletedModalVisible, setIsCompletedModalVisible] = useState(false);
+  const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const [pageSize] = useState(5);
 
   const isMobile = screenData.width < 768;
@@ -54,16 +58,34 @@ const MyAttendancesScreen = () => {
     loadAttendances();
   }, []);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const onChange = (result) => {
+        if (result?.type === 'success') {
+          loadAttendances(true);
+        }
+      };
+
+      loadAttendances();
+
+      return onChange;
+    }, [])
+  );
+
   const loadAttendances = async (shouldRefresh = false) => {
-    try {
+    if (shouldRefresh) {
+      setIsRefreshing(true);
+      setCurrentFuturePage(0);
+      setCurrentPastPage(0);
+    } else {
       setIsLoading(true);
+    }
+
+    try {
       await Promise.all([
         loadFutureAttendances(0, shouldRefresh),
         loadPastAttendances(0, shouldRefresh)
       ]);
-    } catch (error) {
-      console.error('Erro ao carregar atendimentos:', error);
-      toastHelper.showError('Erro ao carregar seus atendimentos');
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -71,81 +93,92 @@ const MyAttendancesScreen = () => {
   };
 
   const loadFutureAttendances = async (page = 0, shouldRefresh = false) => {
-    try {
-      if (page === 0 && !shouldRefresh) {
-        setIsLoading(true);
-      } else {
-        setIsLoadingFuture(true);
-      }
+    if (!shouldRefresh && page > 0) {
+      setIsLoadingFuture(true);
+    }
 
+    try {
       const response = await AgendamentoService.listarMeusAtendimentosFuturos(page, pageSize);
-      const newAttendances = response?.content || [];
       
-      setHasMoreFuturePages(!response?.last);
+      if (page === 0 || shouldRefresh) {
+        setFutureAttendances(response.content || []);
+      } else {
+        setFutureAttendances(prev => [...prev, ...(response.content || [])]);
+      }
       
-      setFutureAttendances(newAttendances);
+      setHasMoreFuturePages(!response.last);
       
-      setCurrentFuturePage(page);
+      if (page === 0 || shouldRefresh) {
+        setCurrentFuturePage(0);
+      }
     } catch (error) {
       console.error('Erro ao carregar atendimentos futuros:', error);
-      throw error;
+      toastHelper.showError('Erro ao carregar atendimentos futuros');
     } finally {
       setIsLoadingFuture(false);
-      setIsLoading(false);
     }
   };
 
   const loadPastAttendances = async (page = 0, shouldRefresh = false) => {
-    try {
-      if (page === 0 && !shouldRefresh) {
-        setIsLoading(true);
-      } else {
-        setIsLoadingPast(true);
-      }
+    if (!shouldRefresh && page > 0) {
+      setIsLoadingPast(true);
+    }
 
+    try {
       const response = await AgendamentoService.listarMeusAtendimentosPassados(page, pageSize);
-      const newAttendances = response?.content || [];
       
-      setHasMorePastPages(!response?.last);
+      if (page === 0 || shouldRefresh) {
+        setPastAttendances(response.content || []);
+      } else {
+        setPastAttendances(prev => [...prev, ...(response.content || [])]);
+      }
       
-      setPastAttendances(newAttendances);
+      setHasMorePastPages(!response.last);
       
-      setCurrentPastPage(page);
+      if (page === 0 || shouldRefresh) {
+        setCurrentPastPage(0);
+      }
     } catch (error) {
       console.error('Erro ao carregar atendimentos passados:', error);
-      throw error;
+      toastHelper.showError('Erro ao carregar atendimentos passados');
     } finally {
       setIsLoadingPast(false);
-      setIsLoading(false);
     }
   };
 
   const handleNextFuturePage = () => {
-    if (!isLoadingFuture && hasMoreFuturePages) {
-      loadFutureAttendances(currentFuturePage + 1);
+    if (hasMoreFuturePages && !isLoadingFuture) {
+      const nextPage = currentFuturePage + 1;
+      setCurrentFuturePage(nextPage);
+      loadFutureAttendances(nextPage);
     }
   };
 
   const handlePrevFuturePage = () => {
-    if (!isLoadingFuture && currentFuturePage > 0) {
-      loadFutureAttendances(currentFuturePage - 1);
+    if (currentFuturePage > 0 && !isLoadingFuture) {
+      const prevPage = currentFuturePage - 1;
+      setCurrentFuturePage(prevPage);
+      loadFutureAttendances(prevPage);
     }
   };
 
   const handleNextPastPage = () => {
-    if (!isLoadingPast && hasMorePastPages) {
-      loadPastAttendances(currentPastPage + 1);
+    if (hasMorePastPages && !isLoadingPast) {
+      const nextPage = currentPastPage + 1;
+      setCurrentPastPage(nextPage);
+      loadPastAttendances(nextPage);
     }
   };
 
   const handlePrevPastPage = () => {
-    if (!isLoadingPast && currentPastPage > 0) {
-      loadPastAttendances(currentPastPage - 1);
+    if (currentPastPage > 0 && !isLoadingPast) {
+      const prevPage = currentPastPage - 1;
+      setCurrentPastPage(prevPage);
+      loadPastAttendances(prevPage);
     }
   };
 
   const handleRefresh = () => {
-    setIsRefreshing(true);
     loadAttendances(true);
   };
 
@@ -169,152 +202,182 @@ const MyAttendancesScreen = () => {
     setSelectedAttendance(null);
   };
 
+  const handleCloseCancelModal = () => {
+    setIsCancelModalVisible(false);
+  };
+
+  const handleCancelAppointment = () => {
+    if (!selectedAttendance) {
+      toastHelper.showError('Erro ao identificar o agendamento');
+      return;
+    }
+
+    if (selectedAttendance.status?.toUpperCase() !== 'AGENDADO') {
+      toastHelper.showError('Apenas agendamentos com status "Agendado" podem ser cancelados');
+      return;
+    }
+
+    setIsModalVisible(false);
+    setIsCancelModalVisible(true);
+  };
+
+  const handleConfirmCancel = async (reason) => {
+    try {
+      await AgendamentoService.atualizarStatusAgendamento(selectedAttendance.idAgendamento, 'CANCELADO');
+      
+      toastHelper.showSuccess('Agendamento cancelado com sucesso');
+      
+      await loadAttendances(true);
+      
+    } catch (error) {
+      console.error('Erro ao cancelar agendamento:', error);
+      let errorMessage = 'Erro ao cancelar agendamento. Tente novamente.';
+      
+      if (error.response?.status === 400) {
+        errorMessage = error.response.data || 'Não foi possível cancelar o agendamento';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Você não tem permissão para cancelar este agendamento';
+      }
+      
+      toastHelper.showError(errorMessage);
+    } finally {
+      setIsCancelModalVisible(false);
+      setSelectedAttendance(null);
+    }
+  };
+
   const renderFutureAttendances = () => {
-    if (isLoading && currentFuturePage === 0) {
-      return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#111" />
-          <Text style={styles.loadingText}>Carregando atendimentos futuros...</Text>
-        </View>
-      );
-    }
-
-    if (futureAttendances.length === 0) {
-      return (
-        <View style={styles.emptyContainer}>
-          <MaterialIcons name="event-available" size={64} color="#94A3B8" />
-          <Text style={styles.emptyText}>Nenhum atendimento futuro</Text>
-          <Text style={styles.emptySubtext}>
-            Quando clientes agendarem serviços com você, eles aparecerão aqui.
-          </Text>
-        </View>
-      );
-    }
-
     return (
-      <View style={styles.sectionContainer}>
-        <View style={styles.appointmentsList}>
-          {futureAttendances.map((attendance) => (
-            <AppointmentCard
-              key={attendance.idAgendamento}
-              appointment={attendance}
-              onPress={() => handleAttendancePress(attendance)}
-              showActions={false}
-              isProfessional={true}
-            />
-          ))}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Próximos Atendimentos</Text>
+          
+          {!isLoading && futureAttendances.length > 0 && (
+            <View style={styles.paginationContainer}>
+              <TouchableOpacity 
+                style={[
+                  styles.paginationButton, 
+                  currentFuturePage === 0 && styles.paginationButtonDisabled
+                ]}
+                onPress={handlePrevFuturePage}
+                disabled={currentFuturePage === 0 || isLoadingFuture}
+              >
+                <MaterialIcons 
+                  name="chevron-left" 
+                  size={24} 
+                  color={currentFuturePage === 0 ? "#CBD5E1" : "#111"} 
+                />
+              </TouchableOpacity>
+              
+              <Text style={styles.paginationText}>{currentFuturePage + 1}</Text>
+              
+              <TouchableOpacity 
+                style={[
+                  styles.paginationButton, 
+                  !hasMoreFuturePages && styles.paginationButtonDisabled
+                ]}
+                onPress={handleNextFuturePage}
+                disabled={!hasMoreFuturePages || isLoadingFuture}
+              >
+                <MaterialIcons 
+                  name="chevron-right" 
+                  size={24} 
+                  color={!hasMoreFuturePages ? "#CBD5E1" : "#111"} 
+                />
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
-
-        <View style={styles.paginationContainer}>
-          <TouchableOpacity
-            style={[
-              styles.paginationButton,
-              currentFuturePage === 0 && styles.paginationButtonDisabled
-            ]}
-            onPress={handlePrevFuturePage}
-            disabled={currentFuturePage === 0 || isLoadingFuture}
-          >
-            {isLoadingFuture ? (
-              <ActivityIndicator size="small" color="#64748B" />
-            ) : (
-              <MaterialIcons name="chevron-left" size={20} color="#64748B" />
+        
+        {futureAttendances.length > 0 ? (
+          <>
+            {futureAttendances.map(attendance => (
+              <AppointmentCard
+                key={attendance.idAgendamento}
+                appointment={attendance}
+                onPress={() => handleAttendancePress(attendance)}
+                isProfessional={true}
+              />
+            ))}
+            
+            {isLoadingFuture && (
+              <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color="#111" />
+                <Text style={styles.loadingMoreText}>Carregando atendimentos...</Text>
+              </View>
             )}
-          </TouchableOpacity>
-
-          <Text style={styles.paginationText}>
-            Página {currentFuturePage + 1}
-          </Text>
-
-          <TouchableOpacity
-            style={[
-              styles.paginationButton,
-              !hasMoreFuturePages && styles.paginationButtonDisabled
-            ]}
-            onPress={handleNextFuturePage}
-            disabled={!hasMoreFuturePages || isLoadingFuture}
-          >
-            {isLoadingFuture ? (
-              <ActivityIndicator size="small" color="#64748B" />
-            ) : (
-              <MaterialIcons name="chevron-right" size={20} color="#64748B" />
-            )}
-          </TouchableOpacity>
-        </View>
+          </>
+        ) : (
+          <Text style={styles.emptyText}>Você não possui atendimentos futuros.</Text>
+        )}
       </View>
     );
   };
 
   const renderPastAttendances = () => {
-    if (isLoading && currentPastPage === 0) {
-      return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#111" />
-          <Text style={styles.loadingText}>Carregando histórico de atendimentos...</Text>
-        </View>
-      );
-    }
-
-    if (pastAttendances.length === 0) {
-      return (
-        <View style={styles.emptyContainer}>
-          <MaterialIcons name="history" size={64} color="#94A3B8" />
-          <Text style={styles.emptyText}>Nenhum atendimento no histórico</Text>
-          <Text style={styles.emptySubtext}>
-            Seus atendimentos concluídos aparecerão aqui.
-          </Text>
-        </View>
-      );
-    }
-
     return (
-      <View style={styles.sectionContainer}>
-        <View style={styles.appointmentsList}>
-          {pastAttendances.map((attendance) => (
-            <AppointmentCard
-              key={attendance.idAgendamento}
-              appointment={attendance}
-              onPress={() => handleAttendancePress(attendance)}
-              showActions={false}
-              isProfessional={true}
-            />
-          ))}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Histórico de Atendimentos</Text>
+          
+          {!isLoading && pastAttendances.length > 0 && (
+            <View style={styles.paginationContainer}>
+              <TouchableOpacity 
+                style={[
+                  styles.paginationButton, 
+                  currentPastPage === 0 && styles.paginationButtonDisabled
+                ]}
+                onPress={handlePrevPastPage}
+                disabled={currentPastPage === 0 || isLoadingPast}
+              >
+                <MaterialIcons 
+                  name="chevron-left" 
+                  size={24} 
+                  color={currentPastPage === 0 ? "#CBD5E1" : "#111"} 
+                />
+              </TouchableOpacity>
+              
+              <Text style={styles.paginationText}>{currentPastPage + 1}</Text>
+              
+              <TouchableOpacity 
+                style={[
+                  styles.paginationButton, 
+                  !hasMorePastPages && styles.paginationButtonDisabled
+                ]}
+                onPress={handleNextPastPage}
+                disabled={!hasMorePastPages || isLoadingPast}
+              >
+                <MaterialIcons 
+                  name="chevron-right" 
+                  size={24} 
+                  color={!hasMorePastPages ? "#CBD5E1" : "#111"} 
+                />
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
-
-        <View style={styles.paginationContainer}>
-          <TouchableOpacity
-            style={[
-              styles.paginationButton,
-              currentPastPage === 0 && styles.paginationButtonDisabled
-            ]}
-            onPress={handlePrevPastPage}
-            disabled={currentPastPage === 0 || isLoadingPast}
-          >
-            {isLoadingPast ? (
-              <ActivityIndicator size="small" color="#64748B" />
-            ) : (
-              <MaterialIcons name="chevron-left" size={20} color="#64748B" />
+        
+        {pastAttendances.length > 0 ? (
+          <>
+            {pastAttendances.map(attendance => (
+              <AppointmentCard
+                key={attendance.idAgendamento}
+                appointment={attendance}
+                onPress={() => handleAttendancePress(attendance)}
+                isProfessional={true}
+              />
+            ))}
+            
+            {isLoadingPast && (
+              <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color="#111" />
+                <Text style={styles.loadingMoreText}>Carregando atendimentos...</Text>
+              </View>
             )}
-          </TouchableOpacity>
-
-          <Text style={styles.paginationText}>
-            Página {currentPastPage + 1}
-          </Text>
-
-          <TouchableOpacity
-            style={[
-              styles.paginationButton,
-              !hasMorePastPages && styles.paginationButtonDisabled
-            ]}
-            onPress={handleNextPastPage}
-            disabled={!hasMorePastPages || isLoadingPast}
-          >
-            {isLoadingPast ? (
-              <ActivityIndicator size="small" color="#64748B" />
-            ) : (
-              <MaterialIcons name="chevron-right" size={20} color="#64748B" />
-            )}
-          </TouchableOpacity>
-        </View>
+          </>
+        ) : (
+          <Text style={styles.emptyText}>Você não possui histórico de atendimentos.</Text>
+        )}
       </View>
     );
   };
@@ -332,14 +395,13 @@ const MyAttendancesScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
+      <ScrollView 
         style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
-            colors={['#111']}
+            colors={["#111"]}
             tintColor="#111"
           />
         }
@@ -355,25 +417,23 @@ const MyAttendancesScreen = () => {
         </View>
 
         <View style={styles.content}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              <MaterialIcons name="schedule" size={20} color="#111" style={styles.sectionIcon} />
-              Próximos Atendimentos
-            </Text>
-            {renderFutureAttendances()}
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              <MaterialIcons name="history" size={20} color="#111" style={styles.sectionIcon} />
-              Histórico de Atendimentos
-            </Text>
-            {renderPastAttendances()}
-          </View>
+          {futureAttendances.length === 0 && pastAttendances.length === 0 ? (
+            <View style={styles.emptyState}>
+              <MaterialIcons name="event" size={48} color="#64748b" />
+              <Text style={styles.emptyStateTitle}>Nenhum atendimento encontrado</Text>
+              <Text style={styles.emptyStateText}>
+                Você ainda não possui agendamentos de clientes.
+              </Text>
+            </View>
+          ) : (
+            <>
+              {renderFutureAttendances()}
+              {renderPastAttendances()}
+            </>
+          )}
         </View>
+        <Footer />
       </ScrollView>
-
-      <Footer />
 
       {selectedAttendance && (
         <>
@@ -381,8 +441,9 @@ const MyAttendancesScreen = () => {
             visible={isModalVisible}
             appointment={selectedAttendance}
             onClose={handleCloseModal}
+            onCancel={selectedAttendance?.status?.toUpperCase() === 'AGENDADO' ? handleCancelAppointment : undefined}
             showEditButton={false}
-            showCancelButton={false}
+            showCancelButton={selectedAttendance?.status?.toUpperCase() === 'AGENDADO'}
             isProfessional={true}
           />
 
@@ -391,6 +452,17 @@ const MyAttendancesScreen = () => {
             appointment={selectedAttendance}
             onClose={handleCloseCompletedModal}
             isProfessional={true}
+          />
+
+          <CancelAppointmentModal
+            visible={isCancelModalVisible}
+            onClose={handleCloseCancelModal}
+            onConfirm={handleConfirmCancel}
+            appointmentDetails={{
+              date: selectedAttendance?.dtInicio,
+              service: selectedAttendance?.tipoServico,
+              clientName: selectedAttendance?.nomeUsuario
+            }}
           />
         </>
       )}
@@ -401,13 +473,10 @@ const MyAttendancesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#fff',
   },
   scrollContainer: {
     flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
@@ -415,14 +484,13 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#e2e8f0',
   },
   backButton: {
     marginRight: 16,
-    padding: 8,
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#111',
   },
@@ -430,81 +498,83 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
     color: '#111',
-    marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sectionIcon: {
-    marginRight: 8,
-  },
-  sectionContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  appointmentsList: {
-    marginBottom: 16,
-  },
-  paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-  },
-  paginationButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#F1F5F9',
-    marginHorizontal: 8,
-  },
-  paginationButtonDisabled: {
-    opacity: 0.5,
-  },
-  paginationText: {
-    fontSize: 14,
-    color: '#64748B',
-    marginHorizontal: 16,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
   },
   loadingText: {
-    marginTop: 12,
+    marginTop: 16,
     fontSize: 16,
-    color: '#64748B',
+    color: '#64748b',
   },
-  emptyContainer: {
+  emptyState: {
     alignItems: 'center',
-    padding: 32,
+    padding: 24,
   },
-  emptyText: {
-    fontSize: 18,
+  emptyStateTitle: {
+    fontSize: 20,
     fontWeight: '600',
-    color: '#475569',
+    color: '#111',
     marginTop: 16,
     marginBottom: 8,
   },
-  emptySubtext: {
+  emptyStateText: {
+    fontSize: 16,
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#64748b',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  loadingMoreContainer: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  loadingMoreText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#64748b',
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  paginationButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  paginationButtonDisabled: {
+    backgroundColor: '#F8FAFC',
+  },
+  paginationText: {
     fontSize: 14,
     color: '#64748B',
+    marginHorizontal: 8,
+    minWidth: 20,
     textAlign: 'center',
-    lineHeight: 20,
   },
 });
 

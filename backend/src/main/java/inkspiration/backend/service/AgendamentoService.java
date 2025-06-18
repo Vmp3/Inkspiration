@@ -306,11 +306,37 @@ public class AgendamentoService {
     }
     
     @Transactional
-    public Agendamento atualizarStatusAgendamento(Long id, Long idUsuarioLogado, String status) {
+    public Agendamento atualizarStatusAgendamento(Long id, Long idUsuarioLogado, String status, List<String> roles) {
         Agendamento agendamento = buscarPorId(id);
         
-        if (!agendamento.getUsuario().getIdUsuario().equals(idUsuarioLogado)) {
-            throw new RuntimeException("Não autorizado: este agendamento não pertence ao usuário logado");
+        boolean isAuthorized = false;
+        
+        if (agendamento.getUsuario().getIdUsuario().equals(idUsuarioLogado)) {
+            isAuthorized = true;
+        }
+        
+        if (!isAuthorized && roles.contains("ROLE_PROF")) {
+            try {
+                Usuario usuario = usuarioRepository.findById(idUsuarioLogado)
+                        .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                
+                
+                Profissional profissionalLogado = profissionalRepository.findByUsuario(usuario)
+                        .orElseThrow(() -> new RuntimeException("Profissional não encontrado para o usuário logado"));
+                
+                
+                if (agendamento.getProfissional().getIdProfissional().equals(profissionalLogado.getIdProfissional())) {
+                    isAuthorized = true;
+                } else {
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                isAuthorized = false;
+            }
+        }
+        
+        if (!isAuthorized) {
+            throw new RuntimeException("Não autorizado: você não tem permissão para alterar este agendamento");
         }
         
         try {
