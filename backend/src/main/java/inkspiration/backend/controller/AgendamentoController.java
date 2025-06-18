@@ -70,9 +70,9 @@ public class AgendamentoController {
             } else if (errorMessage.contains("Não é possível agendar consigo mesmo")) {
                 return ResponseEntity.badRequest().body(
                         "Não é possível agendar um serviço consigo mesmo como profissional.");
-            } else if (errorMessage.contains("Não é possível agendar para datas e horários que já passaram")) {
+            } else if (errorMessage.contains("Só é possível fazer agendamentos a partir do dia seguinte")) {
                 return ResponseEntity.badRequest().body(
-                        "Não é possível agendar para datas e horários que já passaram. Por favor, selecione uma data futura.");
+                        "Só é possível fazer agendamentos a partir do dia seguinte. Por favor, selecione uma data a partir do próximo dia.");
             }
             
             return ResponseEntity.badRequest().body(errorMessage);
@@ -170,9 +170,9 @@ public class AgendamentoController {
                         "Por favor, selecione outro horário disponível.");
             } else if (errorMessage.contains("Tipo de serviço inválido")) {
                 return ResponseEntity.badRequest().body(errorMessage);
-            } else if (errorMessage.contains("Não é possível agendar para datas e horários que já passaram")) {
+            } else if (errorMessage.contains("Só é possível fazer agendamentos a partir de amanhã")) {
                 return ResponseEntity.badRequest().body(
-                        "Não é possível agendar para datas e horários que já passaram. Por favor, selecione uma data futura.");
+                        "Só é possível fazer agendamentos a partir de amanhã. Por favor, selecione uma data a partir do próximo dia.");
             } else if (errorMessage.contains("Não autorizado")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                         "Você não tem permissão para editar este agendamento.");

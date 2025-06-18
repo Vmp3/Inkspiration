@@ -1,5 +1,6 @@
 package inkspiration.backend.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -80,9 +81,9 @@ public class AgendamentoService {
             throw new RuntimeException("Não é possível agendar consigo mesmo");
         }
         
-        LocalDateTime agora = LocalDateTime.now();
-        if (dtInicio.isBefore(agora)) {
-            throw new RuntimeException("Não é possível agendar para datas e horários que já passaram");
+        LocalDateTime amanha = LocalDate.now().plusDays(1).atStartOfDay();
+        if (dtInicio.isBefore(amanha)) {
+            throw new RuntimeException("Só é possível fazer agendamentos a partir do dia seguinte");
         }
         
         TipoServico tipoServico;
@@ -180,9 +181,9 @@ public class AgendamentoService {
             throw new RuntimeException("Não autorizado: este agendamento não pertence ao usuário logado");
         }
         
-        LocalDateTime agora = LocalDateTime.now();
-        if (dtInicio.isBefore(agora)) {
-            throw new RuntimeException("Não é possível agendar para datas e horários que já passaram");
+        LocalDateTime amanha = LocalDate.now().plusDays(1).atStartOfDay();
+        if (dtInicio.isBefore(amanha)) {
+            throw new RuntimeException("Só é possível fazer agendamentos a partir do dia seguinte");
         }
         
         TipoServico tipoServico;

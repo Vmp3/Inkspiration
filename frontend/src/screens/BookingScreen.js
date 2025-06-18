@@ -65,7 +65,7 @@ const BookingScreen = () => {
     const lastDay = new Date(year, selectedMonth + 1, 0);
     
     const startDay = selectedMonth === currentDate.getMonth() 
-      ? currentDate.getDate() 
+      ? currentDate.getDate() + 1
       : 1;
     
     for (let i = startDay; i <= lastDay.getDate(); i++) {
@@ -112,8 +112,10 @@ const BookingScreen = () => {
       const servicesData = await AgendamentoService.buscarTiposServicoPorProfissional(professionalId);
       setServices(servicesData);
 
-      const today = new Date().toISOString().split('T')[0];
-      setSelectedDate(today);
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate());
+      const tomorrowDate = tomorrow.toISOString().split('T')[0];
+      setSelectedDate(tomorrowDate);
       
     } catch (error) {
       console.error('Erro ao carregar dados iniciais:', error);
