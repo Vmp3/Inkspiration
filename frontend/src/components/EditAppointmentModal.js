@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   TextInput,
   ScrollView,
   ActivityIndicator,
@@ -538,75 +539,79 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       animationType="none"
       onRequestClose={onClose}
     >
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Editar Agendamento</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <MaterialIcons name="close" size={24} color="#64748b" />
-            </TouchableOpacity>
-          </View>
-          
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#111" />
-              <Text style={styles.loadingText}>Carregando...</Text>
-            </View>
-          ) : !canEdit() ? (
-            <View style={styles.errorContainer}>
-              <MaterialIcons name="error-outline" size={64} color="#EF4444" />
-              <Text style={styles.errorTitle}>Edição não permitida</Text>
-              <Text style={styles.errorMessage}>
-                A edição só é permitida com no mínimo 3 dias de antecedência.
-              </Text>
-              <TouchableOpacity 
-                style={styles.closeErrorButton}
-                onPress={onClose}
-              >
-                <Text style={styles.closeErrorButtonText}>Fechar</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <>
-              {renderProgressBar()}
-              
-              <ScrollView style={styles.modalContent}>
-                {renderCurrentStep()}
-              </ScrollView>
-              
-              <View style={styles.modalFooter}>
-                {step > 1 ? (
-                  <TouchableOpacity
-                    style={styles.prevButton}
-                    onPress={handlePrevStep}
-                  >
-                    <Text style={styles.prevButtonText}>Voltar</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.emptyButton} />
-                )}
-                
-                <TouchableOpacity
-                  style={[
-                    styles.nextButton,
-                    !canProceedToNext() && styles.nextButtonDisabled
-                  ]}
-                  onPress={step === 3 ? handleUpdateAppointment : handleNextStep}
-                  disabled={!canProceedToNext() || isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.nextButtonText}>
-                      {step === 3 ? 'Salvar Alterações' : 'Próximo'}
-                    </Text>
-                  )}
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalBackdrop}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Editar Agendamento</Text>
+                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                  <MaterialIcons name="close" size={24} color="#64748b" />
                 </TouchableOpacity>
               </View>
-            </>
-          )}
+              
+              {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#111" />
+                  <Text style={styles.loadingText}>Carregando...</Text>
+                </View>
+              ) : !canEdit() ? (
+                <View style={styles.errorContainer}>
+                  <MaterialIcons name="error-outline" size={64} color="#EF4444" />
+                  <Text style={styles.errorTitle}>Edição não permitida</Text>
+                  <Text style={styles.errorMessage}>
+                    A edição só é permitida com no mínimo 3 dias de antecedência.
+                  </Text>
+                  <TouchableOpacity 
+                    style={styles.closeErrorButton}
+                    onPress={onClose}
+                  >
+                    <Text style={styles.closeErrorButtonText}>Fechar</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  {renderProgressBar()}
+                  
+                  <ScrollView style={styles.modalContent}>
+                    {renderCurrentStep()}
+                  </ScrollView>
+                  
+                  <View style={styles.modalFooter}>
+                    {step > 1 ? (
+                      <TouchableOpacity
+                        style={styles.prevButton}
+                        onPress={handlePrevStep}
+                      >
+                        <Text style={styles.prevButtonText}>Voltar</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={styles.emptyButton} />
+                    )}
+                    
+                    <TouchableOpacity
+                      style={[
+                        styles.nextButton,
+                        !canProceedToNext() && styles.nextButtonDisabled
+                      ]}
+                      onPress={step === 3 ? handleUpdateAppointment : handleNextStep}
+                      disabled={!canProceedToNext() || isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.nextButtonText}>
+                          {step === 3 ? 'Salvar Alterações' : 'Próximo'}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </View>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
