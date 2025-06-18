@@ -362,6 +362,8 @@ public class AgendamentoService {
     
     public byte[] gerarPDFAgendamentos(Long idUsuario, Integer ano) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Document document = null;
+        PdfWriter writer = null;
         
         try {
             List<Agendamento> agendamentos = agendamentoRepository.findByUsuarioIdAndStatusAndAno(
@@ -375,8 +377,8 @@ public class AgendamentoService {
                 .map(AgendamentoCompletoDTO::new)
                 .collect(Collectors.toList());
             
-            Document document = new Document(com.lowagie.text.PageSize.A4);
-            PdfWriter writer = PdfWriter.getInstance(document, out);
+            document = new Document(com.lowagie.text.PageSize.A4);
+            writer = PdfWriter.getInstance(document, out);
             
             document.addCreator("Inkspiration App");
             document.addAuthor("Inkspiration");
@@ -521,8 +523,17 @@ public class AgendamentoService {
             throw new Exception("Erro ao gerar PDF: " + e.getMessage());
         } finally {
             try {
-                out.close();
+                if (document != null && document.isOpen()) {
+                    document.close();
+                }
+                if (writer != null) {
+                    writer.close();
+                }
+                if (out != null) {
+                    out.close();
+                }
             } catch (Exception e) {
+                System.err.println("Erro ao fechar recursos PDF: " + e.getMessage());
             }
         }
     }
