@@ -117,7 +117,6 @@ public class EmailVerificationService {
     }
 
     private void cleanExpiredRegistrations() {
-        LocalDateTime now = LocalDateTime.now();
         pendingRegistrations.entrySet().removeIf(entry -> {
             PendingRegistration reg = entry.getValue();
             return reg.isExpired();
@@ -145,10 +144,6 @@ public class EmailVerificationService {
 
         public void setVerificationCode(String verificationCode) {
             this.verificationCode = verificationCode;
-        }
-
-        public LocalDateTime getExpiresAt() {
-            return expiresAt;
         }
 
         public void setExpiresAt(LocalDateTime expiresAt) {

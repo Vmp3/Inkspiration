@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import axios from 'axios';
 import * as formatters from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
+import toastHelper from '../utils/toastHelper';
 
 import PersonalForm from '../components/forms/PersonalForm';
 import AddressForm from '../components/forms/AddressForm';
@@ -35,6 +36,8 @@ const EditProfileScreen = () => {
   const [phoneError, setPhoneError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [bioError, setBioError] = useState('');
+  const [biographyError, setBiographyError] = useState('');
   
   // Form data state
   const [formData, setFormData] = useState({
@@ -111,6 +114,25 @@ const EditProfileScreen = () => {
     }
   }, [userData]);
 
+  const validateBio = (text) => {
+    if (!text || text.trim().length === 0) {
+      return 'Biografia é obrigatória';
+    }
+    if (text.trim().length < 20) {
+      return 'Biografia deve ter pelo menos 20 caracteres';
+    }
+    if (text.trim().length > 500) {
+      return 'Biografia deve ter no máximo 500 caracteres';
+    }
+    return '';
+  };
+
+  const handleBiographyChange = (text) => {
+    professionalData.setBiography(text);
+    const error = validateBio(text);
+    setBiographyError(error);
+  };
+
   const handleChange = (field, value) => {
     let formattedValue = value;
     
@@ -146,6 +168,14 @@ const EditProfileScreen = () => {
         break;
       case 'email':
         setEmailError('');
+        break;
+      case 'bio':
+        setBioError('');
+        const bioValidationError = validateBio(value);
+        if (bioValidationError) {
+          setBioError(bioValidationError);
+        }
+        formattedValue = value;
         break;
       case 'senhaAtual':
       case 'novaSenha':
@@ -294,6 +324,26 @@ const EditProfileScreen = () => {
             tabs={tabNavigation.getTabs()}
             activeTab={tabNavigation.activeTab}
             setActiveTab={tabNavigation.setActiveTab}
+            onTabPress={(tabId) => {
+              if (tabNavigation.activeTab === 'hours') {
+                const isValid = professionalData.professionalFormData.workHours ? 
+                  tabNavigation.validateCurrentTab() : true;
+                
+                if (!isValid) {
+                  toastHelper.showError('Corrija os horários inválidos antes de continuar.');
+                  return;
+                }
+              }
+              
+              if (tabNavigation.activeTab === 'basic-info') {
+                const isValid = tabNavigation.validateCurrentTab();
+                if (!isValid) {
+                  return;
+                }
+              }
+              
+              tabNavigation.setActiveTab(tabId);
+            }}
           >
             {tabNavigation.activeTab === 'personal' && (
                   <>
@@ -342,12 +392,17 @@ const EditProfileScreen = () => {
                   socialMedia={professionalData.professionalFormData.socialMedia}
                   handleSocialMediaChange={professionalData.handleSocialMediaChange}
                   handleNextTab={tabNavigation.handleNextTab}
-                      experienceDropdownOpen={experienceDropdownOpen}
-                      setExperienceDropdownOpen={setExperienceDropdownOpen}
+                  experienceDropdownOpen={experienceDropdownOpen}
+                  setExperienceDropdownOpen={setExperienceDropdownOpen}
+                  tiposServico={professionalData.professionalFormData.tiposServico}
+                  setTiposServico={(value) => professionalData.setProfessionalFormData(prev => ({ ...prev, tiposServico: value }))}
+                  tipoServicoSelecionados={professionalData.professionalFormData.tipoServicoSelecionados}
+                  handleTipoServicoChange={professionalData.handleTipoServicoChange}
                     />
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
+                  nextDisabled={!tabNavigation.validateCurrentTab()}
                     />
                   </>
                 )}
@@ -363,6 +418,7 @@ const EditProfileScreen = () => {
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
+                  nextDisabled={!tabNavigation.isHoursValid}
                     />
                   </>
                 )}
@@ -372,6 +428,8 @@ const EditProfileScreen = () => {
                     <PortfolioForm 
                   biography={professionalData.professionalFormData.biography}
                   setBiography={professionalData.setBiography}
+                  biographyError={biographyError}
+                  handleBiographyChange={handleBiographyChange}
                   portfolioImages={professionalData.professionalFormData.portfolioImages}
                   profileImage={professionalData.professionalFormData.profileImage}
                   handleAddPortfolioImage={professionalData.handleAddPortfolioImage}
@@ -390,6 +448,7 @@ const EditProfileScreen = () => {
                     <ProfessionalForm 
                       formData={formData}
                       handleChange={handleChange}
+                      bioError={bioError}
                     />
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}

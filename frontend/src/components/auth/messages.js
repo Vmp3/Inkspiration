@@ -15,9 +15,9 @@ export const authMessages = {
     requiredFields: 'Por favor, preencha todos os campos',
     invalidCpf: 'CPF inválido',
     loginFailed: 'Falha ao fazer login. Verifique suas credenciais.',
-    serverError: 'Ocorreu um erro ao fazer login. Tente novamente.',
+    serverError: 'Falha ao realizar login. Tente novamente mais tarde.',
     tokenError: 'Erro ao processar autenticação',
-    networkError: 'Erro de conexão. Verifique sua internet.'
+    networkError: 'Falha ao realizar login. Verifique sua conexão com a internet e tente novamente.'
   },
 
   // Mensagens de erro - Register

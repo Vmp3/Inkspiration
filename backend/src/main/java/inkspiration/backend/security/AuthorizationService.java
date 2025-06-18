@@ -17,9 +17,6 @@ public class AuthorizationService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private JwtService jwtService;
-
     /**
      * Verifica se o usuário atual é administrador
      */

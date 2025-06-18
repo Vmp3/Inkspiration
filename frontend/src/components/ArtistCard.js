@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Platform } from 'react-native';
+import DefaultUser from '../../assets/default_user.png'
 
 const ArtistCard = ({ artist }) => {
   const { id, name, rating, specialties, location, coverImage } = artist;
@@ -16,7 +17,7 @@ const ArtistCard = ({ artist }) => {
     <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.9}>
       <View style={styles.imageContainer}>
         <Image 
-          source={coverImage ? { uri: coverImage } : { uri: 'https://via.placeholder.com/400x200/e0e0e0/8c8c8c?text=No+Image' }}
+          source={coverImage ? { uri: coverImage } : { uri: DefaultUser }}
           style={styles.image}
           resizeMode="cover"
         />

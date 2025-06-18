@@ -14,6 +14,16 @@ class ProfessionalService {
     }
   }
 
+  async buscarPorId(id) {
+    try {
+      const response = await ApiService.get(`/profissional/${id}`);
+      return response;
+    } catch (error) {
+      console.error('Erro ao buscar profissional:', error);
+      throw error;
+    }
+  }
+
   async getProfessionalByUserId(userId) {
     try {
       const response = await ApiService.get(`/profissional/usuario/${userId}`);

@@ -1,14 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-
-const API_URL = 'http://localhost:8080';
+import { API_CONFIG } from '../config/apiConfig';
 
 const TOKEN_KEY = 'jwtToken';
 
 class AuthService {
   constructor() {
     this.api = axios.create({
-      baseURL: API_URL,
+      baseURL: API_CONFIG.BASE_URL,
+      timeout: API_CONFIG.TIMEOUT,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -96,6 +96,13 @@ class AuthService {
       if (error.response && error.response.data) {
         const responseData = error.response.data;
         throw new Error(responseData?.error || responseData?.message || responseData || 'Erro no login');
+      }
+      
+      if (error.code === 'ECONNABORTED' || error.code === 'NETWORK_ERROR' || 
+          error.message?.toLowerCase().includes('network') ||
+          error.message?.toLowerCase().includes('timeout') ||
+          error.message?.toLowerCase().includes('connection')) {
+        throw new Error('Falha ao realizar login. Verifique sua conexão com a internet e tente novamente.');
       }
       
       throw error;

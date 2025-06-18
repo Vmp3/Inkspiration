@@ -65,7 +65,6 @@ export const professionalMessages = {
 
   // Validações
   validations: {
-    selectSpecialty: 'Selecione pelo menos uma especialidade',
     minBiography: 'A biografia deve conter pelo menos 20 caracteres',
     selectWorkHours: 'Defina pelo menos um horário de disponibilidade',
     invalidSocialMedia: 'Link de rede social inválido'

@@ -1,5 +1,6 @@
 package inkspiration.backend.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public class PortifolioDTO {
@@ -8,7 +9,8 @@ public class PortifolioDTO {
     
     private Long idProfissional;
     
-    @Size(max = 2000)
+    @NotBlank(message = "Biografia é obrigatória")
+    @Size(min = 20, max = 500, message = "Biografia deve ter entre 20 e 500 caracteres")
     private String descricao;
     
     @Size(max = 1000)

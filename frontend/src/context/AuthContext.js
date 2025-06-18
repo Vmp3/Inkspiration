@@ -27,6 +27,14 @@ export const AuthProvider = ({ children }) => {
   const checkAuthStatus = useCallback(async () => {
     try {
       setLoading(true);
+      const token = await AuthService.getToken();
+      
+      if (!token) {
+        setIsAuthenticated(false);
+        setLoading(false);
+        return;
+      }
+      
       const isAuth = await AuthService.isAuthenticated();
       setIsAuthenticated(isAuth);
       

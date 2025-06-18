@@ -105,6 +105,18 @@ const LoginScreen = () => {
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
+      console.error('Erro no login:', error);
+      
+      // Verificar se é erro de rede
+      if (error.code === 'NETWORK_ERROR' || 
+          error.message?.toLowerCase().includes('network') ||
+          error.message?.toLowerCase().includes('timeout') ||
+          error.message?.toLowerCase().includes('connection') ||
+          !navigator.onLine) {
+        toastHelper.showError('Falha ao realizar login. Verifique sua conexão com a internet e tente novamente.');
+        return;
+      }
+      
       // Priorizar mensagem do erro se disponível
       const errorMessage = error.message || authMessages.loginErrors.serverError;
       toastHelper.showError(errorMessage);

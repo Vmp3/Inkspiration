@@ -2,15 +2,24 @@ package inkspiration.backend.dto;
 
 import java.util.List;
 
+import inkspiration.backend.enums.TipoServico;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
+
 public class ProfissionalCriacaoDTO {
     private Long idUsuario;
     private Long idEndereco;
     
+    @NotEmpty(message = "Pelo menos um tipo de serviço é obrigatório")
+    private List<TipoServico> tiposServico;
+    
     // Portifolio
+    @NotBlank(message = "Biografia é obrigatória")
+    @Size(min = 20, max = 500, message = "Biografia deve ter entre 20 e 500 caracteres")
     private String descricao;
     private String experiencia;
     private String especialidade;
-    private List<String> estilosTatuagem;
     private String website;
     private String tiktok;
     private String instagram;
@@ -23,16 +32,16 @@ public class ProfissionalCriacaoDTO {
     public ProfissionalCriacaoDTO() {
     }
     
-    public ProfissionalCriacaoDTO(Long idUsuario, Long idEndereco, String descricao, 
+    public ProfissionalCriacaoDTO(Long idUsuario, Long idEndereco, List<TipoServico> tiposServico, String descricao, 
                                 String experiencia, String especialidade,
                                 List<String> estilosTatuagem, List<DisponibilidadeDTO> disponibilidades,
                                 String website, String tiktok, String instagram, String facebook, String twitter) {
         this.idUsuario = idUsuario;
         this.idEndereco = idEndereco;
+        this.tiposServico = tiposServico;
         this.descricao = descricao;
         this.experiencia = experiencia;
         this.especialidade = especialidade;
-        this.estilosTatuagem = estilosTatuagem;
         this.disponibilidades = disponibilidades;
         this.website = website;
         this.tiktok = tiktok;
@@ -55,6 +64,14 @@ public class ProfissionalCriacaoDTO {
 
     public void setIdEndereco(Long idEndereco) {
         this.idEndereco = idEndereco;
+    }
+    
+    public List<TipoServico> getTiposServico() {
+        return tiposServico;
+    }
+    
+    public void setTiposServico(List<TipoServico> tiposServico) {
+        this.tiposServico = tiposServico;
     }
 
     public String getDescricao() {
@@ -79,14 +96,6 @@ public class ProfissionalCriacaoDTO {
 
     public void setEspecialidade(String especialidade) {
         this.especialidade = especialidade;
-    }
-
-    public List<String> getEstilosTatuagem() {
-        return estilosTatuagem;
-    }
-
-    public void setEstilosTatuagem(List<String> estilosTatuagem) {
-        this.estilosTatuagem = estilosTatuagem;
     }
 
     public List<DisponibilidadeDTO> getDisponibilidades() {

@@ -29,44 +29,44 @@ const useProfessionalData = (userData) => {
       {
         day: 'Segunda',
         available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+        morning: { enabled: true, start: '07:00', end: '11:00' },
+        afternoon: { enabled: true, start: '13:00', end: '20:00' }
       },
       {
         day: 'Terça',
         available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+        morning: { enabled: true, start: '07:00', end: '11:00' },
+        afternoon: { enabled: true, start: '13:00', end: '20:00' }
       },
       {
         day: 'Quarta',
         available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+        morning: { enabled: true, start: '07:00', end: '11:00' },
+        afternoon: { enabled: true, start: '13:00', end: '20:00' }
       },
       {
         day: 'Quinta',
         available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+        morning: { enabled: true, start: '07:00', end: '11:00' },
+        afternoon: { enabled: true, start: '13:00', end: '20:00' }
       },
       {
         day: 'Sexta',
         available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: true, start: '13:00', end: '18:00' }
+        morning: { enabled: true, start: '07:00', end: '11:00' },
+        afternoon: { enabled: true, start: '13:00', end: '20:00' }
       },
       {
         day: 'Sábado',
-        available: true,
-        morning: { enabled: true, start: '08:00', end: '12:00' },
-        afternoon: { enabled: false, start: '13:00', end: '18:00' }
+        available: false,
+        morning: { enabled: false, start: '07:00', end: '11:00' },
+        afternoon: { enabled: false, start: '13:00', end: '20:00' }
       },
       {
         day: 'Domingo',
         available: false,
-        morning: { enabled: false, start: '08:00', end: '12:00' },
-        afternoon: { enabled: false, start: '13:00', end: '18:00' }
+        morning: { enabled: false, start: '07:00', end: '11:00' },
+        afternoon: { enabled: false, start: '13:00', end: '20:00' }
       }
     ],
     biography: '',
@@ -76,7 +76,9 @@ const useProfessionalData = (userData) => {
       base64: userData.imagemPerfil,
       type: 'image/jpeg',
       name: 'profile.jpg'
-    } : null
+    } : null,
+    tiposServico: [],
+    tipoServicoSelecionados: {}
   });
 
   // Carregar dados profissionais
@@ -89,8 +91,15 @@ const useProfessionalData = (userData) => {
       const response = await ApiService.get(`/profissional/usuario/${userData.idUsuario}/completo`);
       
       if (response && response.profissional) {
-        const { profissional, portfolio, imagens, disponibilidades } = response;
+        const { profissional, portfolio, imagens, disponibilidades, tiposServico } = response;
         
+        const allTiposServico = await ApiService.get('/tipos-servico');
+        
+        const tipoServicoSelecionados = {};
+        allTiposServico.forEach(tipo => {
+          tipoServicoSelecionados[tipo.nome] = tiposServico.includes(tipo.nome);
+        });
+
         // Transformar especialidades
         const specialties = portfolio?.especialidade ? 
           portfolio.especialidade.split(', ').reduce((acc, style) => {
@@ -122,13 +131,13 @@ const useProfessionalData = (userData) => {
 
         // Transformar horários de trabalho
         const workHours = [
-          { day: 'Segunda', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Terça', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Quarta', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Quinta', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Sexta', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Sábado', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
-          { day: 'Domingo', available: false, morning: { enabled: false, start: '08:00', end: '12:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } }
+          { day: 'Segunda', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Terça', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Quarta', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Quinta', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Sexta', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Sábado', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Domingo', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } }
         ];
 
         if (disponibilidades && Object.keys(disponibilidades).length > 0) {
@@ -141,13 +150,25 @@ const useProfessionalData = (userData) => {
               horarios.forEach(horario => {
                 if (horario && horario.inicio && horario.fim) {
                   const startHour = parseInt(horario.inicio.split(':')[0]);
-                  if (startHour < 13) {
+                  const endHour = parseInt(horario.fim.split(':')[0]);
+                  
+                  if (endHour <= 12) {
                     workHours[dayIndex].morning.enabled = true;
                     workHours[dayIndex].morning.start = horario.inicio;
                     workHours[dayIndex].morning.end = horario.fim;
-                  } else {
+                  }
+                  else if (startHour >= 12) {
                     workHours[dayIndex].afternoon.enabled = true;
                     workHours[dayIndex].afternoon.start = horario.inicio;
+                    workHours[dayIndex].afternoon.end = horario.fim;
+                  }
+                  else {
+                    workHours[dayIndex].morning.enabled = true;
+                    workHours[dayIndex].morning.start = horario.inicio;
+                    workHours[dayIndex].morning.end = "11:59";
+                    
+                    workHours[dayIndex].afternoon.enabled = true;
+                    workHours[dayIndex].afternoon.start = "12:00";
                     workHours[dayIndex].afternoon.end = horario.fim;
                   }
                 }
@@ -156,7 +177,8 @@ const useProfessionalData = (userData) => {
           });
         }
 
-        setProfessionalFormData({
+        setProfessionalFormData(prev => ({
+          ...prev,
           experience: portfolio?.experiencia || '1-3 anos',
           specialties,
           socialMedia: {
@@ -179,8 +201,10 @@ const useProfessionalData = (userData) => {
             base64: userData.imagemPerfil,
             type: 'image/jpeg',
             name: 'profile.jpg'
-          } : null
-        });
+          } : null,
+          tiposServico: allTiposServico,
+          tipoServicoSelecionados: tipoServicoSelecionados
+        }));
       }
     } catch (error) {
       toastHelper.showError('Erro ao obter informações profissionais');
@@ -211,12 +235,19 @@ const useProfessionalData = (userData) => {
           }
         }
       });
-      
-      const selectedSpecialties = Object.keys(professionalFormData.specialties).filter(key => professionalFormData.specialties[key]);
-      
+
+      const tiposServicoSelecionados = Object.entries(professionalFormData.tipoServicoSelecionados)
+        .filter(([_, selected]) => selected)
+        .map(([nome]) => nome);
+
+      const especialidades = Object.entries(professionalFormData.specialties)
+        .filter(([_, selected]) => selected)
+        .map(([name]) => name)
+        .join(', ');
+
       const portfolioData = {
         descricao: professionalFormData.biography,
-        especialidade: selectedSpecialties.join(', '),
+        especialidade: especialidades,
         experiencia: professionalFormData.experience,
         instagram: professionalFormData.socialMedia.instagram || null,
         tiktok: professionalFormData.socialMedia.tiktok || null,
@@ -224,32 +255,24 @@ const useProfessionalData = (userData) => {
         twitter: professionalFormData.socialMedia.twitter || null,
         website: professionalFormData.socialMedia.website || null
       };
-      
-      const imagensData = professionalFormData.portfolioImages.map(image => ({
-        imagemBase64: image.base64
-      }));
-      
-      const dadosCompletos = {
+
+      const requestData = {
         profissional: {},
         portfolio: portfolioData,
-        imagens: imagensData,
-        disponibilidades: disponibilidades
+        imagens: professionalFormData.portfolioImages.map(img => ({
+          imagemBase64: img.base64
+        })),
+        disponibilidades,
+        tiposServico: tiposServicoSelecionados
       };
-      
-      await ApiService.put(`/profissional/usuario/${userData.idUsuario}/atualizar-completo-com-imagens`, dadosCompletos);
-      
-      if (professionalFormData.profileImage && professionalFormData.profileImage.base64) {
-        try {
-          await ApiService.put(`/usuario/${userData.idUsuario}/foto-perfil`, { 
-            imagemBase64: professionalFormData.profileImage.base64 
-          });
-        } catch (error) {
-          console.error('Falha ao enviar imagem de perfil:', error);
-        }
-      }
-      
+
+      await ApiService.put(`/profissional/usuario/${userData.idUsuario}/atualizar-completo-com-imagens`, requestData);
+      toastHelper.showSuccess('Perfil atualizado com sucesso!');
+      return true;
     } catch (error) {
-      toastHelper.showError('Erro ao atualizar dados profissionais');
+      console.error('Erro ao atualizar dados profissionais:', error);
+      toastHelper.showError('Erro ao atualizar perfil');
+      return false;
     }
   };
 
@@ -366,6 +389,16 @@ const useProfessionalData = (userData) => {
     }));
   };
 
+  const handleTipoServicoChange = (tipoNome) => {
+    setProfessionalFormData(prev => ({
+      ...prev,
+      tipoServicoSelecionados: {
+        ...prev.tipoServicoSelecionados,
+        [tipoNome]: !prev.tipoServicoSelecionados[tipoNome]
+      }
+    }));
+  };
+
   // Carregar dados quando userData mudar
   useEffect(() => {
     if (userData?.role === 'ROLE_PROF') {
@@ -397,7 +430,8 @@ const useProfessionalData = (userData) => {
     handleAddPortfolioImage,
     handleRemovePortfolioImage,
     pickImage,
-    setBiography
+    setBiography,
+    handleTipoServicoChange
   };
 };
 

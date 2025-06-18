@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 
 import TabHeader from '../ui/TabHeader';
 
-const FormContainer = ({ tabs, activeTab, setActiveTab, children }) => {
+const FormContainer = ({ tabs, activeTab, setActiveTab, children, onTabPress }) => {
   return (
     <View style={styles.cardWrapper}>
       <View style={styles.formCard}>
@@ -12,6 +12,7 @@ const FormContainer = ({ tabs, activeTab, setActiveTab, children }) => {
             tabs={tabs}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
+            onTabPress={onTabPress || setActiveTab}
           />
         </View>
         

@@ -27,7 +27,6 @@ public class JwtService {
     private final JwtEncoder encoder;
     private final JwtDecoder jwtDecoder;
     private final TokenRevogadoRepository tokenRevogadoRepository;
-    private final JwtConfig jwtConfig;
     private final UsuarioRepository usuarioRepository;
     
     @Value("${api.security.token.expiration:720}")
@@ -46,7 +45,6 @@ public class JwtService {
         this.encoder = encoder;
         this.jwtDecoder = jwtDecoder;
         this.tokenRevogadoRepository = tokenRevogadoRepository;
-        this.jwtConfig = jwtConfig;
         this.usuarioRepository = usuarioRepository;
     }
 

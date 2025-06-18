@@ -21,7 +21,6 @@ import inkspiration.backend.dto.PortifolioDTO;
 import inkspiration.backend.dto.ProfissionalCriacaoDTO;
 import inkspiration.backend.dto.ProfissionalDTO;
 import inkspiration.backend.entities.Endereco;
-import inkspiration.backend.entities.Portifolio;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.exception.ResourceNotFoundException;
@@ -37,7 +36,6 @@ public class ProfissionalService {
     private final UsuarioRepository usuarioRepository;
     private final EnderecoRepository enderecoRepository;
     private final PortifolioService portifolioService;
-    private final UsuarioService usuarioService;
     private final DisponibilidadeService disponibilidadeService;
 
     @Autowired
@@ -51,12 +49,11 @@ public class ProfissionalService {
         this.usuarioRepository = usuarioRepository;
         this.enderecoRepository = enderecoRepository;
         this.portifolioService = portifolioService;
-        this.usuarioService = usuarioService;
         this.disponibilidadeService = disponibilidadeService;
     }
 
     @Transactional
-    public Profissional criar(ProfissionalDTO dto) {
+    private Profissional criar(ProfissionalDTO dto) {
         // Verifica se o usuário existe
         Usuario usuario = usuarioRepository.findById(dto.getIdUsuario())
             .orElseThrow(() -> new UsuarioException.UsuarioNaoEncontradoException("Usuário não encontrado"));
@@ -89,6 +86,8 @@ public class ProfissionalService {
             profissional.setNota(dto.getNota());
         }
         
+        profissional.setTiposServico(dto.getTiposServico());
+        
         return profissionalRepository.save(profissional);
     }
 
@@ -106,6 +105,10 @@ public class ProfissionalService {
         // Atualiza a nota se fornecida
         if (dto.getNota() != null) {
             profissional.setNota(dto.getNota());
+        }
+        
+        if (dto.getTiposServico() != null) {
+            profissional.setTiposServico(dto.getTiposServico());
         }
         
         return profissionalRepository.save(profissional);
@@ -135,8 +138,17 @@ public class ProfissionalService {
             profissionalDTO.setIdUsuario(dto.getIdUsuario());
             profissionalDTO.setIdEndereco(dto.getIdEndereco());
             profissionalDTO.setNota(new BigDecimal("0.0")); // Nota inicial sempre zero
+            profissionalDTO.setTiposServico(dto.getTiposServico()); // Define os tipos de serviço
             
             profissional = criar(profissionalDTO);
+        }
+        
+        if (isUpdate) {
+            profissional.setTiposServico(dto.getTiposServico());
+            profissional = profissionalRepository.save(profissional);
+            
+            profissionalRepository.flush();
+            profissional = profissionalRepository.findById(profissional.getIdProfissional()).orElseThrow();
         }
         
         // 2. Criar ou atualizar o portifólio
@@ -151,29 +163,17 @@ public class ProfissionalService {
         portifolioDTO.setFacebook(dto.getFacebook());
         portifolioDTO.setTwitter(dto.getTwitter());
         
-        // Adicionar redes sociais se fornecidas
-        if (dto.getEstilosTatuagem() != null && !dto.getEstilosTatuagem().isEmpty()) {
-            // TODO: Adicionar estilos de tatuagem ao portifólio
-        }
-        
-        Portifolio portifolio;
         if (isUpdate && profissional.getPortifolio() != null) {
-            // Atualizar portfólio existente
             portifolioDTO.setIdPortifolio(profissional.getPortifolio().getIdPortifolio());
-            portifolio = portifolioService.atualizar(profissional.getPortifolio().getIdPortifolio(), portifolioDTO);
+            portifolioService.atualizar(profissional.getPortifolio().getIdPortifolio(), portifolioDTO);
         } else {
-            // Criar novo portfólio
-            portifolio = portifolioService.criar(portifolioDTO);
+            portifolioService.criar(portifolioDTO);
         }
         
-        // 3. Criar ou atualizar as disponibilidades
         if (dto.getDisponibilidades() != null && !dto.getDisponibilidades().isEmpty()) {
             Map<String, List<Map<String, String>>> horarios = new HashMap<>();
             
-            // Converter do formato da API para o formato esperado pelo serviço
             dto.getDisponibilidades().forEach(dispDTO -> {
-                // Implemente a lógica de conversão de DisponibilidadeDTO para o formato de mapa
-                // que o DisponibilidadeService espera
                 String[] partes = dispDTO.getHrAtendimento().split("-");
                 if (partes.length == 3) {
                     String diaSemana = partes[0];
@@ -184,12 +184,10 @@ public class ProfissionalService {
                     periodo.put("inicio", inicio);
                     periodo.put("fim", fim);
                     
-                    // Se o dia ainda não existe no mapa, criar uma lista
                     horarios.computeIfAbsent(diaSemana, k -> new ArrayList<>()).add(periodo);
                 }
             });
             
-            // O serviço de disponibilidade já lida com criar ou atualizar automaticamente
             disponibilidadeService.cadastrarDisponibilidade(profissional.getIdProfissional(), horarios);
         }
         
@@ -323,9 +321,8 @@ public class ProfissionalService {
         profissionalRepository.delete(profissional);
     }
     
-    // Métodos auxiliares para conversão e atualização de entidades
     
-    private Endereco converterEnderecoDTO(EnderecoDTO dto) {
+    public Endereco converterEnderecoDTO(EnderecoDTO dto) {
         Endereco endereco = new Endereco();
         atualizarEndereco(endereco, dto);
         return endereco;
@@ -355,11 +352,12 @@ public class ProfissionalService {
             profissional.getIdProfissional(),
             profissional.getUsuario().getIdUsuario(),
             idEndereco,
-            profissional.getNota()
+            profissional.getNota(),
+            profissional.getTiposServico()
         );
     }
     
-    private EnderecoDTO converterEnderecoParaDto(Endereco endereco) {
+    public EnderecoDTO converterEnderecoParaDto(Endereco endereco) {
         return new EnderecoDTO(
             endereco.getIdEndereco(),
             endereco.getCep(),
@@ -374,8 +372,7 @@ public class ProfissionalService {
         );
     }
 
-    // Método auxiliar para buscar endereço por ID
-    private Endereco buscarEnderecoPorId(Long idEndereco) {
+    public Endereco buscarEnderecoPorId(Long idEndereco) {
         return enderecoRepository.findById(idEndereco)
             .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado com ID: " + idEndereco));
     }
