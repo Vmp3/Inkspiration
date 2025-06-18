@@ -184,6 +184,14 @@ const MyAttendancesScreen = () => {
     loadAttendances(true);
   };
 
+  const handleGoBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Home');
+    }
+  };
+
   const handleAttendancePress = (attendance) => {
     setSelectedAttendance(attendance);
     
@@ -412,7 +420,7 @@ const MyAttendancesScreen = () => {
           <View style={styles.headerLeft}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={handleGoBack}
             >
               <MaterialIcons name="arrow-back" size={24} color="#111" />
             </TouchableOpacity>

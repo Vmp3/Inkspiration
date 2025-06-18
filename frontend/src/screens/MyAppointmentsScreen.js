@@ -156,6 +156,14 @@ const MyAppointmentsScreen = () => {
     loadAppointments(true);
   };
 
+  const handleGoBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Home');
+    }
+  };
+
   const handleAppointmentPress = (appointment) => {
     setSelectedAppointment(appointment);
     
@@ -412,7 +420,7 @@ const MyAppointmentsScreen = () => {
           <View style={styles.headerLeft}>
             <TouchableOpacity 
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={handleGoBack}
             >
               <MaterialIcons name="arrow-back" size={24} color="#111" />
             </TouchableOpacity>
