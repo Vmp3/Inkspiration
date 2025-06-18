@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   ActivityIndicator
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -77,62 +78,66 @@ const ExportAppointmentsModal = ({ visible, onClose }) => {
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Exportar Agendamentos</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <MaterialIcons name="close" size={24} color="#64748b" />
-            </TouchableOpacity>
-          </View>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalBackdrop}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Exportar Agendamentos</Text>
+                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                  <MaterialIcons name="close" size={24} color="#64748b" />
+                </TouchableOpacity>
+              </View>
 
-          <View style={styles.modalContent}>
-            <Text style={styles.label}>Selecione o ano dos agendamentos:</Text>
-            
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={selectedYear}
-                onValueChange={(itemValue) => setSelectedYear(itemValue)}
-                style={styles.picker}
-                itemStyle={styles.pickerItem}
-              >
-                {years.map((year) => (
-                  <Picker.Item key={year} label={year.toString()} value={year} />
-                ))}
-              </Picker>
+              <View style={styles.modalContent}>
+                <Text style={styles.label}>Selecione o ano dos agendamentos:</Text>
+                
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={selectedYear}
+                    onValueChange={(itemValue) => setSelectedYear(itemValue)}
+                    style={styles.picker}
+                    itemStyle={styles.pickerItem}
+                  >
+                    {years.map((year) => (
+                      <Picker.Item key={year} label={year.toString()} value={year} />
+                    ))}
+                  </Picker>
+                </View>
+                
+                <Text style={styles.note}>
+                  Serão exportados todos os agendamentos concluídos do ano selecionado.
+                </Text>
+              </View>
+
+              <View style={styles.modalFooter}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={onClose}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.exportButton}
+                  onPress={handleExportPDF}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <MaterialIcons name="picture-as-pdf" size={18} color="#fff" style={styles.buttonIcon} />
+                      <Text style={styles.exportButtonText}>Baixar em PDF</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
-            
-            <Text style={styles.note}>
-              Serão exportados todos os agendamentos concluídos do ano selecionado.
-            </Text>
-          </View>
-
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={onClose}
-              disabled={isLoading}
-            >
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.exportButton}
-              onPress={handleExportPDF}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <MaterialIcons name="picture-as-pdf" size={18} color="#fff" style={styles.buttonIcon} />
-                  <Text style={styles.exportButtonText}>Baixar em PDF</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };

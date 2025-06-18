@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   ActivityIndicator
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -53,6 +54,29 @@ const ExportAttendancesModal = ({ visible, onClose }) => {
     setSelectedMonth(new Date().getMonth() + 1);
   };
 
+  const getMonthName = (monthValue) => {
+    // Garantir que monthValue seja um número
+    const monthNum = Number(monthValue);
+    
+    // Encontrar o mês correspondente no array
+    const month = months.find(m => m.value === monthNum);
+    
+    // Nomes dos meses em português
+    const nomesMeses = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+    
+    // Se encontrou no array, use esse valor, senão use o array de nomes
+    if (month) {
+      return month.label;
+    } else if (monthNum >= 1 && monthNum <= 12) {
+      return nomesMeses[monthNum - 1];
+    } else {
+      return `Mês ${monthNum}`;
+    }
+  };
+
   const handleExportPDF = async () => {
     try {
       setIsLoading(true);
@@ -66,17 +90,17 @@ const ExportAttendancesModal = ({ visible, onClose }) => {
     } catch (error) {
       let errorMessage = 'Erro ao gerar o PDF. Tente novamente.';
       
+      // Obtenha o nome do mês usando a função auxiliar
+      const monthName = getMonthName(selectedMonth);
+      
       if (error.response?.status === 404) {
-        const monthName = months.find(m => m.value === selectedMonth)?.label;
         errorMessage = `Nenhum atendimento concluído foi encontrado para ${monthName}/${selectedYear}. Selecione um período diferente.`;
       } else if (error.response?.status === 500 && 
           error.response?.data && 
           typeof error.response.data === 'string' && 
           error.response.data.includes('Nenhum atendimento concluído encontrado')) {
-        const monthName = months.find(m => m.value === selectedMonth)?.label;
         errorMessage = `Nenhum atendimento concluído foi encontrado para ${monthName}/${selectedYear}. Selecione um período diferente.`;
       } else if (error.message && error.message.includes('Nenhum atendimento concluído encontrado')) {
-        const monthName = months.find(m => m.value === selectedMonth)?.label;
         errorMessage = `Nenhum atendimento concluído foi encontrado para ${monthName}/${selectedYear}. Selecione um período diferente.`;
       } else if (error.response?.status === 401) {
         errorMessage = 'Sessão expirada. Faça login novamente.';
@@ -97,79 +121,83 @@ const ExportAttendancesModal = ({ visible, onClose }) => {
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Exportar Atendimentos</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <MaterialIcons name="close" size={24} color="#64748b" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.modalContent}>
-            <Text style={styles.label}>Selecione o período dos atendimentos:</Text>
-            
-            <View style={styles.pickerRow}>
-              <View style={styles.pickerContainer}>
-                <Text style={styles.pickerLabel}>Mês:</Text>
-                <Picker
-                  selectedValue={selectedMonth}
-                  onValueChange={(itemValue) => setSelectedMonth(itemValue)}
-                  style={styles.picker}
-                  itemStyle={styles.pickerItem}
-                >
-                  {months.map((month) => (
-                    <Picker.Item key={month.value} label={month.label} value={month.value} />
-                  ))}
-                </Picker>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalBackdrop}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Exportar Atendimentos</Text>
+                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                  <MaterialIcons name="close" size={24} color="#64748b" />
+                </TouchableOpacity>
               </View>
-              
-              <View style={styles.pickerContainer}>
-                <Text style={styles.pickerLabel}>Ano:</Text>
-                <Picker
-                  selectedValue={selectedYear}
-                  onValueChange={(itemValue) => setSelectedYear(itemValue)}
-                  style={styles.picker}
-                  itemStyle={styles.pickerItem}
+
+              <View style={styles.modalContent}>
+                <Text style={styles.label}>Selecione o período dos atendimentos:</Text>
+                
+                <View style={styles.pickerRow}>
+                  <View style={styles.pickerContainer}>
+                    <Text style={styles.pickerLabel}>Mês:</Text>
+                    <Picker
+                      selectedValue={selectedMonth}
+                      onValueChange={(itemValue) => setSelectedMonth(itemValue)}
+                      style={styles.picker}
+                      itemStyle={styles.pickerItem}
+                    >
+                      {months.map((month) => (
+                        <Picker.Item key={month.value} label={month.label} value={month.value} />
+                      ))}
+                    </Picker>
+                  </View>
+                  
+                  <View style={styles.pickerContainer}>
+                    <Text style={styles.pickerLabel}>Ano:</Text>
+                    <Picker
+                      selectedValue={selectedYear}
+                      onValueChange={(itemValue) => setSelectedYear(itemValue)}
+                      style={styles.picker}
+                      itemStyle={styles.pickerItem}
+                    >
+                      {years.map((year) => (
+                        <Picker.Item key={year} label={year.toString()} value={year} />
+                      ))}
+                    </Picker>
+                  </View>
+                </View>
+                
+                <Text style={styles.note}>
+                  Serão exportados todos os atendimentos concluídos do período selecionado.
+                </Text>
+              </View>
+
+              <View style={styles.modalFooter}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={onClose}
+                  disabled={isLoading}
                 >
-                  {years.map((year) => (
-                    <Picker.Item key={year} label={year.toString()} value={year} />
-                  ))}
-                </Picker>
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.exportButton}
+                  onPress={handleExportPDF}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <MaterialIcons name="picture-as-pdf" size={18} color="#fff" style={styles.buttonIcon} />
+                      <Text style={styles.exportButtonText}>Baixar em PDF</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
               </View>
             </View>
-            
-            <Text style={styles.note}>
-              Serão exportados todos os atendimentos concluídos do período selecionado.
-            </Text>
-          </View>
-
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={onClose}
-              disabled={isLoading}
-            >
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.exportButton}
-              onPress={handleExportPDF}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <MaterialIcons name="picture-as-pdf" size={18} color="#fff" style={styles.buttonIcon} />
-                  <Text style={styles.exportButtonText}>Baixar em PDF</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };

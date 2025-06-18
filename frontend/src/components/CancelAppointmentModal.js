@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
@@ -16,35 +17,44 @@ const CancelAppointmentModal = ({ visible, onClose, onConfirm }) => {
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Cancelar Agendamento</Text>
-          
-          <View style={styles.warningContainer}>
-            <MaterialIcons name="warning" size={24} color="#E11D48" />
-            <Text style={styles.warningText}>
-              Tem certeza que deseja cancelar este agendamento? Esta ação
-              não pode ser desfeita.
-            </Text>
-          </View>
-          
-          <View style={styles.buttonRow}>
-            <TouchableOpacity 
-              style={styles.backButton} 
-              onPress={onClose}
-            >
-              <Text style={styles.backButtonText}>Voltar</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.confirmButton} 
-              onPress={onConfirm}
-            >
-              <Text style={styles.confirmButtonText}>Cancelar Agendamento</Text>
-            </TouchableOpacity>
-          </View>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalBackdrop}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Cancelar Agendamento</Text>
+              
+              <View style={styles.warningContainer}>
+                <MaterialIcons name="warning" size={24} color="#E11D48" />
+                <Text style={styles.warningText}>
+                  Tem certeza que deseja cancelar este agendamento? Esta ação
+                  não pode ser desfeita.
+                </Text>
+              </View>
+              
+              <Text style={styles.infoText}>
+                Se precisar reagendar, recomendamos editar o agendamento em vez
+                de cancelá-lo.
+              </Text>
+              
+              <View style={styles.buttonRow}>
+                <TouchableOpacity 
+                  style={styles.backButton} 
+                  onPress={onClose}
+                >
+                  <Text style={styles.backButtonText}>Voltar</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.confirmButton} 
+                  onPress={onConfirm}
+                >
+                  <Text style={styles.confirmButtonText}>Cancelar Agendamento</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
