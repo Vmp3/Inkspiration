@@ -150,6 +150,7 @@ const ArtistScreen = ({ route }) => {
   const [hasMoreReviews, setHasMoreReviews] = useState(true);
   const [selectedImage, setSelectedImage] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [reviewCount, setReviewCount] = useState(0);
   
   const isMobile = screenData.width < 768;
 
@@ -234,7 +235,7 @@ const ArtistScreen = ({ route }) => {
         idProfissional: artistId,
         title: "Tatuador",
         bio: transformedData.description,
-        reviewCount: reviews.length,
+        reviewCount: reviewCount,
         profileImage: transformedData.coverImage,
         coverImage: transformedData.coverImage,
         portfolio: processedImages,
@@ -261,23 +262,41 @@ const ArtistScreen = ({ route }) => {
     try {
       setIsLoadingReviews(true);
       const response = await AvaliacaoService.listarPorProfissional(artist.idProfissional, page);
-      
-      const newReviews = response.map(review => ({
-        id: review.idAvaliacao,
-        userName: review.agendamento.usuario.nome,
-        userImage: review.agendamento.usuario.fotoPerfil || DefaultUser,
-        rating: review.rating,
-        comment: review.descricao,
-        date: formatDate(review.agendamento.dataHora),
-        tattooType: review.agendamento.tipoTatuagem
-      }));
-
+      // O backend retorna até 10 avaliações por página, mas precisamos do total
+      // Se o response for um objeto paginado, use response.totalElements
+      // Se for array simples, conte manualmente
+      let newReviews = [];
+      let totalAvaliacoes = 0;
+      if (Array.isArray(response)) {
+        newReviews = response.map(review => ({
+          id: review.idAvaliacao,
+          userName: review.agendamento.usuario.nome,
+          userImage: review.agendamento.usuario.fotoPerfil || DefaultUser,
+          rating: review.rating,
+          comment: review.descricao,
+          date: formatDate(review.agendamento.dataHora),
+          tattooType: review.agendamento.tipoTatuagem
+        }));
+        // Se for a primeira página, o total é o length do array
+        totalAvaliacoes = page === 0 ? response.length : reviewCount;
+      } else if (response && response.content) {
+        newReviews = response.content.map(review => ({
+          id: review.idAvaliacao,
+          userName: review.agendamento.usuario.nome,
+          userImage: review.agendamento.usuario.fotoPerfil || DefaultUser,
+          rating: review.rating,
+          comment: review.descricao,
+          date: formatDate(review.agendamento.dataHora),
+          tattooType: review.agendamento.tipoTatuagem
+        }));
+        totalAvaliacoes = response.totalElements || newReviews.length;
+      }
       if (shouldRefresh || page === 0) {
         setReviews(newReviews);
       } else {
         setReviews(prev => [...prev, ...newReviews]);
       }
-
+      setReviewCount(totalAvaliacoes);
       setHasMoreReviews(newReviews.length === 10);
       setCurrentReviewPage(page);
     } catch (error) {
@@ -418,7 +437,7 @@ const ArtistScreen = ({ route }) => {
                 ))}
               </View>
               <Text style={styles.ratingValue}>{artist.rating}</Text>
-              <Text style={styles.reviewCount}>({artist.reviewCount})</Text>
+              <Text style={styles.reviewCount}>({reviewCount} avaliações)</Text>
             </View>
           </View>
 
@@ -531,7 +550,7 @@ const ArtistScreen = ({ route }) => {
               <Text style={styles.artistTitle}>{artist.title}</Text>
               <View style={styles.ratingRow}>
                 <MaterialIcons name="star" size={16} color="#FACC15" />
-                <Text style={styles.ratingText}>{artist.rating} ({artist.reviewCount} reviews)</Text>
+                <Text style={styles.ratingText}>{artist.rating} ({reviewCount} avaliações)</Text>
               </View>
               <View style={styles.locationRow}>
                 <Feather name="map-pin" size={16} color="#6B7280" />
