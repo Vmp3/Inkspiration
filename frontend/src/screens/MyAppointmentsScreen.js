@@ -44,10 +44,11 @@ const MyAppointmentsScreen = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [reviewStars, setReviewStars] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
+  const [reviewAppointment, setReviewAppointment] = useState(null);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isCompletedModalVisible, setIsCompletedModalVisible] = useState(false);
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isExportModalVisible, setIsExportModalVisible] = useState(false);
   const [pageSize] = useState(5);
@@ -230,7 +231,7 @@ const MyAppointmentsScreen = () => {
 
   const handleConfirmCancel = async () => {
     try {
-      setIsSubmitting(true);
+      setIsSubmittingReview(true);
       
       await AgendamentoService.atualizarStatusAgendamento(
         selectedAppointment.idAgendamento,
@@ -252,12 +253,12 @@ const MyAppointmentsScreen = () => {
       
       toastHelper.showError(errorMessage);
     } finally {
-      setIsSubmitting(false);
+      setIsSubmittingReview(false);
     }
   };
 
   const handleOpenReviewModal = (appointment) => {
-    setSelectedAppointment(appointment);
+    setReviewAppointment(appointment);
     setShowReviewModal(true);
     setReviewStars(0);
     setReviewComment('');
@@ -265,32 +266,30 @@ const MyAppointmentsScreen = () => {
 
   const handleCloseReviewModal = () => {
     setShowReviewModal(false);
-    setSelectedAppointment(null);
+    setReviewAppointment(null);
     setReviewStars(0);
     setReviewComment('');
   };
 
   const handleSendReview = async () => {
+    if (reviewStars === 0) {
+      toastHelper.showError('Por favor, selecione uma nota para o artista');
+      return;
+    }
+    setIsSubmittingReview(true);
     try {
-      if (reviewStars === 0) {
-        toastHelper.showError('Por favor, selecione uma nota para o artista');
-        return;
-      }
-
       await AvaliacaoService.criarAvaliacao(
-        selectedAppointment.idAgendamento,
+        reviewAppointment.idAgendamento,
         reviewComment,
         reviewStars
       );
-
       toastHelper.showSuccess('Avaliação enviada com sucesso!');
       handleCloseReviewModal();
-      
-      // Recarregar os agendamentos para atualizar a lista
       loadAppointments(true);
     } catch (error) {
-      console.error('Erro ao enviar avaliação:', error);
       toastHelper.showError('Erro ao enviar avaliação. Tente novamente.');
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -412,12 +411,6 @@ const MyAppointmentsScreen = () => {
                   appointment={appointment}
                   onPress={() => handleAppointmentPress(appointment)}
                 />
-                <TouchableOpacity
-                  style={{ alignSelf: 'flex-end', marginBottom: 12, backgroundColor: '#2563eb', borderRadius: 6, paddingVertical: 6, paddingHorizontal: 16 }}
-                  onPress={() => handleOpenReviewModal(appointment)}
-                >
-                  <Text style={{ color: '#fff', fontWeight: '600' }}>Avaliação</Text>
-                </TouchableOpacity>
               </View>
             ))}
             
@@ -516,6 +509,7 @@ const MyAppointmentsScreen = () => {
         visible={isCompletedModalVisible}
         appointment={selectedAppointment}
         onClose={handleCloseCompletedModal}
+        onOpenReview={handleOpenReviewModal}
       />
 
       <CancelAppointmentModal
@@ -535,6 +529,62 @@ const MyAppointmentsScreen = () => {
         visible={isExportModalVisible}
         onClose={() => setIsExportModalVisible(false)}
       />
+
+      <Modal
+        visible={showReviewModal}
+        onClose={handleCloseReviewModal}
+        title="Avaliar Artista"
+        description={`Compartilhe sua experiência com ${reviewAppointment?.nomeProfissional || ''}`}
+      >
+        <Text style={{ fontWeight: '500', fontSize: 16, alignSelf: 'flex-start', marginBottom: 8 }}>Sua Nota</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 20 }}>
+          {[1,2,3,4,5].map((star) => (
+            <TouchableOpacity key={star} onPress={() => setReviewStars(star)}>
+              <View style={{ position: 'relative', marginHorizontal: 4, width: 38, height: 38, alignItems: 'center', justifyContent: 'center' }}>
+                <MaterialIcons
+                  name="star"
+                  size={38}
+                  color="#6B7280"
+                  style={{ position: 'absolute', top: 0, left: 0 }}
+                />
+                <MaterialIcons
+                  name="star"
+                  size={32}
+                  color={star <= reviewStars ? '#FFD700' : '#E5E7EB'}
+                  style={{ position: 'absolute', top: 3, left: 3 }}
+                />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <Text style={{ fontWeight: '500', fontSize: 16, alignSelf: 'flex-start', marginBottom: 8 }}>Seu comentário (opcional)</Text>
+        <Input
+          placeholder="Conte como foi sua experiência..."
+          value={reviewComment}
+          onChangeText={setReviewComment}
+          multiline
+          numberOfLines={4}
+          style={{ minHeight: 80, width: '100%', marginBottom: 24 }}
+        />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 8 }}>
+          <TouchableOpacity
+            style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24 }}
+            onPress={handleCloseReviewModal}
+            disabled={isSubmittingReview}
+          >
+            <Text style={{ color: '#111', fontWeight: '600', fontSize: 16 }}>Cancelar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{ backgroundColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24, opacity: isSubmittingReview ? 0.7 : 1 }}
+            onPress={handleSendReview}
+            disabled={isSubmittingReview}
+          >
+            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
+              {isSubmittingReview ? 'Enviando...' : 'Enviar avaliação'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };

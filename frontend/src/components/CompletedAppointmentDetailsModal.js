@@ -16,13 +16,8 @@ import Input from './ui/Input';
 import AvaliacaoService from '../services/AvaliacaoService';
 import toastHelper from '../utils/toastHelper';
 
-const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose }) => {
+const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, onOpenReview }) => {
   if (!appointment) return null;
-
-  const [showReviewModal, setShowReviewModal] = React.useState(false);
-  const [reviewStars, setReviewStars] = React.useState(0);
-  const [reviewComment, setReviewComment] = React.useState('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const formatDate = (date) => {
     return format(new Date(date), "d 'de' MMMM 'de' yyyy", { locale: ptBR });
@@ -92,211 +87,124 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose }) => 
     }
   };
 
-  const handleRateAppointment = () => {
-    setShowReviewModal(true);
-  };
-
-  const handleCloseReviewModal = () => {
-    setShowReviewModal(false);
-  };
-
-  const handleSendReview = async () => {
-    if (reviewStars === 0) {
-      toastHelper.showError('Por favor, selecione uma nota para o artista');
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      await AvaliacaoService.criarAvaliacao(
-        appointment.idAgendamento,
-        reviewComment,
-        reviewStars
-      );
-      toastHelper.showSuccess('Avaliação enviada com sucesso!');
-      handleCloseReviewModal();
-      onClose(); // Fecha o modal de detalhes também
-    } catch (error) {
-      toastHelper.showError('Erro ao enviar avaliação. Tente novamente.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
-    <>
-      <Modal
-        visible={visible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={onClose}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Detalhes do Agendamento</Text>
-              <Text style={styles.modalDate}>{formatDate(appointment.dtInicio)}</Text>
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalBackdrop}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Detalhes do Agendamento</Text>
+            <Text style={styles.modalDate}>{formatDate(appointment.dtInicio)}</Text>
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            <View style={styles.artistInfo}>
+              <Image
+                source={appointment.imagemPerfilProfissional ? 
+                  { uri: appointment.imagemPerfilProfissional } : 
+                  DefaultUser
+                }
+                style={styles.artistImage}
+              />
+              <View>
+                <Text style={styles.artistName}>
+                  {appointment.nomeProfissional || 'Nome não disponível'}
+                </Text>
+                <View style={styles.badgeContainer}>
+                  <MaterialIcons name="person" size={12} color="#64748B" />
+                  <Text style={styles.badgeText}>Tatuador</Text>
+                </View>
+              </View>
             </View>
 
-            <ScrollView style={styles.modalContent}>
-              <View style={styles.artistInfo}>
-                <Image
-                  source={appointment.imagemPerfilProfissional ? 
-                    { uri: appointment.imagemPerfilProfissional } : 
-                    DefaultUser
-                  }
-                  style={styles.artistImage}
-                />
-                <View>
-                  <Text style={styles.artistName}>
-                    {appointment.nomeProfissional || 'Nome não disponível'}
-                  </Text>
-                  <View style={styles.badgeContainer}>
-                    <MaterialIcons name="person" size={12} color="#64748B" />
-                    <Text style={styles.badgeText}>Tatuador</Text>
-                  </View>
-                </View>
+            <View style={styles.divider} />
+
+            <View style={styles.detailSection}>
+              <View style={styles.detailRow}>
+                <MaterialIcons name="design-services" size={18} color="#111" />
+                <Text style={styles.detailLabel}>Serviço</Text>
               </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.detailSection}>
-                <View style={styles.detailRow}>
-                  <MaterialIcons name="design-services" size={18} color="#111" />
-                  <Text style={styles.detailLabel}>Serviço</Text>
-                </View>
-                <Text style={styles.detailValue}>
-                  {formatServiceType(appointment.tipoServico)}
-                </Text>
-              </View>
-
-              <View style={styles.detailSection}>
-                <View style={styles.detailRow}>
-                  <MaterialIcons name="event" size={18} color="#111" />
-                  <Text style={styles.detailLabel}>Data</Text>
-                </View>
-                <Text style={styles.detailValue}>
-                  {formatDate(appointment.dtInicio)}
-                </Text>
-              </View>
-
-              <View style={styles.detailSection}>
-                <View style={styles.detailRow}>
-                  <MaterialIcons name="access-time" size={18} color="#111" />
-                  <Text style={styles.detailLabel}>Horário</Text>
-                </View>
-                <Text style={styles.detailValue}>
-                  {formatTime(appointment.dtInicio, appointment.dtFim)}
-                </Text>
-              </View>
-
-              <View style={styles.detailSection}>
-                <View style={styles.detailRow}>
-                  <MaterialIcons name="location-on" size={18} color="#111" />
-                  <Text style={styles.detailLabel}>Local</Text>
-                </View>
-                <Text style={styles.detailValue}>
-                  {formatAddress(appointment)}
-                </Text>
-              </View>
-
-              {appointment.descricao && (
-                <View style={styles.detailSection}>
-                  <View style={styles.detailRow}>
-                    <MaterialIcons name="description" size={18} color="#111" />
-                    <Text style={styles.detailLabel}>Descrição</Text>
-                  </View>
-                  <Text style={styles.detailValue}>
-                    {appointment.descricao}
-                  </Text>
-                </View>
-              )}
-
-              <View style={styles.statusSection}>
-                <Text style={styles.statusLabel}>Status</Text>
-                <View style={styles.statusBadge}>
-                  <Text style={styles.statusText}>{getStatusLabel(appointment.status)}</Text>
-                </View>
-              </View>
-            </ScrollView>
-
-            <View style={styles.buttonRow}>
-              <TouchableOpacity 
-                style={styles.rateButton} 
-                onPress={handleRateAppointment}
-              >
-                <MaterialIcons name="star" size={20} color="#000" />
-                <Text style={styles.rateButtonText}>Avaliação</Text>
-              </TouchableOpacity>
+              <Text style={styles.detailValue}>
+                {formatServiceType(appointment.tipoServico)}
+              </Text>
             </View>
 
+            <View style={styles.detailSection}>
+              <View style={styles.detailRow}>
+                <MaterialIcons name="event" size={18} color="#111" />
+                <Text style={styles.detailLabel}>Data</Text>
+              </View>
+              <Text style={styles.detailValue}>
+                {formatDate(appointment.dtInicio)}
+              </Text>
+            </View>
+
+            <View style={styles.detailSection}>
+              <View style={styles.detailRow}>
+                <MaterialIcons name="access-time" size={18} color="#111" />
+                <Text style={styles.detailLabel}>Horário</Text>
+              </View>
+              <Text style={styles.detailValue}>
+                {formatTime(appointment.dtInicio, appointment.dtFim)}
+              </Text>
+            </View>
+
+            <View style={styles.detailSection}>
+              <View style={styles.detailRow}>
+                <MaterialIcons name="location-on" size={18} color="#111" />
+                <Text style={styles.detailLabel}>Local</Text>
+              </View>
+              <Text style={styles.detailValue}>
+                {formatAddress(appointment)}
+              </Text>
+            </View>
+
+            {appointment.descricao && (
+              <View style={styles.detailSection}>
+                <View style={styles.detailRow}>
+                  <MaterialIcons name="description" size={18} color="#111" />
+                  <Text style={styles.detailLabel}>Descrição</Text>
+                </View>
+                <Text style={styles.detailValue}>
+                  {appointment.descricao}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.statusSection}>
+              <Text style={styles.statusLabel}>Status</Text>
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusText}>{getStatusLabel(appointment.status)}</Text>
+              </View>
+            </View>
+          </ScrollView>
+
+          <View style={styles.buttonRow}>
             <TouchableOpacity 
-              style={styles.closeButton} 
-              onPress={onClose}
+              style={styles.rateButton} 
+              onPress={() => {
+                onClose();
+                setTimeout(() => onOpenReview(appointment), 80);
+              }}
             >
-              <Text style={styles.closeButtonText}>Fechar</Text>
+              <MaterialIcons name="star" size={20} color="#000" />
+              <Text style={styles.rateButtonText}>Avaliação</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
-      {/* Modal de Avaliação (visual apenas, padrão) */}
-      <Modal
-        visible={showReviewModal}
-        onClose={handleCloseReviewModal}
-        title="Avaliar Artista"
-        description={`Compartilhe sua experiência com ${appointment.nomeProfissional}`}
-      >
-        <Text style={{ fontWeight: '500', fontSize: 16, alignSelf: 'flex-start', marginBottom: 8 }}>Sua Nota</Text>
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 20 }}>
-          {[1,2,3,4,5].map((star) => (
-            <TouchableOpacity key={star} onPress={() => setReviewStars(star)}>
-              <View style={{ position: 'relative', marginHorizontal: 4, width: 38, height: 38, alignItems: 'center', justifyContent: 'center' }}>
-                {/* Estrela "borda" */}
-                <MaterialIcons
-                  name="star"
-                  size={38}
-                  color="#6B7280"
-                  style={{ position: 'absolute', top: 0, left: 0 }}
-                />
-                {/* Estrela "preenchida" */}
-                <MaterialIcons
-                  name="star"
-                  size={32}
-                  color={star <= reviewStars ? '#FFD700' : '#E5E7EB'}
-                  style={{ position: 'absolute', top: 3, left: 3 }}
-                />
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <Text style={{ fontWeight: '500', fontSize: 16, alignSelf: 'flex-start', marginBottom: 8 }}>Seu comentário (opcional)</Text>
-        <Input
-          placeholder="Conte como foi sua experiência..."
-          value={reviewComment}
-          onChangeText={setReviewComment}
-          multiline
-          numberOfLines={4}
-          style={{ minHeight: 80, width: '100%', marginBottom: 24 }}
-        />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 8 }}>
-          <TouchableOpacity
-            style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24 }}
-            onPress={handleCloseReviewModal}
-            disabled={isSubmitting}
+
+          <TouchableOpacity 
+            style={styles.closeButton} 
+            onPress={onClose}
           >
-            <Text style={{ color: '#111', fontWeight: '600', fontSize: 16 }}>Cancelar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{ backgroundColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24, opacity: isSubmitting ? 0.7 : 1 }}
-            onPress={handleSendReview}
-            disabled={isSubmitting}
-          >
-            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
-              {isSubmitting ? 'Enviando...' : 'Enviar avaliação'}
-            </Text>
+            <Text style={styles.closeButtonText}>Fechar</Text>
           </TouchableOpacity>
         </View>
-      </Modal>
-    </>
+      </View>
+    </Modal>
   );
 };
 
