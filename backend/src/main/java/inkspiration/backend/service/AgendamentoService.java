@@ -105,9 +105,7 @@ public class AgendamentoService {
                 .collect(Collectors.toList());
         
         if (!agendamentosUsuario.isEmpty()) {
-            throw new RuntimeException("Você já possui outro agendamento nesse horário. " +
-                    "Horário conflitante: " + dtInicioAjustado.toLocalTime() + " às " + dtFim.toLocalTime() +
-                    ". Por favor, selecione um horário diferente.");
+            throw new RuntimeException("Você já possui outro agendamento nesse horário. Por favor, selecione um horário diferente.");
         }
         
         try {
