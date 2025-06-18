@@ -61,6 +61,8 @@ public class AgendamentoController {
                 return ResponseEntity.badRequest().body(
                         "O profissional não está disponível para atendimento nesse horário. " +
                         "Por favor, consulte os horários de atendimento do profissional.");
+            } else if (errorMessage.contains("Você já possui outro agendamento nesse horário")) {
+                return ResponseEntity.badRequest().body(errorMessage);
             } else if (errorMessage.contains("já possui outro agendamento")) {
                 return ResponseEntity.badRequest().body(
                         "O profissional já possui outro agendamento nesse horário. " +
@@ -164,6 +166,8 @@ public class AgendamentoController {
                 return ResponseEntity.badRequest().body(
                         "O profissional não está disponível para atendimento nesse horário. " +
                         "Por favor, consulte os horários de atendimento do profissional.");
+            } else if (errorMessage.contains("Você já possui outro agendamento nesse horário")) {
+                return ResponseEntity.badRequest().body(errorMessage);
             } else if (errorMessage.contains("já possui outro agendamento")) {
                 return ResponseEntity.badRequest().body(
                         "O profissional já possui outro agendamento nesse horário. " +

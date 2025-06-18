@@ -98,6 +98,18 @@ public class AgendamentoService {
         
         LocalDateTime dtFim = calcularHorarioFim(dtInicioAjustado, tipoServico);
         
+        List<Agendamento> agendamentosUsuario = agendamentoRepository.findByUsuario(usuario)
+                .stream()
+                .filter(a -> a.getStatus() != StatusAgendamento.CANCELADO)
+                .filter(a -> (a.getDtInicio().isBefore(dtFim) && a.getDtFim().isAfter(dtInicioAjustado)))
+                .collect(Collectors.toList());
+        
+        if (!agendamentosUsuario.isEmpty()) {
+            throw new RuntimeException("Você já possui outro agendamento nesse horário. " +
+                    "Horário conflitante: " + dtInicioAjustado.toLocalTime() + " às " + dtFim.toLocalTime() +
+                    ". Por favor, selecione um horário diferente.");
+        }
+        
         try {
             boolean estaNoHorarioDeTrabalho = disponibilidadeService.isProfissionalDisponivel(
                     idProfissional, dtInicioAjustado, dtFim);
@@ -199,6 +211,16 @@ public class AgendamentoService {
         LocalDateTime dtFim = calcularHorarioFim(dtInicioAjustado, tipoServico);
         
         if (!agendamento.getDtInicio().equals(dtInicioAjustado) || !agendamento.getDtFim().equals(dtFim)) {
+            List<Agendamento> agendamentosUsuario = agendamentoRepository.findByUsuario(agendamento.getUsuario())
+                    .stream()
+                    .filter(a -> !a.getIdAgendamento().equals(id))
+                    .filter(a -> a.getStatus() != StatusAgendamento.CANCELADO)
+                    .filter(a -> (a.getDtInicio().isBefore(dtFim) && a.getDtFim().isAfter(dtInicioAjustado)))
+                    .collect(Collectors.toList());
+            
+            if (!agendamentosUsuario.isEmpty()) {
+                throw new RuntimeException("Você já possui outro agendamento nesse horário. Por favor, selecione um horário diferente.");
+            }
             try {
                 boolean estaNoHorarioDeTrabalho = disponibilidadeService.isProfissionalDisponivel(
                         agendamento.getProfissional().getIdProfissional(), dtInicioAjustado, dtFim);
