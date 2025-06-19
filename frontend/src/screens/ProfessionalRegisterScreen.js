@@ -5,29 +5,18 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-  TextInput,
-  TouchableOpacity,
-  Image,
   Platform,
-  Modal,
-  TouchableWithoutFeedback,
-  ActivityIndicator,
-  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import TabHeader from '../components/ui/TabHeader';
-import Button from '../components/ui/Button';
 import FormNavigation from '../components/ui/FormNavigation';
 import toastHelper from '../utils/toastHelper';
-import { TimeInput } from '../components/TimeInput';
+import * as formatters from '../utils/formatters';
 import { professionalRegisterMessages } from '../components/professionalRegister/messages';
 import AuthService from '../services/AuthService';
 import ApiService from '../services/ApiService';
-import ProfessionalService from '../services/ProfessionalService';
-import { professionalMessages } from '../components/professional/messages';
 
 // Componentes modulares para as diferentes seções do formulário
 import BasicInfoForm from '../components/forms/BasicInfoForm';
@@ -419,6 +408,14 @@ const ProfessionalRegisterScreen = () => {
       }
     }
     
+    if (!formatters.validateSocialMedia(socialMedia.instagram) ||
+        !formatters.validateSocialMedia(socialMedia.tiktok) ||
+        !formatters.validateSocialMedia(socialMedia.facebook) ||
+        !formatters.validateSocialMedia(socialMedia.twitter) ||
+        !formatters.validateWebsite(socialMedia.website)) {
+      return false;
+    }
+    
     return true;
   };
   
@@ -506,10 +503,36 @@ const ProfessionalRegisterScreen = () => {
   
   const handleNextTab = () => {
     if (activeTab === 'basic') {
-      if (!validateBasicTab()) {
+      const selectedSpecialties = Object.keys(specialties).filter(key => specialties[key]);
+      if (selectedSpecialties.length === 0) {
         toastHelper.showError(professionalRegisterMessages.errors.basicInfoRequired);
         return;
       }
+      
+      if (tipoServicoSelecionados) {
+        const selectedServices = Object.keys(tipoServicoSelecionados).filter(
+          key => tipoServicoSelecionados[key]
+        );
+        
+        if (selectedServices.length === 0) {
+          toastHelper.showError(professionalRegisterMessages.errors.basicInfoRequired);
+          return;
+        }
+      }
+      
+      if (!formatters.validateSocialMedia(socialMedia.instagram) ||
+          !formatters.validateSocialMedia(socialMedia.tiktok) ||
+          !formatters.validateSocialMedia(socialMedia.facebook) ||
+          !formatters.validateSocialMedia(socialMedia.twitter)) {
+        toastHelper.showError(professionalRegisterMessages.errors.socialMediaTooLong);
+        return;
+      }
+      
+      if (!formatters.validateWebsite(socialMedia.website)) {
+        toastHelper.showError(professionalRegisterMessages.errors.websiteTooLong);
+        return;
+      }
+      
       setActiveTab('hours');
     } else if (activeTab === 'hours') {
       if (!hasWorkSchedule()) {
@@ -549,6 +572,22 @@ const ProfessionalRegisterScreen = () => {
       const selectedTiposServico = Object.keys(tipoServicoSelecionados).filter(key => tipoServicoSelecionados[key]);
       if (selectedTiposServico.length === 0) {
         toastHelper.showError(professionalRegisterMessages.errors.serviceTypeRequired);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Validar redes sciais
+      if (!formatters.validateSocialMedia(socialMedia.instagram) ||
+          !formatters.validateSocialMedia(socialMedia.tiktok) ||
+          !formatters.validateSocialMedia(socialMedia.facebook) ||
+          !formatters.validateSocialMedia(socialMedia.twitter)) {
+        toastHelper.showError(professionalRegisterMessages.errors.socialMediaTooLong);
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!formatters.validateWebsite(socialMedia.website)) {
+        toastHelper.showError(professionalRegisterMessages.errors.websiteTooLong);
         setIsLoading(false);
         return;
       }

@@ -28,10 +28,19 @@ public class Portifolio {
     @Column(length = 500)
     private String especialidade;
     
+    @Column(length = 255)
     private String website;
+    
+    @Column(length = 50)
     private String tiktok;
+    
+    @Column(length = 50)
     private String instagram;
+    
+    @Column(length = 50)
     private String facebook;
+    
+    @Column(length = 50)
     private String twitter;
     
     @OneToOne(mappedBy = "portifolio", cascade = CascadeType.ALL)

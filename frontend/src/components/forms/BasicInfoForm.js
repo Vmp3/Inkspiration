@@ -198,6 +198,7 @@ const BasicInfoForm = ({
             placeholder="@seu_instagram"
             value={socialMedia.instagram}
             onChangeText={(text) => handleSocialMediaChange('instagram', text)}
+            maxLength={50}
           />
         </View>
         
@@ -208,6 +209,7 @@ const BasicInfoForm = ({
             placeholder="@seu_tiktok"
             value={socialMedia.tiktok}
             onChangeText={(text) => handleSocialMediaChange('tiktok', text)}
+            maxLength={50}
           />
         </View>
         
@@ -218,6 +220,7 @@ const BasicInfoForm = ({
             placeholder="facebook.com/seuperfil"
             value={socialMedia.facebook}
             onChangeText={(text) => handleSocialMediaChange('facebook', text)}
+            maxLength={50}
           />
         </View>
         
@@ -228,6 +231,7 @@ const BasicInfoForm = ({
             placeholder="@seu_twitter"
             value={socialMedia.twitter}
             onChangeText={(text) => handleSocialMediaChange('twitter', text)}
+            maxLength={50}
           />
         </View>
         
@@ -238,6 +242,7 @@ const BasicInfoForm = ({
             placeholder="seusite.com"
             value={socialMedia.website}
             onChangeText={(text) => handleSocialMediaChange('website', text)}
+            maxLength={255}
           />
         </View>
       </View>

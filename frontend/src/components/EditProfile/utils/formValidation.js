@@ -41,6 +41,18 @@ export const useFormValidation = () => {
       if (selectedServices.length === 0) return false;
     }
     
+    if (professionalFormData.socialMedia) {
+      const { instagram, tiktok, facebook, twitter, website } = professionalFormData.socialMedia;
+      
+      if (!formatters.validateSocialMedia(instagram) ||
+          !formatters.validateSocialMedia(tiktok) ||
+          !formatters.validateSocialMedia(facebook) ||
+          !formatters.validateSocialMedia(twitter) ||
+          !formatters.validateWebsite(website)) {
+        return false;
+      }
+    }
+    
     return true;
   };
 
@@ -248,6 +260,24 @@ export const useFormValidation = () => {
       );
       
       if (selectedServices.length === 0) {
+        return false;
+      }
+    }
+    
+    // Validar redes sociais
+    if (professionalFormData.socialMedia) {
+      const { instagram, tiktok, facebook, twitter, website } = professionalFormData.socialMedia;
+      
+      if (!formatters.validateSocialMedia(instagram) ||
+          !formatters.validateSocialMedia(tiktok) ||
+          !formatters.validateSocialMedia(facebook) ||
+          !formatters.validateSocialMedia(twitter)) {
+        toastHelper.showError(editProfileMessages.validations.socialMediaTooLong);
+        return false;
+      }
+      
+      if (!formatters.validateWebsite(website)) {
+        toastHelper.showError(editProfileMessages.validations.websiteTooLong);
         return false;
       }
     }

@@ -102,6 +102,8 @@ export const editProfileMessages = {
     imageSelectionFailed: 'Falha ao selecionar imagem. Tente novamente.',
     fixInvalidSchedules: 'Corrija os horários inválidos antes de continuar.',
     professionalDataError: 'Erro ao obter informações profissionais',
-    passwordIncorrect: 'Senha atual incorreta'
+    passwordIncorrect: 'Senha atual incorreta',
+    socialMediaTooLong: 'Redes sociais devem ter no máximo 50 caracteres',
+    websiteTooLong: 'Website deve ter no máximo 255 caracteres'
   }
 }; 

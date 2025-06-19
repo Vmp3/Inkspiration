@@ -19,7 +19,9 @@ export const professionalRegisterMessages = {
     registrationFailed: 'Ocorreu um erro ao tentar cadastrar. Tente novamente.',
     basicInfoRequired: 'Complete todas as informações básicas obrigatórias',
     workScheduleRequired: 'Selecione pelo menos um horário de trabalho',
-    invalidWorkHours: 'Verifique se os horários estão corretos'
+    invalidWorkHours: 'Verifique se os horários estão corretos',
+    socialMediaTooLong: 'Redes sociais devem ter no máximo 50 caracteres',
+    websiteTooLong: 'Website deve ter no máximo 255 caracteres'
   },
 
   // Mensagens de sucesso

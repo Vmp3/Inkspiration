@@ -136,6 +136,18 @@ const validateFullNameLength = (firstName, surname) => {
   return fullName.length <= 255;
 };
 
+const validateSocialMedia = (value) => {
+  if (!value || value.trim() === '') return true;
+  
+  return value.trim().length <= 50;
+};
+
+const validateWebsite = (value) => {
+  if (!value || value.trim() === '') return true;
+  
+  return value.trim().length <= 255;
+};
+
 export {
   formatCPF,
   formatCEP,
@@ -147,5 +159,7 @@ export {
   validateBirthDate,
   validateFirstName,
   validateSurname,
-  validateFullNameLength
+  validateFullNameLength,
+  validateSocialMedia,
+  validateWebsite
 }; 
