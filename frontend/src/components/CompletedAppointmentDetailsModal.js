@@ -209,11 +209,11 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isPro
                 )}
               </ScrollView>
 
-              {!isProfessional && (
+              {!isProfessional && false && (
                 <View style={styles.buttonRow}>
                   <TouchableOpacity 
                     style={styles.rateButton} 
-                    onPress={handleRateAppointment}
+                    onPress={() => {}}
                   >
                     <MaterialIcons name="star" size={20} color="#000" />
                     <Text style={styles.rateButtonText}>Avaliação</Text>
