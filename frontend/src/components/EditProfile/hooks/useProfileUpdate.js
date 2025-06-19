@@ -10,7 +10,7 @@ const useProfileUpdate = (isArtist, updateProfessionalData) => {
   const navigation = useNavigation();
   const { updateUserData, userData } = useAuth();
 
-  const handleUpdateProfile = async (formData, validateCurrentTab) => {
+  const handleUpdateProfile = async (formData, validateCurrentTab, professionalFormData) => {
     if (!validateCurrentTab()) return;
 
     try {
@@ -43,6 +43,11 @@ const useProfileUpdate = (isArtist, updateProfessionalData) => {
         senha: 'SENHA_NAO_ALTERADA',
         manterSenhaAtual: true
       };
+
+      // Adicionar imagem de perfil se existir
+      if (professionalFormData && professionalFormData.profileImage && professionalFormData.profileImage.base64) {
+        updateData.imagemPerfil = professionalFormData.profileImage.base64;
+      }
 
       if (isArtist) {
         updateData.especialidades = formData.especialidades || [];
