@@ -32,7 +32,7 @@ const FilterDropdown = ({
     "Blackwork",
     "Geométrico",
     "Realista",
-    "Retratos",
+    "Fineline",
     "Neo-Tradicional",
     "Old School",
   ];
