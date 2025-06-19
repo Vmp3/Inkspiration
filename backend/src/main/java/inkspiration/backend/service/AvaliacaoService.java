@@ -175,4 +175,10 @@ public class AvaliacaoService {
         
         return new PageImpl<>(avaliacoesDTO, pageable, avaliacoesPage.getTotalElements());
     }
+    
+    public Avaliacao buscarPorAgendamento(Long idAgendamento) {
+        return agendamentoRepository.findById(idAgendamento)
+            .flatMap(agendamento -> avaliacaoRepository.findByAgendamento(agendamento))
+            .orElse(null);
+    }
 } 

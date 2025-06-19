@@ -103,4 +103,17 @@ public class AvaliacaoController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    
+    @GetMapping("/agendamento/{idAgendamento}")
+    public ResponseEntity<?> buscarPorAgendamento(@PathVariable Long idAgendamento) {
+        try {
+            Avaliacao avaliacao = avaliacaoService.buscarPorAgendamento(idAgendamento);
+            if (avaliacao == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(new AvaliacaoDTO(avaliacao));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 } 
