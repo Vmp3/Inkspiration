@@ -83,14 +83,14 @@ const useProfileUpdate = (isArtist, updateProfessionalData) => {
       if (error.response && error.response.data && typeof error.response.data.error === 'string') {
         const msg = error.response.data.error;
         if (msg.includes('Senha atual incorreta')) {
-          toastHelper.showError('Senha atual incorreta');
+          toastHelper.showError(editProfileMessages.validations.passwordIncorrect);
           return;
         }
         toastHelper.showError(msg);
         return;
       }
       if (error.message && error.message.includes('Senha atual incorreta')) {
-        toastHelper.showError('Senha atual incorreta');
+        toastHelper.showError(editProfileMessages.validations.passwordIncorrect);
       } else {
         toastHelper.showError(editProfileMessages.errors.saveProfile);
       }

@@ -330,7 +330,7 @@ const EditProfileScreen = () => {
                   tabNavigation.validateCurrentTab() : true;
                 
                 if (!isValid) {
-                  toastHelper.showError('Corrija os horários inválidos antes de continuar.');
+                  toastHelper.showError(editProfileMessages.validations.fixInvalidSchedules);
                   return;
                 }
               }

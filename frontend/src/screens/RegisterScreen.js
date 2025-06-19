@@ -482,7 +482,7 @@ const RegisterScreen = () => {
 
     try {
       // Mostrar mensagem de loading específica para envio de email
-      toastHelper.showInfo('Enviando email de confirmação...');
+      toastHelper.showInfo(authMessages.info.sendingEmailConfirmation);
       
       await emailTimeout.executeWithTimeout(
         () => PublicAuthService.requestEmailVerification(userData),
@@ -510,7 +510,7 @@ const RegisterScreen = () => {
 
   const handleVerifyEmail = async () => {
     if (!verificationCode.trim()) {
-      toastHelper.showError('Por favor, insira o código de verificação.');
+      toastHelper.showError(authMessages.emailVerificationErrors.verificationCodeRequired);
       return;
     }
 
@@ -520,7 +520,7 @@ const RegisterScreen = () => {
       await PublicAuthService.verifyEmail(verificationEmail, verificationCode);
 
       // Exibe mensagem de sucesso
-      toastHelper.showSuccess('Conta criada com sucesso!');
+              toastHelper.showSuccess(authMessages.success.accountCreated);
 
       setShowVerificationModal(false);
       setTimeout(() => {
@@ -528,7 +528,7 @@ const RegisterScreen = () => {
       }, 1000);
 
     } catch (error) {
-      toastHelper.showError(error.message || 'Código de verificação inválido ou expirado.');
+              toastHelper.showError(error.message || authMessages.emailVerificationErrors.invalidOrExpiredCode);
     } finally {
       setIsVerifyingEmail(false);
     }
@@ -536,7 +536,7 @@ const RegisterScreen = () => {
 
   const handleResendCode = async () => {
     if (resendCooldown > 0) {
-      toastHelper.showWarning(`Aguarde ${resendCooldown} segundos para reenviar novamente.`);
+      toastHelper.showWarning(authMessages.info.waitToResend(resendCooldown));
       return;
     }
 

@@ -1,50 +1,51 @@
 import toastHelper from '../../../utils/toastHelper';
 import * as formatters from '../../../utils/formatters';
+import { editProfileMessages } from '../messages';
 
 export const useFormValidation = () => {
   const validatePersonalTab = (formData) => {
     if (!formData.nome) {
-      toastHelper.showError('Nome é obrigatório');
+      toastHelper.showError(editProfileMessages.validations.nameRequired);
       return false;
     }
     
     if (!formatters.validateFirstName(formData.nome)) {
-      toastHelper.showError('Nome inválido');
+      toastHelper.showError(editProfileMessages.validations.nameInvalid);
       return false;
     }
     
     if (!formData.sobrenome) {
-      toastHelper.showError('Sobrenome é obrigatório');
+      toastHelper.showError(editProfileMessages.validations.surnameRequired);
       return false;
     }
     
     if (!formatters.validateSurname(formData.sobrenome)) {
-      toastHelper.showError('Sobrenome inválido');
+      toastHelper.showError(editProfileMessages.validations.surnameInvalid);
       return false;
     }
     
     if (!formatters.validateFullNameLength(formData.nome, formData.sobrenome)) {
-      toastHelper.showError('Nome e sobrenome não podem ultrapassar 255 caracteres');
+      toastHelper.showError(editProfileMessages.validations.nameTooBig);
       return false;
     }
     
     if (!formData.email) {
-      toastHelper.showError('Email é obrigatório');
+      toastHelper.showError(editProfileMessages.validations.emailRequired);
       return false;
     }
 
     if (!formatters.validateEmail(formData.email)) {
-      toastHelper.showError('Email inválido');
+      toastHelper.showError(editProfileMessages.validations.emailInvalid);
       return false;
     }
     
     if (!formData.telefone) {
-      toastHelper.showError('Telefone é obrigatório');
+      toastHelper.showError(editProfileMessages.validations.phoneRequired);
       return false;
     }
 
     if (!formatters.validatePhone(formData.telefone)) {
-      toastHelper.showError('Telefone inválido');
+      toastHelper.showError(editProfileMessages.validations.phoneInvalid);
       return false;
     }
     
@@ -53,32 +54,32 @@ export const useFormValidation = () => {
 
   const validateAddressTab = (formData) => {
     if (!formData.cep) {
-      toastHelper.showError('CEP é obrigatório');
+      toastHelper.showError(editProfileMessages.validations.cepRequired);
       return false;
     }
     
     if (!formData.rua) {
-      toastHelper.showError('Rua é obrigatória');
+      toastHelper.showError(editProfileMessages.validations.streetRequired);
       return false;
     }
     
     if (!formData.numero) {
-      toastHelper.showError('Número é obrigatório');
+      toastHelper.showError(editProfileMessages.validations.numberRequired);
       return false;
     }
     
     if (!formData.bairro) {
-      toastHelper.showError('Bairro é obrigatório');
+      toastHelper.showError(editProfileMessages.validations.districtRequired);
       return false;
     }
     
     if (!formData.cidade) {
-      toastHelper.showError('Cidade é obrigatória');
+      toastHelper.showError(editProfileMessages.validations.cityRequired);
       return false;
     }
     
     if (!formData.estado) {
-      toastHelper.showError('Estado é obrigatório');
+      toastHelper.showError(editProfileMessages.validations.stateRequired);
       return false;
     }
     
@@ -94,29 +95,29 @@ export const useFormValidation = () => {
         !(formData.senhaAtual && formData.novaSenha && formData.confirmarSenha)) {
       
       if (!formData.senhaAtual) {
-        toastHelper.showError('Senha atual é obrigatória para alterar a senha');
+        toastHelper.showError(editProfileMessages.validations.currentPasswordRequired);
         return false;
       }
       
       if (!formData.novaSenha) {
-        toastHelper.showError('Nova senha é obrigatória');
+        toastHelper.showError(editProfileMessages.validations.newPasswordRequired);
         return false;
       }
       
       if (!formData.confirmarSenha) {
-        toastHelper.showError('Confirmação de senha é obrigatória');
+        toastHelper.showError(editProfileMessages.validations.confirmPasswordRequired);
         return false;
       }
     }
     
     if (formData.senhaAtual && formData.novaSenha && formData.confirmarSenha) {
       if (formData.novaSenha.length < 6) {
-        toastHelper.showError('A senha deve ter pelo menos 6 caracteres');
+        toastHelper.showError(editProfileMessages.validations.passwordMinLength);
         return false;
       }
       
       if (formData.novaSenha !== formData.confirmarSenha) {
-        toastHelper.showError('As senhas não coincidem');
+        toastHelper.showError(editProfileMessages.validations.passwordsDontMatch);
         return false;
       }
     }
@@ -126,7 +127,7 @@ export const useFormValidation = () => {
 
   const validateProfessionalTab = (formData, isArtist) => {
     if (isArtist && !formData.bio) {
-      toastHelper.showError('Bio é obrigatória para profissionais');
+      toastHelper.showError(editProfileMessages.validations.bioRequired);
       return false;
     }
     
@@ -194,7 +195,7 @@ export const useFormValidation = () => {
       day.available && (day.morning.enabled || day.afternoon.enabled)
     );
     if (!hasWorkHours) {
-      toastHelper.showError('Defina pelo menos um horário de disponibilidade');
+      toastHelper.showError(editProfileMessages.validations.scheduleRequired);
       return false;
     }
     
@@ -235,7 +236,7 @@ export const useFormValidation = () => {
   
   const validatePortfolioTab = (professionalFormData) => {
     if (!professionalFormData.biography || professionalFormData.biography.trim().length < 20) {
-      toastHelper.showError('A biografia deve conter pelo menos 20 caracteres');
+      toastHelper.showError(editProfileMessages.validations.bioMinLength);
       return false;
     }
     return true;

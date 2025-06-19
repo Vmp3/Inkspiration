@@ -16,6 +16,7 @@ import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import toastHelper from '../utils/toastHelper';
 import textUtils from '../utils/textUtils';
+import { headerMessages } from './header/messages';
 
 const Header = () => {
   const navigation = useNavigation();
@@ -115,11 +116,11 @@ const Header = () => {
     try {
       await logout();
       setUserDropdownOpen(false);
-      toastHelper.showSuccess('Logout realizado com sucesso!');
+      toastHelper.showSuccess(headerMessages.success.logoutSuccess);
       navigation.navigate('Home');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
-      toastHelper.showError('Erro ao fazer logout. Tente novamente.');
+      toastHelper.showError(headerMessages.errors.logoutError);
     }
   };
 

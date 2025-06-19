@@ -17,6 +17,7 @@ import { differenceInDays } from 'date-fns';
 import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import Footer from '../components/Footer';
+import { attendancesMessages } from '../components/attendances/messages';
 import AppointmentCard from '../components/AppointmentCard';
 import AppointmentDetailsModal from '../components/AppointmentDetailsModal';
 import CompletedAppointmentDetailsModal from '../components/CompletedAppointmentDetailsModal';
@@ -115,7 +116,7 @@ const MyAttendancesScreen = () => {
       }
     } catch (error) {
       console.error('Erro ao carregar atendimentos futuros:', error);
-      toastHelper.showError('Erro ao carregar atendimentos futuros');
+      toastHelper.showError(attendancesMessages.errors.loadFutureAttendances);
     } finally {
       setIsLoadingFuture(false);
     }
@@ -142,7 +143,7 @@ const MyAttendancesScreen = () => {
       }
     } catch (error) {
       console.error('Erro ao carregar atendimentos passados:', error);
-      toastHelper.showError('Erro ao carregar atendimentos passados');
+      toastHelper.showError(attendancesMessages.errors.loadPastAttendances);
     } finally {
       setIsLoadingPast(false);
     }
@@ -218,12 +219,12 @@ const MyAttendancesScreen = () => {
 
   const handleCancelAppointment = () => {
     if (!selectedAttendance) {
-      toastHelper.showError('Erro ao identificar o agendamento');
+      toastHelper.showError(attendancesMessages.errors.identifyAppointment);
       return;
     }
 
     if (selectedAttendance.status?.toUpperCase() !== 'AGENDADO') {
-      toastHelper.showError('Apenas agendamentos com status "Agendado" podem ser cancelados');
+      toastHelper.showError(attendancesMessages.errors.onlyScheduledCanCancel);
       return;
     }
 
@@ -235,13 +236,13 @@ const MyAttendancesScreen = () => {
     try {
       await AgendamentoService.atualizarStatusAgendamento(selectedAttendance.idAgendamento, 'CANCELADO');
       
-      toastHelper.showSuccess('Agendamento cancelado com sucesso');
+      toastHelper.showSuccess(attendancesMessages.success.appointmentCanceled);
       
       await loadAttendances(true);
       
     } catch (error) {
       console.error('Erro ao cancelar agendamento:', error);
-      let errorMessage = 'Erro ao cancelar agendamento. Tente novamente.';
+      let errorMessage = attendancesMessages.errors.cancelAppointmentGeneric;
       
       if (error.response?.status === 400) {
         errorMessage = error.response.data || 'Não foi possível cancelar o agendamento';

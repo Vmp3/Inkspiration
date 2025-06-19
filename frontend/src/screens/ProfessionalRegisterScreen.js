@@ -23,6 +23,7 @@ import Button from '../components/ui/Button';
 import FormNavigation from '../components/ui/FormNavigation';
 import toastHelper from '../utils/toastHelper';
 import { TimeInput } from '../components/TimeInput';
+import { professionalRegisterMessages } from '../components/professionalRegister/messages';
 import AuthService from '../services/AuthService';
 import ApiService from '../services/ApiService';
 import ProfessionalService from '../services/ProfessionalService';
@@ -360,7 +361,7 @@ const ProfessionalRegisterScreen = () => {
         }
       }
     } catch (error) {
-      toastHelper.showError('Falha ao selecionar imagem. Tente novamente.');
+              toastHelper.showError(professionalRegisterMessages.errors.imageSelectionFailed);
     }
   };
   
@@ -474,7 +475,7 @@ const ProfessionalRegisterScreen = () => {
       setActiveTab('portfolio');
     } else if (activeTab === 'portfolio') {
       if (!validatePortfolioTab()) {
-        toastHelper.showError('Preencha todos os campos obrigatórios do portfólio');
+        toastHelper.showError(professionalRegisterMessages.errors.portfolioFieldsRequired);
         return;
       }
     }
@@ -500,14 +501,14 @@ const ProfessionalRegisterScreen = () => {
       
       const selectedTiposServico = Object.keys(tipoServicoSelecionados).filter(key => tipoServicoSelecionados[key]);
       if (selectedTiposServico.length === 0) {
-        toastHelper.showError('Selecione pelo menos um tipo de serviço');
+        toastHelper.showError(professionalRegisterMessages.errors.serviceTypeRequired);
         setIsLoading(false);
         return;
       }
       
       // Validar biografia
       if (!biography || biography.trim().length < 20) {
-        toastHelper.showError('A biografia deve conter pelo menos 20 caracteres');
+        toastHelper.showError(professionalRegisterMessages.errors.biographyMinLength);
         setIsLoading(false);
         return;
       }
@@ -531,14 +532,14 @@ const ProfessionalRegisterScreen = () => {
       
       // Validar se pelo menos um horário foi selecionado
       if (disponibilidades.length === 0) {
-        toastHelper.showError('Defina pelo menos um horário de disponibilidade');
+        toastHelper.showError(professionalRegisterMessages.errors.scheduleRequired);
         setIsLoading(false);
         return;
       }
       
       // Verificar se o usuário está logado e tem os dados necessários
       if (!userData?.idUsuario) {
-        toastHelper.showError('Não foi possível identificar seu usuário. Faça login novamente.');
+        toastHelper.showError(professionalRegisterMessages.errors.userNotIdentified);
         setIsLoading(false);
         return;
       }
@@ -548,7 +549,7 @@ const ProfessionalRegisterScreen = () => {
         const userDetails = await ApiService.get(`/usuario/${userData.idUsuario}`);
         
         if (!userDetails.idEndereco) {
-          toastHelper.showError('Seu cadastro não possui um endereço. Atualize seu perfil antes de continuar.');
+          toastHelper.showError(professionalRegisterMessages.errors.addressRequired);
           setIsLoading(false);
           return;
         }
@@ -575,18 +576,18 @@ const ProfessionalRegisterScreen = () => {
         
         // Se houver imagens, fazer o upload
         if ((profileImage && profileImage.uri) || portfolioImages.some(img => img && img.uri)) {
-          toastHelper.showInfo('Enviando imagens...');
+          toastHelper.showInfo(professionalRegisterMessages.info.uploadingImages);
           
           try {
             // Tentativa de envio das imagens
             await uploadImages(profissionalCadastrado.idProfissional);
           } catch (imageError) {
             console.error('Erro ao enviar imagens:', imageError);
-            toastHelper.showWarning('Profissional cadastrado, mas houve um problema ao enviar as imagens.');
+            toastHelper.showWarning(professionalRegisterMessages.warnings.imageUploadPartialFailure);
           }
         }
         
-        toastHelper.showSuccess('Cadastro de profissional realizado com sucesso!');
+                  toastHelper.showSuccess(professionalRegisterMessages.success.professionalRegistered);
         
         // Atualizar o token para refletir a nova role (ROLE_PROF)
         try {
@@ -600,7 +601,7 @@ const ProfessionalRegisterScreen = () => {
             }, 1000);
           } else {
             console.error('Falha ao atualizar token - redirecionando para login');
-            toastHelper.showWarning('Por favor, faça login novamente para atualizar suas permissões');
+            toastHelper.showWarning(professionalRegisterMessages.warnings.loginAgainForPermissions);
             await AuthService.logout();
             setTimeout(() => {
               navigation.navigate('Login');
@@ -609,7 +610,7 @@ const ProfessionalRegisterScreen = () => {
         } catch (tokenError) {
           console.error('Erro ao atualizar token:', tokenError);
           
-          toastHelper.showWarning('Por favor, faça login novamente para atualizar suas permissões');
+          toastHelper.showWarning(professionalRegisterMessages.warnings.loginAgainForPermissions);
           await AuthService.logout();
           setTimeout(() => {
             navigation.navigate('Login');
@@ -617,12 +618,12 @@ const ProfessionalRegisterScreen = () => {
         }
       } catch (userError) {
         console.error('Erro ao obter dados do usuário ou cadastrar profissional:', userError);
-        toastHelper.showError('Ocorreu um erro ao processar sua solicitação. Tente novamente.');
+        toastHelper.showError(professionalRegisterMessages.errors.genericError);
       }
       
     } catch (error) {
       console.error('Erro ao cadastrar profissional:', error);
-      toastHelper.showError(error.message || 'Ocorreu um erro ao tentar cadastrar. Tente novamente.');
+      toastHelper.showError(error.message || professionalRegisterMessages.errors.registrationFailed);
     } finally {
       setIsLoading(false);
     }

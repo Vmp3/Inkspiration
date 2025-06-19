@@ -207,7 +207,7 @@ const useProfessionalData = (userData) => {
         }));
       }
     } catch (error) {
-      toastHelper.showError('Erro ao obter informações profissionais');
+              toastHelper.showError(editProfileMessages.validations.professionalDataError);
     }
   };
 
@@ -267,11 +267,11 @@ const useProfessionalData = (userData) => {
       };
 
       await ApiService.put(`/profissional/usuario/${userData.idUsuario}/atualizar-completo-com-imagens`, requestData);
-      toastHelper.showSuccess('Perfil atualizado com sucesso!');
+              toastHelper.showSuccess(editProfileMessages.success.profileUpdated);
       return true;
     } catch (error) {
       console.error('Erro ao atualizar dados profissionais:', error);
-      toastHelper.showError('Erro ao atualizar perfil');
+              toastHelper.showError(editProfileMessages.errors.saveProfile);
       return false;
     }
   };
@@ -378,7 +378,7 @@ const useProfessionalData = (userData) => {
         }
       }
     } catch (error) {
-      toastHelper.showError('Falha ao selecionar imagem. Tente novamente.');
+              toastHelper.showError(editProfileMessages.validations.imageSelectionFailed);
     }
   };
   

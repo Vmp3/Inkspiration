@@ -18,6 +18,7 @@ import AgendamentoService from '../services/AgendamentoService';
 import ProfessionalService from '../services/ProfessionalService';
 import toastHelper from '../utils/toastHelper';
 import Footer from '../components/Footer';
+import { bookingMessages } from '../components/booking/messages';
 
 const BookingScreen = () => {
   const navigation = useNavigation();
@@ -120,7 +121,7 @@ const BookingScreen = () => {
       
     } catch (error) {
       console.error('Erro ao carregar dados iniciais:', error);
-      toastHelper.showError('Erro ao carregar dados do profissional');
+      toastHelper.showError(bookingMessages.errors.loadProfessional);
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +146,7 @@ const BookingScreen = () => {
     } catch (error) {
       if (!error.message || !error.message.includes('204')) {
         console.error('Erro ao carregar horários disponíveis:', error);
-        toastHelper.showError('Erro ao carregar horários disponíveis');
+        toastHelper.showError(bookingMessages.errors.loadSchedules);
       }
       setAvailableTimeSlots([]);
     } finally {
@@ -189,12 +190,12 @@ const BookingScreen = () => {
       setIsSubmitting(true);
 
       if (!userData?.idUsuario) {
-        toastHelper.showError('Você precisa estar logado para fazer um agendamento');
+        toastHelper.showError(bookingMessages.errors.loginRequired);
         return;
       }
 
       if (!selectedService || !selectedDate || !selectedTime) {
-        toastHelper.showError('Por favor, preencha todos os campos obrigatórios');
+        toastHelper.showError(bookingMessages.errors.requiredFields);
         return;
       }
 
@@ -210,7 +211,7 @@ const BookingScreen = () => {
       await AgendamentoService.criarAgendamento(agendamentoData);
       
       setStep(4); 
-      toastHelper.showSuccess('Agendamento realizado com sucesso!');
+      toastHelper.showSuccess(bookingMessages.success.bookingCreated);
       
     } catch (error) {
       console.error('Erro ao criar agendamento:', error);

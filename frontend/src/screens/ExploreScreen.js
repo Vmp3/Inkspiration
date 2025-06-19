@@ -95,7 +95,7 @@ const ExploreScreen = ({ navigation }) => {
       updateActiveFilters();
     } catch (error) {
       console.error('Erro ao carregar profissionais:', error);
-      toastHelper.showError('Erro ao carregar profissionais');
+      toastHelper.showError(exploreMessages.errors.loadProfessionals);
       setDisplayedArtists([]);
       setTotalPages(0);
       setTotalElements(0);

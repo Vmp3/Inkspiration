@@ -93,7 +93,7 @@ const HomeScreen = ({ navigation }) => {
       updateActiveFilters();
     } catch (error) {
       console.error('Erro ao carregar profissionais:', error);
-      toastHelper.showError('Erro ao carregar profissionais');
+      toastHelper.showError(homeMessages.errors.loadProfessionals);
       setDisplayedArtists([]);
     } finally {
       setIsLoading(false);
