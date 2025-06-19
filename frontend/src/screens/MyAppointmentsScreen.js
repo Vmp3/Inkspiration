@@ -265,12 +265,22 @@ const MyAppointmentsScreen = () => {
     }
   };
 
-  const handleOpenReviewModal = (appointment) => {
+  const handleOpenReviewModal = async (appointment) => {
     setIsCompletedModalVisible(false);
     setReviewAppointment(appointment);
-    setShowReviewModal(true);
     setReviewStars(0);
     setReviewComment('');
+
+    try {
+      const avaliacao = await AvaliacaoService.buscarPorAgendamento(appointment.idAgendamento);
+      if (avaliacao) {
+        setReviewStars(avaliacao.rating || 0);
+        setReviewComment(avaliacao.descricao || '');
+      }
+    } catch (error) {
+      // Se der erro, apenas abre vazio
+    }
+    setShowReviewModal(true);
   };
 
   const handleCloseReviewModal = () => {

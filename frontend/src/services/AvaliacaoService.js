@@ -61,6 +61,18 @@ class AvaliacaoService {
       throw error;
     }
   }
+
+  async buscarPorAgendamento(idAgendamento) {
+    try {
+      const response = await ApiService.get(`/avaliacoes/agendamento/${idAgendamento}`);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        return null; // Não existe avaliação
+      }
+      throw error;
+    }
+  }
 }
 
 export default new AvaliacaoService(); 
