@@ -88,13 +88,12 @@ const LoginForm = ({
 
       <Button
         variant="primary"
-        label={loading ? "" : "Entrar"}
+        label="Entrar"
         onPress={handleSubmit} 
         style={styles.primaryButton}
         fullWidth={true}
-      >
-        {loading && <ActivityIndicator color="#fff" />}
-      </Button>
+        loading={loading}
+      />
     </View>
   );
 };
