@@ -177,13 +177,24 @@ const ArtistScreen = ({ route }) => {
 
     if (!artistId) {
       toastHelper.showError(artistMessages.errors.noArtistId);
-      navigation.goBack();
+      navigation.navigate('Home');
       return;
     }
 
     // Carregar dados do profissional
     loadArtistData();
   }, [artistId, userData, navigation]);
+
+  // useEffect para redirecionamento quando não encontra artista
+  useEffect(() => {
+    if (!artist && !isLoading) {
+      const timeoutId = setTimeout(() => {
+        navigation.navigate('Home');
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [artist, isLoading, navigation]);
 
   const loadArtistData = async () => {
     try {
@@ -192,7 +203,7 @@ const ArtistScreen = ({ route }) => {
       // Verificar se artistId está definido
       if (!artistId) {
         toastHelper.showError(artistMessages.errors.professionalIdNotFound);
-        navigation.goBack();
+        navigation.navigate('Home');
         return;
       }
       
@@ -246,7 +257,7 @@ const ArtistScreen = ({ route }) => {
       setPortfolioImages(processedImages);
     } catch (error) {
       toastHelper.showError(artistMessages.errors.loadProfile);
-      navigation.goBack();
+      navigation.navigate('Home');
     } finally {
       setIsLoading(false);
     }
@@ -299,11 +310,8 @@ const ArtistScreen = ({ route }) => {
   // Se não encontrou o artista
   if (!artist) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{artistMessages.errors.notFound}</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>Voltar</Text>
-        </TouchableOpacity>
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Redirecionando...</Text>
       </View>
     );
   }
@@ -935,29 +943,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#111827',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#EF4444',
-    marginBottom: 20,
-  },
-  backButton: {
-    backgroundColor: '#111827',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-  },
-  backButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
   noImagesContainer: {
     flex: 1,
