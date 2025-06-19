@@ -65,12 +65,13 @@ class AvaliacaoService {
   async buscarPorAgendamento(idAgendamento) {
     try {
       const response = await ApiService.get(`/avaliacoes/agendamento/${idAgendamento}`);
-      return response.data;
+      return response.data ? response.data : response;
     } catch (error) {
       if (error.response && error.response.status === 404) {
         return null; // Não existe avaliação
       }
-      throw error;
+      console.error("Erro ao buscar avaliação por agendamento:", error);
+      return null;
     }
   }
 }

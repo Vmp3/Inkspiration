@@ -274,13 +274,18 @@ const MyAppointmentsScreen = () => {
     try {
       const avaliacao = await AvaliacaoService.buscarPorAgendamento(appointment.idAgendamento);
       if (avaliacao) {
+        // Atualiza o estado com os dados da avaliação encontrada
         setReviewStars(avaliacao.rating || 0);
         setReviewComment(avaliacao.descricao || '');
       }
     } catch (error) {
-      // Se der erro, apenas abre vazio
+      console.error('Erro ao buscar avaliação:', error);
+    } finally {
+      // Força a exibição do modal no próximo ciclo de renderização
+      setTimeout(() => {
+        setShowReviewModal(true);
+      }, 0);
     }
-    setShowReviewModal(true);
   };
 
   const handleCloseReviewModal = () => {
