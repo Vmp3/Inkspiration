@@ -469,7 +469,7 @@ const EditProfileScreen = () => {
 
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
-                  onNext={() => profileUpdate.handleUpdateProfile(formData, tabNavigation.validateCurrentTab)}
+                  onNext={() => profileUpdate.handleUpdateProfile(formData, tabNavigation.validateCurrentTab, professionalData.professionalFormData)}
                       showNext={true}
                       nextText="Salvar Alterações"
                   isLoading={profileUpdate.isLoading}
