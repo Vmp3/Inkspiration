@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DefaultUser from '../../assets/default_user.png';
 
-const AppointmentCard = ({ appointment, onPress }) => {
+const AppointmentCard = ({ appointment, onPress, isProfessional = false }) => {
   const getStatusStyle = (status) => {
     switch (status) {
       case 'AGENDADO':
@@ -108,16 +108,28 @@ const AppointmentCard = ({ appointment, onPress }) => {
     >
       <View style={styles.cardContent}>
         <View style={styles.leftContent}>
-          <Image
-            source={appointment.imagemPerfilProfissional ? 
-              { uri: appointment.imagemPerfilProfissional } : 
-              DefaultUser
-            }
-            style={styles.artistImage}
-          />
+          {!isProfessional && (
+            <Image
+              source={appointment.imagemPerfilProfissional ? 
+                { uri: appointment.imagemPerfilProfissional } : 
+                DefaultUser
+              }
+              style={styles.artistImage}
+            />
+          )}
+          {isProfessional && (
+            <View style={styles.avatarPlaceholder}>
+              <Text style={styles.avatarText}>
+                {appointment.nomeUsuario ? appointment.nomeUsuario.charAt(0).toUpperCase() : 'U'}
+              </Text>
+            </View>
+          )}
           <View style={styles.infoContainer}>
             <Text style={styles.artistName}>
-              {appointment.nomeProfissional || 'Nome não disponível'}
+              {isProfessional ? 
+                (appointment.nomeUsuario || 'Nome não disponível') :
+                (appointment.nomeProfissional || 'Nome não disponível')
+              }
             </Text>
             <Text style={styles.serviceType}>
               {formatServiceType(appointment.tipoServico)}
@@ -190,6 +202,20 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     marginRight: 12,
+  },
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#64748B',
   },
   infoContainer: {
     flex: 1,

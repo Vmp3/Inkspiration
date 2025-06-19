@@ -163,6 +163,14 @@ const MyAppointmentsScreen = () => {
     loadAppointments(true);
   };
 
+  const handleGoBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Home');
+    }
+  };
+
   const handleAppointmentPress = (appointment) => {
     setSelectedAppointment(appointment);
     
@@ -435,6 +443,7 @@ const MyAppointmentsScreen = () => {
           <ActivityIndicator size="large" color="#111" />
           <Text style={styles.loadingText}>Carregando agendamentos...</Text>
         </View>
+        <Footer />
       </SafeAreaView>
     );
   }
@@ -456,7 +465,7 @@ const MyAppointmentsScreen = () => {
           <View style={styles.headerLeft}>
             <TouchableOpacity 
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={handleGoBack}
             >
               <MaterialIcons name="arrow-back" size={24} color="#111" />
             </TouchableOpacity>
@@ -494,8 +503,9 @@ const MyAppointmentsScreen = () => {
             </>
           )}
         </View>
-        <Footer />
       </ScrollView>
+
+      <Footer />
 
       <AppointmentDetailsModal
         visible={isModalVisible}

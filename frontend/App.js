@@ -21,6 +21,7 @@ import AdminUsersScreen from './src/screens/AdminUsersScreen';
 import ArtistScreen from './src/screens/ArtistScreen';
 import BookingScreen from './src/screens/BookingScreen';
 import MyAppointmentsScreen from './src/screens/MyAppointmentsScreen';
+import MyAttendancesScreen from './src/screens/MyAttendancesScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import TwoFactorSetupScreen from './src/screens/TwoFactorSetupScreen';
@@ -47,6 +48,7 @@ const linking = {
       EditProfile: 'edit-profile',
       ProfessionalRegister: 'professional-register',
       MyAppointments: 'my-appointments',
+      MyAttendances: 'my-attendances',
       TwoFactorSetup: 'two-factor-setup',
     },
   },
@@ -100,6 +102,7 @@ export default function App() {
                   <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
                   <Stack.Screen name="ProfessionalRegister" component={ProfessionalRegisterScreen} />
                   <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} />
+                  <Stack.Screen name="MyAttendances" component={MyAttendancesScreen} />
                   <Stack.Screen name="TwoFactorSetup" component={TwoFactorSetupScreen} />
                 </Stack.Navigator>
               </ProtectedRoute>

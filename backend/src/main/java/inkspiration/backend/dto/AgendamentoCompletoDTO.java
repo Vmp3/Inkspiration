@@ -17,7 +17,9 @@ public class AgendamentoCompletoDTO {
     // Informações do profissional
     private Long idProfissional;
     private String nomeProfissional;
-    private String imagemPerfilProfissional;
+    
+    private Long idUsuario;
+    private String nomeUsuario;
     
     // Informações do endereço
     private String rua;
@@ -40,7 +42,6 @@ public class AgendamentoCompletoDTO {
             this.idProfissional = agendamento.getProfissional().getIdProfissional();
             if (agendamento.getProfissional().getUsuario() != null) {
                 this.nomeProfissional = agendamento.getProfissional().getUsuario().getNome();
-                this.imagemPerfilProfissional = agendamento.getProfissional().getUsuario().getImagemPerfil();
             }
             if (agendamento.getProfissional().getEndereco() != null) {
                 this.rua = agendamento.getProfissional().getEndereco().getRua();
@@ -51,6 +52,11 @@ public class AgendamentoCompletoDTO {
                 this.cep = agendamento.getProfissional().getEndereco().getCep();
                 this.complemento = agendamento.getProfissional().getEndereco().getComplemento();
             }
+        }
+        
+        if (agendamento.getUsuario() != null) {
+            this.idUsuario = agendamento.getUsuario().getIdUsuario();
+            this.nomeUsuario = agendamento.getUsuario().getNome();
         }
     }
 
@@ -119,12 +125,20 @@ public class AgendamentoCompletoDTO {
         this.nomeProfissional = nomeProfissional;
     }
 
-    public String getImagemPerfilProfissional() {
-        return imagemPerfilProfissional;
+    public Long getIdUsuario() {
+        return idUsuario;
     }
 
-    public void setImagemPerfilProfissional(String imagemPerfilProfissional) {
-        this.imagemPerfilProfissional = imagemPerfilProfissional;
+    public void setIdUsuario(Long idUsuario) {
+        this.idUsuario = idUsuario;
+    }
+
+    public String getNomeUsuario() {
+        return nomeUsuario;
+    }
+
+    public void setNomeUsuario(String nomeUsuario) {
+        this.nomeUsuario = nomeUsuario;
     }
 
     public String getRua() {

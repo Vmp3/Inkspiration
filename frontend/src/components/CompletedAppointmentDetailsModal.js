@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   Image,
   ScrollView,
 } from 'react-native';
@@ -16,7 +17,7 @@ import Input from './ui/Input';
 import AvaliacaoService from '../services/AvaliacaoService';
 import toastHelper from '../utils/toastHelper';
 
-const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, onOpenReview }) => {
+const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isProfessional = false }) => {
   if (!appointment) return null;
 
   const formatDate = (date) => {
@@ -94,116 +95,142 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, onOpe
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Detalhes do Agendamento</Text>
-            <Text style={styles.modalDate}>{formatDate(appointment.dtInicio)}</Text>
-          </View>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalBackdrop}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Detalhes do Agendamento</Text>
+                <Text style={styles.modalDate}>{formatDate(appointment.dtInicio)}</Text>
+              </View>
 
-          <ScrollView style={styles.modalContent}>
-            <View style={styles.artistInfo}>
-              <Image
-                source={appointment.imagemPerfilProfissional ? 
-                  { uri: appointment.imagemPerfilProfissional } : 
-                  DefaultUser
-                }
-                style={styles.artistImage}
-              />
-              <View>
-                <Text style={styles.artistName}>
-                  {appointment.nomeProfissional || 'Nome não disponível'}
-                </Text>
-                <View style={styles.badgeContainer}>
-                  <MaterialIcons name="person" size={12} color="#64748B" />
-                  <Text style={styles.badgeText}>Tatuador</Text>
+              <ScrollView style={styles.modalContent}>
+                <View style={styles.artistInfo}>
+                  {!isProfessional && (
+                    <Image
+                      source={appointment.imagemPerfilProfissional ? 
+                        { uri: appointment.imagemPerfilProfissional } : 
+                        DefaultUser
+                      }
+                      style={styles.artistImage}
+                    />
+                  )}
+                  {isProfessional && (
+                    <View style={styles.avatarPlaceholder}>
+                      <Text style={styles.avatarText}>
+                        {appointment.nomeUsuario ? appointment.nomeUsuario.charAt(0).toUpperCase() : 'U'}
+                      </Text>
+                    </View>
+                  )}
+                  <View>
+                    <Text style={styles.artistName}>
+                      {isProfessional ? 
+                        (appointment.nomeUsuario || 'Nome não disponível') :
+                        (appointment.nomeProfissional || 'Nome não disponível')
+                      }
+                    </Text>
+                    <View style={styles.badgeContainer}>
+                      <MaterialIcons name="person" size={12} color="#64748B" />
+                      <Text style={styles.badgeText}>
+                        {isProfessional ? 'Cliente' : 'Tatuador'}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-              </View>
-            </View>
 
-            <View style={styles.divider} />
+                <View style={styles.divider} />
 
-            <View style={styles.detailSection}>
-              <View style={styles.detailRow}>
-                <MaterialIcons name="design-services" size={18} color="#111" />
-                <Text style={styles.detailLabel}>Serviço</Text>
-              </View>
-              <Text style={styles.detailValue}>
-                {formatServiceType(appointment.tipoServico)}
-              </Text>
-            </View>
-
-            <View style={styles.detailSection}>
-              <View style={styles.detailRow}>
-                <MaterialIcons name="event" size={18} color="#111" />
-                <Text style={styles.detailLabel}>Data</Text>
-              </View>
-              <Text style={styles.detailValue}>
-                {formatDate(appointment.dtInicio)}
-              </Text>
-            </View>
-
-            <View style={styles.detailSection}>
-              <View style={styles.detailRow}>
-                <MaterialIcons name="access-time" size={18} color="#111" />
-                <Text style={styles.detailLabel}>Horário</Text>
-              </View>
-              <Text style={styles.detailValue}>
-                {formatTime(appointment.dtInicio, appointment.dtFim)}
-              </Text>
-            </View>
-
-            <View style={styles.detailSection}>
-              <View style={styles.detailRow}>
-                <MaterialIcons name="location-on" size={18} color="#111" />
-                <Text style={styles.detailLabel}>Local</Text>
-              </View>
-              <Text style={styles.detailValue}>
-                {formatAddress(appointment)}
-              </Text>
-            </View>
-
-            {appointment.descricao && (
-              <View style={styles.detailSection}>
-                <View style={styles.detailRow}>
-                  <MaterialIcons name="description" size={18} color="#111" />
-                  <Text style={styles.detailLabel}>Descrição</Text>
+                <View style={styles.detailSection}>
+                  <View style={styles.detailRow}>
+                    <MaterialIcons name="design-services" size={18} color="#111" />
+                    <Text style={styles.detailLabel}>Serviço</Text>
+                  </View>
+                  <Text style={styles.detailValue}>
+                    {formatServiceType(appointment.tipoServico)}
+                  </Text>
                 </View>
-                <Text style={styles.detailValue}>
-                  {appointment.descricao}
-                </Text>
-              </View>
-            )}
 
-            <View style={styles.statusSection}>
-              <Text style={styles.statusLabel}>Status</Text>
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>{getStatusLabel(appointment.status)}</Text>
-              </View>
+                <View style={styles.detailSection}>
+                  <View style={styles.detailRow}>
+                    <MaterialIcons name="event" size={18} color="#111" />
+                    <Text style={styles.detailLabel}>Data</Text>
+                  </View>
+                  <Text style={styles.detailValue}>
+                    {formatDate(appointment.dtInicio)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailSection}>
+                  <View style={styles.detailRow}>
+                    <MaterialIcons name="access-time" size={18} color="#111" />
+                    <Text style={styles.detailLabel}>Horário</Text>
+                  </View>
+                  <Text style={styles.detailValue}>
+                    {formatTime(appointment.dtInicio, appointment.dtFim)}
+                  </Text>
+                </View>
+
+                <View style={styles.detailSection}>
+                  <View style={styles.detailRow}>
+                    <MaterialIcons name="location-on" size={18} color="#111" />
+                    <Text style={styles.detailLabel}>Local</Text>
+                  </View>
+                  <Text style={styles.detailValue}>
+                    {formatAddress(appointment)}
+                  </Text>
+                </View>
+
+                {appointment.descricao && (
+                  <View style={styles.detailSection}>
+                    <View style={styles.detailRow}>
+                      <MaterialIcons name="description" size={18} color="#111" />
+                      <Text style={styles.detailLabel}>Descrição</Text>
+                    </View>
+                    <Text style={styles.detailValue}>
+                      {appointment.descricao}
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.statusSection}>
+                  <Text style={styles.statusLabel}>Status</Text>
+                  <View style={styles.statusBadge}>
+                    <Text style={styles.statusText}>{getStatusLabel(appointment.status)}</Text>
+                  </View>
+                </View>
+
+                {/* TODO: Implementar avaliação para agendamentos concluídos no contexto de profissional */}
+                {isProfessional && appointment.status?.toUpperCase() === 'CONCLUIDO' && (
+                  <View style={styles.todoSection}>
+                    <Text style={styles.todoText}>
+                      TODO: Implementar visualização da avaliação do cliente
+                    </Text>
+                  </View>
+                )}
+              </ScrollView>
+
+              {!isProfessional && (
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity 
+                    style={styles.rateButton} 
+                    onPress={handleRateAppointment}
+                  >
+                    <MaterialIcons name="star" size={20} color="#000" />
+                    <Text style={styles.rateButtonText}>Avaliação</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <TouchableOpacity 
+                style={styles.closeButton} 
+                onPress={onClose}
+              >
+                <Text style={styles.closeButtonText}>Fechar</Text>
+              </TouchableOpacity>
             </View>
-          </ScrollView>
-
-          <View style={styles.buttonRow}>
-            <TouchableOpacity 
-              style={styles.rateButton} 
-              onPress={() => {
-                onClose();
-                setTimeout(() => onOpenReview(appointment), 80);
-              }}
-            >
-              <MaterialIcons name="star" size={20} color="#000" />
-              <Text style={styles.rateButtonText}>Avaliação</Text>
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={onClose}
-          >
-            <Text style={styles.closeButtonText}>Fechar</Text>
-          </TouchableOpacity>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -252,6 +279,20 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     marginRight: 12,
+  },
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#64748B',
   },
   artistName: {
     fontSize: 16,
@@ -348,6 +389,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#64748B',
+  },
+  todoSection: {
+    padding: 16,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  todoText: {
+    fontSize: 14,
+    color: '#92400E',
+    fontStyle: 'italic',
   },
 });
 

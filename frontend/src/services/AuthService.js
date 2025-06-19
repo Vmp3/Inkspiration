@@ -98,6 +98,13 @@ class AuthService {
         throw new Error(responseData?.error || responseData?.message || responseData || 'Erro no login');
       }
       
+      if (error.code === 'ECONNABORTED' || error.code === 'NETWORK_ERROR' || 
+          error.message?.toLowerCase().includes('network') ||
+          error.message?.toLowerCase().includes('timeout') ||
+          error.message?.toLowerCase().includes('connection')) {
+        throw new Error('Falha ao realizar login. Verifique sua conexão com a internet e tente novamente.');
+      }
+      
       throw error;
     }
   }

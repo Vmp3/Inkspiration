@@ -45,9 +45,18 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
             
     Page<Agendamento> findByUsuarioAndDtFimBeforeOrderByDtInicioDesc(
             Usuario usuario, LocalDateTime dataReferencia, Pageable pageable);
+            
+    Page<Agendamento> findByProfissionalAndDtFimAfterOrderByDtInicioAsc(
+            Profissional profissional, LocalDateTime dataReferencia, Pageable pageable);
+            
+    Page<Agendamento> findByProfissionalAndDtFimBeforeOrderByDtInicioDesc(
+            Profissional profissional, LocalDateTime dataReferencia, Pageable pageable);
 
     List<Agendamento> findByStatusAndDtFimBefore(StatusAgendamento status, LocalDateTime data);
 
     @Query("SELECT a FROM Agendamento a WHERE a.usuario.id = :idUsuario AND a.status = :status AND YEAR(a.dtInicio) = :ano ORDER BY a.dtInicio")
     List<Agendamento> findByUsuarioIdAndStatusAndAno(Long idUsuario, StatusAgendamento status, Integer ano);
+
+    @Query("SELECT a FROM Agendamento a WHERE a.profissional.id = :idProfissional AND a.status = :status AND YEAR(a.dtInicio) = :ano AND MONTH(a.dtInicio) = :mes ORDER BY a.dtInicio")
+    List<Agendamento> findByProfissionalIdAndStatusAndAnoMes(Long idProfissional, StatusAgendamento status, Integer ano, Integer mes);
 } 

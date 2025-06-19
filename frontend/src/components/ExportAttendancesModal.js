@@ -14,10 +14,26 @@ import AgendamentoService from '../services/AgendamentoService';
 import PDFExportService from '../services/PDFExportService';
 import toastHelper from '../utils/toastHelper';
 
-const ExportAppointmentsModal = ({ visible, onClose }) => {
+const ExportAttendancesModal = ({ visible, onClose }) => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [years, setYears] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  const months = [
+    { value: 1, label: 'Janeiro' },
+    { value: 2, label: 'Fevereiro' },
+    { value: 3, label: 'Março' },
+    { value: 4, label: 'Abril' },
+    { value: 5, label: 'Maio' },
+    { value: 6, label: 'Junho' },
+    { value: 7, label: 'Julho' },
+    { value: 8, label: 'Agosto' },
+    { value: 9, label: 'Setembro' },
+    { value: 10, label: 'Outubro' },
+    { value: 11, label: 'Novembro' },
+    { value: 12, label: 'Dezembro' }
+  ];
 
   useEffect(() => {
     if (visible) {
@@ -35,14 +51,38 @@ const ExportAppointmentsModal = ({ visible, onClose }) => {
     
     setYears(yearOptions);
     setSelectedYear(currentYear);
+    setSelectedMonth(new Date().getMonth() + 1);
+  };
+
+  const getMonthName = (monthValue) => {
+    // Garantir que monthValue seja um número
+    const monthNum = Number(monthValue);
+    
+    // Encontrar o mês correspondente no array
+    const month = months.find(m => m.value === monthNum);
+    
+    // Nomes dos meses em português
+    const nomesMeses = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+    
+    // Se encontrou no array, use esse valor, senão use o array de nomes
+    if (month) {
+      return month.label;
+    } else if (monthNum >= 1 && monthNum <= 12) {
+      return nomesMeses[monthNum - 1];
+    } else {
+      return `Mês ${monthNum}`;
+    }
   };
 
   const handleExportPDF = async () => {
     try {
       setIsLoading(true);
       
-      const response = await AgendamentoService.exportarAgendamentosPDF(selectedYear);
-      const filename = `agendamentos-${selectedYear}.pdf`;
+      const response = await AgendamentoService.exportarAtendimentosPDF(selectedYear, selectedMonth);
+      const filename = `atendimentos-${selectedMonth.toString().padStart(2, '0')}-${selectedYear}.pdf`;
       
       await PDFExportService.exportToPDF(response, filename);
       
@@ -50,15 +90,18 @@ const ExportAppointmentsModal = ({ visible, onClose }) => {
     } catch (error) {
       let errorMessage = 'Erro ao gerar o PDF. Tente novamente.';
       
+      // Obtenha o nome do mês usando a função auxiliar
+      const monthName = getMonthName(selectedMonth);
+      
       if (error.response?.status === 404) {
-        errorMessage = `Nenhum agendamento concluído foi encontrado para o ano ${selectedYear}. Selecione um ano diferente.`;
+        errorMessage = `Nenhum atendimento concluído foi encontrado para ${monthName}/${selectedYear}. Selecione um período diferente.`;
       } else if (error.response?.status === 500 && 
           error.response?.data && 
           typeof error.response.data === 'string' && 
-          error.response.data.includes('Nenhum agendamento concluído encontrado')) {
-        errorMessage = `Nenhum agendamento concluído foi encontrado para o ano ${selectedYear}. Selecione um ano diferente.`;
-      } else if (error.message && error.message.includes('Nenhum agendamento concluído encontrado')) {
-        errorMessage = `Nenhum agendamento concluído foi encontrado para o ano ${selectedYear}. Selecione um ano diferente.`;
+          error.response.data.includes('Nenhum atendimento concluído encontrado')) {
+        errorMessage = `Nenhum atendimento concluído foi encontrado para ${monthName}/${selectedYear}. Selecione um período diferente.`;
+      } else if (error.message && error.message.includes('Nenhum atendimento concluído encontrado')) {
+        errorMessage = `Nenhum atendimento concluído foi encontrado para ${monthName}/${selectedYear}. Selecione um período diferente.`;
       } else if (error.response?.status === 401) {
         errorMessage = 'Sessão expirada. Faça login novamente.';
       } else if (error.response?.status === 403) {
@@ -83,30 +126,47 @@ const ExportAppointmentsModal = ({ visible, onClose }) => {
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Exportar Agendamentos</Text>
+                <Text style={styles.modalTitle}>Exportar Atendimentos</Text>
                 <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                   <MaterialIcons name="close" size={24} color="#64748b" />
                 </TouchableOpacity>
               </View>
 
               <View style={styles.modalContent}>
-                <Text style={styles.label}>Selecione o ano dos agendamentos:</Text>
+                <Text style={styles.label}>Selecione o período dos atendimentos:</Text>
                 
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={selectedYear}
-                    onValueChange={(itemValue) => setSelectedYear(itemValue)}
-                    style={styles.picker}
-                    itemStyle={styles.pickerItem}
-                  >
-                    {years.map((year) => (
-                      <Picker.Item key={year} label={year.toString()} value={year} />
-                    ))}
-                  </Picker>
+                <View style={styles.pickerRow}>
+                  <View style={styles.pickerContainer}>
+                    <Text style={styles.pickerLabel}>Mês:</Text>
+                    <Picker
+                      selectedValue={selectedMonth}
+                      onValueChange={(itemValue) => setSelectedMonth(itemValue)}
+                      style={styles.picker}
+                      itemStyle={styles.pickerItem}
+                    >
+                      {months.map((month) => (
+                        <Picker.Item key={month.value} label={month.label} value={month.value} />
+                      ))}
+                    </Picker>
+                  </View>
+                  
+                  <View style={styles.pickerContainer}>
+                    <Text style={styles.pickerLabel}>Ano:</Text>
+                    <Picker
+                      selectedValue={selectedYear}
+                      onValueChange={(itemValue) => setSelectedYear(itemValue)}
+                      style={styles.picker}
+                      itemStyle={styles.pickerItem}
+                    >
+                      {years.map((year) => (
+                        <Picker.Item key={year} label={year.toString()} value={year} />
+                      ))}
+                    </Picker>
+                  </View>
                 </View>
                 
                 <Text style={styles.note}>
-                  Serão exportados todos os agendamentos concluídos do ano selecionado.
+                  Serão exportados todos os atendimentos concluídos do período selecionado.
                 </Text>
               </View>
 
@@ -179,18 +239,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#111',
-    marginBottom: 12,
+    marginBottom: 16,
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 8,
-    marginBottom: 16,
-    backgroundColor: '#F8FAFC',
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  pickerLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111',
+    marginBottom: 8,
   },
   picker: {
     height: 50,
     width: '100%',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    backgroundColor: '#F8FAFC',
   },
   pickerItem: {
     fontSize: 16,
@@ -238,4 +310,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ExportAppointmentsModal; 
+export default ExportAttendancesModal; 

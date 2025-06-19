@@ -6,7 +6,9 @@ import Checkbox from '../ui/Checkbox';
 const ProfessionalForm = ({ 
   formData, 
   handleChange,
+  bioError,
 }) => {
+  const isValid = bioError === '' && formData.bio && formData.bio.trim().length >= 20;
   const allSpecialties = [
     "Tradicional",
     "Realista",
@@ -43,15 +45,32 @@ const ProfessionalForm = ({
         <Text style={styles.sectionTitle}>Informações Profissionais</Text>
         
         <View style={styles.formFullWidth}>
-          <Text style={styles.formLabel}>Biografia</Text>
+          <Text style={styles.formLabel}>Biografia *</Text>
           <Input
-            placeholder="Conte sobre sua experiência, estilo e trajetória como tatuador"
+            placeholder="Conte sobre sua experiência, estilo e trajetória como tatuador (mínimo 20 caracteres)"
             value={formData.bio}
             onChangeText={(text) => handleChange('bio', text)}
             multiline={true}
             numberOfLines={4}
-            style={[styles.inputField, styles.textAreaInput]}
+            maxLength={500}
+            style={[
+              styles.inputField, 
+              styles.textAreaInput,
+              bioError ? styles.inputError : null,
+              isValid ? styles.inputValid : null
+            ]}
           />
+          <View style={styles.inputInfo}>
+            <Text style={[
+              styles.characterCount,
+              formData.bio && formData.bio.length > 500 ? styles.characterCountError : null
+            ]}>
+              {formData.bio ? formData.bio.length : 0}/500 caracteres
+            </Text>
+          </View>
+          {bioError ? (
+            <Text style={styles.errorText}>{bioError}</Text>
+          ) : null}
         </View>
 
         <View style={styles.formFullWidth}>
@@ -184,6 +203,32 @@ const styles = StyleSheet.create({
     height: 120,
     textAlignVertical: 'top',
     paddingTop: 12,
+  },
+  inputError: {
+    borderColor: '#ef4444',
+    backgroundColor: '#fef2f2',
+  },
+  inputValid: {
+    borderColor: '#10b981',
+    backgroundColor: '#f0fdf4',
+  },
+  inputInfo: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  characterCount: {
+    fontSize: 12,
+    color: '#64748b',
+  },
+  characterCountError: {
+    color: '#ef4444',
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#ef4444',
+    marginTop: 4,
   },
   specialtiesContainer: {
     flexDirection: 'row',

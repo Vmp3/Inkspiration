@@ -17,7 +17,27 @@ class PDFExportService {
       throw new Error("Dados do PDF não recebidos");
     }
     
-    const blob = new Blob([response.data], { type: 'application/pdf' });
+    let blob;
+    
+    if (response.data instanceof Blob) {
+      blob = response.data;
+    } 
+    else if (typeof response.data === 'string') {
+      try {
+        const binaryString = atob(response.data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        blob = new Blob([bytes], { type: 'application/pdf' });
+      } catch (error) {
+        throw new Error("Erro ao decodificar dados base64 do PDF");
+      }
+    } 
+    else {
+      blob = new Blob([response.data], { type: 'application/pdf' });
+    }
+    
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -42,6 +62,14 @@ class PDFExportService {
       const arrayBuffer = await response.data.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
       base64Data = btoa(String.fromCharCode(...bytes));
+    }
+    
+    if (typeof response.data === 'string') {
+      base64Data = response.data;
+    }
+    
+    if (!base64Data || typeof base64Data !== 'string') {
+      throw new Error('Dados PDF inválidos recebidos');
     }
     
     await FileSystem.writeAsStringAsync(fileUri, base64Data, {

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   TextInput,
   ScrollView,
   ActivityIndicator,
@@ -22,6 +23,7 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
   const [selectedService, setSelectedService] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [description, setDescription] = useState('');
+  const [descriptionError, setDescriptionError] = useState('');
   
   const [services, setServices] = useState([]);
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
@@ -122,7 +124,9 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
         setSelectedService(tipoOriginal);
       }, 0);
       
-      setDescription(appointment.descricao || '');
+      const currentDescription = appointment.descricao || '';
+      setDescription(currentDescription);
+      setDescriptionError(validateDescription(currentDescription));
       
       setSelectedMonth(currentDate.getMonth());
       setSelectedDate(appointment.dtInicio.split('T')[0]);
@@ -187,6 +191,25 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
     if (step > 1) {
       setStep(step - 1);
     }
+  };
+
+  const validateDescription = (text) => {
+    if (!text || text.trim().length === 0) {
+      return 'Descrição é obrigatória';
+    }
+    if (text.trim().length < 20) {
+      return 'Descrição deve ter pelo menos 20 caracteres';
+    }
+    if (text.trim().length > 500) {
+      return 'Descrição deve ter no máximo 500 caracteres';
+    }
+    return '';
+  };
+
+  const handleDescriptionChange = (text) => {
+    setDescription(text);
+    const error = validateDescription(text);
+    setDescriptionError(error);
   };
   
   const handleUpdateAppointment = async () => {
@@ -441,20 +464,38 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
   };
 
   const renderDetailsForm = () => {
+    const isValid = descriptionError === '' && description.trim().length >= 20;
+    
     return (
       <View style={styles.stepContent}>
         <Text style={styles.stepTitle}>Detalhes do Agendamento</Text>
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Descrição da Tatuagem</Text>
+          <Text style={styles.label}>Descrição da Tatuagem *</Text>
           <TextInput
-            style={styles.textarea}
+            style={[
+              styles.textarea,
+              descriptionError ? styles.textareaError : null,
+              isValid ? styles.textareaValid : null
+            ]}
             multiline
             numberOfLines={4}
-            placeholder="Por favor, descreva o que você está procurando, incluindo tamanho, local e quaisquer imagens de referência"
+            placeholder="Por favor, descreva o que você está procurando (mínimo 20 caracteres)"
             placeholderTextColor="#94a3b8"
             value={description}
-            onChangeText={setDescription}
+            onChangeText={handleDescriptionChange}
+            maxLength={500}
           />
+          <View style={styles.inputInfo}>
+            <Text style={[
+              styles.characterCount,
+              description.length > 500 ? styles.characterCountError : null
+            ]}>
+              {description.length}/500 caracteres
+            </Text>
+          </View>
+          {descriptionError ? (
+            <Text style={styles.errorText}>{descriptionError}</Text>
+          ) : null}
         </View>
       </View>
     );
@@ -480,7 +521,10 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       case 2:
         return selectedDate !== null && selectedTime !== null;
       case 3:
-        return canEdit();
+        return canEdit() && 
+               description.trim().length >= 20 && 
+               description.trim().length <= 500 && 
+               descriptionError === '';
       default:
         return false;
     }
@@ -495,75 +539,79 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       animationType="none"
       onRequestClose={onClose}
     >
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Editar Agendamento</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <MaterialIcons name="close" size={24} color="#64748b" />
-            </TouchableOpacity>
-          </View>
-          
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#111" />
-              <Text style={styles.loadingText}>Carregando...</Text>
-            </View>
-          ) : !canEdit() ? (
-            <View style={styles.errorContainer}>
-              <MaterialIcons name="error-outline" size={64} color="#EF4444" />
-              <Text style={styles.errorTitle}>Edição não permitida</Text>
-              <Text style={styles.errorMessage}>
-                A edição só é permitida com no mínimo 3 dias de antecedência.
-              </Text>
-              <TouchableOpacity 
-                style={styles.closeErrorButton}
-                onPress={onClose}
-              >
-                <Text style={styles.closeErrorButtonText}>Fechar</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <>
-              {renderProgressBar()}
-              
-              <ScrollView style={styles.modalContent}>
-                {renderCurrentStep()}
-              </ScrollView>
-              
-              <View style={styles.modalFooter}>
-                {step > 1 ? (
-                  <TouchableOpacity
-                    style={styles.prevButton}
-                    onPress={handlePrevStep}
-                  >
-                    <Text style={styles.prevButtonText}>Voltar</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.emptyButton} />
-                )}
-                
-                <TouchableOpacity
-                  style={[
-                    styles.nextButton,
-                    !canProceedToNext() && styles.nextButtonDisabled
-                  ]}
-                  onPress={step === 3 ? handleUpdateAppointment : handleNextStep}
-                  disabled={!canProceedToNext() || isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.nextButtonText}>
-                      {step === 3 ? 'Salvar Alterações' : 'Próximo'}
-                    </Text>
-                  )}
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalBackdrop}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Editar Agendamento</Text>
+                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                  <MaterialIcons name="close" size={24} color="#64748b" />
                 </TouchableOpacity>
               </View>
-            </>
-          )}
+              
+              {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#111" />
+                  <Text style={styles.loadingText}>Carregando...</Text>
+                </View>
+              ) : !canEdit() ? (
+                <View style={styles.errorContainer}>
+                  <MaterialIcons name="error-outline" size={64} color="#EF4444" />
+                  <Text style={styles.errorTitle}>Edição não permitida</Text>
+                  <Text style={styles.errorMessage}>
+                    A edição só é permitida com no mínimo 3 dias de antecedência.
+                  </Text>
+                  <TouchableOpacity 
+                    style={styles.closeErrorButton}
+                    onPress={onClose}
+                  >
+                    <Text style={styles.closeErrorButtonText}>Fechar</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  {renderProgressBar()}
+                  
+                  <ScrollView style={styles.modalContent}>
+                    {renderCurrentStep()}
+                  </ScrollView>
+                  
+                  <View style={styles.modalFooter}>
+                    {step > 1 ? (
+                      <TouchableOpacity
+                        style={styles.prevButton}
+                        onPress={handlePrevStep}
+                      >
+                        <Text style={styles.prevButtonText}>Voltar</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={styles.emptyButton} />
+                    )}
+                    
+                    <TouchableOpacity
+                      style={[
+                        styles.nextButton,
+                        !canProceedToNext() && styles.nextButtonDisabled
+                      ]}
+                      onPress={step === 3 ? handleUpdateAppointment : handleNextStep}
+                      disabled={!canProceedToNext() || isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.nextButtonText}>
+                          {step === 3 ? 'Salvar Alterações' : 'Próximo'}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </View>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -866,6 +914,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#111',
     textAlignVertical: 'top',
+  },
+  textareaError: {
+    borderColor: '#ef4444',
+    backgroundColor: '#fef2f2',
+  },
+  textareaValid: {
+    borderColor: '#10b981',
+    backgroundColor: '#f0fdf4',
+  },
+  inputInfo: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  characterCount: {
+    fontSize: 12,
+    color: '#64748b',
+  },
+  characterCountError: {
+    color: '#ef4444',
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#ef4444',
+    marginTop: 4,
   },
   prevButton: {
     paddingVertical: 12,

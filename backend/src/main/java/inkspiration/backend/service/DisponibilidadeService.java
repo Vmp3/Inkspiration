@@ -224,9 +224,13 @@ public class DisponibilidadeService {
                 LocalTime inicioTrabalho = LocalTime.parse(horario.get("inicio"));
                 LocalTime fimTrabalho = LocalTime.parse(horario.get("fim"));
                 
-                // Verifica se o horário de início e fim estão dentro do horário de trabalho
-                boolean inicioValido = !horaInicio.isBefore(inicioTrabalho) && !horaInicio.isAfter(fimTrabalho);
-                boolean fimValido = !horaFim.isBefore(inicioTrabalho) && !horaFim.isAfter(fimTrabalho);
+                LocalTime fimTrabalhoAjustado = fimTrabalho;
+                if (fimTrabalho.equals(LocalTime.of(23, 59))) {
+                    fimTrabalhoAjustado = LocalTime.of(23, 59, 59, 999999999); // 23:59:59.999999999
+                }
+                
+                boolean inicioValido = !horaInicio.isBefore(inicioTrabalho) && !horaInicio.isAfter(fimTrabalhoAjustado);
+                boolean fimValido = !horaFim.isBefore(inicioTrabalho) && !horaFim.isAfter(fimTrabalhoAjustado);
                 
                 if (inicioValido && fimValido) {
                     return true;
@@ -353,7 +357,12 @@ public class DisponibilidadeService {
                 LocalTime inicioTrabalho = LocalTime.parse(periodo.get("inicio"));
                 LocalTime fimTrabalho = LocalTime.parse(periodo.get("fim"));
                 
-                LocalTime horarioLimite = fimTrabalho.minusHours(duracaoHoras);
+                LocalTime fimTrabalhoAjustado = fimTrabalho;
+                if (fimTrabalho.equals(LocalTime.of(23, 59))) {
+                    fimTrabalhoAjustado = LocalTime.of(0, 0); 
+                }
+                
+                LocalTime horarioLimite = fimTrabalhoAjustado.minusHours(duracaoHoras);
                 
                 if (inicioTrabalho.isAfter(horarioLimite)) {
                     continue;
@@ -375,8 +384,14 @@ public class DisponibilidadeService {
                     
                     horaAtual = horaAtual.plusHours(1);
                     
-                    if (horaAtual.isAfter(fimTrabalho)) {
-                        break;
+                    if (fimTrabalhoAjustado.equals(LocalTime.of(0, 0))) {
+                        if (horaAtual.isAfter(horarioLimite)) {
+                            break;
+                        }
+                    } else {
+                        if (horaAtual.isAfter(fimTrabalho)) {
+                            break;
+                        }
                     }
                 }
             }

@@ -3,7 +3,9 @@ package inkspiration.backend.dto;
 import java.util.List;
 
 import inkspiration.backend.enums.TipoServico;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 
 public class ProfissionalCriacaoDTO {
     private Long idUsuario;
@@ -13,6 +15,8 @@ public class ProfissionalCriacaoDTO {
     private List<TipoServico> tiposServico;
     
     // Portifolio
+    @NotBlank(message = "Biografia é obrigatória")
+    @Size(min = 20, max = 500, message = "Biografia deve ter entre 20 e 500 caracteres")
     private String descricao;
     private String experiencia;
     private String especialidade;

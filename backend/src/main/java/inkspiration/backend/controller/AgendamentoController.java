@@ -1,6 +1,7 @@
 package inkspiration.backend.controller;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -61,6 +62,8 @@ public class AgendamentoController {
                 return ResponseEntity.badRequest().body(
                         "O profissional não está disponível para atendimento nesse horário. " +
                         "Por favor, consulte os horários de atendimento do profissional.");
+            } else if (errorMessage.contains("Você já possui outro agendamento nesse horário")) {
+                return ResponseEntity.badRequest().body(errorMessage);
             } else if (errorMessage.contains("já possui outro agendamento")) {
                 return ResponseEntity.badRequest().body(
                         "O profissional já possui outro agendamento nesse horário. " +
@@ -70,9 +73,9 @@ public class AgendamentoController {
             } else if (errorMessage.contains("Não é possível agendar consigo mesmo")) {
                 return ResponseEntity.badRequest().body(
                         "Não é possível agendar um serviço consigo mesmo como profissional.");
-            } else if (errorMessage.contains("Não é possível agendar para datas e horários que já passaram")) {
+            } else if (errorMessage.contains("Só é possível fazer agendamentos a partir do dia seguinte")) {
                 return ResponseEntity.badRequest().body(
-                        "Não é possível agendar para datas e horários que já passaram. Por favor, selecione uma data futura.");
+                        "Só é possível fazer agendamentos a partir do dia seguinte. Por favor, selecione uma data a partir do próximo dia.");
             }
             
             return ResponseEntity.badRequest().body(errorMessage);
@@ -164,15 +167,17 @@ public class AgendamentoController {
                 return ResponseEntity.badRequest().body(
                         "O profissional não está disponível para atendimento nesse horário. " +
                         "Por favor, consulte os horários de atendimento do profissional.");
+            } else if (errorMessage.contains("Você já possui outro agendamento nesse horário")) {
+                return ResponseEntity.badRequest().body(errorMessage);
             } else if (errorMessage.contains("já possui outro agendamento")) {
                 return ResponseEntity.badRequest().body(
                         "O profissional já possui outro agendamento nesse horário. " +
                         "Por favor, selecione outro horário disponível.");
             } else if (errorMessage.contains("Tipo de serviço inválido")) {
                 return ResponseEntity.badRequest().body(errorMessage);
-            } else if (errorMessage.contains("Não é possível agendar para datas e horários que já passaram")) {
+            } else if (errorMessage.contains("Só é possível fazer agendamentos a partir de amanhã")) {
                 return ResponseEntity.badRequest().body(
-                        "Não é possível agendar para datas e horários que já passaram. Por favor, selecione uma data futura.");
+                        "Só é possível fazer agendamentos a partir de amanhã. Por favor, selecione uma data a partir do próximo dia.");
             } else if (errorMessage.contains("Não autorizado")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                         "Você não tem permissão para editar este agendamento.");
@@ -241,7 +246,12 @@ public class AgendamentoController {
                         .body("Token não contém informações do usuário");
             }
             
-            Agendamento agendamento = agendamentoService.atualizarStatusAgendamento(id, userId, status);
+            String scope = jwt.getClaimAsString("scope");
+            List<String> roles = new ArrayList<>();
+            if (scope != null) {
+                roles.add(scope);
+            }
+            Agendamento agendamento = agendamentoService.atualizarStatusAgendamento(id, userId, status, roles);
             return ResponseEntity.ok(new AgendamentoDTO(agendamento));
         } catch (Exception e) {
             String errorMessage = e.getMessage();
@@ -349,6 +359,105 @@ public class AgendamentoController {
             String errorMessage = e.getMessage();
             
             if (errorMessage.contains("Nenhum agendamento concluído encontrado")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(errorMessage.getBytes());
+            }
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Erro ao gerar PDF: " + errorMessage).getBytes());
+        }
+    }
+
+    @GetMapping("/profissional/meus-atendimentos/futuros")
+    public ResponseEntity<?> listarMeusAtendimentosFuturos(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            if (authentication instanceof JwtAuthenticationToken) {
+                JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+                Jwt jwt = jwtAuth.getToken();
+                Long userId = jwt.getClaim("userId");
+                
+                if (userId == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body("Token não contém informações do usuário");
+                }
+                
+                Pageable pageable = PageRequest.of(page, size);
+                Page<AgendamentoCompletoDTO> atendimentosPage = agendamentoService.listarAtendimentosFuturos(userId, pageable);
+                
+                return ResponseEntity.ok(atendimentosPage);
+            }
+            
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Autenticação inválida");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/profissional/meus-atendimentos/passados")
+    public ResponseEntity<?> listarMeusAtendimentosPassados(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            if (authentication instanceof JwtAuthenticationToken) {
+                JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+                Jwt jwt = jwtAuth.getToken();
+                Long userId = jwt.getClaim("userId");
+                
+                if (userId == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body("Token não contém informações do usuário");
+                }
+                
+                Pageable pageable = PageRequest.of(page, size);
+                Page<AgendamentoCompletoDTO> atendimentosPage = agendamentoService.listarAtendimentosPassados(userId, pageable);
+                
+                return ResponseEntity.ok(atendimentosPage);
+            }
+            
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Autenticação inválida");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/profissional/relatorios/exportar-pdf")
+    public ResponseEntity<byte[]> exportarAtendimentosPDF(
+            @RequestParam(required = true) Integer ano,
+            @RequestParam(required = true) Integer mes,
+            Authentication authentication) {
+        try {
+            if (!(authentication instanceof JwtAuthenticationToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Autenticação inválida".getBytes());
+            }
+            
+            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+            Jwt jwt = jwtAuth.getToken();
+            Long userId = jwt.getClaim("userId");
+            
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Token não contém informações do usuário".getBytes());
+            }
+            
+            byte[] pdfBytes = agendamentoService.gerarPDFAtendimentos(userId, ano, mes);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.add("Content-Disposition", "attachment; filename=atendimentos-" + String.format("%02d", mes) + "-" + ano + ".pdf");
+            headers.add("Content-Length", String.valueOf(pdfBytes.length));
+            
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            String errorMessage = e.getMessage();
+            
+            if (errorMessage.contains("Nenhum atendimento concluído encontrado")) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(errorMessage.getBytes());
             }
