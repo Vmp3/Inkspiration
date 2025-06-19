@@ -17,7 +17,7 @@ import Input from './ui/Input';
 import AvaliacaoService from '../services/AvaliacaoService';
 import toastHelper from '../utils/toastHelper';
 
-const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isProfessional = false }) => {
+const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isProfessional = false, onOpenReview }) => {
   if (!appointment) return null;
 
   const formatDate = (date) => {
@@ -209,11 +209,11 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isPro
                 )}
               </ScrollView>
 
-              {!isProfessional && false && (
+              {!isProfessional && onOpenReview && (
                 <View style={styles.buttonRow}>
                   <TouchableOpacity 
                     style={styles.rateButton} 
-                    onPress={() => {}}
+                    onPress={onOpenReview}
                   >
                     <MaterialIcons name="star" size={20} color="#000" />
                     <Text style={styles.rateButtonText}>Avaliação</Text>

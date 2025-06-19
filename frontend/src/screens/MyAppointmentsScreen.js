@@ -266,6 +266,7 @@ const MyAppointmentsScreen = () => {
   };
 
   const handleOpenReviewModal = (appointment) => {
+    setIsCompletedModalVisible(false);
     setReviewAppointment(appointment);
     setShowReviewModal(true);
     setReviewStars(0);
@@ -506,15 +507,12 @@ const MyAppointmentsScreen = () => {
         {selectedAppointment && (
           <>
             {selectedAppointment.status?.toUpperCase() === 'CONCLUIDO' && (
-              (() => { console.log('selectedAppointment', selectedAppointment); return null; })() ||
-              (selectedAppointment &&
-                <CompletedAppointmentDetailsModal
-                  visible={isCompletedModalVisible}
-                  appointment={selectedAppointment}
-                  onClose={handleCloseCompletedModal}
-                  onOpenReview={handleOpenReviewModal}
-                />
-              )
+              <CompletedAppointmentDetailsModal
+                visible={isCompletedModalVisible}
+                appointment={selectedAppointment}
+                onClose={handleCloseCompletedModal}
+                onOpenReview={() => handleOpenReviewModal(selectedAppointment)}
+              />
             )}
             {selectedAppointment.status?.toUpperCase() === 'CANCELADO' && (
               <CancelAppointmentModal
