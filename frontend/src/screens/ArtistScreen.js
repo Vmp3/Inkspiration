@@ -191,7 +191,7 @@ const ArtistScreen = ({ route }) => {
       
       // Verificar se artistId está definido
       if (!artistId) {
-        toastHelper.showError('ID do profissional não encontrado');
+        toastHelper.showError(artistMessages.errors.professionalIdNotFound);
         navigation.goBack();
         return;
       }
@@ -493,7 +493,7 @@ const ArtistScreen = ({ route }) => {
               style={styles.scheduleButton}
               onPress={() => {
                 if (!userData) {
-                  toastHelper.showError(artistMessages.errors.loginRequired || 'Faça login para agendar');
+                  toastHelper.showError(artistMessages.errors.loginRequired);
                   navigation.navigate('Login');
                 } else {
                   navigation.navigate('Booking', { professionalId: artist.idProfissional });

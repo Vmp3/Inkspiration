@@ -15,6 +15,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { differenceInDays } from 'date-fns';
 import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
+import { editAppointmentMessages } from './editAppointment/messages';
 
 const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
   const [step, setStep] = useState(1);
@@ -137,7 +138,7 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       setIsLoading(false);
     } catch (error) {
       console.error('Erro ao carregar dados para edição:', error);
-      toastHelper.showError('Erro ao carregar dados do agendamento');
+      toastHelper.showError(editAppointmentMessages.errors.loadAppointment);
       onClose();
     }
   };
@@ -173,7 +174,7 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
     } catch (error) {
       if (!error.message || !error.message.includes('204')) {
         console.error('Erro ao carregar horários disponíveis:', error);
-        toastHelper.showError('Erro ao carregar horários disponíveis');
+        toastHelper.showError(editAppointmentMessages.errors.loadSchedules);
       }
       setAvailableTimeSlots([]);
     } finally {
@@ -215,12 +216,12 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
   const handleUpdateAppointment = async () => {
     try {
       if (!canEdit()) {
-        toastHelper.showError('O agendamento só pode ser editado com no mínimo 3 dias de antecedência');
+        toastHelper.showError(editAppointmentMessages.errors.editTimeLimit);
         return;
       }
       
       if (!selectedService || !selectedDate || !selectedTime) {
-        toastHelper.showError('Por favor, preencha todos os campos obrigatórios');
+        toastHelper.showError(editAppointmentMessages.errors.requiredFields);
         return;
       }
       
@@ -234,13 +235,13 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       
       await AgendamentoService.atualizarAgendamento(appointment.idAgendamento, updatedData);
       
-      toastHelper.showSuccess('Agendamento atualizado com sucesso!');
+      toastHelper.showSuccess(editAppointmentMessages.success.appointmentUpdated);
       onSuccess();
       onClose();
     } catch (error) {
       console.error('Erro ao atualizar agendamento:', error);
       
-      let errorMessage = 'Erro ao atualizar agendamento';
+      let errorMessage = editAppointmentMessages.errors.updateFailed;
       if (error.response?.data) {
         if (typeof error.response.data === 'object' && !Array.isArray(error.response.data)) {
           const firstError = Object.values(error.response.data)[0];

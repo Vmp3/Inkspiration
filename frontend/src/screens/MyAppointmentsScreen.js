@@ -17,6 +17,7 @@ import { differenceInDays } from 'date-fns';
 import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import Footer from '../components/Footer';
+import { appointmentsMessages } from '../components/appointments/messages';
 import AppointmentCard from '../components/AppointmentCard';
 import AppointmentDetailsModal from '../components/AppointmentDetailsModal';
 import CancelAppointmentModal from '../components/CancelAppointmentModal';
@@ -70,7 +71,7 @@ const MyAppointmentsScreen = () => {
       ]);
     } catch (error) {
       console.error('Erro ao carregar agendamentos:', error);
-      toastHelper.showError('Erro ao carregar seus agendamentos');
+      toastHelper.showError(appointmentsMessages.errors.loadAppointments);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -194,7 +195,7 @@ const MyAppointmentsScreen = () => {
     const daysDiff = differenceInDays(appointmentDate, today);
     
     if (daysDiff < 3) {
-      toastHelper.showError("A edição só é permitida com no mínimo 3 dias de antecedência.");
+      toastHelper.showError(appointmentsMessages.errors.editTimeLimit);
       return;
     }
     
@@ -217,7 +218,7 @@ const MyAppointmentsScreen = () => {
     const daysDiff = differenceInDays(appointmentDate, today);
     
     if (daysDiff < 3) {
-      toastHelper.showError("O cancelamento só é permitido com no mínimo 3 dias de antecedência.");
+      toastHelper.showError(appointmentsMessages.errors.cancelTimeLimit);
       return;
     }
     
@@ -239,7 +240,7 @@ const MyAppointmentsScreen = () => {
         'CANCELADO'
       );
       
-      toastHelper.showSuccess('Agendamento cancelado com sucesso');
+      toastHelper.showSuccess(appointmentsMessages.success.appointmentCanceled);
       setIsCancelModalVisible(false);
       setSelectedAppointment(null);
       
@@ -247,7 +248,7 @@ const MyAppointmentsScreen = () => {
     } catch (error) {
       console.error('Erro ao cancelar agendamento:', error);
       
-      let errorMessage = 'Erro ao cancelar o agendamento';
+      let errorMessage = appointmentsMessages.errors.cancelAppointment;
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }

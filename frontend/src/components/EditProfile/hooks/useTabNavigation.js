@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import useFormValidation from '../utils/formValidation';
 import toastHelper from '../../../utils/toastHelper';
+import { editProfileMessages } from '../messages';
 
 const useTabNavigation = (isArtist, formData, professionalFormData) => {
   const [activeTab, setActiveTab] = useState('personal');
@@ -29,7 +30,7 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
     if (currentTab === 'hours') {
       const isValid = validation.validateWorkHoursTab(professionalFormData);
       if (!isValid) {
-        toastHelper.showError('Corrija os horários inválidos antes de continuar.');
+        toastHelper.showError(editProfileMessages.validations.fixInvalidSchedules);
         return false;
       }
     }
@@ -69,7 +70,7 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
       case 'hours':
         isValid = validation.validateWorkHoursTab(professionalFormData);
         if (!isValid) {
-          toastHelper.showError('Corrija os horários inválidos antes de continuar.');
+          toastHelper.showError(editProfileMessages.validations.fixInvalidSchedules);
         } else {
           setActiveTab('portfolio');
         }

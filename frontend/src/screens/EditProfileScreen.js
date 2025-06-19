@@ -330,7 +330,7 @@ const EditProfileScreen = () => {
                   tabNavigation.validateCurrentTab() : true;
                 
                 if (!isValid) {
-                  toastHelper.showError('Corrija os horários inválidos antes de continuar.');
+                  toastHelper.showError(editProfileMessages.validations.fixInvalidSchedules);
                   return;
                 }
               }
@@ -469,7 +469,7 @@ const EditProfileScreen = () => {
 
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
-                  onNext={() => profileUpdate.handleUpdateProfile(formData, tabNavigation.validateCurrentTab)}
+                  onNext={() => profileUpdate.handleUpdateProfile(formData, tabNavigation.validateCurrentTab, professionalData.professionalFormData)}
                       showNext={true}
                       nextText="Salvar Alterações"
                   isLoading={profileUpdate.isLoading}

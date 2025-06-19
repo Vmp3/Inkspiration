@@ -2,6 +2,7 @@ import { Platform, Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import toastHelper from '../utils/toastHelper';
+import { pdfExportMessages } from './messages';
 
 class PDFExportService {
   async exportToPDF(response, filename) {
@@ -51,7 +52,7 @@ class PDFExportService {
       document.body.removeChild(link);
     }, 100);
     
-    toastHelper.showSuccess('PDF gerado com sucesso!');
+    toastHelper.showSuccess(pdfExportMessages.success.pdfGenerated);
   }
 
   async handleMobileDownload(response, filename) {
@@ -99,7 +100,7 @@ class PDFExportService {
           encoding: FileSystem.EncodingType.Base64 
         });
         
-        toastHelper.showSuccess('PDF salvo com sucesso na pasta selecionada!');
+        toastHelper.showSuccess(pdfExportMessages.success.pdfSaved);
         return true;
       }
     } catch (error) {
@@ -117,7 +118,7 @@ class PDFExportService {
         dialogTitle: `Salvar ${filename}`,
         UTI: 'com.adobe.pdf'
       });
-      toastHelper.showSuccess('PDF gerado com sucesso! Use o menu de compartilhamento para salvar.');
+      toastHelper.showSuccess(pdfExportMessages.success.pdfGeneratedUseShare);
     } else {
       Alert.alert(
         'PDF Gerado',
@@ -125,7 +126,7 @@ class PDFExportService {
         [
           { 
             text: 'OK', 
-            onPress: () => toastHelper.showSuccess('PDF salvo no dispositivo!') 
+            onPress: () => toastHelper.showSuccess(pdfExportMessages.success.pdfSavedToDevice) 
           }
         ]
       );
