@@ -7,6 +7,7 @@ const Input = ({
   placeholder, 
   value, 
   onChangeText, 
+  onSubmitEditing,
   secureTextEntry, 
   keyboardType,
   multiline,
@@ -20,6 +21,13 @@ const Input = ({
 }) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+
+  const handleKeyPress = (event) => {
+    const key = event.nativeEvent?.key || event.key;
+    if (key === 'Enter' && onSubmitEditing) {
+      onSubmitEditing();
+    }
+  };
 
   const renderPasswordToggle = () => {
     if (!secureTextEntry) return null;
@@ -64,6 +72,8 @@ const Input = ({
           onChangeText={onChangeText}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          onSubmitEditing={onSubmitEditing}
+          onKeyPress={handleKeyPress}
           secureTextEntry={secureTextEntry && !passwordVisible}
           keyboardType={keyboardType || 'default'}
           multiline={multiline}

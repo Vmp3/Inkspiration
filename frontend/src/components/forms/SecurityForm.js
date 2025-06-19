@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Modal, ScrollView } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import Input from '../ui/Input';
 import Checkbox from '../ui/Checkbox';
 import FormNavigation from '../ui/FormNavigation';
-import ApiService from '../../services/ApiService';
+import TermsAndPolicies from './TermsAndPolicies';
 
 const SecurityForm = ({ 
   formData, 
@@ -15,12 +16,15 @@ const SecurityForm = ({
   passwordError,
   confirmPasswordError
 }) => {
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
   const openTerms = () => {
-    Linking.openURL('https://app.inkspiration.com.br/termos-de-uso');
+    setShowTermsModal(true);
   };
 
   const openPrivacyPolicy = () => {
-    Linking.openURL('https://app.inkspiration.com.br/politica-de-privacidade');
+    setShowPrivacyModal(true);
   };
 
   return (
@@ -81,10 +85,70 @@ const SecurityForm = ({
         onNext={handleRegister}
         showNext={true}
         showPrev={true}
-        nextText="Criar Conta"
+        nextText={isLoading ? "Enviando email..." : "Criar Conta"}
         isLoading={isLoading}
         nextDisabled={!formData.termsAccepted}
       />
+
+      {/* Modal de Termos de Uso */}
+      <Modal
+        visible={showTermsModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowTermsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Termos de Uso</Text>
+              <TouchableOpacity onPress={() => setShowTermsModal(false)}>
+                <Feather name="x" size={24} color="#111" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={true}>
+              <TermsAndPolicies type="terms" />
+            </ScrollView>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity 
+                style={styles.modalButton} 
+                onPress={() => setShowTermsModal(false)}
+              >
+                <Text style={styles.modalButtonText}>Fechar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Política de Privacidade */}
+      <Modal
+        visible={showPrivacyModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowPrivacyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Política de Privacidade</Text>
+              <TouchableOpacity onPress={() => setShowPrivacyModal(false)}>
+                <Feather name="x" size={24} color="#111" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={true}>
+              <TermsAndPolicies type="privacy" />
+            </ScrollView>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity 
+                style={styles.modalButton} 
+                onPress={() => setShowPrivacyModal(false)}
+              >
+                <Text style={styles.modalButtonText}>Fechar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -145,7 +209,68 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1976d2',
     textDecorationLine: 'underline',
-  }
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    width: '100%',
+    maxWidth: 600,
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111',
+  },
+  modalContent: {
+    flex: 1,
+    padding: 20,
+  },
+  modalText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#333',
+    textAlign: 'left',
+  },
+  modalFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    alignItems: 'center',
+  },
+  modalButton: {
+    backgroundColor: '#111',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 6,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
 
 export default SecurityForm; 

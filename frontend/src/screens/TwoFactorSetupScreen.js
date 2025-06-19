@@ -16,6 +16,7 @@ import toastHelper from '../utils/toastHelper';
 import ApiService from '../services/ApiService';
 import TwoFactorService from '../services/TwoFactorService';
 import { professionalMessages } from '../components/professional/messages';
+import { useEmailTimeout, EMAIL_TIMEOUT_CONFIG } from '../components/ui/EmailTimeout';
 
 // Componentes
 import StepIndicator from '../components/TwoFactorSetup/StepIndicator';
@@ -42,10 +43,11 @@ const TwoFactorSetupScreen = () => {
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
   const [showRecoveryOption, setShowRecoveryOption] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState('');
-  const [isLoadingRecovery, setIsLoadingRecovery] = useState(false);
   const [qrCodeData, setQrCodeData] = useState('');
   const [error, setError] = useState('');
-  const [isSendingRecovery, setIsSendingRecovery] = useState(false);
+  
+  // Hook para timeout de email
+  const recoveryTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.RECOVERY_TIMEOUT);
 
   useEffect(() => {
     if (action === 'enable' && step === 2) {
@@ -161,19 +163,21 @@ const TwoFactorSetupScreen = () => {
 
   const handleSendRecoveryCode = async () => {
     try {
-      setIsLoadingRecovery(true);
-      const response = await ApiService.post('/two-factor/send-recovery-code');
-      
-      if (response && response.success) {
-        toastHelper.showSuccess(professionalMessages.success.recoveryCodeSent);
-        setShowRecoveryOption(true);
-      } else {
-        toastHelper.showError(professionalMessages.twoFactorErrors.sendRecovery);
-      }
+      await recoveryTimeout.executeWithTimeout(
+        () => ApiService.post('/two-factor/send-recovery-code'),
+        {
+          successMessage: professionalMessages.success.recoveryCodeSent,
+          timeoutMessage: 'Tempo limite para envio do código de recuperação esgotado. Tente novamente.',
+          errorMessage: professionalMessages.twoFactorErrors.sendRecovery,
+          onSuccess: (response) => {
+            if (response && response.success) {
+              setShowRecoveryOption(true);
+            }
+          }
+        }
+      );
     } catch (error) {
-      toastHelper.showError(professionalMessages.twoFactorErrors.sendRecovery);
-    } finally {
-      setIsLoadingRecovery(false);
+      // Erro já tratado pelo hook
     }
   };
 
@@ -319,10 +323,10 @@ const TwoFactorSetupScreen = () => {
 
       {/* Opção de recuperação por email para desativação */}
       {action === 'disable' && !showRecoveryOption && (
-        <RecoverySection
-          onSendRecoveryCode={handleSendRecoveryCode}
-          isLoading={isLoadingRecovery}
-        />
+              <RecoverySection
+        onSendRecoveryCode={handleSendRecoveryCode}
+        isLoading={recoveryTimeout.isLoading}
+      />
       )}
 
       <NavigationButtons

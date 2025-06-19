@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import useFormValidation from '../utils/formValidation';
+import toastHelper from '../../../utils/toastHelper';
+import { editProfileMessages } from '../messages';
 
 const useTabNavigation = (isArtist, formData, professionalFormData) => {
   const [activeTab, setActiveTab] = useState('personal');
@@ -22,6 +24,25 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
     tabs.push({ id: 'security', label: 'Segurança' });
 
     return tabs;
+  };
+
+  const canChangeTab = (currentTab, targetTab) => {
+    if (currentTab === 'hours') {
+      const isValid = validation.validateWorkHoursTab(professionalFormData);
+      if (!isValid) {
+        toastHelper.showError(editProfileMessages.validations.fixInvalidSchedules);
+        return false;
+      }
+    }
+    
+    if (currentTab === 'basic-info') {
+      const isValid = validation.validateBasicInfoTab(professionalFormData);
+      if (!isValid) {
+        return false;
+      }
+    }
+    
+    return true;
   };
 
   const handleNextTab = () => {
@@ -48,7 +69,11 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
         break;
       case 'hours':
         isValid = validation.validateWorkHoursTab(professionalFormData);
-        if (isValid) setActiveTab('portfolio');
+        if (!isValid) {
+          toastHelper.showError(editProfileMessages.validations.fixInvalidSchedules);
+        } else {
+          setActiveTab('portfolio');
+        }
         break;
       case 'portfolio':
         isValid = validation.validatePortfolioTab(professionalFormData);
@@ -109,13 +134,27 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
     }
   };
 
+  const setActiveTabWithValidation = (newTab) => {
+    if (activeTab === 'hours' && !canChangeTab(activeTab, newTab)) {
+      return;
+    }
+    setActiveTab(newTab);
+  };
+
   return {
     activeTab,
-    setActiveTab,
+    setActiveTab: setActiveTabWithValidation,
     getTabs,
     handleNextTab,
     handlePrevTab,
-    validateCurrentTab
+    validateCurrentTab,
+    isHoursValid: (() => {
+      if (activeTab !== 'hours' || !professionalFormData || !professionalFormData.workHours) {
+        return true;
+      }
+      
+      return validation.validateWorkHoursTab(professionalFormData);
+    })()
   };
 };
 

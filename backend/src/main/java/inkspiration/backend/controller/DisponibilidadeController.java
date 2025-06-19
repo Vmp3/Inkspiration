@@ -1,6 +1,6 @@
 package inkspiration.backend.controller;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import inkspiration.backend.dto.DisponibilidadeDTO;
+import inkspiration.backend.enums.TipoServico;
+import inkspiration.backend.exception.DisponibilidadeException;
 import inkspiration.backend.service.DisponibilidadeService;
 import inkspiration.backend.security.AuthorizationService;
 import inkspiration.backend.service.ProfissionalService;
@@ -52,10 +54,12 @@ public class DisponibilidadeController {
             DisponibilidadeDTO disponibilidadeDTO = disponibilidadeService.cadastrarDisponibilidadeDTO(
                     idProfissional, horarios);
             return ResponseEntity.status(HttpStatus.CREATED).body(disponibilidadeDTO);
+        } catch (DisponibilidadeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro de validação", "mensagem", e.getMessage()));
         } catch (JsonProcessingException e) {
-            return ResponseEntity.badRequest().body("Erro ao processar JSON: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro ao processar JSON", "mensagem", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro", "mensagem", e.getMessage()));
         }
     }
     
@@ -66,9 +70,9 @@ public class DisponibilidadeController {
                     disponibilidadeService.obterDisponibilidade(idProfissional);
             return ResponseEntity.ok(disponibilidade);
         } catch (JsonProcessingException e) {
-            return ResponseEntity.badRequest().body("Erro ao processar JSON: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro ao processar JSON", "mensagem", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro", "mensagem", e.getMessage()));
         }
     }
     
@@ -85,35 +89,42 @@ public class DisponibilidadeController {
             DisponibilidadeDTO disponibilidadeDTO = disponibilidadeService.buscarPorProfissionalDTO(idProfissional);
             return ResponseEntity.ok(disponibilidadeDTO);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro", "mensagem", e.getMessage()));
         }
     }
     
-    @GetMapping("/profissional/{idProfissional}/verificar")
-    public ResponseEntity<?> verificarDisponibilidade(
-            @PathVariable Long idProfissional,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim) {
+    @GetMapping("/verificar")
+    public ResponseEntity<?> obterHorariosDisponiveis(
+            @RequestParam Long idProfissional,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
+            @RequestParam String tipoServico) {
         
         try {
-            boolean disponivel = disponibilidadeService.isProfissionalDisponivel(
-                    idProfissional, inicio, fim);
-            
-            if (disponivel) {
-                return ResponseEntity.ok(Map.of(
-                    "disponivel", true,
-                    "mensagem", "O profissional está trabalhando nesse horário"
-                ));
-            } else {
-                return ResponseEntity.ok(Map.of(
-                    "disponivel", false,
-                    "mensagem", "O profissional não está trabalhando nesse horário"
+            TipoServico tipoServicoEnum;
+            try {
+                tipoServicoEnum = TipoServico.fromDescricao(tipoServico);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "erro", "Tipo de serviço inválido",
+                    "mensagem", "Tipos válidos: pequena, media, grande, sessao"
                 ));
             }
+            
+            List<String> horariosDisponiveis = disponibilidadeService.obterHorariosDisponiveis(
+                    idProfissional, data, tipoServicoEnum);
+            
+            if (horariosDisponiveis.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                        .body(Map.of("mensagem", "Não há horários disponíveis para este dia e tipo de serviço"));
+            }
+            
+            return ResponseEntity.ok(horariosDisponiveis);
         } catch (JsonProcessingException e) {
-            return ResponseEntity.badRequest().body("Erro ao processar JSON: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro ao processar JSON", "mensagem", e.getMessage()));
+        } catch (DisponibilidadeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro de validação", "mensagem", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erro", "Erro", "mensagem", e.getMessage()));
         }
     }
 } 

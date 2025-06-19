@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -28,13 +29,14 @@ import inkspiration.backend.dto.ImagemDTO;
 import inkspiration.backend.dto.ProfissionalCriacaoDTO;
 import inkspiration.backend.dto.ProfissionalDTO;
 import inkspiration.backend.dto.PortifolioDTO;
-import inkspiration.backend.dto.DisponibilidadeDTO;
 import inkspiration.backend.entities.Profissional;
+import inkspiration.backend.enums.TipoServico;
 import inkspiration.backend.service.ImagemService;
 import inkspiration.backend.service.ProfissionalService;
 import inkspiration.backend.service.PortifolioService;
 import inkspiration.backend.service.DisponibilidadeService;
 import inkspiration.backend.security.AuthorizationService;
+import inkspiration.backend.repository.ProfissionalRepository;
 import jakarta.validation.Valid;
 
 @RestController
@@ -47,7 +49,12 @@ public class ProfissionalController {
     private final AuthorizationService authorizationService;
 
     @Autowired
-    public ProfissionalController(ProfissionalService profissionalService, ImagemService imagemService, PortifolioService portifolioService, DisponibilidadeService disponibilidadeService, AuthorizationService authorizationService) {
+    public ProfissionalController(ProfissionalService profissionalService, 
+                                  ImagemService imagemService, 
+                                  PortifolioService portifolioService, 
+                                  DisponibilidadeService disponibilidadeService, 
+                                  AuthorizationService authorizationService,
+                                  ProfissionalRepository profissionalRepository) {
         this.profissionalService = profissionalService;
         this.imagemService = imagemService;
         this.portifolioService = portifolioService;
@@ -84,10 +91,19 @@ public class ProfissionalController {
     }
 
     @GetMapping("/profissional/completo")
-    public ResponseEntity<List<Map<String, Object>>> listarCompleto(@RequestParam(defaultValue = "0") int page) {
+    public ResponseEntity<Map<String, Object>> listarCompleto(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "9") int size,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String locationTerm,
+            @RequestParam(defaultValue = "0") double minRating,
+            @RequestParam(required = false) String[] selectedSpecialties,
+            @RequestParam(defaultValue = "melhorAvaliacao") String sortBy) {
+        
         // Endpoint público para listar profissionais com informações completas (portfolio, endereço, nota)
-        Pageable pageable = PageRequest.of(page, 10);
-        Page<Profissional> profissionais = profissionalService.listar(pageable);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Profissional> profissionais = profissionalService.listarComFiltros(
+            pageable, searchTerm, locationTerm, minRating, selectedSpecialties, sortBy);
         
         List<Map<String, Object>> profissionaisCompletos = profissionais.getContent().stream()
                 .map(profissional -> {
@@ -107,6 +123,8 @@ public class ProfissionalController {
                         usuarioInfo.put("imagemPerfil", profissional.getUsuario().getImagemPerfil());
                     }
                     profissionalCompleto.put("usuario", usuarioInfo);
+                    
+                    profissionalCompleto.put("tiposServico", profissional.getTiposServico());
                     
                     // Informações do endereço
                     Map<String, Object> enderecoInfo = new HashMap<>();
@@ -151,8 +169,18 @@ public class ProfissionalController {
                     return profissionalCompleto;
                 })
                 .collect(Collectors.toList());
-                
-        return ResponseEntity.ok(profissionaisCompletos);
+        
+        // Retornar dados paginados
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", profissionaisCompletos);
+        response.put("totalElements", profissionais.getTotalElements());
+        response.put("totalPages", profissionais.getTotalPages());
+        response.put("currentPage", profissionais.getNumber());
+        response.put("size", profissionais.getSize());
+        response.put("hasNext", profissionais.hasNext());
+        response.put("hasPrevious", profissionais.hasPrevious());
+        
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/profissional/completo/{id}")
@@ -176,6 +204,8 @@ public class ProfissionalController {
             usuarioInfo.put("imagemPerfil", profissional.getUsuario().getImagemPerfil());
         }
         profissionalCompleto.put("usuario", usuarioInfo);
+        
+        profissionalCompleto.put("tiposServico", profissional.getTiposServico());
         
         // Informações do endereço
         Map<String, Object> enderecoInfo = new HashMap<>();
@@ -279,6 +309,7 @@ public class ProfissionalController {
             response.put("portfolio", portfolioDto);
             response.put("imagens", imagens);
             response.put("disponibilidades", disponibilidades);
+            response.put("tiposServico", profissional.getTiposServico());
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -295,10 +326,41 @@ public class ProfissionalController {
         return ResponseEntity.ok(existePerfil);
     }
 
-    @PostMapping("/auth/register/profissional")
-    public ResponseEntity<ProfissionalDTO> criar(@RequestBody @Valid ProfissionalDTO dto) {
-        Profissional profissional = profissionalService.criar(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(profissionalService.converterParaDto(profissional));
+    @GetMapping("/tipos-servico")
+    public ResponseEntity<List<Map<String, Object>>> listarTiposServico() {
+        List<Map<String, Object>> tiposServico = Arrays.stream(TipoServico.values())
+            .map(tipo -> {
+                Map<String, Object> tipoMap = new HashMap<>();
+                tipoMap.put("nome", tipo.name());
+                tipoMap.put("descricao", tipo.getDescricao());
+                tipoMap.put("duracaoHoras", tipo.getDuracaoHoras());
+                return tipoMap;
+            })
+            .collect(Collectors.toList());
+            
+        return ResponseEntity.ok(tiposServico);
+    }
+
+    @GetMapping("/tipos-servico/{idProfissional}")
+    public ResponseEntity<List<Map<String, Object>>> listarTiposServicoPorProfissional(@PathVariable Long idProfissional) {
+        try {
+            Profissional profissional = profissionalService.buscarPorId(idProfissional);
+            List<Map<String, Object>> tiposServico = profissional.getTiposServico().stream()
+                .map(tipo -> {
+                    Map<String, Object> tipoMap = new HashMap<>();
+                    tipoMap.put("tipo", tipo.getDescricao());
+                    tipoMap.put("duracaoHoras", tipo.getDuracaoHoras());
+                    tipoMap.put("exemplo", tipo.name().startsWith("TATUAGEM_") ? 
+                        "Tatuagem " + tipo.name().replace("TATUAGEM_", "").toLowerCase() + " - " + tipo.getDuracaoHoras() + " horas" :
+                        "Sessão completa - " + tipo.getDuracaoHoras() + " horas");
+                    return tipoMap;
+                })
+                .collect(Collectors.toList());
+                
+            return ResponseEntity.ok(tiposServico);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping("/auth/register/profissional-completo")
@@ -350,10 +412,6 @@ public class ProfissionalController {
             // Verifica se o usuário pode editar este perfil profissional
             authorizationService.requireUserAccessOrAdmin(idUsuario);
             
-            // Extrair dados profissionais
-            @SuppressWarnings("unchecked")
-            Map<String, Object> profissionalData = (Map<String, Object>) requestData.get("profissional");
-            
             // Extrair dados do portfólio
             @SuppressWarnings("unchecked")
             Map<String, Object> portfolioData = (Map<String, Object>) requestData.get("portfolio");
@@ -366,50 +424,39 @@ public class ProfissionalController {
             @SuppressWarnings("unchecked")
             Map<String, List<Map<String, String>>> disponibilidadesData = (Map<String, List<Map<String, String>>>) requestData.get("disponibilidades");
             
-            // Buscar o profissional existente
+            @SuppressWarnings("unchecked")
+            List<String> tiposServicoStr = (List<String>) requestData.get("tiposServico");
+            
             Profissional profissional = profissionalService.buscarPorUsuario(idUsuario);
             
-            // Atualizar dados básicos do profissional se fornecidos
-            if (profissionalData != null) {
-                // Atualizar campos do profissional conforme necessário
-                // (implementar lógica de atualização baseada nos dados recebidos)
+            ProfissionalCriacaoDTO dto = new ProfissionalCriacaoDTO();
+            dto.setIdUsuario(idUsuario);
+            dto.setIdEndereco(profissional.getEndereco().getIdEndereco());
+            
+            if (tiposServicoStr != null) {
+                try {
+                    List<TipoServico> tiposServico = tiposServicoStr.stream()
+                            .map(TipoServico::valueOf)
+                            .collect(Collectors.toList());
+                    dto.setTiposServico(tiposServico);
+                } catch (IllegalArgumentException e) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body("Tipo de serviço inválido: " + e.getMessage());
+                }
             }
             
-            // Atualizar portfólio se fornecido
-            if (portfolioData != null && profissional.getPortifolio() != null) {
-                Long portfolioId = profissional.getPortifolio().getIdPortifolio();
-                
-                // Atualizar dados do portfólio
-                PortifolioDTO portfolioDto = new PortifolioDTO();
-                portfolioDto.setIdPortifolio(portfolioId);
-                
-                if (portfolioData.containsKey("descricao")) {
-                    portfolioDto.setDescricao((String) portfolioData.get("descricao"));
-                }
-                if (portfolioData.containsKey("especialidade")) {
-                    portfolioDto.setEspecialidade((String) portfolioData.get("especialidade"));
-                }
-                if (portfolioData.containsKey("experiencia")) {
-                    portfolioDto.setExperiencia((String) portfolioData.get("experiencia"));
-                }
-                if (portfolioData.containsKey("instagram")) {
-                    portfolioDto.setInstagram((String) portfolioData.get("instagram"));
-                }
-                if (portfolioData.containsKey("tiktok")) {
-                    portfolioDto.setTiktok((String) portfolioData.get("tiktok"));
-                }
-                if (portfolioData.containsKey("facebook")) {
-                    portfolioDto.setFacebook((String) portfolioData.get("facebook"));
-                }
-                if (portfolioData.containsKey("twitter")) {
-                    portfolioDto.setTwitter((String) portfolioData.get("twitter"));
-                }
-                if (portfolioData.containsKey("website")) {
-                    portfolioDto.setWebsite((String) portfolioData.get("website"));
-                }
-                
-                portifolioService.atualizar(portfolioId, portfolioDto);
+            if (portfolioData != null) {
+                dto.setDescricao((String) portfolioData.get("descricao"));
+                dto.setEspecialidade((String) portfolioData.get("especialidade"));
+                dto.setExperiencia((String) portfolioData.get("experiencia"));
+                dto.setInstagram((String) portfolioData.get("instagram"));
+                dto.setTiktok((String) portfolioData.get("tiktok"));
+                dto.setFacebook((String) portfolioData.get("facebook"));
+                dto.setTwitter((String) portfolioData.get("twitter"));
+                dto.setWebsite((String) portfolioData.get("website"));
             }
+            
+            profissional = profissionalService.criarProfissionalCompleto(dto);
             
             // Atualizar imagens do portfólio se fornecidas
             if (imagensData != null && profissional.getPortifolio() != null) {
@@ -436,6 +483,8 @@ public class ProfissionalController {
             if (disponibilidadesData != null) {
                 disponibilidadeService.cadastrarDisponibilidade(profissional.getIdProfissional(), disponibilidadesData);
             }
+            
+            profissional = profissionalService.buscarPorId(profissional.getIdProfissional());
             
             // Retornar dados completos atualizados no mesmo formato do endpoint /completo
             return buscarCompletoPorid(profissional.getIdProfissional());

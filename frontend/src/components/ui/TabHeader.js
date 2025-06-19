@@ -1,7 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 
-const TabHeader = ({ tabs, activeTab, setActiveTab }) => {
+const TabHeader = ({ tabs, activeTab, setActiveTab, onTabPress }) => {
+  const handleTabPress = (tabId) => {
+    if (onTabPress) {
+      onTabPress(tabId);
+    } else {
+      setActiveTab(tabId);
+    }
+  };
+
   return (
     <ScrollView 
       horizontal 
@@ -16,7 +24,7 @@ const TabHeader = ({ tabs, activeTab, setActiveTab }) => {
               styles.tabItem,
               activeTab === tab.id && styles.activeTabItem,
             ]}
-            onPress={() => setActiveTab(tab.id)}
+            onPress={() => handleTabPress(tab.id)}
           >
             <Text
               style={[

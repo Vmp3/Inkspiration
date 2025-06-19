@@ -1,6 +1,7 @@
 package inkspiration.backend.controller;
 
 import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import inkspiration.backend.dto.UsuarioDTO;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.security.AuthenticationService;
 import inkspiration.backend.service.UsuarioService;
+import inkspiration.backend.service.TwoFactorAuthService;
 import jakarta.validation.Valid;
 
 @RestController
@@ -28,17 +30,23 @@ public class AuthenticationController {
     private final AuthenticationManager authenticationManager;
     private final AuthenticationService authService;
     private final UsuarioService usuarioService;
+    private final TwoFactorAuthService twoFactorAuthService;
 
-    public AuthenticationController(AuthenticationManager authenticationManager, AuthenticationService authService, UsuarioService usuarioService) {
+    public AuthenticationController(AuthenticationManager authenticationManager, 
+                                  AuthenticationService authService, 
+                                  UsuarioService usuarioService,
+                                  TwoFactorAuthService twoFactorAuthService) {
         this.authenticationManager = authenticationManager;
         this.authService = authService;
         this.usuarioService = usuarioService;
+        this.twoFactorAuthService = twoFactorAuthService;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody @Valid UsuarioAutenticarDTO loginDTO) {
+    public ResponseEntity<?> login(@RequestBody @Valid UsuarioAutenticarDTO loginDTO) {
         System.out.println("Tentativa de login para usuário com CPF: " + loginDTO.getCpf());
         
+        // Primeira etapa: autenticação com usuário e senha
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(loginDTO.getCpf(), loginDTO.getSenha())
         );
@@ -48,19 +56,62 @@ public class AuthenticationController {
             System.out.println("Tentativa de login de usuário inativo com CPF: " + loginDTO.getCpf());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuário inativo ou deletado");
         }
-    
-        String token = authService.authenticate(authentication);
-        System.out.println("Token gerado para usuário com CPF: " + loginDTO.getCpf());
+        
+        // Buscar o usuário para verificar se tem 2FA ativado
+        Usuario usuario = usuarioService.buscarPorCpf(loginDTO.getCpf());
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não encontrado");
+        }
+        
+        // Verificar se o 2FA está ativado
+        boolean isTwoFactorEnabled = twoFactorAuthService.isTwoFactorEnabled(usuario.getIdUsuario());
+        
+        if (isTwoFactorEnabled) {
+            // Se o 2FA está ativado mas não foi fornecido código
+            if (loginDTO.getTwoFactorCode() == null) {
+                System.out.println("2FA necessário para usuário com CPF: " + loginDTO.getCpf());
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("requiresTwoFactor", true);
+                response.put("message", "Código de autenticação de dois fatores é obrigatório");
+                return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED).body(response);
+            }
+            
+            // Validar o código 2FA fornecido
+            boolean isValidCode = twoFactorAuthService.validateCode(usuario.getIdUsuario(), loginDTO.getTwoFactorCode());
+            if (!isValidCode) {
+                System.out.println("Código 2FA inválido para usuário com CPF: " + loginDTO.getCpf());
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("requiresTwoFactor", true);
+                response.put("message", "Código de autenticação de dois fatores inválido");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+            
+            System.out.println("Código 2FA validado com sucesso para usuário com CPF: " + loginDTO.getCpf());
+        }
+        
+        // Gerar token JWT após validação completa
+        // Usar o valor de rememberMe do DTO, defaultando para false se null
+        Boolean rememberMe = loginDTO.getRememberMe() != null ? loginDTO.getRememberMe() : false;
+        String token = authService.authenticate(authentication, rememberMe);
+        System.out.println("Token gerado para usuário com CPF: " + loginDTO.getCpf() + 
+                          " (Remember Me: " + rememberMe + ")");
         
         // Salva o novo token no usuário
-        Usuario usuario = usuarioService.buscarPorCpf(loginDTO.getCpf());
         if (usuario != null) {
             usuario.setTokenAtual(token);
             usuarioService.salvar(usuario);
             System.out.println("Token salvo para usuário com CPF: " + loginDTO.getCpf());
         }
-    
-        return ResponseEntity.ok(token);
+        
+        // Resposta de sucesso
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("token", token);
+        response.put("message", "Login realizado com sucesso");
+        
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/register")
@@ -132,6 +183,43 @@ public class AuthenticationController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro ao reautenticar: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/check-2fa")
+    public ResponseEntity<?> checkTwoFactorRequirement(@RequestBody Map<String, String> request) {
+        try {
+            String cpf = request.get("cpf");
+            if (cpf == null || cpf.trim().isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "CPF é obrigatório");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Buscar o usuário pelo CPF
+            Usuario usuario = usuarioService.buscarPorCpf(cpf);
+            if (usuario == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("requiresTwoFactor", false);
+                return ResponseEntity.ok(response);
+            }
+            
+            // Verificar se o 2FA está ativado
+            boolean isTwoFactorEnabled = twoFactorAuthService.isTwoFactorEnabled(usuario.getIdUsuario());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("requiresTwoFactor", isTwoFactorEnabled);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Erro ao verificar 2FA: " + e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Erro interno do servidor");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 }

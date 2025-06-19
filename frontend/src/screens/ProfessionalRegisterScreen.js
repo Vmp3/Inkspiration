@@ -23,6 +23,7 @@ import Button from '../components/ui/Button';
 import FormNavigation from '../components/ui/FormNavigation';
 import toastHelper from '../utils/toastHelper';
 import { TimeInput } from '../components/TimeInput';
+import { professionalRegisterMessages } from '../components/professionalRegister/messages';
 import AuthService from '../services/AuthService';
 import ApiService from '../services/ApiService';
 import ProfessionalService from '../services/ProfessionalService';
@@ -35,11 +36,14 @@ import PortfolioForm from '../components/forms/PortfolioForm';
 
 const ProfessionalRegisterScreen = () => {
   const navigation = useNavigation();
-  const { userData, updateUserData } = useAuth();
+  const { userData, updateUserData, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('basic');
   const [isLoading, setIsLoading] = useState(false);
   const [showExperienceOptions, setShowExperienceOptions] = useState(false);
   const [experienceDropdownOpen, setExperienceDropdownOpen] = useState(false);
+  
+  const [tiposServico, setTiposServico] = useState([]);
+  const [tipoServicoSelecionados, setTipoServicoSelecionados] = useState({});
   
   // Estados para as informações básicas
   const [experience, setExperience] = useState('1-3 anos');
@@ -70,13 +74,13 @@ const ProfessionalRegisterScreen = () => {
       available: true,
       morning: {
         enabled: true,
-        start: '08:00',
-        end: '12:00'
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: true,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     },
     {
@@ -84,13 +88,13 @@ const ProfessionalRegisterScreen = () => {
       available: true,
       morning: {
         enabled: true,
-        start: '08:00',
-        end: '12:00'
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: true,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     },
     {
@@ -98,13 +102,13 @@ const ProfessionalRegisterScreen = () => {
       available: true,
       morning: {
         enabled: true,
-        start: '08:00',
-        end: '12:00'
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: true,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     },
     {
@@ -112,13 +116,13 @@ const ProfessionalRegisterScreen = () => {
       available: true,
       morning: {
         enabled: true,
-        start: '08:00',
-        end: '12:00'
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: true,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     },
     {
@@ -126,27 +130,27 @@ const ProfessionalRegisterScreen = () => {
       available: true,
       morning: {
         enabled: true,
-        start: '08:00',
-        end: '12:00'
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: true,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     },
     {
       day: 'Sábado',
-      available: true,
+      available: false,
       morning: {
-        enabled: true,
-        start: '08:00',
-        end: '12:00'
+        enabled: false,
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: false,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     },
     {
@@ -154,19 +158,20 @@ const ProfessionalRegisterScreen = () => {
       available: false,
       morning: {
         enabled: false,
-        start: '08:00',
-        end: '12:00'
+        start: '07:00',
+        end: '11:00'
       },
       afternoon: {
         enabled: false,
         start: '13:00',
-        end: '18:00'
+        end: '20:00'
       }
     }
   ]);
   
   // Estado para portfólio
   const [biography, setBiography] = useState('');
+  const [biographyError, setBiographyError] = useState('');
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [profileImage, setProfileImage] = useState(null);
   
@@ -223,12 +228,16 @@ const ProfessionalRegisterScreen = () => {
   
   // Verificar se o usuário está logado
   useEffect(() => {
+    if (loading) {
+      return;
+    }
+    
     if (!userData) {
       navigation.navigate('Login');
     } else if (userData.role === 'ROLE_PROF') {
       navigation.navigate('Home');
     }
-  }, [userData, navigation]);
+  }, [userData, navigation, loading]);
   
   // Fechar dropdown quando clicar fora do componente
   useEffect(() => {
@@ -259,11 +268,37 @@ const ProfessionalRegisterScreen = () => {
     }));
   };
   
+  const handleTipoServicoChange = (tipoNome) => {
+    setTipoServicoSelecionados(prev => ({
+      ...prev,
+      [tipoNome]: !prev[tipoNome]
+    }));
+  };
+  
   const handleSocialMediaChange = (platform, value) => {
     setSocialMedia(prev => ({
       ...prev,
       [platform]: value
     }));
+  };
+
+  const validateBiography = (text) => {
+    if (!text || text.trim().length === 0) {
+      return 'Biografia é obrigatória';
+    }
+    if (text.trim().length < 20) {
+      return 'Biografia deve ter pelo menos 20 caracteres';
+    }
+    if (text.trim().length > 500) {
+      return 'Biografia deve ter no máximo 500 caracteres';
+    }
+    return '';
+  };
+
+  const handleBiographyChange = (text) => {
+    setBiography(text);
+    const error = validateBiography(text);
+    setBiographyError(error);
   };
   
   const handleWorkHourChange = (index, period, field, value) => {
@@ -326,7 +361,7 @@ const ProfessionalRegisterScreen = () => {
         }
       }
     } catch (error) {
-      toastHelper.showError('Falha ao selecionar imagem. Tente novamente.');
+              toastHelper.showError(professionalRegisterMessages.errors.imageSelectionFailed);
     }
   };
   
@@ -368,11 +403,81 @@ const ProfessionalRegisterScreen = () => {
     }
   };
   
+  const validateBasicTab = () => {
+    const selectedSpecialties = Object.keys(specialties).filter(key => specialties[key]);
+    if (selectedSpecialties.length === 0) {
+      return false;
+    }
+    
+    if (tipoServicoSelecionados) {
+      const selectedServices = Object.keys(tipoServicoSelecionados).filter(
+        key => tipoServicoSelecionados[key]
+      );
+      
+      if (selectedServices.length === 0) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+  
+  const validateWorkHours = () => {
+    const hasWorkHours = workHours.some(day => 
+      day.available && (day.morning.enabled || day.afternoon.enabled)
+    );
+    
+    for (const day of workHours) {
+      if (!day.available) continue;
+      
+      if (day.morning.enabled) {
+        if (!day.morning.start || day.morning.start.length < 5 || !day.morning.end || day.morning.end.length < 5) {
+          return false;
+        }
+        
+        const [startHours, startMinutes] = day.morning.start.split(':').map(num => parseInt(num, 10));
+        const [endHours, endMinutes] = day.morning.end.split(':').map(num => parseInt(num, 10));
+        
+        if (endHours * 60 + endMinutes <= startHours * 60 + startMinutes) {
+          return false;
+        }
+      }
+      
+      if (day.afternoon.enabled) {
+        if (!day.afternoon.start || day.afternoon.start.length < 5 || !day.afternoon.end || day.afternoon.end.length < 5) {
+          return false;
+        }
+        
+        const [startHours, startMinutes] = day.afternoon.start.split(':').map(num => parseInt(num, 10));
+        const [endHours, endMinutes] = day.afternoon.end.split(':').map(num => parseInt(num, 10));
+        
+        if (endHours * 60 + endMinutes <= startHours * 60 + startMinutes) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  };
+
+  const validatePortfolioTab = () => {
+    return biography.trim().length >= 20 && 
+           biography.trim().length <= 500 && 
+           biographyError === '';
+  };
+  
   const handleNextTab = () => {
     if (activeTab === 'basic') {
+      if (!validateBasicTab()) return;
       setActiveTab('hours');
     } else if (activeTab === 'hours') {
+      if (!validateWorkHours()) return;
       setActiveTab('portfolio');
+    } else if (activeTab === 'portfolio') {
+      if (!validatePortfolioTab()) {
+        toastHelper.showError(professionalRegisterMessages.errors.portfolioFieldsRequired);
+        return;
+      }
     }
   };
   
@@ -388,17 +493,22 @@ const ProfessionalRegisterScreen = () => {
     setIsLoading(true);
     
     try {
-      // Validar se pelo menos uma especialidade foi selecionada
       const selectedSpecialties = Object.keys(specialties).filter(key => specialties[key]);
       if (selectedSpecialties.length === 0) {
-        toastHelper.showError('Selecione pelo menos uma especialidade');
+        setIsLoading(false);
+        return;
+      }
+      
+      const selectedTiposServico = Object.keys(tipoServicoSelecionados).filter(key => tipoServicoSelecionados[key]);
+      if (selectedTiposServico.length === 0) {
+        toastHelper.showError(professionalRegisterMessages.errors.serviceTypeRequired);
         setIsLoading(false);
         return;
       }
       
       // Validar biografia
       if (!biography || biography.trim().length < 20) {
-        toastHelper.showError('A biografia deve conter pelo menos 20 caracteres');
+        toastHelper.showError(professionalRegisterMessages.errors.biographyMinLength);
         setIsLoading(false);
         return;
       }
@@ -422,14 +532,14 @@ const ProfessionalRegisterScreen = () => {
       
       // Validar se pelo menos um horário foi selecionado
       if (disponibilidades.length === 0) {
-        toastHelper.showError('Defina pelo menos um horário de disponibilidade');
+        toastHelper.showError(professionalRegisterMessages.errors.scheduleRequired);
         setIsLoading(false);
         return;
       }
       
       // Verificar se o usuário está logado e tem os dados necessários
       if (!userData?.idUsuario) {
-        toastHelper.showError('Não foi possível identificar seu usuário. Faça login novamente.');
+        toastHelper.showError(professionalRegisterMessages.errors.userNotIdentified);
         setIsLoading(false);
         return;
       }
@@ -439,7 +549,7 @@ const ProfessionalRegisterScreen = () => {
         const userDetails = await ApiService.get(`/usuario/${userData.idUsuario}`);
         
         if (!userDetails.idEndereco) {
-          toastHelper.showError('Seu cadastro não possui um endereço. Atualize seu perfil antes de continuar.');
+          toastHelper.showError(professionalRegisterMessages.errors.addressRequired);
           setIsLoading(false);
           return;
         }
@@ -448,6 +558,7 @@ const ProfessionalRegisterScreen = () => {
         const professionalData = {
           idUsuario: userData.idUsuario,
           idEndereco: userDetails.idEndereco,
+          tiposServico: selectedTiposServico,
           experiencia: experience,
           especialidade: selectedSpecialties.join(', '),
           descricao: biography,
@@ -465,18 +576,18 @@ const ProfessionalRegisterScreen = () => {
         
         // Se houver imagens, fazer o upload
         if ((profileImage && profileImage.uri) || portfolioImages.some(img => img && img.uri)) {
-          toastHelper.showInfo('Enviando imagens...');
+          toastHelper.showInfo(professionalRegisterMessages.info.uploadingImages);
           
           try {
             // Tentativa de envio das imagens
             await uploadImages(profissionalCadastrado.idProfissional);
           } catch (imageError) {
             console.error('Erro ao enviar imagens:', imageError);
-            toastHelper.showWarning('Profissional cadastrado, mas houve um problema ao enviar as imagens.');
+            toastHelper.showWarning(professionalRegisterMessages.warnings.imageUploadPartialFailure);
           }
         }
         
-        toastHelper.showSuccess('Cadastro de profissional realizado com sucesso!');
+                  toastHelper.showSuccess(professionalRegisterMessages.success.professionalRegistered);
         
         // Atualizar o token para refletir a nova role (ROLE_PROF)
         try {
@@ -490,7 +601,7 @@ const ProfessionalRegisterScreen = () => {
             }, 1000);
           } else {
             console.error('Falha ao atualizar token - redirecionando para login');
-            toastHelper.showWarning('Por favor, faça login novamente para atualizar suas permissões');
+            toastHelper.showWarning(professionalRegisterMessages.warnings.loginAgainForPermissions);
             await AuthService.logout();
             setTimeout(() => {
               navigation.navigate('Login');
@@ -499,7 +610,7 @@ const ProfessionalRegisterScreen = () => {
         } catch (tokenError) {
           console.error('Erro ao atualizar token:', tokenError);
           
-          toastHelper.showWarning('Por favor, faça login novamente para atualizar suas permissões');
+          toastHelper.showWarning(professionalRegisterMessages.warnings.loginAgainForPermissions);
           await AuthService.logout();
           setTimeout(() => {
             navigation.navigate('Login');
@@ -507,12 +618,12 @@ const ProfessionalRegisterScreen = () => {
         }
       } catch (userError) {
         console.error('Erro ao obter dados do usuário ou cadastrar profissional:', userError);
-        toastHelper.showError('Ocorreu um erro ao processar sua solicitação. Tente novamente.');
+        toastHelper.showError(professionalRegisterMessages.errors.genericError);
       }
       
     } catch (error) {
       console.error('Erro ao cadastrar profissional:', error);
-      toastHelper.showError(error.message || 'Ocorreu um erro ao tentar cadastrar. Tente novamente.');
+      toastHelper.showError(error.message || professionalRegisterMessages.errors.registrationFailed);
     } finally {
       setIsLoading(false);
     }
@@ -534,7 +645,21 @@ const ProfessionalRegisterScreen = () => {
           
           <View style={styles.cardWrapper}>
             <View style={styles.card}>
-              <TabHeader tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+              <TabHeader 
+                tabs={tabs} 
+                activeTab={activeTab} 
+                setActiveTab={(tabId) => {
+                  if (activeTab === 'basic' && tabId !== 'basic') {
+                    if (!validateBasicTab()) return;
+                  }
+                  
+                  if (activeTab === 'hours' && tabId !== 'hours' && tabId !== 'basic') {
+                    if (!validateWorkHours()) return;
+                  }
+                  
+                  setActiveTab(tabId);
+                }} 
+              />
               
               {activeTab === 'basic' && (
                 <View style={styles.tabContentWrapper}>
@@ -547,12 +672,17 @@ const ProfessionalRegisterScreen = () => {
                     handleSocialMediaChange={handleSocialMediaChange}
                     experienceDropdownOpen={experienceDropdownOpen}
                     setExperienceDropdownOpen={setExperienceDropdownOpen}
+                    tiposServico={tiposServico}
+                    setTiposServico={setTiposServico}
+                    tipoServicoSelecionados={tipoServicoSelecionados}
+                    handleTipoServicoChange={handleTipoServicoChange}
                   />
                   <View style={styles.formNavigationWrapper}>
                     <FormNavigation
                       onNext={handleNextTab}
                       showPrev={false}
                       nextText="Próximo"
+                      nextDisabled={!validateBasicTab()}
                     />
                   </View>
                 </View>
@@ -569,6 +699,7 @@ const ProfessionalRegisterScreen = () => {
                       onPrev={handlePrevTab}
                       onNext={handleNextTab}
                       nextText="Próximo"
+                      nextDisabled={!validateWorkHours()}
                     />
                   </View>
                 </View>
@@ -579,6 +710,8 @@ const ProfessionalRegisterScreen = () => {
                   <PortfolioForm 
                     biography={biography}
                     setBiography={setBiography}
+                    biographyError={biographyError}
+                    handleBiographyChange={handleBiographyChange}
                     portfolioImages={portfolioImages}
                     profileImage={profileImage}
                     handleAddPortfolioImage={handleAddPortfolioImage}

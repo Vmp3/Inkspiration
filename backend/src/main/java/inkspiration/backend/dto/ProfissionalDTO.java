@@ -1,11 +1,14 @@
 package inkspiration.backend.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
+
+import inkspiration.backend.enums.TipoServico;
 
 public class ProfissionalDTO {
     
@@ -22,7 +25,18 @@ public class ProfissionalDTO {
     @Digits(integer = 1, fraction = 1)
     private BigDecimal nota;
     
+    private List<TipoServico> tiposServico;
+    
     public ProfissionalDTO() {}
+    
+    public ProfissionalDTO(Long idProfissional, Long idUsuario, Long idEndereco, 
+                          BigDecimal nota, List<TipoServico> tiposServico) {
+        this.idProfissional = idProfissional;
+        this.idUsuario = idUsuario;
+        this.idEndereco = idEndereco;
+        this.nota = nota;
+        this.tiposServico = tiposServico;
+    }
     
     public ProfissionalDTO(Long idProfissional, Long idUsuario, Long idEndereco, 
                           BigDecimal nota) {
@@ -63,5 +77,13 @@ public class ProfissionalDTO {
     
     public void setNota(BigDecimal nota) {
         this.nota = nota;
+    }
+    
+    public List<TipoServico> getTiposServico() {
+        return tiposServico;
+    }
+    
+    public void setTiposServico(List<TipoServico> tiposServico) {
+        this.tiposServico = tiposServico;
     }
 } 

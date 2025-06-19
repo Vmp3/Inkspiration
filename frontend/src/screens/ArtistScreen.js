@@ -8,15 +8,18 @@ import {
   TouchableOpacity, 
   FlatList, 
   Dimensions,
-  Linking
+  Linking,
+  Modal
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons, Feather, FontAwesome, Entypo, AntDesign } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import ProfessionalService from '../services/ProfessionalService';
 import toastHelper from '../utils/toastHelper';
+import textUtils from '../utils/textUtils';
 import { artistMessages } from '../components/common/messages';
 import { mockReviews } from '../data/reviews';
+import DefaultUser from '../../assets/default_user.png'
 
 const Tabs = ({ tabs, activeTab, onTabChange }) => {
   return (
@@ -60,7 +63,7 @@ const Card = ({ children, style }) => {
   );
 };
 
-const PortfolioItem = ({ image }) => {
+const PortfolioItem = ({ image, onPress }) => {
   // Função para processar a imagem base64
   const processBase64Image = (base64String) => {    
     // Se já tem o prefixo data:image, usar diretamente
@@ -75,7 +78,7 @@ const PortfolioItem = ({ image }) => {
   const imageUri = processBase64Image(image);
 
   return (
-    <View style={styles.portfolioItem}>
+    <TouchableOpacity style={styles.portfolioItem} onPress={() => onPress(imageUri)} activeOpacity={0.8}>
       <Image
         source={{ uri: imageUri }}
         style={styles.portfolioImage}
@@ -84,7 +87,7 @@ const PortfolioItem = ({ image }) => {
       <View style={styles.portfolioPlaceholder}>
         <Feather name="image" size={24} color="#D1D5DB" />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -119,7 +122,9 @@ const SocialMediaItem = ({ platform, username, onPress }) => {
       activeOpacity={0.7}
     >
       {getIcon()}
-      <Text style={styles.socialText}>{username}</Text>
+      <Text style={styles.socialText} numberOfLines={1} ellipsizeMode="tail">
+        {textUtils.truncateText(username, 20)}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -137,8 +142,22 @@ const ArtistScreen = ({ route }) => {
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
+  const [isSamePerson, setIsSamePerson] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showImageModal, setShowImageModal] = useState(false);
   
   const isMobile = screenData.width < 768;
+
+  const mapServiceType = (serviceType) => {
+    const serviceTypeMap = {
+      'TATUAGEM_PEQUENA': 'Tatuagem Pequena',
+      'TATUAGEM_MEDIA': 'Tatuagem Média', 
+      'TATUAGEM_GRANDE': 'Tatuagem Grande',
+      'SESSAO': 'Sessão'
+    };
+    
+    return serviceTypeMap[serviceType] || serviceType;
+  };
 
   useEffect(() => {
     const onChange = (result) => {
@@ -172,13 +191,17 @@ const ArtistScreen = ({ route }) => {
       
       // Verificar se artistId está definido
       if (!artistId) {
-        toastHelper.showError('ID do profissional não encontrado');
+        toastHelper.showError(artistMessages.errors.professionalIdNotFound);
         navigation.goBack();
         return;
       }
       
       // Buscar dados completos do profissional
       const professionalData = await ProfessionalService.getProfessionalCompleteById(artistId);
+      
+      if (userData?.idUsuario === professionalData.profissional.idUsuario) {
+        setIsSamePerson(true);
+      }
       
       const transformedData = ProfessionalService.transformCompleteProfessionalData(professionalData);
       
@@ -195,20 +218,22 @@ const ArtistScreen = ({ route }) => {
         };
       });
       
+      const mappedServices = professionalData.profissional.tiposServico 
+        ? professionalData.profissional.tiposServico.map(serviceType => ({
+            name: mapServiceType(serviceType)
+          }))
+        : [];
+
       setArtist({
         ...transformedData,
+        idProfissional: artistId,
         title: "Tatuador",
-        bio: transformedData.description || "Profissional especializado em tatuagens com foco na criação de designs personalizados que contam uma história e refletem a personalidade dos clientes.",
+        bio: transformedData.description,
         reviewCount: reviews.length,
         profileImage: transformedData.coverImage,
         coverImage: transformedData.coverImage,
         portfolio: processedImages,
-        services: [
-          { name: "Tatuagem Pequena (5-8 cm)" },
-          { name: "Tatuagem Média (10-15 cm)" },
-          { name: "Tatuagem Grande (18+ cm)" },
-          { name: "Sessão Dia Inteiro (6-8 horas)" },
-        ],
+        services: mappedServices,
         social: {
           instagram: transformedData.instagram,
           facebook: transformedData.facebook,
@@ -250,6 +275,16 @@ const ArtistScreen = ({ route }) => {
     } catch (error) {
       toastHelper.showError(artistMessages.errors.linkError);
     }
+  };
+
+  const handleImagePress = (imageUri) => {
+    setSelectedImage(imageUri);
+    setShowImageModal(true);
+  };
+
+  const closeImageModal = () => {
+    setShowImageModal(false);
+    setSelectedImage(null);
   };
 
   // Mostrar loading enquanto carrega os dados
@@ -301,7 +336,8 @@ const ArtistScreen = ({ route }) => {
             portfolioImages.map((image, index) => (
               <PortfolioItem 
                 key={index} 
-                image={image.imagemBase64 || "https://via.placeholder.com/300"} 
+                image={image.imagemBase64 || DefaultUser} 
+                onPress={handleImagePress}
               />
             ))
           )}
@@ -366,7 +402,7 @@ const ArtistScreen = ({ route }) => {
 
                 <View style={styles.reviewFooter}>
                   <Text style={styles.serviceLabel}>Serviço:</Text>
-                  <Text style={styles.serviceType}>{item.tattooType}</Text>
+                  <Text style={styles.serviceType}>{mapServiceType(item.tattooType)}</Text>
                 </View>
               </View>
             )}
@@ -426,7 +462,9 @@ const ArtistScreen = ({ route }) => {
             />
             
             <View style={styles.profileInfo}>
-              <Text style={styles.artistName}>{artist.name}</Text>
+              <Text style={styles.artistName} numberOfLines={2} ellipsizeMode="tail">
+                {textUtils.truncateName(artist.name, 15)}
+              </Text>
               <Text style={styles.artistTitle}>{artist.title}</Text>
               <View style={styles.ratingRow}>
                 <MaterialIcons name="star" size={16} color="#FACC15" />
@@ -434,7 +472,9 @@ const ArtistScreen = ({ route }) => {
               </View>
               <View style={styles.locationRow}>
                 <Feather name="map-pin" size={16} color="#6B7280" />
-                <Text style={styles.locationText}>{artist.location}</Text>
+                <Text style={styles.locationText} numberOfLines={1} ellipsizeMode="tail">
+                  {textUtils.truncateText(artist.location, 30)}
+                </Text>
               </View>
             </View>
           </View>
@@ -448,44 +488,57 @@ const ArtistScreen = ({ route }) => {
             ))}
           </View>
 
-          {/* Botão de agendar */}
-          <TouchableOpacity 
-            style={styles.scheduleButton}
-            onPress={() => navigation.navigate('Booking', { id: artist.id, type: 'artist' })}
-          >
-            <Feather name="calendar" size={20} color="#FFFFFF" style={styles.scheduleIcon} />
-            <Text style={styles.scheduleText}>Agendar</Text>
-          </TouchableOpacity>
+          {!isSamePerson && (
+            <TouchableOpacity 
+              style={styles.scheduleButton}
+              onPress={() => {
+                if (!userData) {
+                  toastHelper.showError(artistMessages.errors.loginRequired);
+                  navigation.navigate('Login');
+                } else {
+                  navigation.navigate('Booking', { professionalId: artist.idProfissional });
+                }
+              }}
+            >
+              <Feather name="calendar" size={20} color="#FFFFFF" style={styles.scheduleIcon} />
+              <Text style={styles.scheduleText}>Agendar</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Serviços */}
           <Card style={styles.servicesCard}>
             <Text style={styles.sectionTitle}>Serviços</Text>
-            {artist.services.map((service, index) => (
-              <Text key={index} style={styles.serviceItem}>{service.name}</Text>
-            ))}
+            {artist.services.length === 0 ? (
+              <Text style={styles.noServicesText}>Nenhum serviço cadastrado</Text>
+            ) : (
+              artist.services.map((service, index) => (
+                <Text key={index} style={styles.serviceItem}>{service.name}</Text>
+              ))
+            )}
           </Card>
 
-          {/* Redes Sociais */}
-          <Card style={styles.socialCard}>
-            <Text style={styles.sectionTitle}>Redes Sociais</Text>
-            <View style={styles.socialLinks}>
-              {artist.social.instagram && (
-                <SocialMediaItem platform="instagram" username={artist.social.instagram} onPress={() => openSocialLink(`https://instagram.com/${artist.social.instagram}`)} />
-              )}
-              {artist.social.tiktok && (
-                <SocialMediaItem platform="tiktok" username={artist.social.tiktok} onPress={() => openSocialLink(`https://tiktok.com/@${artist.social.tiktok}`)} />
-              )}
-              {artist.social.facebook && (
-                <SocialMediaItem platform="facebook" username={artist.social.facebook} onPress={() => openSocialLink(`https://facebook.com/${artist.social.facebook}`)} />
-              )}
-              {artist.social.twitter && (
-                <SocialMediaItem platform="twitter" username={artist.social.twitter} onPress={() => openSocialLink(`https://twitter.com/${artist.social.twitter}`)} />
-              )}
-              {artist.social.website && (
-                <SocialMediaItem platform="website" username={artist.social.website} onPress={() => openSocialLink(artist.social.website)} />
-              )}
-            </View>
-          </Card>
+          {(artist.social.instagram || artist.social.tiktok || artist.social.facebook || artist.social.twitter || artist.social.website) && (
+            <Card style={styles.socialCard}>
+              <Text style={styles.sectionTitle}>Redes Sociais</Text>
+              <View style={styles.socialLinks}>
+                {artist.social.instagram && (
+                  <SocialMediaItem platform="instagram" username={artist.social.instagram} onPress={() => openSocialLink(`https://instagram.com/${artist.social.instagram}`)} />
+                )}
+                {artist.social.tiktok && (
+                  <SocialMediaItem platform="tiktok" username={artist.social.tiktok} onPress={() => openSocialLink(`https://tiktok.com/@${artist.social.tiktok}`)} />
+                )}
+                {artist.social.facebook && (
+                  <SocialMediaItem platform="facebook" username={artist.social.facebook} onPress={() => openSocialLink(`https://facebook.com/${artist.social.facebook}`)} />
+                )}
+                {artist.social.twitter && (
+                  <SocialMediaItem platform="twitter" username={artist.social.twitter} onPress={() => openSocialLink(`https://twitter.com/${artist.social.twitter}`)} />
+                )}
+                {artist.social.website && (
+                  <SocialMediaItem platform="website" username={artist.social.website} onPress={() => openSocialLink(artist.social.website)} />
+                )}
+              </View>
+            </Card>
+          )}
         </View>
 
         <View style={[styles.rightColumn, isMobile && styles.rightColumnMobile]}>
@@ -503,6 +556,40 @@ const ArtistScreen = ({ route }) => {
           {renderActiveTab()}
         </View>
       </View>
+
+      {/* Modal de Imagem Ampliada */}
+      <Modal
+        visible={showImageModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeImageModal}
+      >
+        <View style={styles.imageModalContainer}>
+          <TouchableOpacity 
+            style={styles.imageModalBackdrop} 
+            onPress={closeImageModal}
+            activeOpacity={1}
+          >
+            <View style={styles.imageModalContent}>
+              <TouchableOpacity 
+                style={styles.closeButton} 
+                onPress={closeImageModal}
+                activeOpacity={0.7}
+              >
+                <Feather name="x" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              
+              {selectedImage && (
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={styles.expandedImage}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -683,27 +770,37 @@ const styles = StyleSheet.create({
   portfolioGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    padding: 4,
   },
   portfolioItem: {
-    width: '33.33%',
+    width: '20%',
     aspectRatio: 1,
     position: 'relative',
     backgroundColor: '#F3F4F6',
+    padding: 3,
   },
   portfolioImage: {
     width: '100%',
     height: '100%',
     position: 'absolute',
-    top: 0,
-    left: 0,
+    top: 2,
+    left: 2,
+    right: 2,
+    bottom: 2,
     zIndex: 2,
+    borderRadius: 4,
   },
   portfolioPlaceholder: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 2,
+    left: 2,
+    right: 2,
+    bottom: 2,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F3F4F6',
     zIndex: 1,
+    borderRadius: 4,
   },
   badge: {
     backgroundColor: '#F3F4F6',
@@ -873,6 +970,11 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
   },
+  noServicesText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontStyle: 'italic',
+  },
   pageWrapperMobile: {
     flexDirection: 'column',
     alignItems: 'center',
@@ -889,6 +991,41 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 300,
     width: '100%',
+  },
+  // Estilos do Modal de Imagem
+  imageModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageModalBackdrop: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageModalContent: {
+    width: '90%',
+    height: '80%',
+    position: 'relative',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 3,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expandedImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
   },
 });
 

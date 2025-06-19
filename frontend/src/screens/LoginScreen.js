@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as formatters from '../utils/formatters';
@@ -10,15 +10,24 @@ import { authMessages } from '../components/auth/messages';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
-  const { login, loading: authLoading } = useAuth();
+  const { login, loading: authLoading, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigation.replace('Home');
+    }
+  }, [isAuthenticated, authLoading, navigation]);
   
   const [formData, setFormData] = useState({
     cpf: '',
     password: '',
+    twoFactorCode: '',
   });
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cpfError, setCpfError] = useState('');
+  const [twoFactorCodeError, setTwoFactorCodeError] = useState('');
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
 
   const handleChange = (field, value) => {
     let formattedValue = value;
@@ -26,6 +35,11 @@ const LoginScreen = () => {
     if (field === 'cpf') {
       formattedValue = formatters.formatCPF(value);
       setCpfError('');
+      setShowTwoFactor(false);
+      setFormData(prev => ({ ...prev, twoFactorCode: '' }));
+    } else if (field === 'twoFactorCode') {
+      formattedValue = value.replace(/\D/g, '').slice(0, 6);
+      setTwoFactorCodeError('');
     }
 
     setFormData(prev => ({ ...prev, [field]: formattedValue }));
@@ -37,6 +51,12 @@ const LoginScreen = () => {
         setCpfError(authMessages.loginErrors.invalidCpf);
       } else {
         setCpfError('');
+      }
+    } else if (field === 'twoFactorCode' && formData.twoFactorCode) {
+      if (formData.twoFactorCode.length !== 6) {
+        setTwoFactorCodeError('Código deve ter 6 dígitos');
+      } else {
+        setTwoFactorCodeError('');
       }
     }
   };
@@ -52,19 +72,32 @@ const LoginScreen = () => {
       return;
     }
 
+    if (showTwoFactor && (!formData.twoFactorCode || formData.twoFactorCode.length !== 6)) {
+      toastHelper.showError(authMessages.loginErrors.twoFactorRequired);
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await login(
         formData.cpf.replace(/\D/g, ''),
-        formData.password
+        formData.password,
+        showTwoFactor ? formData.twoFactorCode : null,
+        rememberMe
       );
 
       if (!result.success) {
-        toastHelper.showError(authMessages.loginErrors.loginFailed);
+        if (result.requiresTwoFactor) {
+          setShowTwoFactor(true);
+          toastHelper.showError(result.message || authMessages.loginErrors.twoFactorPrompt);
+          return;
+        }
+        const errorMessage = result.error || result.message || authMessages.loginErrors.loginFailed;
+        toastHelper.showError(errorMessage);
         return;
       }
 
-      toastHelper.showSuccess(authMessages.success.loginSuccess);
+      toastHelper.showSuccess(result.message || authMessages.success.loginSuccess);
 
       // Navegar para a tela principal
       navigation.reset({
@@ -72,7 +105,21 @@ const LoginScreen = () => {
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
-      toastHelper.showError(authMessages.loginErrors.serverError);
+      console.error('Erro no login:', error);
+      
+      // Verificar se é erro de rede
+      if (error.code === 'NETWORK_ERROR' || 
+          error.message?.toLowerCase().includes('network') ||
+          error.message?.toLowerCase().includes('timeout') ||
+          error.message?.toLowerCase().includes('connection') ||
+          !navigator.onLine) {
+        toastHelper.showError(authMessages.loginErrors.networkError);
+        return;
+      }
+      
+      // Priorizar mensagem do erro se disponível
+      const errorMessage = error.message || authMessages.loginErrors.serverError;
+      toastHelper.showError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -98,6 +145,8 @@ const LoginScreen = () => {
               handleBlur={handleBlur}
               handleSubmit={handleSubmit}
               cpfError={cpfError}
+              twoFactorCodeError={twoFactorCodeError}
+              showTwoFactor={showTwoFactor}
               rememberMe={rememberMe}
               setRememberMe={setRememberMe}
               loading={loading || authLoading}

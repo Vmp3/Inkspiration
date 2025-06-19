@@ -10,7 +10,7 @@ const useProfileUpdate = (isArtist, updateProfessionalData) => {
   const navigation = useNavigation();
   const { updateUserData, userData } = useAuth();
 
-  const handleUpdateProfile = async (formData, validateCurrentTab) => {
+  const handleUpdateProfile = async (formData, validateCurrentTab, professionalFormData) => {
     if (!validateCurrentTab()) return;
 
     try {
@@ -43,6 +43,11 @@ const useProfileUpdate = (isArtist, updateProfessionalData) => {
         senha: 'SENHA_NAO_ALTERADA',
         manterSenhaAtual: true
       };
+
+      // Adicionar imagem de perfil se existir
+      if (professionalFormData && professionalFormData.profileImage && professionalFormData.profileImage.base64) {
+        updateData.imagemPerfil = professionalFormData.profileImage.base64;
+      }
 
       if (isArtist) {
         updateData.especialidades = formData.especialidades || [];
@@ -78,14 +83,14 @@ const useProfileUpdate = (isArtist, updateProfessionalData) => {
       if (error.response && error.response.data && typeof error.response.data.error === 'string') {
         const msg = error.response.data.error;
         if (msg.includes('Senha atual incorreta')) {
-          toastHelper.showError('Senha atual incorreta');
+          toastHelper.showError(editProfileMessages.validations.passwordIncorrect);
           return;
         }
         toastHelper.showError(msg);
         return;
       }
       if (error.message && error.message.includes('Senha atual incorreta')) {
-        toastHelper.showError('Senha atual incorreta');
+        toastHelper.showError(editProfileMessages.validations.passwordIncorrect);
       } else {
         toastHelper.showError(editProfileMessages.errors.saveProfile);
       }
