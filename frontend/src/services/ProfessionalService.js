@@ -79,7 +79,8 @@ class ProfessionalService {
         params.append('sortBy', filters.sortBy);
       }
       
-      const response = await PublicApiService.get(`/profissional/completo?${params.toString()}`);
+      const requestUrl = `/profissional/completo?${params.toString()}`;
+      const response = await PublicApiService.get(requestUrl);
       return response;
     } catch (error) {
       console.error('Erro ao buscar profissionais completos:', error);
