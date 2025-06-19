@@ -22,6 +22,7 @@ import PortfolioForm from '../components/forms/PortfolioForm';
 import useProfessionalData from '../components/EditProfile/hooks/useProfessionalData';
 import useTabNavigation from '../components/EditProfile/hooks/useTabNavigation';
 import useProfileUpdate from '../components/EditProfile/hooks/useProfileUpdate';
+import useFormValidation from '../components/EditProfile/utils/formValidation';
 
 const EditProfileScreen = () => {
   const { userData } = useAuth();
@@ -70,6 +71,7 @@ const EditProfileScreen = () => {
   });
   
   // Hooks customizados
+  const validation = useFormValidation();
   const professionalData = useProfessionalData(userData);
   const tabNavigation = useTabNavigation(isArtist, formData, professionalData.professionalFormData);
   const profileUpdate = useProfileUpdate(isArtist, professionalData.updateProfessionalData);
@@ -324,26 +326,8 @@ const EditProfileScreen = () => {
             tabs={tabNavigation.getTabs()}
             activeTab={tabNavigation.activeTab}
             setActiveTab={tabNavigation.setActiveTab}
-            onTabPress={(tabId) => {
-              if (tabNavigation.activeTab === 'hours') {
-                const isValid = professionalData.professionalFormData.workHours ? 
-                  tabNavigation.validateCurrentTab() : true;
-                
-                if (!isValid) {
-                  toastHelper.showError(editProfileMessages.validations.fixInvalidSchedules);
-                  return;
-                }
-              }
-              
-              if (tabNavigation.activeTab === 'basic-info') {
-                const isValid = tabNavigation.validateCurrentTab();
-                if (!isValid) {
-                  return;
-                }
-              }
-              
-              tabNavigation.setActiveTab(tabId);
-            }}
+            onTabPress={tabNavigation.handleTabPress}
+            availableTabs={tabNavigation.getAvailableTabs()}
           >
             {tabNavigation.activeTab === 'personal' && (
                   <>
@@ -364,6 +348,7 @@ const EditProfileScreen = () => {
                   onNext={tabNavigation.handleNextTab}
                       showPrev={false}
                       nextText="Próximo"
+                      nextDisabled={!validation.isPersonalTabValid(formData)}
                     />
                   </>
                 )}
@@ -378,6 +363,7 @@ const EditProfileScreen = () => {
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
+                      nextDisabled={!validation.isAddressTabValid(formData)}
                     />
                   </>
                 )}
@@ -402,7 +388,7 @@ const EditProfileScreen = () => {
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
-                  nextDisabled={!tabNavigation.validateCurrentTab()}
+                      nextDisabled={!validation.isBasicInfoTabValid(professionalData.professionalFormData)}
                     />
                   </>
                 )}
@@ -418,7 +404,7 @@ const EditProfileScreen = () => {
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
-                  nextDisabled={!tabNavigation.isHoursValid}
+                      nextDisabled={!validation.isWorkHoursTabValid(professionalData.professionalFormData)}
                     />
                   </>
                 )}
@@ -439,6 +425,7 @@ const EditProfileScreen = () => {
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
+                      nextDisabled={!validation.isPortfolioTabValid(professionalData.professionalFormData)}
                     />
                   </>
                 )}
@@ -453,6 +440,7 @@ const EditProfileScreen = () => {
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
+                      nextDisabled={false}
                     />
                   </>
                 )}

@@ -51,6 +51,15 @@ export const editProfileMessages = {
     portfolioImageInfo: 'Adicione imagens ao seu portfólio'
   },
 
+  // Mensagens de aviso para navegação
+  warnings: {
+    completePersonalDataFirst: 'Complete todos os dados pessoais primeiro',
+    completeAddressDataFirst: 'Complete todos os dados de endereço primeiro',
+    completeBasicInfoFirst: 'Complete todas as informações básicas primeiro',
+    selectWorkScheduleFirst: 'Configure os horários de trabalho primeiro',
+    completePortfolioFirst: 'Complete o portfólio primeiro'
+  },
+
   // Mensagens de confirmação
   confirmations: {
     saveChanges: 'Tem certeza que deseja salvar as alterações?',
