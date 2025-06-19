@@ -2,6 +2,7 @@ package inkspiration.backend.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -595,7 +596,7 @@ public class AgendamentoService {
             }
             
             Paragraph footer = new Paragraph("Relatório gerado em: " + 
-                java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
+                java.time.LocalDateTime.now(ZoneId.of("America/Sao_Paulo")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
                 FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10, Color.GRAY));
             footer.setAlignment(Element.ALIGN_CENTER);
             document.add(footer);
@@ -765,7 +766,7 @@ public class AgendamentoService {
             }
             
             Paragraph footer = new Paragraph("Relatório gerado em: " + 
-                java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
+                java.time.LocalDateTime.now(ZoneId.of("America/Sao_Paulo")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
                 FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10, Color.GRAY));
             footer.setAlignment(Element.ALIGN_CENTER);
             document.add(footer);
