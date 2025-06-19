@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -6,17 +6,17 @@ import {
   ScrollView, 
   TouchableOpacity,
   Dimensions,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import Footer from '../components/Footer';
 import Input from '../components/ui/Input';
 import FilterButton from '../components/FilterButton';
-import ProfessionalService from '../services/ProfessionalService';
-import toastHelper from '../utils/toastHelper';
-import { exploreMessages } from '../components/explore/messages';
 import Button from '../components/ui/Button';
+import { exploreMessages } from '../components/explore/messages';
+import useProfessionalSearch from '../hooks/useProfessionalSearch';
 
 // Componentes de exploração
 import FiltersPanel from '../components/explore/FiltersPanel';
@@ -28,29 +28,45 @@ import MobileFiltersModal from '../components/common/MobileFiltersModal';
 import FilterDropdown from '../components/common/FilterDropdown';
 
 const ExploreScreen = ({ navigation }) => {
-  // Estados
-  const [searchTerm, setSearchTerm] = useState('');
-  const [locationTerm, setLocationTerm] = useState('');
-  const [minRating, setMinRating] = useState(0);
-  const [selectedSpecialties, setSelectedSpecialties] = useState([]);
-  const [sortBy, setSortBy] = useState('melhorAvaliacao');
-  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
-  const [activeFilters, setActiveFilters] = useState([]);
-  const [showFiltersModal, setShowFiltersModal] = useState(false);
+  // Usar o hook personalizado com configurações para a tela Explore
+  const {
+    searchTerm,
+    setSearchTerm,
+    locationTerm,
+    setLocationTerm,
+    minRating,
+    setMinRating,
+    selectedSpecialties,
+    setSelectedSpecialties,
+    sortBy,
+    setSortBy,
+    activeFilters,
+    displayedArtists,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalElements,
+    hasNext,
+    hasPrevious,
+    isLoading,
+    loadingTime,
+    handleSearch,
+    toggleSpecialty,
+    resetFilters,
+    removeFilter,
+    updateActiveFilters,
+    loadProfessionals
+  } = useProfessionalSearch({
+    initialSortBy: 'melhorAvaliacao',
+    limitResults: false
+  });
 
+  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const [showFiltersModal, setShowFiltersModal] = useState(false);
   const [isFilterDropdownVisible, setIsFilterDropdownVisible] = useState(false);
   const [filterButtonPosition, setFilterButtonPosition] = useState({ top: 0, left: 0 });
   const filterButtonRef = useRef(null);
   const scrollViewRef = useRef(null);
-  
-  // Estado para resultados paginados
-  const [displayedArtists, setDisplayedArtists] = useState([]);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const [hasNext, setHasNext] = useState(false);
-  const [hasPrevious, setHasPrevious] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const updateLayout = () => {
@@ -66,104 +82,19 @@ const ExploreScreen = ({ navigation }) => {
       }
     };
   }, []);
-  useEffect(() => {
-    loadProfessionals();
-  }, [currentPage, sortBy]);
 
-  // Carregar profissionais na primeira renderização
-  useEffect(() => {
-    loadProfessionals();
-  }, []);
-
-  const loadProfessionals = async () => {
-    try {
-      setIsLoading(true);
-      const filters = {
-        searchTerm: searchTerm.trim() || null,
-        locationTerm: locationTerm.trim() || null,
-        minRating,
-        selectedSpecialties,
-        sortBy
-      };
-      
-      const response = await ProfessionalService.getTransformedCompleteProfessionals(currentPage, filters);
-      setDisplayedArtists(response.content);
-      setTotalPages(response.totalPages);
-      setTotalElements(response.totalElements);
-      setHasNext(response.hasNext);
-      setHasPrevious(response.hasPrevious);
-      updateActiveFilters();
-    } catch (error) {
-      console.error('Erro ao carregar profissionais:', error);
-      toastHelper.showError(exploreMessages.errors.loadProfessionals);
-      setDisplayedArtists([]);
-      setTotalPages(0);
-      setTotalElements(0);
-      setHasNext(false);
-      setHasPrevious(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
   const isMobile = screenWidth < 768;
   
-  const numColumns = (() => {
+  // Memoizar o número de colunas para evitar recálculos desnecessários
+  const numColumns = useMemo(() => {
     if (screenWidth < 768) {
       return 1;
     }
     return 3;
-  })();
-
-  // Função de busca
-  const handleSearch = () => {
-    setCurrentPage(0);
-    loadProfessionals();
-  };
-
-  // Atualizar filtros ativos
-  const updateActiveFilters = () => {
-    const filters = [];
-    
-    if (minRating > 0) {
-      filters.push({ type: 'rating', value: `${minRating}★` });
-    }
-    
-    selectedSpecialties.forEach(specialty => {
-      filters.push({ type: 'specialty', value: specialty });
-    });
-    
-    setActiveFilters(filters);
-  };
-
-  // Alternar seleção de especialidade
-  const toggleSpecialty = (specialty) => {
-    setSelectedSpecialties(prev =>
-      prev.includes(specialty) ? prev.filter(s => s !== specialty) : [...prev, specialty]
-    );
-  };
-
-  // Resetar filtros
-  const resetFilters = () => {
-    setMinRating(0);
-    setSelectedSpecialties([]);
-    setActiveFilters([]);
-    handleSearch();
-  };
-  
-  // Remover filtro específico
-  const removeFilter = (filter) => {
-    if (filter.type === 'rating') {
-      setMinRating(0);
-    } else if (filter.type === 'specialty') {
-      setSelectedSpecialties(prev => prev.filter(s => s !== filter.value));
-    }
-    // Fazer busca após remover filtro
-    handleSearch();
-  };
+  }, [screenWidth]);
 
   // Função para lidar com o clique no botão de filtros
-  const handleFilterPress = () => {
+  const handleFilterPress = useCallback(() => {
     if (isMobile) {
       setShowFiltersModal(true);
     } else {
@@ -176,15 +107,24 @@ const ExploreScreen = ({ navigation }) => {
         setIsFilterDropdownVisible(true);
       }
     }
-  };
+  }, [isMobile]);
 
   // Função para mudança de página, responsável por scrollar para o topo da página
-  const handlePageChange = (newPage) => {
+  const handlePageChange = useCallback((newPage) => {
     setCurrentPage(newPage);
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ y: 0, animated: true });
     }
-  };
+  }, [setCurrentPage]);
+
+  // Renderizar o componente de carregamento
+  const renderLoading = useMemo(() => (
+    <View style={styles.loadingContainer}>
+      <MaterialIcons name="hourglass-top" size={32} color="#6B7280" />
+      <Text style={styles.loadingText}>Carregando profissionais...</Text>
+      <Text style={styles.loadingSubtext}>Aguarde enquanto buscamos os melhores profissionais para você</Text>
+    </View>
+  ), []);
 
   return (
     <View style={styles.container}>
@@ -292,15 +232,20 @@ const ExploreScreen = ({ navigation }) => {
               {/* Grid de artistas */}
               <View style={styles.artistsGridContainer}>
                 {isLoading ? (
-                  <View style={styles.loadingContainer}>
-                    <Text style={styles.loadingText}>Carregando profissionais...</Text>
-                  </View>
+                  renderLoading
                 ) : displayedArtists.length > 0 ? (
-                  <ArtistsGrid 
-                    artists={displayedArtists} 
-                    numColumns={numColumns} 
-                    navigation={navigation} 
-                  />
+                  <>
+                    {loadingTime > 0 && (
+                      <Text style={styles.loadingTimeText}>
+                        Carregado em {loadingTime} segundos
+                      </Text>
+                    )}
+                    <ArtistsGrid 
+                      artists={displayedArtists} 
+                      numColumns={numColumns} 
+                      navigation={navigation} 
+                    />
+                  </>
                 ) : (
                   <View style={styles.noResultsContainer}>
                     <Text style={styles.noResultsTitle}>Nenhum resultado encontrado</Text>
@@ -340,7 +285,7 @@ const ExploreScreen = ({ navigation }) => {
         toggleSpecialty={toggleSpecialty}
         handleSearch={handleSearch}
         resetFilters={resetFilters}
-        applyFilters={loadProfessionals}
+        applyFilters={() => loadProfessionals(true)}
         updateActiveFilters={updateActiveFilters}
       />
 
@@ -353,7 +298,7 @@ const ExploreScreen = ({ navigation }) => {
         selectedSpecialties={selectedSpecialties}
         toggleSpecialty={toggleSpecialty}
         resetFilters={resetFilters}
-        applyFilters={loadProfessionals}
+        applyFilters={() => loadProfessionals(true)}
         anchorPosition={filterButtonPosition}
       />
     </View>
@@ -494,6 +439,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  loadingSubtext: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+  loadingTimeText: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'right',
+    marginBottom: 8,
+    fontStyle: 'italic',
   },
   noResultsContainer: {
     padding: 48,
