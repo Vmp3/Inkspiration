@@ -429,6 +429,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   container: {
+    position: 'relative',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -455,9 +456,12 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   navContainer: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    transform: [{ translateX: '-50%' }, { translateY: '-50%' }],
     flexDirection: 'row',
     justifyContent: 'center',
-    flex: 1,
   },
   navItem: {
     marginHorizontal: 16,
