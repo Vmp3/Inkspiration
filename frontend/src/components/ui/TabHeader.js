@@ -1,8 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 
-const TabHeader = ({ tabs, activeTab, setActiveTab, onTabPress }) => {
+const TabHeader = ({ tabs, activeTab, setActiveTab, onTabPress, availableTabs }) => {
   const handleTabPress = (tabId) => {
+    if (availableTabs && !availableTabs.includes(tabId)) {
+      return;
+    }
+    
     if (onTabPress) {
       onTabPress(tabId);
     } else {
@@ -17,27 +21,35 @@ const TabHeader = ({ tabs, activeTab, setActiveTab, onTabPress }) => {
       contentContainerStyle={styles.tabsScrollContainer}
     >
       <View style={styles.tabsContainer}>
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.id}
-            style={[
-              styles.tabItem,
-              activeTab === tab.id && styles.activeTabItem,
-            ]}
-            onPress={() => handleTabPress(tab.id)}
-          >
-            <Text
+        {tabs.map((tab) => {
+          const isAvailable = !availableTabs || availableTabs.includes(tab.id);
+          const isActive = activeTab === tab.id;
+          
+          return (
+            <TouchableOpacity
+              key={tab.id}
               style={[
-                styles.tabText,
-                activeTab === tab.id && styles.activeTabText
+                styles.tabItem,
+                isActive && styles.activeTabItem,
+                !isAvailable && styles.disabledTabItem,
               ]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
+              onPress={() => handleTabPress(tab.id)}
+              disabled={!isAvailable}
             >
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  styles.tabText,
+                  isActive && styles.activeTabText,
+                  !isAvailable && styles.disabledTabText
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </ScrollView>
   );
@@ -67,6 +79,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 3,
     borderBottomColor: '#eaeaea',
   },
+  disabledTabItem: {
+    backgroundColor: '#f8f8f8',
+    opacity: 0.5,
+  },
   tabText: {
     fontSize: 13.5,
     color: '#666',
@@ -76,6 +92,10 @@ const styles = StyleSheet.create({
   activeTabText: {
     fontWeight: '600',
     color: '#111',
+  },
+  disabledTabText: {
+    color: '#ccc',
+    fontWeight: '400',
   },
 });
 
