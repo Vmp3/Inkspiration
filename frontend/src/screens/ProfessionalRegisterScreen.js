@@ -422,10 +422,16 @@ const ProfessionalRegisterScreen = () => {
     return true;
   };
   
-  const validateWorkHours = () => {
-    const hasWorkHours = workHours.some(day => 
+  const hasWorkSchedule = () => {
+    return workHours.some(day => 
       day.available && (day.morning.enabled || day.afternoon.enabled)
     );
+  };
+
+  const validateWorkHours = () => {
+    if (!hasWorkSchedule()) {
+      return false;
+    }
     
     for (const day of workHours) {
       if (!day.available) continue;
@@ -465,13 +471,54 @@ const ProfessionalRegisterScreen = () => {
            biography.trim().length <= 500 && 
            biographyError === '';
   };
+
+  const getAvailableTabs = () => {
+    const availableTabs = ['basic'];
+    
+    if (validateBasicTab()) {
+      availableTabs.push('hours');
+    }
+    
+    if (validateBasicTab() && validateWorkHours()) {
+      availableTabs.push('portfolio');
+    }
+    
+    return availableTabs;
+  };
+
+  const handleTabPress = (tabId) => {
+    const availableTabs = getAvailableTabs();
+    
+    if (availableTabs.includes(tabId)) {
+      setActiveTab(tabId);
+    } else {
+      if (tabId === 'hours' && !validateBasicTab()) {
+        toastHelper.showWarning(professionalRegisterMessages.warnings.completeBasicInfoFirst);
+      } else if (tabId === 'portfolio' && (!validateBasicTab() || !validateWorkHours())) {
+        if (!validateBasicTab()) {
+          toastHelper.showWarning(professionalRegisterMessages.warnings.completeBasicInfoFirst);
+        } else {
+          toastHelper.showWarning(professionalRegisterMessages.warnings.selectWorkScheduleFirst);
+        }
+      }
+    }
+  };
   
   const handleNextTab = () => {
     if (activeTab === 'basic') {
-      if (!validateBasicTab()) return;
+      if (!validateBasicTab()) {
+        toastHelper.showError(professionalRegisterMessages.errors.basicInfoRequired);
+        return;
+      }
       setActiveTab('hours');
     } else if (activeTab === 'hours') {
-      if (!validateWorkHours()) return;
+      if (!hasWorkSchedule()) {
+        toastHelper.showError(professionalRegisterMessages.errors.workScheduleRequired);
+        return;
+      }
+      if (!validateWorkHours()) {
+        return;
+      }
       setActiveTab('portfolio');
     } else if (activeTab === 'portfolio') {
       if (!validatePortfolioTab()) {
@@ -648,17 +695,9 @@ const ProfessionalRegisterScreen = () => {
               <TabHeader 
                 tabs={tabs} 
                 activeTab={activeTab} 
-                setActiveTab={(tabId) => {
-                  if (activeTab === 'basic' && tabId !== 'basic') {
-                    if (!validateBasicTab()) return;
-                  }
-                  
-                  if (activeTab === 'hours' && tabId !== 'hours' && tabId !== 'basic') {
-                    if (!validateWorkHours()) return;
-                  }
-                  
-                  setActiveTab(tabId);
-                }} 
+                setActiveTab={setActiveTab}
+                onTabPress={handleTabPress}
+                availableTabs={getAvailableTabs()}
               />
               
               {activeTab === 'basic' && (
@@ -724,6 +763,7 @@ const ProfessionalRegisterScreen = () => {
                       onNext={handleSubmit}
                       nextText={isLoading ? "Finalizando..." : "Finalizar Cadastro"}
                       isLoading={isLoading}
+                      nextDisabled={!validatePortfolioTab() || isLoading}
                     />
                   </View>
                 </View>

@@ -468,12 +468,12 @@ const RegisterScreen = () => {
       setActiveTab(tabId);
     } else {
       if (tabId === 'address' && !isPersonalTabValid()) {
-        toastHelper.showWarning('Complete todos os dados pessoais primeiro');
+        toastHelper.showWarning(authMessages.warnings.completePersonalDataFirst);
       } else if (tabId === 'security' && (!isPersonalTabValid() || !isAddressTabValid())) {
         if (!isPersonalTabValid()) {
-          toastHelper.showWarning('Complete todos os dados pessoais primeiro');
+          toastHelper.showWarning(authMessages.warnings.completePersonalDataFirst);
         } else {
-          toastHelper.showWarning('Complete todos os dados de endereço primeiro');
+          toastHelper.showWarning(authMessages.warnings.completeAddressDataFirst);
         }
       }
     }
