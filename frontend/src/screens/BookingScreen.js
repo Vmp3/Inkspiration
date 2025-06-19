@@ -115,9 +115,10 @@ const BookingScreen = () => {
       setServices(servicesData);
 
       const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate());
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowDate = tomorrow.toISOString().split('T')[0];
       setSelectedDate(tomorrowDate);
+      setSelectedMonth(tomorrow.getMonth());
       
     } catch (error) {
       console.error('Erro ao carregar dados iniciais:', error);
