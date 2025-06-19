@@ -177,8 +177,6 @@ public class AvaliacaoService {
     }
     
     public Avaliacao buscarPorAgendamento(Long idAgendamento) {
-        return agendamentoRepository.findById(idAgendamento)
-            .flatMap(agendamento -> avaliacaoRepository.findByAgendamento(agendamento))
-            .orElse(null);
+        return avaliacaoRepository.findByAgendamento_IdAgendamento(idAgendamento).orElse(null);
     }
 } 

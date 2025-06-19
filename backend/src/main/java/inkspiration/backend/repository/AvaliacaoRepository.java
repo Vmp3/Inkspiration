@@ -20,6 +20,7 @@ public interface AvaliacaoRepository extends JpaRepository<Avaliacao, Long> {
     Page<Avaliacao> findByAgendamentoUsuarioIdUsuario(Long idUsuario, Pageable pageable);
     Page<Avaliacao> findByAgendamentoProfissionalIdProfissional(Long idProfissional, Pageable pageable);
     Optional<Avaliacao> findByAgendamento(Agendamento agendamento);
+    Optional<Avaliacao> findByAgendamento_IdAgendamento(Long idAgendamento);
     boolean existsByAgendamento(Agendamento agendamento);
     
     // Calcular a média de avaliações de um profissional
