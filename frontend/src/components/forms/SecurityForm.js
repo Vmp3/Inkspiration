@@ -14,7 +14,8 @@ const SecurityForm = ({
   handlePrevTab, 
   isLoading,
   passwordError,
-  confirmPasswordError
+  confirmPasswordError,
+  isValid = true
 }) => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -87,7 +88,7 @@ const SecurityForm = ({
         showPrev={true}
         nextText={isLoading ? "Enviando email..." : "Criar Conta"}
         isLoading={isLoading}
-        nextDisabled={!formData.termsAccepted}
+        nextDisabled={!isValid}
       />
 
       {/* Modal de Termos de Uso */}

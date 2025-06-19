@@ -5,29 +5,18 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-  TextInput,
-  TouchableOpacity,
-  Image,
   Platform,
-  Modal,
-  TouchableWithoutFeedback,
-  ActivityIndicator,
-  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import TabHeader from '../components/ui/TabHeader';
-import Button from '../components/ui/Button';
 import FormNavigation from '../components/ui/FormNavigation';
 import toastHelper from '../utils/toastHelper';
-import { TimeInput } from '../components/TimeInput';
+import * as formatters from '../utils/formatters';
 import { professionalRegisterMessages } from '../components/professionalRegister/messages';
 import AuthService from '../services/AuthService';
 import ApiService from '../services/ApiService';
-import ProfessionalService from '../services/ProfessionalService';
-import { professionalMessages } from '../components/professional/messages';
 
 // Componentes modulares para as diferentes seções do formulário
 import BasicInfoForm from '../components/forms/BasicInfoForm';
@@ -419,13 +408,27 @@ const ProfessionalRegisterScreen = () => {
       }
     }
     
+    if (!formatters.validateSocialMedia(socialMedia.instagram) ||
+        !formatters.validateSocialMedia(socialMedia.tiktok) ||
+        !formatters.validateSocialMedia(socialMedia.facebook) ||
+        !formatters.validateSocialMedia(socialMedia.twitter) ||
+        !formatters.validateWebsite(socialMedia.website)) {
+      return false;
+    }
+    
     return true;
   };
   
-  const validateWorkHours = () => {
-    const hasWorkHours = workHours.some(day => 
+  const hasWorkSchedule = () => {
+    return workHours.some(day => 
       day.available && (day.morning.enabled || day.afternoon.enabled)
     );
+  };
+
+  const validateWorkHours = () => {
+    if (!hasWorkSchedule()) {
+      return false;
+    }
     
     for (const day of workHours) {
       if (!day.available) continue;
@@ -465,13 +468,80 @@ const ProfessionalRegisterScreen = () => {
            biography.trim().length <= 500 && 
            biographyError === '';
   };
+
+  const getAvailableTabs = () => {
+    const availableTabs = ['basic'];
+    
+    if (validateBasicTab()) {
+      availableTabs.push('hours');
+    }
+    
+    if (validateBasicTab() && validateWorkHours()) {
+      availableTabs.push('portfolio');
+    }
+    
+    return availableTabs;
+  };
+
+  const handleTabPress = (tabId) => {
+    const availableTabs = getAvailableTabs();
+    
+    if (availableTabs.includes(tabId)) {
+      setActiveTab(tabId);
+    } else {
+      if (tabId === 'hours' && !validateBasicTab()) {
+        toastHelper.showWarning(professionalRegisterMessages.warnings.completeBasicInfoFirst);
+      } else if (tabId === 'portfolio' && (!validateBasicTab() || !validateWorkHours())) {
+        if (!validateBasicTab()) {
+          toastHelper.showWarning(professionalRegisterMessages.warnings.completeBasicInfoFirst);
+        } else {
+          toastHelper.showWarning(professionalRegisterMessages.warnings.selectWorkScheduleFirst);
+        }
+      }
+    }
+  };
   
   const handleNextTab = () => {
     if (activeTab === 'basic') {
-      if (!validateBasicTab()) return;
+      const selectedSpecialties = Object.keys(specialties).filter(key => specialties[key]);
+      if (selectedSpecialties.length === 0) {
+        toastHelper.showError(professionalRegisterMessages.errors.basicInfoRequired);
+        return;
+      }
+      
+      if (tipoServicoSelecionados) {
+        const selectedServices = Object.keys(tipoServicoSelecionados).filter(
+          key => tipoServicoSelecionados[key]
+        );
+        
+        if (selectedServices.length === 0) {
+          toastHelper.showError(professionalRegisterMessages.errors.basicInfoRequired);
+          return;
+        }
+      }
+      
+      if (!formatters.validateSocialMedia(socialMedia.instagram) ||
+          !formatters.validateSocialMedia(socialMedia.tiktok) ||
+          !formatters.validateSocialMedia(socialMedia.facebook) ||
+          !formatters.validateSocialMedia(socialMedia.twitter)) {
+        toastHelper.showError(professionalRegisterMessages.errors.socialMediaTooLong);
+        return;
+      }
+      
+      if (!formatters.validateWebsite(socialMedia.website)) {
+        toastHelper.showError(professionalRegisterMessages.errors.websiteTooLong);
+        return;
+      }
+      
       setActiveTab('hours');
     } else if (activeTab === 'hours') {
-      if (!validateWorkHours()) return;
+      if (!hasWorkSchedule()) {
+        toastHelper.showError(professionalRegisterMessages.errors.workScheduleRequired);
+        return;
+      }
+      if (!validateWorkHours()) {
+        return;
+      }
       setActiveTab('portfolio');
     } else if (activeTab === 'portfolio') {
       if (!validatePortfolioTab()) {
@@ -502,6 +572,22 @@ const ProfessionalRegisterScreen = () => {
       const selectedTiposServico = Object.keys(tipoServicoSelecionados).filter(key => tipoServicoSelecionados[key]);
       if (selectedTiposServico.length === 0) {
         toastHelper.showError(professionalRegisterMessages.errors.serviceTypeRequired);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Validar redes sciais
+      if (!formatters.validateSocialMedia(socialMedia.instagram) ||
+          !formatters.validateSocialMedia(socialMedia.tiktok) ||
+          !formatters.validateSocialMedia(socialMedia.facebook) ||
+          !formatters.validateSocialMedia(socialMedia.twitter)) {
+        toastHelper.showError(professionalRegisterMessages.errors.socialMediaTooLong);
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!formatters.validateWebsite(socialMedia.website)) {
+        toastHelper.showError(professionalRegisterMessages.errors.websiteTooLong);
         setIsLoading(false);
         return;
       }
@@ -648,17 +734,9 @@ const ProfessionalRegisterScreen = () => {
               <TabHeader 
                 tabs={tabs} 
                 activeTab={activeTab} 
-                setActiveTab={(tabId) => {
-                  if (activeTab === 'basic' && tabId !== 'basic') {
-                    if (!validateBasicTab()) return;
-                  }
-                  
-                  if (activeTab === 'hours' && tabId !== 'hours' && tabId !== 'basic') {
-                    if (!validateWorkHours()) return;
-                  }
-                  
-                  setActiveTab(tabId);
-                }} 
+                setActiveTab={setActiveTab}
+                onTabPress={handleTabPress}
+                availableTabs={getAvailableTabs()}
               />
               
               {activeTab === 'basic' && (
@@ -724,6 +802,7 @@ const ProfessionalRegisterScreen = () => {
                       onNext={handleSubmit}
                       nextText={isLoading ? "Finalizando..." : "Finalizar Cadastro"}
                       isLoading={isLoading}
+                      nextDisabled={!validatePortfolioTab() || isLoading}
                     />
                   </View>
                 </View>

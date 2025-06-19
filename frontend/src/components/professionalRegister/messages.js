@@ -16,7 +16,12 @@ export const professionalRegisterMessages = {
     userNotIdentified: 'Não foi possível identificar seu usuário. Faça login novamente.',
     addressRequired: 'Seu cadastro não possui um endereço. Atualize seu perfil antes de continuar.',
     genericError: 'Ocorreu um erro ao processar sua solicitação. Tente novamente.',
-    registrationFailed: 'Ocorreu um erro ao tentar cadastrar. Tente novamente.'
+    registrationFailed: 'Ocorreu um erro ao tentar cadastrar. Tente novamente.',
+    basicInfoRequired: 'Complete todas as informações básicas obrigatórias',
+    workScheduleRequired: 'Selecione pelo menos um horário de trabalho',
+    invalidWorkHours: 'Verifique se os horários estão corretos',
+    socialMediaTooLong: 'Redes sociais devem ter no máximo 50 caracteres',
+    websiteTooLong: 'Website deve ter no máximo 255 caracteres'
   },
 
   // Mensagens de sucesso
@@ -27,7 +32,9 @@ export const professionalRegisterMessages = {
   // Mensagens de aviso
   warnings: {
     imageUploadPartialFailure: 'Profissional cadastrado, mas houve um problema ao enviar as imagens.',
-    loginAgainForPermissions: 'Por favor, faça login novamente para atualizar suas permissões'
+    loginAgainForPermissions: 'Por favor, faça login novamente para atualizar suas permissões',
+    completeBasicInfoFirst: 'Complete todas as informações básicas primeiro',
+    selectWorkScheduleFirst: 'Selecione pelo menos um horário de trabalho primeiro'
   },
 
   // Mensagens informativas

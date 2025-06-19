@@ -3,6 +3,116 @@ import * as formatters from '../../../utils/formatters';
 import { editProfileMessages } from '../messages';
 
 export const useFormValidation = () => {
+  const isPersonalTabValid = (formData) => {
+    return (
+      formData.nome &&
+      formatters.validateFirstName(formData.nome) &&
+      formData.sobrenome &&
+      formatters.validateSurname(formData.sobrenome) &&
+      formatters.validateFullNameLength(formData.nome, formData.sobrenome) &&
+      formData.email &&
+      formatters.validateEmail(formData.email) &&
+      formData.telefone &&
+      formatters.validatePhone(formData.telefone)
+    );
+  };
+
+  const isAddressTabValid = (formData) => {
+    return (
+      formData.cep &&
+      formData.rua &&
+      formData.numero &&
+      formData.bairro &&
+      formData.cidade &&
+      formData.estado
+    );
+  };
+
+  const isBasicInfoTabValid = (professionalFormData) => {
+    if (!professionalFormData) return false;
+    
+    const selectedSpecialties = Object.keys(professionalFormData.specialties || {}).filter(key => professionalFormData.specialties[key]);
+    if (selectedSpecialties.length === 0) return false;
+    
+    if (professionalFormData.tipoServicoSelecionados) {
+      const selectedServices = Object.keys(professionalFormData.tipoServicoSelecionados).filter(
+        key => professionalFormData.tipoServicoSelecionados[key]
+      );
+      if (selectedServices.length === 0) return false;
+    }
+    
+    if (professionalFormData.socialMedia) {
+      const { instagram, tiktok, facebook, twitter, website } = professionalFormData.socialMedia;
+      
+      if (!formatters.validateSocialMedia(instagram) ||
+          !formatters.validateSocialMedia(tiktok) ||
+          !formatters.validateSocialMedia(facebook) ||
+          !formatters.validateSocialMedia(twitter) ||
+          !formatters.validateWebsite(website)) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  const hasWorkSchedule = (professionalFormData) => {
+    if (!professionalFormData || !professionalFormData.workHours) return false;
+    return professionalFormData.workHours.some(day => 
+      day.available && (day.morning.enabled || day.afternoon.enabled)
+    );
+  };
+
+  const isWorkHoursTabValid = (professionalFormData) => {
+    if (!professionalFormData || !professionalFormData.workHours) return false;
+    
+    if (!hasWorkSchedule(professionalFormData)) return false;
+    
+    for (const day of professionalFormData.workHours) {
+      if (!day.available) continue;
+      
+      if (day.morning.enabled) {
+        if (!validateTimeFormat(day.morning.start, 'morning') ||
+            !validateTimeFormat(day.morning.end, 'morning') ||
+            !validateStartEndTime(day.morning.start, day.morning.end)) {
+          return false;
+        }
+      }
+      
+      if (day.afternoon.enabled) {
+        if (!validateTimeFormat(day.afternoon.start, 'afternoon') ||
+            !validateTimeFormat(day.afternoon.end, 'afternoon') ||
+            !validateStartEndTime(day.afternoon.start, day.afternoon.end)) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  };
+
+  const isPortfolioTabValid = (professionalFormData) => {
+    return professionalFormData &&
+           professionalFormData.biography &&
+           professionalFormData.biography.trim().length >= 20;
+  };
+
+  const isSecurityTabValid = (formData) => {
+    if (!formData.senhaAtual && !formData.novaSenha && !formData.confirmarSenha) {
+      return true;
+    }
+    
+    if (formData.senhaAtual || formData.novaSenha || formData.confirmarSenha) {
+      return formData.senhaAtual &&
+             formData.novaSenha &&
+             formData.confirmarSenha &&
+             formData.novaSenha.length >= 6 &&
+             formData.novaSenha === formData.confirmarSenha;
+    }
+    
+    return true;
+  };
+
   const validatePersonalTab = (formData) => {
     if (!formData.nome) {
       toastHelper.showError(editProfileMessages.validations.nameRequired);
@@ -154,6 +264,24 @@ export const useFormValidation = () => {
       }
     }
     
+    // Validar redes sociais
+    if (professionalFormData.socialMedia) {
+      const { instagram, tiktok, facebook, twitter, website } = professionalFormData.socialMedia;
+      
+      if (!formatters.validateSocialMedia(instagram) ||
+          !formatters.validateSocialMedia(tiktok) ||
+          !formatters.validateSocialMedia(facebook) ||
+          !formatters.validateSocialMedia(twitter)) {
+        toastHelper.showError(editProfileMessages.validations.socialMediaTooLong);
+        return false;
+      }
+      
+      if (!formatters.validateWebsite(website)) {
+        toastHelper.showError(editProfileMessages.validations.websiteTooLong);
+        return false;
+      }
+    }
+    
     return true;
   };
   
@@ -203,29 +331,17 @@ export const useFormValidation = () => {
       if (!day.available) continue;
       
       if (day.morning.enabled) {
-        if (!validateTimeFormat(day.morning.start, 'morning')) {
-          return false;
-        }
-        
-        if (!validateTimeFormat(day.morning.end, 'morning')) {
-          return false;
-        }
-        
-        if (!validateStartEndTime(day.morning.start, day.morning.end)) {
+        if (!validateTimeFormat(day.morning.start, 'morning') ||
+            !validateTimeFormat(day.morning.end, 'morning') ||
+            !validateStartEndTime(day.morning.start, day.morning.end)) {
           return false;
         }
       }
       
       if (day.afternoon.enabled) {
-        if (!validateTimeFormat(day.afternoon.start, 'afternoon')) {
-          return false;
-        }
-        
-        if (!validateTimeFormat(day.afternoon.end, 'afternoon')) {
-          return false;
-        }
-        
-        if (!validateStartEndTime(day.afternoon.start, day.afternoon.end)) {
+        if (!validateTimeFormat(day.afternoon.start, 'afternoon') ||
+            !validateTimeFormat(day.afternoon.end, 'afternoon') ||
+            !validateStartEndTime(day.afternoon.start, day.afternoon.end)) {
           return false;
         }
       }
@@ -243,6 +359,13 @@ export const useFormValidation = () => {
   };
 
   return {
+    isPersonalTabValid,
+    isAddressTabValid,
+    isBasicInfoTabValid,
+    hasWorkSchedule,
+    isWorkHoursTabValid,
+    isPortfolioTabValid,
+    isSecurityTabValid,
     validatePersonalTab,
     validateAddressTab,
     validateSecurityTab,

@@ -51,6 +51,15 @@ export const editProfileMessages = {
     portfolioImageInfo: 'Adicione imagens ao seu portfólio'
   },
 
+  // Mensagens de aviso para navegação
+  warnings: {
+    completePersonalDataFirst: 'Complete todos os dados pessoais primeiro',
+    completeAddressDataFirst: 'Complete todos os dados de endereço primeiro',
+    completeBasicInfoFirst: 'Complete todas as informações básicas primeiro',
+    selectWorkScheduleFirst: 'Configure os horários de trabalho primeiro',
+    completePortfolioFirst: 'Complete o portfólio primeiro'
+  },
+
   // Mensagens de confirmação
   confirmations: {
     saveChanges: 'Tem certeza que deseja salvar as alterações?',
@@ -93,6 +102,8 @@ export const editProfileMessages = {
     imageSelectionFailed: 'Falha ao selecionar imagem. Tente novamente.',
     fixInvalidSchedules: 'Corrija os horários inválidos antes de continuar.',
     professionalDataError: 'Erro ao obter informações profissionais',
-    passwordIncorrect: 'Senha atual incorreta'
+    passwordIncorrect: 'Senha atual incorreta',
+    socialMediaTooLong: 'Redes sociais devem ter no máximo 50 caracteres',
+    websiteTooLong: 'Website deve ter no máximo 255 caracteres'
   }
 }; 

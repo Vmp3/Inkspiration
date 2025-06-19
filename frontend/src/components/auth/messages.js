@@ -84,6 +84,12 @@ export const authMessages = {
     waitToResend: (seconds) => `Aguarde ${seconds} segundos para reenviar novamente.`
   },
 
+  // Mensagens de aviso para navegação
+  warnings: {
+    completePersonalDataFirst: 'Complete todos os dados pessoais primeiro',
+    completeAddressDataFirst: 'Complete todos os dados de endereço primeiro'
+  },
+
   // Mensagens de erro - Email Verification
   emailVerificationErrors: {
     verificationCodeRequired: 'Por favor, insira o código de verificação.',

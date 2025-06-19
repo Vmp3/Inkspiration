@@ -258,6 +258,31 @@ const RegisterScreen = () => {
     }
   };
 
+  const isPersonalTabValid = () => {
+    return (
+      formData.nome &&
+      formatters.validateFirstName(formData.nome) &&
+      formData.sobrenome &&
+      formatters.validateSurname(formData.sobrenome) &&
+      formatters.validateFullNameLength(formData.nome, formData.sobrenome) &&
+      formData.cpf &&
+      formatters.validateCPF(formData.cpf) &&
+      formData.email &&
+      formatters.validateEmail(formData.email) &&
+      formData.telefone &&
+      formatters.validatePhone(formData.telefone) &&
+      formData.dataNascimento &&
+      formatters.validateBirthDate(formData.dataNascimento) &&
+      !nomeError &&
+      !sobrenomeError &&
+      !fullNameError &&
+      !cpfError &&
+      !emailError &&
+      !phoneError &&
+      !birthDateError
+    );
+  };
+
   const validatePersonalTab = () => {
     let isValid = true;
 
@@ -336,6 +361,17 @@ const RegisterScreen = () => {
     return true;
   };
 
+  const isAddressTabValid = () => {
+    return (
+      formData.cep &&
+      formData.rua &&
+      formData.numero &&
+      formData.bairro &&
+      formData.cidade &&
+      formData.estado
+    );
+  };
+
   const validateAddressTab = () => {
     if (!formData.cep) {
       toastHelper.showError(authMessages.registerErrors.requiredFields);
@@ -370,6 +406,18 @@ const RegisterScreen = () => {
     return true;
   };
 
+  const isSecurityTabValid = () => {
+    return (
+      formData.senha &&
+      formData.senha.length >= 6 &&
+      formData.confirmarSenha &&
+      formData.senha === formData.confirmarSenha &&
+      formData.termsAccepted &&
+      !passwordError &&
+      !confirmPasswordError
+    );
+  };
+
   const validateSecurityTab = () => {
     if (!formData.senha) {
       toastHelper.showError(authMessages.registerErrors.invalidPassword);
@@ -397,6 +445,38 @@ const RegisterScreen = () => {
     }
     
     return true;
+  };
+
+  const getAvailableTabs = () => {
+    const availableTabs = ['personal'];
+    
+    if (isPersonalTabValid()) {
+      availableTabs.push('address');
+    }
+    
+    if (isPersonalTabValid() && isAddressTabValid()) {
+      availableTabs.push('security');
+    }
+    
+    return availableTabs;
+  };
+
+  const handleTabPress = (tabId) => {
+    const availableTabs = getAvailableTabs();
+    
+    if (availableTabs.includes(tabId)) {
+      setActiveTab(tabId);
+    } else {
+      if (tabId === 'address' && !isPersonalTabValid()) {
+        toastHelper.showWarning(authMessages.warnings.completePersonalDataFirst);
+      } else if (tabId === 'security' && (!isPersonalTabValid() || !isAddressTabValid())) {
+        if (!isPersonalTabValid()) {
+          toastHelper.showWarning(authMessages.warnings.completePersonalDataFirst);
+        } else {
+          toastHelper.showWarning(authMessages.warnings.completeAddressDataFirst);
+        }
+      }
+    }
   };
 
   const handleNextTab = () => {
@@ -578,6 +658,8 @@ const RegisterScreen = () => {
                   tabs={tabs}
                   activeTab={activeTab}
                   setActiveTab={setActiveTab}
+                  onTabPress={handleTabPress}
+                  availableTabs={getAvailableTabs()}
                 />
               </View>
               
@@ -601,6 +683,7 @@ const RegisterScreen = () => {
                     <FormNavigation
                       onNext={handleNextTab}
                       showPrev={false}
+                      nextDisabled={!isPersonalTabValid()}
                     />
                   </>
                 )}
@@ -615,6 +698,7 @@ const RegisterScreen = () => {
                     <FormNavigation
                       onPrev={handlePrevTab}
                       onNext={handleNextTab}
+                      nextDisabled={!isAddressTabValid()}
                     />
                   </>
                 )}
@@ -629,6 +713,7 @@ const RegisterScreen = () => {
                     isLoading={isLoading}
                     passwordError={passwordError}
                     confirmPasswordError={confirmPasswordError}
+                    isValid={isSecurityTabValid()}
                   />
                 )}
               </View>

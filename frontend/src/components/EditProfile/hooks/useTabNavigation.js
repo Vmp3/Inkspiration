@@ -7,6 +7,74 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
   const [activeTab, setActiveTab] = useState('personal');
   const validation = useFormValidation();
 
+  const getAvailableTabs = () => {
+    const availableTabs = ['personal'];
+    
+    if (validation.isPersonalTabValid(formData)) {
+      availableTabs.push('address');
+    }
+    
+    if (validation.isPersonalTabValid(formData) && validation.isAddressTabValid(formData)) {
+      if (isArtist) {
+        availableTabs.push('basic-info');
+        
+        if (validation.isBasicInfoTabValid(professionalFormData)) {
+          availableTabs.push('hours');
+          
+          if (validation.isWorkHoursTabValid(professionalFormData)) {
+            availableTabs.push('portfolio');
+            
+            if (validation.isPortfolioTabValid(professionalFormData)) {
+              availableTabs.push('security');
+            }
+          }
+        }
+      } else {
+        availableTabs.push('security');
+      }
+    }
+    
+    return availableTabs;
+  };
+
+  const handleTabPress = (tabId) => {
+    const availableTabs = getAvailableTabs();
+    
+    if (availableTabs.includes(tabId)) {
+      setActiveTab(tabId);
+    } else {
+      if (tabId === 'address' && !validation.isPersonalTabValid(formData)) {
+        toastHelper.showWarning(editProfileMessages.warnings.completePersonalDataFirst);
+      } else if (tabId === 'basic-info' && (!validation.isPersonalTabValid(formData) || !validation.isAddressTabValid(formData))) {
+        if (!validation.isPersonalTabValid(formData)) {
+          toastHelper.showWarning(editProfileMessages.warnings.completePersonalDataFirst);
+        } else {
+          toastHelper.showWarning(editProfileMessages.warnings.completeAddressDataFirst);
+        }
+      } else if (tabId === 'hours' && (!validation.isPersonalTabValid(formData) || !validation.isAddressTabValid(formData) || !validation.isBasicInfoTabValid(professionalFormData))) {
+        if (!validation.isPersonalTabValid(formData)) {
+          toastHelper.showWarning(editProfileMessages.warnings.completePersonalDataFirst);
+        } else if (!validation.isAddressTabValid(formData)) {
+          toastHelper.showWarning(editProfileMessages.warnings.completeAddressDataFirst);
+        } else {
+          toastHelper.showWarning(editProfileMessages.warnings.completeBasicInfoFirst);
+        }
+      } else if (tabId === 'portfolio' && !validation.isWorkHoursTabValid(professionalFormData)) {
+        toastHelper.showWarning(editProfileMessages.warnings.selectWorkScheduleFirst);
+      } else if (tabId === 'security') {
+        if (isArtist) {
+          if (!validation.isPortfolioTabValid(professionalFormData)) {
+            toastHelper.showWarning(editProfileMessages.warnings.completePortfolioFirst);
+          }
+        } else {
+          if (!validation.isAddressTabValid(formData)) {
+            toastHelper.showWarning(editProfileMessages.warnings.completeAddressDataFirst);
+          }
+        }
+      }
+    }
+  };
+
   const getTabs = () => {
     const tabs = [
       { id: 'personal', label: 'Dados Pessoais' },
@@ -68,9 +136,10 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
         if (isValid) setActiveTab('hours');
         break;
       case 'hours':
-        isValid = validation.validateWorkHoursTab(professionalFormData);
-        if (!isValid) {
-          toastHelper.showError(editProfileMessages.validations.fixInvalidSchedules);
+        if (!validation.hasWorkSchedule(professionalFormData)) {
+          toastHelper.showError(editProfileMessages.validations.scheduleRequired);
+        } else if (!validation.isWorkHoursTabValid(professionalFormData)) {
+          return;
         } else {
           setActiveTab('portfolio');
         }
@@ -145,6 +214,8 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
     activeTab,
     setActiveTab: setActiveTabWithValidation,
     getTabs,
+    getAvailableTabs,
+    handleTabPress,
     handleNextTab,
     handlePrevTab,
     validateCurrentTab,
@@ -153,7 +224,7 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
         return true;
       }
       
-      return validation.validateWorkHoursTab(professionalFormData);
+      return validation.isWorkHoursTabValid(professionalFormData);
     })()
   };
 };
