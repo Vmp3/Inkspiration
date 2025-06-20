@@ -602,11 +602,16 @@ const MyAppointmentsScreen = () => {
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={{ fontWeight: '500', fontSize: 16, alignSelf: 'flex-start', marginBottom: 8 }}>Seu comentário (opcional)</Text>
+          <Text style={{ fontWeight: '500', fontSize: 16, alignSelf: 'flex-start', marginBottom: 8 }}>
+            Seu comentário (opcional)
+            <Text style={{ fontWeight: '400', fontSize: 14, color: reviewComment.length > 500 ? '#EF4444' : '#6B7280' }}>  {reviewComment.length}/500</Text>
+          </Text>
           <Input
             placeholder="Conte como foi sua experiência..."
             value={reviewComment}
-            onChangeText={setReviewComment}
+            onChangeText={text => {
+              if (text.length <= 500) setReviewComment(text);
+            }}
             multiline
             numberOfLines={4}
             style={{ minHeight: 80, width: '100%', marginBottom: 24 }}
@@ -620,9 +625,9 @@ const MyAppointmentsScreen = () => {
               <Text style={{ color: '#111', fontWeight: '600', fontSize: 16 }}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={{ backgroundColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24, opacity: isSubmittingReview ? 0.7 : 1 }}
+              style={{ backgroundColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24, opacity: isSubmittingReview || reviewComment.length > 500 ? 0.7 : 1 }}
               onPress={handleSendReview}
-              disabled={isSubmittingReview}
+              disabled={isSubmittingReview || reviewComment.length > 500}
             >
               <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
                 {isSubmittingReview ? 'Salvando...' : (existingReviewId ? 'Atualizar' : 'Enviar avaliação')}
