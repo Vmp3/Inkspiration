@@ -179,4 +179,29 @@ public class AvaliacaoService {
     public Avaliacao buscarPorAgendamento(Long idAgendamento) {
         return avaliacaoRepository.findByAgendamento_IdAgendamento(idAgendamento).orElse(null);
     }
+    
+    public java.util.Map<String, Object> obterEstatisticasProfissional(Long idProfissional) {
+        // Verificar se o profissional existe
+        if (!profissionalRepository.existsById(idProfissional)) {
+            throw new RuntimeException("Profissional não encontrado");
+        }
+        
+        // Obter estatísticas
+        Long totalAvaliacoes = avaliacaoRepository.countByProfissionalId(idProfissional);
+        Double mediaAvaliacoes = avaliacaoRepository.calculateAverageRatingByProfissional(idProfissional);
+        Long avaliacoesComComentario = avaliacaoRepository.countByProfissionalIdAndDescricaoNotNull(idProfissional);
+        
+        // Se não houver avaliações, definir média como zero
+        if (mediaAvaliacoes == null) {
+            mediaAvaliacoes = 0.0;
+        }
+        
+        var stats = new java.util.HashMap<String, Object>();
+        stats.put("totalAvaliacoes", totalAvaliacoes);
+        stats.put("mediaAvaliacoes", mediaAvaliacoes);
+        stats.put("avaliacoesComComentario", avaliacoesComComentario);
+        stats.put("avaliacoesSemComentario", totalAvaliacoes - avaliacoesComComentario);
+        
+        return stats;
+    }
 } 
