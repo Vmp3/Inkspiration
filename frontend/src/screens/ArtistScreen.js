@@ -247,6 +247,7 @@ const ArtistScreen = ({ route }) => {
         coverImage: transformedData.coverImage,
         portfolio: processedImages,
         services: mappedServices,
+        rating: professionalData.profissional.nota || 0,
         social: {
           instagram: transformedData.instagram,
           facebook: transformedData.facebook,
@@ -444,17 +445,27 @@ const ArtistScreen = ({ route }) => {
   }
 
   const renderStars = (rating) => {
+    // Arredondar para a meia estrela mais próxima
+    const rounded = Math.round(rating * 2) / 2;
+    const fullStars = Math.floor(rounded);
+    const hasHalfStar = rounded - fullStars === 0.5;
     return (
       <View style={styles.starContainer}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <MaterialIcons
-            key={star}
-            name="star"
-            size={16}
-            color={star <= rating ? "#FACC15" : "#D1D5DB"}
-            style={star <= rating && styles.filledStar}
-          />
-        ))}
+        {[...Array(5)].map((_, i) => {
+          if (i < fullStars) {
+            return (
+              <MaterialIcons key={i} name="star" size={16} color="#FACC15" style={styles.filledStar} />
+            );
+          } else if (i === fullStars && hasHalfStar) {
+            return (
+              <MaterialIcons key={i} name="star-half" size={16} color="#FACC15" style={styles.filledStar} />
+            );
+          } else {
+            return (
+              <MaterialIcons key={i} name="star-border" size={16} color="#FACC15" />
+            );
+          }
+        })}
       </View>
     );
   };
@@ -494,18 +505,9 @@ const ArtistScreen = ({ route }) => {
             <Text style={styles.reviewsTitle}>Avaliações dos Clientes</Text>
             <View style={styles.ratingContainer}>
               <View style={styles.starsWrapper}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <MaterialIcons
-                    key={star}
-                    name="star"
-                    size={20}
-                    color="#FACC15"
-                    style={styles.filledStar}
-                  />
-                ))}
+                {renderStars(artist.rating)}
               </View>
-              <Text style={styles.ratingValue}>{artist.rating}</Text>
-              <Text style={styles.reviewCount}>({reviewCount} avaliações)</Text>
+              <Text style={styles.ratingValue}>{artist.rating} ({reviewCount} avaliações)</Text>
             </View>
           </View>
 
@@ -655,7 +657,7 @@ const ArtistScreen = ({ route }) => {
               </Text>
               <Text style={styles.artistTitle}>{artist.title}</Text>
               <View style={styles.ratingRow}>
-                <MaterialIcons name="star" size={16} color="#FACC15" />
+                {renderStars(artist.rating)}
                 <Text style={styles.ratingText}>{artist.rating} ({reviewCount} avaliações)</Text>
               </View>
               <View style={styles.locationRow}>
