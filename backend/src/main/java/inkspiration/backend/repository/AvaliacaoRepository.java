@@ -30,4 +30,8 @@ public interface AvaliacaoRepository extends JpaRepository<Avaliacao, Long> {
     // Contar o número de avaliações de um profissional
     @Query("SELECT COUNT(a) FROM Avaliacao a WHERE a.agendamento.profissional.idProfissional = :profissionalId")
     Long countByProfissionalId(@Param("profissionalId") Long profissionalId);
+    
+    // Contar o número de avaliações com comentário de um profissional
+    @Query("SELECT COUNT(a) FROM Avaliacao a WHERE a.agendamento.profissional.idProfissional = :profissionalId AND a.descricao IS NOT NULL AND a.descricao != ''")
+    Long countByProfissionalIdAndDescricaoNotNull(@Param("profissionalId") Long profissionalId);
 } 

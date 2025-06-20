@@ -75,7 +75,29 @@ public class AvaliacaoController {
         try {
             Pageable pageable = PageRequest.of(page, 10);
             Page<AvaliacaoDTO> avaliacoesPage = avaliacaoService.listarPorProfissionalDTO(idProfissional, pageable);
-            return ResponseEntity.ok(avaliacoesPage.getContent());
+            
+            // Criar resposta com informações completas de paginação
+            var response = new java.util.HashMap<String, Object>();
+            response.put("content", avaliacoesPage.getContent());
+            response.put("totalElements", avaliacoesPage.getTotalElements());
+            response.put("totalPages", avaliacoesPage.getTotalPages());
+            response.put("currentPage", avaliacoesPage.getNumber());
+            response.put("hasNext", avaliacoesPage.hasNext());
+            response.put("hasPrevious", avaliacoesPage.hasPrevious());
+            response.put("size", avaliacoesPage.getSize());
+            response.put("numberOfElements", avaliacoesPage.getNumberOfElements());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
+    @GetMapping("/profissional/{idProfissional}/stats")
+    public ResponseEntity<?> obterEstatisticasProfissional(@PathVariable Long idProfissional) {
+        try {
+            var stats = avaliacaoService.obterEstatisticasProfissional(idProfissional);
+            return ResponseEntity.ok(stats);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

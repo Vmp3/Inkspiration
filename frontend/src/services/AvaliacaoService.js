@@ -74,6 +74,15 @@ class AvaliacaoService {
       return null;
     }
   }
+
+  async obterEstatisticasProfissional(idProfissional) {
+    try {
+      const response = await ApiService.get(`/avaliacoes/profissional/${idProfissional}/stats`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export default new AvaliacaoService(); 
