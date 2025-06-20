@@ -256,15 +256,16 @@ const AdminUsersScreen = () => {
 
           {/* Barra de busca */}
           <View style={styles.searchContainer}>
-            <Input
-              placeholder="Buscar usuários por nome"
-              value={searchTerm}
-              onChangeText={setSearchTerm}
-              icon="search"
-              style={styles.searchInput}
-              onSubmitEditing={handleSearch}
-              returnKeyType="search"
-            />
+            <View style={styles.searchInputContainer}>
+              <Input
+                placeholder="Buscar usuários por nome"
+                value={searchTerm}
+                onChangeText={setSearchTerm}
+                icon="search"
+                onSubmitEditing={handleSearch}
+                returnKeyType="search"
+              />
+            </View>
             <Button
               variant="primary"
               size="search"
@@ -356,14 +357,16 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
     marginBottom: 24,
   },
-  searchInput: {
+  searchInputContainer: {
     flex: 1,
   },
   searchButton: {
     minWidth: 80,
+    height: 40,
   },
   loadingContainer: {
     padding: 32,
@@ -442,14 +445,17 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: 8,
+    alignItems: 'center',
   },
   mobileActions: {
     flexDirection: 'column',
     alignItems: 'stretch',
     minWidth: 100,
+    gap: 8,
   },
   actionButton: {
     minWidth: 80,
+    height: 32,
   },
   deactivateButton: {
     borderColor: '#EF4444',

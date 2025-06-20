@@ -50,13 +50,13 @@ const Modal = ({
             
             <View style={styles.footer}>
               <Button
-                title={cancelText}
+                label={cancelText}
                 onPress={onClose}
                 variant="secondary"
                 style={styles.button}
               />
               <Button
-                title={confirmText}
+                label={confirmText}
                 onPress={onConfirm}
                 variant={confirmVariant}
                 style={styles.button}

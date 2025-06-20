@@ -28,6 +28,7 @@ import inkspiration.backend.security.JwtService;
 import inkspiration.backend.util.CpfValidator;
 import inkspiration.backend.util.DateValidator;
 import inkspiration.backend.util.EmailValidator;
+import inkspiration.backend.repository.ProfissionalRepository;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Service
@@ -36,11 +37,13 @@ public class UsuarioService {
     private final UsuarioRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final ProfissionalRepository profissionalRepository;
     private final TokenRevogadoRepository tokenRevogadoRepository;
 
     @Autowired
     public UsuarioService(UsuarioRepository repository, 
                          UsuarioAutenticarRepository autenticarRepository,
+                         ProfissionalRepository profissionalRepository,
                          PasswordEncoder passwordEncoder,
                          JwtService jwtService,
                          HttpServletRequest request,
@@ -48,6 +51,7 @@ public class UsuarioService {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.profissionalRepository = profissionalRepository;
         this.tokenRevogadoRepository = tokenRevogadoRepository;
     }
 
@@ -227,6 +231,38 @@ public class UsuarioService {
         }
         
         repository.save(usuario);
+    }
+
+    @Transactional
+    public void reativar(Long id) {
+        Usuario usuario = buscarPorId(id);
+        
+        if (!"ROLE_DELETED".equals(usuario.getRole())) {
+            throw new UsuarioException.UsuarioNaoEncontradoException("Usuário não está desativado");
+        }
+        
+        String roleOriginal = determinarRoleOriginal(usuario);
+        usuario.setRole(roleOriginal);
+
+        if (usuario.getUsuarioAutenticar() != null) {
+            usuario.getUsuarioAutenticar().setRole(roleOriginal);
+        }
+        
+        repository.save(usuario);
+    }
+
+    private String determinarRoleOriginal(Usuario usuario) {
+        // Verifica se o usuário tem um registro de profissional associado
+        // Se tiver, era um profissional (ROLE_PROF)
+        // Caso contrário, era um usuário comum (ROLE_USER)
+        
+        boolean isProfissional = profissionalRepository.existsByUsuario_IdUsuario(usuario.getIdUsuario());
+        
+        if (isProfissional) {
+            return "ROLE_PROF";
+        } else {
+            return "ROLE_USER";
+        }
     }
 
     @Transactional
