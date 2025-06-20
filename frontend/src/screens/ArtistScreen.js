@@ -152,6 +152,12 @@ const ArtistScreen = ({ route }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [reviewCount, setReviewCount] = useState(0);
+  const [avaliacoesStats, setAvaliacoesStats] = useState({
+    totalAvaliacoes: 0,
+    mediaAvaliacoes: 0,
+    avaliacoesComComentario: 0,
+    avaliacoesSemComentario: 0
+  });
   
   const isMobile = screenData.width < 768;
 
@@ -263,48 +269,61 @@ const ArtistScreen = ({ route }) => {
     try {
       setIsLoadingReviews(true);
       const response = await AvaliacaoService.listarPorProfissional(artist.idProfissional, page);
-      // O backend retorna até 10 avaliações por página, mas precisamos do total
-      // Se o response for um objeto paginado, use response.totalElements
-      // Se for array simples, conte manualmente
+      
       let newReviews = [];
       let totalAvaliacoes = 0;
-      if (Array.isArray(response)) {
-        newReviews = response.map(review => ({
-          id: review.idAvaliacao,
-          userName: review.agendamento.usuario.nome,
-          userImage: review.agendamento.usuario.fotoPerfil || DefaultUser,
-          rating: review.rating,
-          comment: review.descricao,
-          date: formatDate(review.agendamento.dataHora),
-          tattooType: review.agendamento.tipoTatuagem
-        }));
-        // Se for a primeira página, o total é o length do array
-        totalAvaliacoes = page === 0 ? response.length : reviewCount;
-      } else if (response && response.content) {
+      
+      // Nova estrutura de resposta com informações paginadas
+      if (response && response.content) {
         newReviews = response.content.map(review => ({
           id: review.idAvaliacao,
-          userName: review.agendamento.usuario.nome,
-          userImage: review.agendamento.usuario.fotoPerfil || DefaultUser,
+          userName: review.agendamento?.usuario?.nome || 'Usuário',
+          userImage: review.agendamento?.usuario?.fotoPerfil || DefaultUser,
           rating: review.rating,
           comment: review.descricao,
-          date: formatDate(review.agendamento.dataHora),
-          tattooType: review.agendamento.tipoTatuagem
+          date: formatDate(new Date(review.agendamento?.dataHora)),
+          tattooType: review.agendamento?.tipoTatuagem
         }));
-        totalAvaliacoes = response.totalElements || newReviews.length;
+        totalAvaliacoes = response.totalElements || 0;
+        setHasMoreReviews(response.hasNext || false);
+      } else if (Array.isArray(response)) {
+        // Fallback para estrutura antiga
+        newReviews = response.map(review => ({
+          id: review.idAvaliacao,
+          userName: review.agendamento?.usuario?.nome || 'Usuário',
+          userImage: review.agendamento?.usuario?.fotoPerfil || DefaultUser,
+          rating: review.rating,
+          comment: review.descricao,
+          date: formatDate(new Date(review.agendamento?.dataHora)),
+          tattooType: review.agendamento?.tipoTatuagem
+        }));
+        totalAvaliacoes = page === 0 ? response.length : reviewCount;
+        setHasMoreReviews(newReviews.length === 10);
       }
+      
       if (shouldRefresh || page === 0) {
         setReviews(newReviews);
       } else {
         setReviews(prev => [...prev, ...newReviews]);
       }
+      
       setReviewCount(totalAvaliacoes);
-      setHasMoreReviews(newReviews.length === 10);
       setCurrentReviewPage(page);
     } catch (error) {
       console.error('Erro ao carregar avaliações:', error);
       toastHelper.showError('Erro ao carregar avaliações');
     } finally {
       setIsLoadingReviews(false);
+    }
+  };
+
+  const loadAvaliacoesStats = async () => {
+    try {
+      const stats = await AvaliacaoService.obterEstatisticasProfissional(artist.idProfissional);
+      setAvaliacoesStats(stats);
+      setReviewCount(stats.totalAvaliacoes || 0);
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas de avaliações:', error);
     }
   };
 
@@ -328,6 +347,7 @@ const ArtistScreen = ({ route }) => {
   useEffect(() => {
     if (artist) {
       loadReviews(0, true);
+      loadAvaliacoesStats();
     }
   }, [artist]);
 
@@ -420,6 +440,9 @@ const ArtistScreen = ({ route }) => {
   };
 
   const renderReviews = () => {
+    // Filtrar apenas avaliações com comentários
+    const reviewsWithComments = reviews.filter(review => review.comment && review.comment.trim() !== '');
+    
     return (
       <View style={styles.tabContent}>
         <View style={styles.reviewsContainer}>
@@ -442,18 +465,39 @@ const ArtistScreen = ({ route }) => {
             </View>
           </View>
 
+          {/* Estatísticas das avaliações */}
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{avaliacoesStats.totalAvaliacoes}</Text>
+              <Text style={styles.statLabel}>Total</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{avaliacoesStats.avaliacoesComComentario}</Text>
+              <Text style={styles.statLabel}>Com Comentário</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{avaliacoesStats.avaliacoesSemComentario}</Text>
+              <Text style={styles.statLabel}>Sem Comentário</Text>
+            </View>
+          </View>
+
           {isLoadingReviews ? (
             <View style={{ alignItems: 'center', marginTop: 32 }}>
               <ActivityIndicator size="small" color="#111" />
               <Text style={{ marginTop: 12, color: '#6B7280' }}>Carregando avaliações...</Text>
             </View>
-          ) : reviews.length === 0 ? (
+          ) : reviewsWithComments.length === 0 ? (
             <View style={{ alignItems: 'center', marginTop: 32 }}>
-              <Text style={{ color: '#6B7280', fontSize: 16 }}>Ainda não há avaliações para este artista.</Text>
+              <Text style={{ color: '#6B7280', fontSize: 16, textAlign: 'center' }}>
+                {reviews.length === 0 
+                  ? 'Ainda não há avaliações para este artista.'
+                  : 'Não há avaliações com comentários para exibir.'
+                }
+              </Text>
             </View>
           ) : (
             <FlatList
-              data={reviews}
+              data={reviewsWithComments}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
                 <View style={styles.reviewCard}>
@@ -1131,6 +1175,25 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 8,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  statItem: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#6B7280',
   },
 });
 
