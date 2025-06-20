@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons, Feather, FontAwesome, Entypo, AntDesign } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import ProfessionalService from '../services/ProfessionalService';
+import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import textUtils from '../utils/textUtils';
 import { artistMessages } from '../components/common/messages';
@@ -229,11 +230,20 @@ const ArtistScreen = ({ route }) => {
         };
       });
       
-      const mappedServices = professionalData.profissional.tiposServico 
-        ? professionalData.profissional.tiposServico.map(serviceType => ({
-            name: mapServiceType(serviceType)
+      // Buscar preços dos serviços
+      const servicesWithPrices = await AgendamentoService.buscarTiposServicoPorProfissional(artistId);
+      
+      const mappedServices = servicesWithPrices.length > 0 
+        ? servicesWithPrices.map(service => ({
+            name: mapServiceType(service.tipo),
+            price: service.preco || 0
           }))
-        : [];
+        : professionalData.profissional.tiposServico 
+          ? professionalData.profissional.tiposServico.map(serviceType => ({
+              name: mapServiceType(serviceType),
+              price: 0
+            }))
+          : [];
 
       setArtist({
         ...transformedData,
@@ -520,7 +530,12 @@ const ArtistScreen = ({ route }) => {
               <Text style={styles.noServicesText}>Nenhum serviço cadastrado</Text>
             ) : (
               artist.services.map((service, index) => (
-                <Text key={index} style={styles.serviceItem}>{service.name}</Text>
+                <View key={index} style={styles.serviceItemContainer}>
+                  <Text style={styles.serviceItem}>{service.name}</Text>
+                  <Text style={styles.servicePrice}>
+                    R$ {(service.price || 0).toFixed(2).replace('.', ',')}
+                  </Text>
+                </View>
               ))
             )}
           </Card>
@@ -714,10 +729,21 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 16,
   },
+  serviceItemContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   serviceItem: {
     fontSize: 14,
     color: '#6B7280',
-    marginBottom: 8,
+    flex: 1,
+  },
+  servicePrice: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
   },
   socialLinks: {
     marginTop: 4,

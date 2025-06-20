@@ -9,14 +9,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Column;
 import jakarta.persistence.Transient;
-import jakarta.persistence.PostLoad;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 import inkspiration.backend.enums.TipoServico;
@@ -42,33 +40,11 @@ public class Profissional {
     @Column(precision = 3, scale = 1)
     private BigDecimal nota;
     
-    @Column(name = "tipos_servico", length = 500)
+    @Column(name = "tipos_servico", length = 1000)
     private String tiposServicoStr;
     
     @Transient
-    private List<TipoServico> tiposServico = new ArrayList<>();
-    
-    @PostLoad
-    private void onLoad() {
-        tiposServico = new ArrayList<>();
-        if (tiposServicoStr != null && !tiposServicoStr.isEmpty()) {
-            tiposServico = Arrays.stream(tiposServicoStr.split(","))
-                    .map(TipoServico::valueOf)
-                    .collect(Collectors.toList());
-        }
-    }
-    
-    @PrePersist
-    @PreUpdate
-    private void onSave() {
-        if (tiposServico != null && !tiposServico.isEmpty()) {
-            tiposServicoStr = tiposServico.stream()
-                    .map(Enum::name)
-                    .collect(Collectors.joining(","));
-        } else {
-            tiposServicoStr = "";
-        }
-    }
+    private Map<String, BigDecimal> tiposServicoPrecos = new HashMap<>();
     
     public Profissional() {}
     
@@ -113,26 +89,34 @@ public class Profissional {
         this.nota = nota;
     }
     
-    public List<TipoServico> getTiposServico() {
-        return tiposServico;
-    }
-    
-    public void setTiposServico(List<TipoServico> tiposServico) {
-        this.tiposServico = tiposServico != null ? tiposServico : new ArrayList<>();
-        if (this.tiposServico != null && !this.tiposServico.isEmpty()) {
-            this.tiposServicoStr = this.tiposServico.stream()
-                    .map(Enum::name)
-                    .collect(Collectors.joining(","));
-        } else {
-            this.tiposServicoStr = "";
-        }
-    }
-    
     public String getTiposServicoStr() {
         return tiposServicoStr;
     }
     
     public void setTiposServicoStr(String tiposServicoStr) {
         this.tiposServicoStr = tiposServicoStr;
+    }
+    
+    public Map<String, BigDecimal> getTiposServicoPrecos() {
+        return tiposServicoPrecos;
+    }
+    
+    public void setTiposServicoPrecos(Map<String, BigDecimal> tiposServicoPrecos) {
+        this.tiposServicoPrecos = tiposServicoPrecos != null ? tiposServicoPrecos : new HashMap<>();
+    }
+    
+    // Métodos de compatibilidade para obter tipos de serviço como lista
+    public List<TipoServico> getTiposServico() {
+        if (tiposServicoPrecos == null || tiposServicoPrecos.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return tiposServicoPrecos.keySet().stream()
+                .map(TipoServico::valueOf)
+                .collect(Collectors.toList());
+    }
+    
+    // Método para obter apenas os preços
+    public Map<String, BigDecimal> getPrecosServicos() {
+        return new HashMap<>(tiposServicoPrecos != null ? tiposServicoPrecos : new HashMap<>());
     }
 } 

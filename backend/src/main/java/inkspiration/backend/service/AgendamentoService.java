@@ -1,5 +1,6 @@
 package inkspiration.backend.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -37,6 +38,8 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import java.awt.Color;
 import java.time.format.DateTimeFormatter;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 @Service
 public class AgendamentoService {
@@ -45,6 +48,7 @@ public class AgendamentoService {
     private final ProfissionalRepository profissionalRepository;
     private final UsuarioRepository usuarioRepository;
     private final DisponibilidadeService disponibilidadeService;
+    private final NumberFormat formatoBrasileiro = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
     
     public AgendamentoService(
             AgendamentoRepository agendamentoRepository,
@@ -70,7 +74,7 @@ public class AgendamentoService {
     
     @Transactional
     public Agendamento criarAgendamento(Long idUsuario, Long idProfissional, String tipoServicoStr, 
-            String descricao, LocalDateTime dtInicio) throws Exception {
+            String descricao, LocalDateTime dtInicio, BigDecimal valor) throws Exception {
         
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
@@ -135,6 +139,7 @@ public class AgendamentoService {
             agendamento.setDescricao(descricao);
             agendamento.setDtInicio(dtInicioAjustado);
             agendamento.setDtFim(dtFim);
+            agendamento.setValor(valor);
             
             return agendamentoRepository.save(agendamento);
             
@@ -254,6 +259,7 @@ public class AgendamentoService {
         agendamento.setDescricao(descricao);
         agendamento.setDtInicio(dtInicioAjustado);
         agendamento.setDtFim(dtFim);
+        // Valor é preservado - não alterado durante edições
         
         return agendamentoRepository.save(agendamento);
     }
@@ -483,8 +489,20 @@ public class AgendamentoService {
             Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK);
             Paragraph info = new Paragraph("Total de agendamentos concluídos: " + agendamentosDTO.size(), normalFont);
             info.setAlignment(Element.ALIGN_LEFT);
-            info.setSpacingAfter(20);
+            info.setSpacingAfter(10);
             document.add(info);
+            
+            // Calcular valor total dos agendamentos
+            double valorTotal = agendamentosDTO.stream()
+                .filter(agendamento -> agendamento.getValor() != null)
+                .mapToDouble(agendamento -> agendamento.getValor().doubleValue())
+                .sum();
+            
+            Font valorFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK);
+            Paragraph valorInfo = new Paragraph("Valor total dos agendamentos: " + formatoBrasileiro.format(valorTotal), valorFont);
+            valorInfo.setAlignment(Element.ALIGN_LEFT);
+            valorInfo.setSpacingAfter(20);
+            document.add(valorInfo);
             
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
@@ -585,6 +603,11 @@ public class AgendamentoService {
                         addTableRow(table, "Descrição", agendamento.getDescricao(), headerFont, cellFont);
                     }
                     
+                    if (agendamento.getValor() != null) {
+                        String valorFormatado = formatoBrasileiro.format(agendamento.getValor());
+                        addTableRow(table, "Valor", valorFormatado, headerFont, cellFont);
+                    }
+                    
                     document.add(table);
                     
                     Paragraph separator = new Paragraph("------------------------------------------------------");
@@ -683,8 +706,20 @@ public class AgendamentoService {
             Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK);
             Paragraph info = new Paragraph("Total de atendimentos concluídos: " + atendimentosDTO.size(), normalFont);
             info.setAlignment(Element.ALIGN_LEFT);
-            info.setSpacingAfter(20);
+            info.setSpacingAfter(10);
             document.add(info);
+            
+            // Calcular valor total dos atendimentos
+            double valorTotal = atendimentosDTO.stream()
+                .filter(atendimento -> atendimento.getValor() != null)
+                .mapToDouble(atendimento -> atendimento.getValor().doubleValue())
+                .sum();
+            
+            Font valorFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK);
+            Paragraph valorInfo = new Paragraph("Valor total dos atendimentos: " + formatoBrasileiro.format(valorTotal), valorFont);
+            valorInfo.setAlignment(Element.ALIGN_LEFT);
+            valorInfo.setSpacingAfter(20);
+            document.add(valorInfo);
             
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
@@ -753,6 +788,11 @@ public class AgendamentoService {
                     
                     if (atendimento.getDescricao() != null && !atendimento.getDescricao().isEmpty()) {
                         addTableRow(table, "Descrição", atendimento.getDescricao(), headerFont, cellFont);
+                    }
+                    
+                    if (atendimento.getValor() != null) {
+                        String valorFormatado = formatoBrasileiro.format(atendimento.getValor());
+                        addTableRow(table, "Valor", valorFormatado, headerFont, cellFont);
                     }
                     
                     document.add(table);

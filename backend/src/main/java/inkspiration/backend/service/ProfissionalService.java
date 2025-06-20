@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import inkspiration.backend.dto.EnderecoDTO;
 import inkspiration.backend.dto.PortifolioDTO;
@@ -23,6 +25,7 @@ import inkspiration.backend.dto.ProfissionalDTO;
 import inkspiration.backend.entities.Endereco;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
+import inkspiration.backend.enums.TipoServico;
 import inkspiration.backend.exception.ResourceNotFoundException;
 import inkspiration.backend.exception.UsuarioException;
 import inkspiration.backend.repository.EnderecoRepository;
@@ -37,6 +40,7 @@ public class ProfissionalService {
     private final EnderecoRepository enderecoRepository;
     private final PortifolioService portifolioService;
     private final DisponibilidadeService disponibilidadeService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     public ProfissionalService(ProfissionalRepository profissionalRepository, 
@@ -50,6 +54,42 @@ public class ProfissionalService {
         this.enderecoRepository = enderecoRepository;
         this.portifolioService = portifolioService;
         this.disponibilidadeService = disponibilidadeService;
+    }
+
+    /**
+     * Carrega os preços dos serviços do JSON armazenado no banco para o Map transiente da entidade
+     */
+    private void carregarTiposServicoPrecos(Profissional profissional) {
+        Map<String, BigDecimal> tiposServicoPrecos = new HashMap<>();
+        if (profissional.getTiposServicoStr() != null && !profissional.getTiposServicoStr().isEmpty()) {
+            try {
+                TypeReference<Map<String, BigDecimal>> typeRef = new TypeReference<Map<String, BigDecimal>>() {};
+                tiposServicoPrecos = objectMapper.readValue(profissional.getTiposServicoStr(), typeRef);
+                System.out.println("LOG Service: Carregando tipos de serviço com preços: " + tiposServicoPrecos);
+            } catch (JsonProcessingException e) {
+                System.err.println("Erro ao carregar tipos de serviço com preços: " + e.getMessage());
+                tiposServicoPrecos = new HashMap<>();
+            }
+        }
+        profissional.setTiposServicoPrecos(tiposServicoPrecos);
+    }
+
+    /**
+     * Salva os preços dos serviços do Map transiente para o JSON no banco
+     */
+    private void salvarTiposServicoPrecos(Profissional profissional) {
+        if (profissional.getTiposServicoPrecos() != null && !profissional.getTiposServicoPrecos().isEmpty()) {
+            try {
+                String json = objectMapper.writeValueAsString(profissional.getTiposServicoPrecos());
+                profissional.setTiposServicoStr(json);
+                System.out.println("LOG Service: Salvando tipos de serviço com preços: " + profissional.getTiposServicoPrecos());
+            } catch (JsonProcessingException e) {
+                System.err.println("Erro ao salvar tipos de serviço com preços: " + e.getMessage());
+                profissional.setTiposServicoStr("");
+            }
+        } else {
+            profissional.setTiposServicoStr("");
+        }
     }
 
     @Transactional
@@ -86,7 +126,11 @@ public class ProfissionalService {
             profissional.setNota(dto.getNota());
         }
         
-        profissional.setTiposServico(dto.getTiposServico());
+        // Processar tipos de serviço com preços no service - primeira criação sem preços ainda
+        processarTiposServicoComPrecos(profissional, dto.getTiposServico(), null);
+        
+        // Salvar preços no JSON antes de persistir
+        salvarTiposServicoPrecos(profissional);
         
         return profissionalRepository.save(profissional);
     }
@@ -108,7 +152,15 @@ public class ProfissionalService {
         }
         
         if (dto.getTiposServico() != null) {
-            profissional.setTiposServico(dto.getTiposServico());
+            // Criar Map com preços padrão (se não fornecidos)
+            Map<String, BigDecimal> tiposComPrecos = new HashMap<>();
+            for (TipoServico tipo : dto.getTiposServico()) {
+                tiposComPrecos.put(tipo.name(), BigDecimal.ZERO);
+            }
+                    profissional.setTiposServicoPrecos(tiposComPrecos);
+        
+        // Salvar no JSON para persistência
+        salvarTiposServicoPrecos(profissional);
         }
         
         return profissionalRepository.save(profissional);
@@ -138,13 +190,26 @@ public class ProfissionalService {
             profissionalDTO.setIdUsuario(dto.getIdUsuario());
             profissionalDTO.setIdEndereco(dto.getIdEndereco());
             profissionalDTO.setNota(new BigDecimal("0.0")); // Nota inicial sempre zero
-            profissionalDTO.setTiposServico(dto.getTiposServico()); // Define os tipos de serviço
+            // Define os tipos de serviço via processamento
             
             profissional = criar(profissionalDTO);
+            
+            // Processar preços dos serviços na criação usando o método do service
+            if (dto.getPrecosServicos() != null && !dto.getPrecosServicos().isEmpty()) {
+                processarTiposServicoComPrecos(profissional, dto.getTiposServico(), dto.getPrecosServicos());
+                // Salvar preços no JSON antes de persistir
+                salvarTiposServicoPrecos(profissional);
+                profissional = profissionalRepository.save(profissional);
+            }
         }
         
         if (isUpdate) {
-            profissional.setTiposServico(dto.getTiposServico());
+            // Processar tipos de serviço com preços usando o método do service
+            processarTiposServicoComPrecos(profissional, dto.getTiposServico(), dto.getPrecosServicos());
+            
+            // Salvar preços no JSON antes de persistir
+            salvarTiposServicoPrecos(profissional);
+            
             profissional = profissionalRepository.save(profissional);
             
             profissionalRepository.flush();
@@ -195,13 +260,23 @@ public class ProfissionalService {
     }
 
     public Profissional buscarPorId(Long id) {
-        return profissionalRepository.findById(id)
+        Profissional profissional = profissionalRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Profissional não encontrado com ID: " + id));
+        
+        // Carregar preços do JSON para o Map transiente
+        carregarTiposServicoPrecos(profissional);
+        
+        return profissional;
     }
     
     public Profissional buscarPorUsuario(Long idUsuario) {
-        return profissionalRepository.findByUsuario_IdUsuario(idUsuario)
+        Profissional profissional = profissionalRepository.findByUsuario_IdUsuario(idUsuario)
                 .orElseThrow(() -> new ResourceNotFoundException("Perfil profissional não encontrado para o usuário com ID: " + idUsuario));
+        
+        // Carregar preços do JSON para o Map transiente
+        carregarTiposServicoPrecos(profissional);
+        
+        return profissional;
     }
     
     public boolean existePerfil(Long idUsuario) {
@@ -218,6 +293,9 @@ public class ProfissionalService {
                                              double minRating, String[] selectedSpecialties, String sortBy) {
         // Buscar TODOS os profissionais primeiro (sem paginação)
         List<Profissional> allProfissionais = profissionalRepository.findAll();
+        
+        // Carregar preços para todos os profissionais
+        allProfissionais.forEach(this::carregarTiposServicoPrecos);
         
         // Aplicar filtros manualmente
         List<Profissional> filteredProfissionais = allProfissionais.stream()
@@ -372,8 +450,34 @@ public class ProfissionalService {
         );
     }
 
-    public Endereco buscarEnderecoPorId(Long idEndereco) {
+        public Endereco buscarEnderecoPorId(Long idEndereco) {
         return enderecoRepository.findById(idEndereco)
-            .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado com ID: " + idEndereco));
+                .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado com ID: " + idEndereco));
+    }
+    
+    /**
+     * Processa tipos de serviço com preços - toda lógica fica no service
+     */
+    private void processarTiposServicoComPrecos(Profissional profissional, List<TipoServico> tiposServico, Map<String, BigDecimal> precosServicos) {
+        System.out.println("LOG Service: Processando tipos de serviço: " + tiposServico);
+        System.out.println("LOG Service: Processando preços: " + precosServicos);
+        
+        Map<String, BigDecimal> tiposComPrecos = new HashMap<>();
+        
+        if (tiposServico != null && !tiposServico.isEmpty()) {
+            for (TipoServico tipo : tiposServico) {
+                BigDecimal preco = BigDecimal.ZERO;
+                
+                // Se há preços informados, usa eles
+                if (precosServicos != null && precosServicos.containsKey(tipo.name())) {
+                    preco = precosServicos.get(tipo.name());
+                }
+                
+                tiposComPrecos.put(tipo.name(), preco);
+                System.out.println("LOG Service: Tipo " + tipo.name() + " com preço " + preco);
+            }
+        }
+        
+        profissional.setTiposServicoPrecos(tiposComPrecos);
     }
 } 

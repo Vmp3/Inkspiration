@@ -16,7 +16,9 @@ const BasicInfoForm = ({
   tiposServico,
   setTiposServico,
   tipoServicoSelecionados,
-  handleTipoServicoChange
+  handleTipoServicoChange,
+  precosServicos,
+  handlePrecoServicoChange
 }) => {
   const dropdownRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -150,21 +152,37 @@ const BasicInfoForm = ({
         ) : (
           <View style={styles.checkboxGrid}>
             {tiposServico && tiposServico.map((tipo, index) => (
-              <View key={index} style={styles.checkboxTipoServico}>
-                <TouchableOpacity 
-                  style={[
-                    styles.checkbox, 
-                    tipoServicoSelecionados[tipo.nome] && styles.checkboxChecked
-                  ]}
-                  onPress={() => handleTipoServicoChange(tipo.nome)}
-                >
-                  {tipoServicoSelecionados[tipo.nome] && <Feather name="check" size={16} color="#fff" />}
-                </TouchableOpacity>
-                <View style={styles.tipoServicoTextContainer}>
-                  <Text style={styles.checkboxLabel}>
-                    {formatarNomeTipo(tipo.nome)} | Duração: {tipo.duracaoHoras} {tipo.duracaoHoras === 1 ? 'hora' : 'horas'}
-                  </Text>
+              <View key={index} style={styles.checkboxTipoServicoContainer}>
+                <View style={styles.checkboxTipoServico}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.checkbox, 
+                      tipoServicoSelecionados[tipo.nome] && styles.checkboxChecked
+                    ]}
+                    onPress={() => handleTipoServicoChange(tipo.nome)}
+                  >
+                    {tipoServicoSelecionados[tipo.nome] && <Feather name="check" size={16} color="#fff" />}
+                  </TouchableOpacity>
+                  <View style={styles.tipoServicoTextContainer}>
+                    <Text style={styles.checkboxLabel}>
+                      {formatarNomeTipo(tipo.nome)} | Duração: {tipo.duracaoHoras} {tipo.duracaoHoras === 1 ? 'hora' : 'horas'}
+                    </Text>
+                  </View>
                 </View>
+                
+                {/* Input de preço aparece quando o serviço é selecionado */}
+                {tipoServicoSelecionados[tipo.nome] && (
+                  <View style={styles.precoInputContainer}>
+                    <Text style={styles.precoLabel}>Preço (R$):</Text>
+                    <TextInput
+                      style={styles.precoInput}
+                      placeholder="0,00"
+                      value={precosServicos[tipo.nome] || ''}
+                      onChangeText={(text) => handlePrecoServicoChange(tipo.nome, text)}
+                      keyboardType="numeric"
+                    />
+                  </View>
+                )}
               </View>
             ))}
           </View>
@@ -330,12 +348,36 @@ const styles = StyleSheet.create({
     width: '33.33%',
     marginBottom: 12,
   },
+  checkboxTipoServicoContainer: {
+    width: '100%',
+    marginBottom: 16,
+    paddingRight: 8,
+  },
   checkboxTipoServico: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     width: '100%',
-    marginBottom: 16,
-    paddingRight: 8,
+    marginBottom: 8,
+  },
+  precoInputContainer: {
+    marginTop: 8,
+    marginLeft: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  precoLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginRight: 8,
+    minWidth: 70,
+  },
+  precoInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 4,
+    padding: 8,
+    width: 100,
+    textAlign: 'right',
   },
   checkbox: {
     width: 20,

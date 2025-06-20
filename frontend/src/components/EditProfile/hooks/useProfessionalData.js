@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import ApiService from '../../../services/ApiService';
 import toastHelper from '../../../utils/toastHelper';
+import { editProfileMessages } from '../messages';
 
 const useProfessionalData = (userData) => {
   const [professionalFormData, setProfessionalFormData] = useState({
@@ -78,7 +79,8 @@ const useProfessionalData = (userData) => {
       name: 'profile.jpg'
     } : null,
     tiposServico: [],
-    tipoServicoSelecionados: {}
+    tipoServicoSelecionados: {},
+    precosServicos: {}
   });
 
   // Carregar dados profissionais
@@ -91,7 +93,7 @@ const useProfessionalData = (userData) => {
       const response = await ApiService.get(`/profissional/usuario/${userData.idUsuario}/completo`);
       
       if (response && response.profissional) {
-        const { profissional, portfolio, imagens, disponibilidades, tiposServico } = response;
+        const { profissional, portfolio, imagens, disponibilidades, tiposServico, precosServicos } = response;
         
         const allTiposServico = await ApiService.get('/tipos-servico');
         
@@ -99,6 +101,20 @@ const useProfessionalData = (userData) => {
         allTiposServico.forEach(tipo => {
           tipoServicoSelecionados[tipo.nome] = tiposServico.includes(tipo.nome);
         });
+        
+        // Carregar preços dos serviços
+        const precosCarregados = {};
+        if (precosServicos && typeof precosServicos === 'object') {
+          Object.entries(precosServicos).forEach(([tipo, preco]) => {
+            // Converter números para string formatada para exibição
+            if (typeof preco === 'number') {
+              precosCarregados[tipo] = preco.toString().replace('.', ',');
+            } else {
+              precosCarregados[tipo] = preco?.toString() || '';
+            }
+          });
+        }
+        console.log('LOG: Preços carregados do backend:', precosCarregados);
 
         // Transformar especialidades
         const specialties = portfolio?.especialidade ? 
@@ -203,7 +219,8 @@ const useProfessionalData = (userData) => {
             name: 'profile.jpg'
           } : null,
           tiposServico: allTiposServico,
-          tipoServicoSelecionados: tipoServicoSelecionados
+          tipoServicoSelecionados,
+          precosServicos: precosCarregados
         }));
       }
     } catch (error) {
@@ -256,6 +273,21 @@ const useProfessionalData = (userData) => {
         website: professionalFormData.socialMedia.website || null
       };
 
+      // Preparar preços formatados para o backend
+      const precosFormatados = {};
+      Object.entries(professionalFormData.precosServicos || {}).forEach(([tipo, preco]) => {
+        if (preco) {
+          // Converter vírgula para ponto e garantir formato decimal
+          const precoLimpo = typeof preco === 'string' ? preco.replace(',', '.') : preco.toString();
+          const precoNumerico = parseFloat(precoLimpo);
+          if (!isNaN(precoNumerico) && precoNumerico > 0) {
+            precosFormatados[tipo] = precoNumerico;
+          }
+        }
+      });
+      
+      console.log('LOG: Preços formatados para envio:', precosFormatados);
+
       const requestData = {
         profissional: {},
         portfolio: portfolioData,
@@ -263,7 +295,8 @@ const useProfessionalData = (userData) => {
           imagemBase64: img.base64
         })),
         disponibilidades,
-        tiposServico: tiposServicoSelecionados
+        tiposServico: tiposServicoSelecionados,
+        precosServicos: precosFormatados
       };
 
       await ApiService.put(`/profissional/usuario/${userData.idUsuario}/atualizar-completo-com-imagens`, requestData);
@@ -390,11 +423,31 @@ const useProfessionalData = (userData) => {
   };
 
   const handleTipoServicoChange = (tipoNome) => {
+    const isSelected = !professionalFormData.tipoServicoSelecionados[tipoNome];
+    
     setProfessionalFormData(prev => ({
       ...prev,
       tipoServicoSelecionados: {
         ...prev.tipoServicoSelecionados,
-        [tipoNome]: !prev.tipoServicoSelecionados[tipoNome]
+        [tipoNome]: isSelected
+      },
+      // Se o serviço foi desmarcado, remove o preço
+      precosServicos: isSelected ? prev.precosServicos : {
+        ...prev.precosServicos,
+        [tipoNome]: undefined
+      }
+    }));
+  };
+  
+  const handlePrecoServicoChange = (tipoNome, valor) => {
+    // Limpar caracteres não numéricos exceto vírgula e ponto
+    const valorLimpo = valor.replace(/[^\d,.]/, '');
+    
+    setProfessionalFormData(prev => ({
+      ...prev,
+      precosServicos: {
+        ...prev.precosServicos,
+        [tipoNome]: valorLimpo
       }
     }));
   };
@@ -431,7 +484,8 @@ const useProfessionalData = (userData) => {
     handleRemovePortfolioImage,
     pickImage,
     setBiography,
-    handleTipoServicoChange
+    handleTipoServicoChange,
+    handlePrecoServicoChange
   };
 };
 

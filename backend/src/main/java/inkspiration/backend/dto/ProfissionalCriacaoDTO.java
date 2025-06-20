@@ -1,6 +1,8 @@
 package inkspiration.backend.dto;
 
 import java.util.List;
+import java.util.Map;
+import java.math.BigDecimal;
 
 import inkspiration.backend.enums.TipoServico;
 import jakarta.validation.constraints.NotBlank;
@@ -13,6 +15,9 @@ public class ProfissionalCriacaoDTO {
     
     @NotEmpty(message = "Pelo menos um tipo de serviço é obrigatório")
     private List<TipoServico> tiposServico;
+    
+    // Preços dos serviços
+    private Map<String, BigDecimal> precosServicos;
     
     // Portifolio
     @NotBlank(message = "Biografia é obrigatória")
@@ -45,7 +50,8 @@ public class ProfissionalCriacaoDTO {
     public ProfissionalCriacaoDTO(Long idUsuario, Long idEndereco, List<TipoServico> tiposServico, String descricao, 
                                 String experiencia, String especialidade,
                                 List<String> estilosTatuagem, List<DisponibilidadeDTO> disponibilidades,
-                                String website, String tiktok, String instagram, String facebook, String twitter) {
+                                String website, String tiktok, String instagram, String facebook, String twitter,
+                                Map<String, BigDecimal> precosServicos) {
         this.idUsuario = idUsuario;
         this.idEndereco = idEndereco;
         this.tiposServico = tiposServico;
@@ -58,6 +64,7 @@ public class ProfissionalCriacaoDTO {
         this.instagram = instagram;
         this.facebook = facebook;
         this.twitter = twitter;
+        this.precosServicos = precosServicos;
     }
 
     public Long getIdUsuario() {
@@ -154,5 +161,13 @@ public class ProfissionalCriacaoDTO {
 
     public void setTwitter(String twitter) {
         this.twitter = twitter;
+    }
+
+    public Map<String, BigDecimal> getPrecosServicos() {
+        return precosServicos;
+    }
+    
+    public void setPrecosServicos(Map<String, BigDecimal> precosServicos) {
+        this.precosServicos = precosServicos;
     }
 } 

@@ -148,6 +148,21 @@ const validateWebsite = (value) => {
   return value.trim().length <= 255;
 };
 
+const formatCurrency = (value) => {
+  if (!value && value !== 0) return '';
+  
+  const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+  
+  if (isNaN(numericValue)) return '';
+  
+  return numericValue.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 export {
   formatCPF,
   formatCEP,
@@ -161,5 +176,6 @@ export {
   validateSurname,
   validateFullNameLength,
   validateSocialMedia,
-  validateWebsite
+  validateWebsite,
+  formatCurrency
 }; 

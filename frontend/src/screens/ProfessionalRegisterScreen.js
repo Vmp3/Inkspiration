@@ -33,6 +33,7 @@ const ProfessionalRegisterScreen = () => {
   
   const [tiposServico, setTiposServico] = useState([]);
   const [tipoServicoSelecionados, setTipoServicoSelecionados] = useState({});
+  const [precosServicos, setPrecosServicos] = useState({});
   
   // Estados para as informações básicas
   const [experience, setExperience] = useState('1-3 anos');
@@ -258,9 +259,30 @@ const ProfessionalRegisterScreen = () => {
   };
   
   const handleTipoServicoChange = (tipoNome) => {
+    const isSelected = !tipoServicoSelecionados[tipoNome];
+    
     setTipoServicoSelecionados(prev => ({
       ...prev,
-      [tipoNome]: !prev[tipoNome]
+      [tipoNome]: isSelected
+    }));
+    
+    // Se o serviço foi desmarcado, remove o preço
+    if (!isSelected) {
+      setPrecosServicos(prev => {
+        const newPrecos = { ...prev };
+        delete newPrecos[tipoNome];
+        return newPrecos;
+      });
+    }
+  };
+  
+  const handlePrecoServicoChange = (tipoNome, valor) => {
+    // Limpar caracteres não numéricos exceto vírgula e ponto
+    const valorLimpo = valor.replace(/[^\d,.]/, '');
+    
+    setPrecosServicos(prev => ({
+      ...prev,
+      [tipoNome]: valorLimpo
     }));
   };
   
@@ -405,6 +427,13 @@ const ProfessionalRegisterScreen = () => {
       
       if (selectedServices.length === 0) {
         return false;
+      }
+      
+      // Validar se todos os serviços selecionados possuem preço
+      for (const service of selectedServices) {
+        if (!precosServicos[service] || precosServicos[service].trim() === '') {
+          return false;
+        }
       }
     }
     
@@ -640,11 +669,22 @@ const ProfessionalRegisterScreen = () => {
           return;
         }
         
+        // Preparar preços formatados para o backend
+        const precosFormatados = {};
+        Object.entries(precosServicos).forEach(([tipo, preco]) => {
+          // Converter vírgula para ponto e garantir formato decimal
+          const precoLimpo = preco.replace(',', '.');
+          precosFormatados[tipo] = parseFloat(precoLimpo) || 0;
+        });
+        
+        console.log('LOG Frontend: Preços formatados:', precosFormatados);
+        
         // Preparar objeto com formato esperado pelo backend (ProfissionalCriacaoDTO)
         const professionalData = {
           idUsuario: userData.idUsuario,
           idEndereco: userDetails.idEndereco,
           tiposServico: selectedTiposServico,
+          precosServicos: precosFormatados,
           experiencia: experience,
           especialidade: selectedSpecialties.join(', '),
           descricao: biography,
@@ -754,6 +794,8 @@ const ProfessionalRegisterScreen = () => {
                     setTiposServico={setTiposServico}
                     tipoServicoSelecionados={tipoServicoSelecionados}
                     handleTipoServicoChange={handleTipoServicoChange}
+                    precosServicos={precosServicos}
+                    handlePrecoServicoChange={handlePrecoServicoChange}
                   />
                   <View style={styles.formNavigationWrapper}>
                     <FormNavigation
