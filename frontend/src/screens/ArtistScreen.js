@@ -281,7 +281,6 @@ const ArtistScreen = ({ route }) => {
       }
       // Chamada correta
       const apiResponse = await AvaliacaoService.listarPorProfissional(artist.idProfissional, page);
-      console.log('API Response (Reviews):', apiResponse);
 
       let newReviews = [];
       let totalAvaliacoes = 0;
