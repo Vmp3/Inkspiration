@@ -13,6 +13,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DefaultUser from '../../assets/default_user.png';
+import { formatCurrency } from '../utils/formatters';
 
 const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isProfessional = false }) => {
   if (!appointment) return null;
@@ -170,6 +171,18 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isPro
                     {formatTime(appointment.dtInicio, appointment.dtFim)}
                   </Text>
                 </View>
+
+                {appointment.valor && (
+                  <View style={styles.detailSection}>
+                    <View style={styles.detailRow}>
+                      <MaterialIcons name="attach-money" size={18} color="#111" />
+                      <Text style={styles.detailLabel}>Valor</Text>
+                    </View>
+                    <Text style={styles.detailValue}>
+                      {formatCurrency(appointment.valor)}
+                    </Text>
+                  </View>
+                )}
 
                 <View style={styles.detailSection}>
                   <View style={styles.detailRow}>

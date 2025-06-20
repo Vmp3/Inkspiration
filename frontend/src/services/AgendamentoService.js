@@ -41,8 +41,11 @@ class AgendamentoService {
 
   async criarAgendamento(dadosAgendamento) {
     try {
+      const tipoServicoFormatado = this.formatarTipoServico(dadosAgendamento.tipoServico);
+      
       const dadosComStatus = {
         ...dadosAgendamento,
+        tipoServico: tipoServicoFormatado,
         status: "AGENDADO"
       };
       return await ApiService.post('/agendamentos', dadosComStatus);

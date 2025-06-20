@@ -30,6 +30,7 @@ const BookingScreen = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
+  const [selectedServicePrice, setSelectedServicePrice] = useState(0);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [description, setDescription] = useState('');
   const [descriptionError, setDescriptionError] = useState('');
@@ -206,6 +207,7 @@ const BookingScreen = () => {
         tipoServico: selectedService,
         descricao: description,
         dtInicio: `${selectedDate}T${selectedTime}:00`,
+        valor: selectedServicePrice,
         status: "Agendado"
       };
 
@@ -277,7 +279,10 @@ const BookingScreen = () => {
           {services.map((service) => (
             <TouchableOpacity
               key={service.tipo}
-              onPress={() => setSelectedService(service.tipo)}
+              onPress={() => {
+                setSelectedService(service.tipo);
+                setSelectedServicePrice(service.preco || 0);
+              }}
             >
               <View style={[
                 styles.serviceCard,
@@ -287,6 +292,9 @@ const BookingScreen = () => {
                   <Text style={styles.serviceName}>{service.exemplo.split('-')[0].trim()}</Text>
                   <Text style={styles.serviceDuration}>
                     Duração: {service.duracaoHoras} horas
+                  </Text>
+                  <Text style={styles.servicePrice}>
+                    Preço: R$ {(service.preco || 0).toFixed(2).replace('.', ',')}
                   </Text>
                 </View>
               </View>
@@ -487,6 +495,10 @@ const BookingScreen = () => {
           <View style={styles.confirmationRow}>
             <Text style={styles.confirmationLabel}>Hora:</Text>
             <Text style={styles.confirmationValue}>{selectedTime}</Text>
+          </View>
+          <View style={styles.confirmationRow}>
+            <Text style={styles.confirmationLabel}>Valor:</Text>
+            <Text style={styles.confirmationValue}>R$ {selectedServicePrice.toFixed(2).replace('.', ',')}</Text>
           </View>
         </View>
 
@@ -800,6 +812,12 @@ const styles = StyleSheet.create({
   serviceDuration: {
     fontSize: 14,
     color: '#64748b',
+  },
+  servicePrice: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111',
+    marginTop: 4,
   },
   sectionContainer: {
     marginBottom: 24,

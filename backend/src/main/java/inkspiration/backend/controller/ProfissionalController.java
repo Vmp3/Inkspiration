@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Arrays;
+import java.math.BigDecimal;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -124,7 +125,9 @@ public class ProfissionalController {
                     }
                     profissionalCompleto.put("usuario", usuarioInfo);
                     
-                    profissionalCompleto.put("tiposServico", profissional.getTiposServico());
+                    profissionalCompleto.put("tiposServico", profissional.getTiposServico()); // Lista de tipos (compatibilidade)
+                    profissionalCompleto.put("precosServicos", profissional.getPrecosServicos()); // Map de preços (compatibilidade)
+                    profissionalCompleto.put("tiposServicoPrecos", profissional.getTiposServicoPrecos()); // Nova estrutura unificada
                     
                     // Informações do endereço
                     Map<String, Object> enderecoInfo = new HashMap<>();
@@ -205,7 +208,9 @@ public class ProfissionalController {
         }
         profissionalCompleto.put("usuario", usuarioInfo);
         
-        profissionalCompleto.put("tiposServico", profissional.getTiposServico());
+        profissionalCompleto.put("tiposServico", profissional.getTiposServico()); // Lista de tipos (compatibilidade)
+        profissionalCompleto.put("precosServicos", profissional.getPrecosServicos()); // Map de preços (compatibilidade)
+        profissionalCompleto.put("tiposServicoPrecos", profissional.getTiposServicoPrecos()); // Nova estrutura unificada
         
         // Informações do endereço
         Map<String, Object> enderecoInfo = new HashMap<>();
@@ -309,7 +314,9 @@ public class ProfissionalController {
             response.put("portfolio", portfolioDto);
             response.put("imagens", imagens);
             response.put("disponibilidades", disponibilidades);
-            response.put("tiposServico", profissional.getTiposServico());
+            response.put("tiposServico", profissional.getTiposServico()); // Lista de tipos (compatibilidade)
+            response.put("precosServicos", profissional.getPrecosServicos()); // Map de preços (compatibilidade)
+            response.put("tiposServicoPrecos", profissional.getTiposServicoPrecos()); // Nova estrutura unificada
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -345,14 +352,21 @@ public class ProfissionalController {
     public ResponseEntity<List<Map<String, Object>>> listarTiposServicoPorProfissional(@PathVariable Long idProfissional) {
         try {
             Profissional profissional = profissionalService.buscarPorId(idProfissional);
+            Map<String, BigDecimal> precosServicos = profissional.getPrecosServicos();
+            
             List<Map<String, Object>> tiposServico = profissional.getTiposServico().stream()
                 .map(tipo -> {
                     Map<String, Object> tipoMap = new HashMap<>();
-                    tipoMap.put("tipo", tipo.getDescricao());
+                    tipoMap.put("tipo", tipo.name()); // Usar o nome enum para compatibilidade
                     tipoMap.put("duracaoHoras", tipo.getDuracaoHoras());
                     tipoMap.put("exemplo", tipo.name().startsWith("TATUAGEM_") ? 
                         "Tatuagem " + tipo.name().replace("TATUAGEM_", "").toLowerCase() + " - " + tipo.getDuracaoHoras() + " horas" :
                         "Sessão completa - " + tipo.getDuracaoHoras() + " horas");
+                    
+                    // Adicionar preço do serviço
+                    BigDecimal preco = precosServicos.getOrDefault(tipo.name(), BigDecimal.ZERO);
+                    tipoMap.put("preco", preco);
+                    
                     return tipoMap;
                 })
                 .collect(Collectors.toList());
@@ -366,6 +380,9 @@ public class ProfissionalController {
     @PostMapping("/auth/register/profissional-completo")
     public ResponseEntity<?> criarProfissionalCompleto(@RequestBody @Valid ProfissionalCriacaoDTO dto) {
         try {
+            System.out.println("LOG: Recebendo DTO com tipos de serviço: " + dto.getTiposServico());
+            System.out.println("LOG: Recebendo DTO com preços: " + dto.getPrecosServicos());
+            
             Profissional profissional = profissionalService.criarProfissionalCompleto(dto);
             return ResponseEntity.status(HttpStatus.CREATED).body(profissionalService.converterParaDto(profissional));
         } catch (JsonProcessingException e) {
@@ -427,6 +444,12 @@ public class ProfissionalController {
             @SuppressWarnings("unchecked")
             List<String> tiposServicoStr = (List<String>) requestData.get("tiposServico");
             
+            // Extrair preços dos serviços
+            @SuppressWarnings("unchecked")
+            Map<String, Object> precosServicosData = (Map<String, Object>) requestData.get("precosServicos");
+            
+            System.out.println("LOG Controller: Recebendo preços na atualização: " + precosServicosData);
+            
             Profissional profissional = profissionalService.buscarPorUsuario(idUsuario);
             
             ProfissionalCriacaoDTO dto = new ProfissionalCriacaoDTO();
@@ -443,6 +466,28 @@ public class ProfissionalController {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                             .body("Tipo de serviço inválido: " + e.getMessage());
                 }
+            }
+            
+            // Mover processamento de preços para o service - só passa dados brutos
+            if (precosServicosData != null && !precosServicosData.isEmpty()) {
+                Map<String, BigDecimal> precosFormatados = new HashMap<>();
+                precosServicosData.forEach((tipo, preco) -> {
+                    try {
+                        BigDecimal precoDecimal;
+                        if (preco instanceof Number) {
+                            precoDecimal = BigDecimal.valueOf(((Number) preco).doubleValue());
+                        } else if (preco instanceof String) {
+                            precoDecimal = new BigDecimal(preco.toString());
+                        } else {
+                            precoDecimal = new BigDecimal(preco.toString());
+                        }
+                        precosFormatados.put(tipo, precoDecimal);
+                        System.out.println("LOG Controller: Preço processado para " + tipo + ": " + precoDecimal);
+                    } catch (Exception e) {
+                        System.err.println("Erro ao processar preço para " + tipo + ": " + e.getMessage());
+                    }
+                });
+                dto.setPrecosServicos(precosFormatados);
             }
             
             if (portfolioData != null) {

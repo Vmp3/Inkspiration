@@ -16,6 +16,7 @@ import { differenceInDays } from 'date-fns';
 import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import { editAppointmentMessages } from './editAppointment/messages';
+import { formatCurrency } from '../utils/formatters';
 
 const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
   const [step, setStep] = useState(1);
@@ -470,6 +471,14 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
     return (
       <View style={styles.stepContent}>
         <Text style={styles.stepTitle}>Detalhes do Agendamento</Text>
+        {appointment.valor && (
+          <View style={styles.valorContainer}>
+            <Text style={styles.valorLabel}>Valor do Serviço:</Text>
+            <Text style={styles.valorValue}>
+              {formatCurrency(appointment.valor)}
+            </Text>
+          </View>
+        )}
         <View style={styles.formGroup}>
           <Text style={styles.label}>Descrição da Tatuagem *</Text>
           <TextInput
@@ -977,6 +986,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#FFFFFF',
+  },
+  valorContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  valorLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111',
+  },
+  valorValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#059669',
   },
 });
 

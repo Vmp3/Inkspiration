@@ -384,6 +384,8 @@ const EditProfileScreen = () => {
                   setTiposServico={(value) => professionalData.setProfessionalFormData(prev => ({ ...prev, tiposServico: value }))}
                   tipoServicoSelecionados={professionalData.professionalFormData.tipoServicoSelecionados}
                   handleTipoServicoChange={professionalData.handleTipoServicoChange}
+                  precosServicos={professionalData.professionalFormData.precosServicos}
+                  handlePrecoServicoChange={professionalData.handlePrecoServicoChange}
                     />
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}

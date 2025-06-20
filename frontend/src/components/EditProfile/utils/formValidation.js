@@ -39,6 +39,24 @@ export const useFormValidation = () => {
         key => professionalFormData.tipoServicoSelecionados[key]
       );
       if (selectedServices.length === 0) return false;
+      
+      // Validar se todos os serviços selecionados possuem preço
+      for (const service of selectedServices) {
+        const preco = professionalFormData.precosServicos?.[service];
+        if (!preco && preco !== 0) {
+          return false;
+        }
+        
+        // Se for string, verificar se não está vazia
+        if (typeof preco === 'string' && preco.trim() === '') {
+          return false;
+        }
+        
+        // Se for número, verificar se é maior que 0
+        if (typeof preco === 'number' && preco <= 0) {
+          return false;
+        }
+      }
     }
     
     if (professionalFormData.socialMedia) {

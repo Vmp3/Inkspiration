@@ -1,5 +1,6 @@
 package inkspiration.backend.controller;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +54,8 @@ public class AgendamentoController {
                     request.getIdProfissional(),
                     request.getTipoServico(),
                     request.getDescricao(),
-                    request.getDtInicio());
+                    request.getDtInicio(),
+                    request.getValor());
             return ResponseEntity.status(HttpStatus.CREATED).body(new AgendamentoDTO(agendamento));
         } catch (Exception e) {
             String errorMessage = e.getMessage();
