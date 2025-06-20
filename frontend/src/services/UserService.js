@@ -33,7 +33,7 @@ class UserService {
 
   async deactivateUser(id) {
     try {
-      const response = await ApiService.put(`/usuario/desativar/${id}`);
+      const response = await ApiService.post(`/usuario/inativar/${id}`);
       return response;
     } catch (error) {
       console.error('Erro ao desativar usuário:', error);
@@ -43,7 +43,7 @@ class UserService {
 
   async reactivateUser(id) {
     try {
-      const response = await ApiService.put(`/usuario/reativar/${id}`);
+      const response = await ApiService.post(`/usuario/reativar/${id}`);
       return response;
     } catch (error) {
       console.error('Erro ao reativar usuário:', error);

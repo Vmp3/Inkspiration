@@ -117,6 +117,13 @@ public class UsuarioController {
         service.inativar(id);
         return ResponseEntity.ok("Usuário inativado com sucesso.");
     }
+    
+    @PostMapping("/reativar/{id}")
+    public ResponseEntity<String> reativarUsuario(@PathVariable Long id) {
+        service.reativar(id);
+        return ResponseEntity.ok("Usuário reativado com sucesso.");
+    }
+
 
     @DeleteMapping("/deletar/{id}")
     public ResponseEntity<String> excluirUsuario(@PathVariable Long id) {
