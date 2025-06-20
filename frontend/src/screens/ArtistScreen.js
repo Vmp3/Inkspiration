@@ -466,18 +466,18 @@ const ArtistScreen = ({ route }) => {
           </View>
 
           {/* Estatísticas das avaliações */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{avaliacoesStats.totalAvaliacoes}</Text>
-              <Text style={styles.statLabel}>Total</Text>
+          <View style={isMobile ? styles.statsContainerMobile : styles.statsContainer}>
+            <View style={isMobile ? styles.statItemMobile : styles.statItem}>
+              <Text style={isMobile ? styles.statNumberMobile : styles.statNumber}>{avaliacoesStats.totalAvaliacoes}</Text>
+              <Text style={isMobile ? styles.statLabelMobile : styles.statLabel}>Total</Text>
             </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{avaliacoesStats.avaliacoesComComentario}</Text>
-              <Text style={styles.statLabel}>Com Comentário</Text>
+            <View style={isMobile ? styles.statItemMobile : styles.statItem}>
+              <Text style={isMobile ? styles.statNumberMobile : styles.statNumber}>{avaliacoesStats.avaliacoesComComentario}</Text>
+              <Text style={isMobile ? styles.statLabelMobile : styles.statLabel}>Com Comentário</Text>
             </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{avaliacoesStats.avaliacoesSemComentario}</Text>
-              <Text style={styles.statLabel}>Sem Comentário</Text>
+            <View style={isMobile ? styles.statItemMobile : styles.statItem}>
+              <Text style={isMobile ? styles.statNumberMobile : styles.statNumber}>{avaliacoesStats.avaliacoesSemComentario}</Text>
+              <Text style={isMobile ? styles.statLabelMobile : styles.statLabel}>Sem Comentário</Text>
             </View>
           </View>
 
@@ -1181,19 +1181,53 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+    paddingHorizontal: 8,
   },
   statItem: {
     flexDirection: 'column',
     alignItems: 'center',
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    marginHorizontal: 4,
   },
   statNumber: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#111827',
+    marginBottom: 4,
   },
   statLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  statsContainerMobile: {
+    flexDirection: 'column',
+    gap: 8,
+    marginBottom: 16,
+  },
+  statItemMobile: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+  },
+  statNumberMobile: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  statLabelMobile: {
     fontSize: 14,
     color: '#6B7280',
+    fontWeight: '500',
   },
 });
 
