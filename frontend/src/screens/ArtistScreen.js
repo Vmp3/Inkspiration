@@ -23,6 +23,7 @@ import { mockReviews } from '../data/reviews';
 import DefaultUser from '../../assets/default_user.png'
 import AvaliacaoService from '../services/AvaliacaoService';
 import { formatDate } from '../utils/formatters';
+import Avatar from '../components/ui/Avatar';
 
 const Tabs = ({ tabs, activeTab, onTabChange }) => {
   return (
@@ -555,9 +556,11 @@ const ArtistScreen = ({ route }) => {
                 <View style={styles.reviewCard}>
                   <View style={styles.reviewHeader}>
                     <View style={styles.reviewerInfo}>
-                      <Image
-                        source={{ uri: item.userImage }}
-                        style={styles.reviewerImage}
+                      <Avatar
+                        source={item.userImage && item.userImage !== DefaultUser ? item.userImage : null}
+                        fallback={textUtils.getInitials(item.userName)}
+                        size={40}
+                        style={{ marginRight: 12 }}
                       />
                       <View>
                         <Text style={styles.reviewerName}>{item.userName}</Text>
