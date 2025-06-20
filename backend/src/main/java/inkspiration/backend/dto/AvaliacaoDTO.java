@@ -7,6 +7,97 @@ public class AvaliacaoDTO {
     private String descricao;
     private Integer rating;
     private Long idAgendamento;
+    private AgendamentoInfo agendamento;
+
+    // Classe interna para informações do agendamento
+    public static class AgendamentoInfo {
+        private Long idAgendamento;
+        private String dataHora;
+        private String tipoTatuagem;
+        private UsuarioInfo usuario;
+        private ProfissionalInfo profissional;
+
+        public AgendamentoInfo() {}
+
+        public AgendamentoInfo(inkspiration.backend.entities.Agendamento agendamento) {
+            this.idAgendamento = agendamento.getIdAgendamento();
+            this.dataHora = agendamento.getDataHora().toString();
+            this.tipoTatuagem = agendamento.getTipoTatuagem().toString();
+            this.usuario = new UsuarioInfo(agendamento.getUsuario());
+            this.profissional = new ProfissionalInfo(agendamento.getProfissional());
+        }
+
+        // Getters e Setters
+        public Long getIdAgendamento() { return idAgendamento; }
+        public void setIdAgendamento(Long idAgendamento) { this.idAgendamento = idAgendamento; }
+        
+        public String getDataHora() { return dataHora; }
+        public void setDataHora(String dataHora) { this.dataHora = dataHora; }
+        
+        public String getTipoTatuagem() { return tipoTatuagem; }
+        public void setTipoTatuagem(String tipoTatuagem) { this.tipoTatuagem = tipoTatuagem; }
+        
+        public UsuarioInfo getUsuario() { return usuario; }
+        public void setUsuario(UsuarioInfo usuario) { this.usuario = usuario; }
+        
+        public ProfissionalInfo getProfissional() { return profissional; }
+        public void setProfissional(ProfissionalInfo profissional) { this.profissional = profissional; }
+    }
+
+    // Classe interna para informações do usuário
+    public static class UsuarioInfo {
+        private Long idUsuario;
+        private String nome;
+        private String email;
+        private String fotoPerfil;
+
+        public UsuarioInfo() {}
+
+        public UsuarioInfo(inkspiration.backend.entities.Usuario usuario) {
+            this.idUsuario = usuario.getIdUsuario();
+            this.nome = usuario.getNome();
+            this.email = usuario.getEmail();
+            this.fotoPerfil = usuario.getFotoPerfil();
+        }
+
+        // Getters e Setters
+        public Long getIdUsuario() { return idUsuario; }
+        public void setIdUsuario(Long idUsuario) { this.idUsuario = idUsuario; }
+        
+        public String getNome() { return nome; }
+        public void setNome(String nome) { this.nome = nome; }
+        
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        
+        public String getFotoPerfil() { return fotoPerfil; }
+        public void setFotoPerfil(String fotoPerfil) { this.fotoPerfil = fotoPerfil; }
+    }
+
+    // Classe interna para informações do profissional
+    public static class ProfissionalInfo {
+        private Long idProfissional;
+        private String nome;
+        private String email;
+
+        public ProfissionalInfo() {}
+
+        public ProfissionalInfo(inkspiration.backend.entities.Profissional profissional) {
+            this.idProfissional = profissional.getIdProfissional();
+            this.nome = profissional.getNome();
+            this.email = profissional.getEmail();
+        }
+
+        // Getters e Setters
+        public Long getIdProfissional() { return idProfissional; }
+        public void setIdProfissional(Long idProfissional) { this.idProfissional = idProfissional; }
+        
+        public String getNome() { return nome; }
+        public void setNome(String nome) { this.nome = nome; }
+        
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+    }
 
     // Construtor vazio
     public AvaliacaoDTO() {
@@ -18,6 +109,7 @@ public class AvaliacaoDTO {
         this.descricao = avaliacao.getDescricao();
         this.rating = avaliacao.getRating();
         this.idAgendamento = avaliacao.getAgendamento().getIdAgendamento();
+        this.agendamento = new AgendamentoInfo(avaliacao.getAgendamento());
     }
 
     // Construtor completo
@@ -59,5 +151,13 @@ public class AvaliacaoDTO {
 
     public void setIdAgendamento(Long idAgendamento) {
         this.idAgendamento = idAgendamento;
+    }
+
+    public AgendamentoInfo getAgendamento() {
+        return agendamento;
+    }
+
+    public void setAgendamento(AgendamentoInfo agendamento) {
+        this.agendamento = agendamento;
     }
 } 
