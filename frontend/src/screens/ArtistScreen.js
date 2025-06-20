@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -308,13 +308,18 @@ const ArtistScreen = ({ route }) => {
     setSelectedImage(null);
   };
 
+  // Renderizar o componente de carregamento
+  const renderLoading = useMemo(() => (
+    <View style={styles.loadingContainer}>
+      <MaterialIcons name="hourglass-top" size={32} color="#6B7280" />
+      <Text style={styles.loadingText}>Carregando perfil do profissional...</Text>
+      <Text style={styles.loadingSubtext}>Aguarde enquanto buscamos as informações do artista</Text>
+    </View>
+  ), []);
+
   // Mostrar loading enquanto carrega os dados
   if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>{artistMessages.loading.profile}</Text>
-      </View>
-    );
+    return renderLoading;
   }
 
   // Se não encontrou o artista
@@ -966,9 +971,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  loadingSubtext: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    opacity: 0.8,
   },
   noImagesContainer: {
     flex: 1,

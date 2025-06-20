@@ -814,10 +814,8 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   servicePrice: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111',
-    marginTop: 4,
+    fontSize: 14,
+    color: '#64748b',
   },
   sectionContainer: {
     marginBottom: 24,

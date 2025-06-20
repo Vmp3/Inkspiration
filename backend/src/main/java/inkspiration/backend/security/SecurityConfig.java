@@ -62,6 +62,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/portifolio/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/disponibilidades/profissional/{idProfissional}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/disponibilidades/profissional/{idProfissional}/verificar").permitAll()
+                .requestMatchers(HttpMethod.GET, "/tipos-servico").permitAll()
+                .requestMatchers(HttpMethod.GET, "/tipos-servico/{idProfissional}").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated()
             )
