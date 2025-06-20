@@ -274,7 +274,7 @@ const ArtistScreen = ({ route }) => {
       let totalAvaliacoes = 0;
       
       // Nova estrutura de resposta com informações paginadas
-      if (response && response.content) {
+      if (response && response.content && Array.isArray(response.content)) {
         newReviews = response.content.map(review => ({
           id: review.idAvaliacao,
           userName: review.agendamento?.usuario?.nome || 'Usuário',
@@ -299,6 +299,11 @@ const ArtistScreen = ({ route }) => {
         }));
         totalAvaliacoes = page === 0 ? response.length : reviewCount;
         setHasMoreReviews(newReviews.length === 10);
+      } else {
+        // Se a resposta não for válida, definir valores padrão
+        newReviews = [];
+        totalAvaliacoes = 0;
+        setHasMoreReviews(false);
       }
       
       if (shouldRefresh || page === 0) {
@@ -312,6 +317,13 @@ const ArtistScreen = ({ route }) => {
     } catch (error) {
       console.error('Erro ao carregar avaliações:', error);
       toastHelper.showError('Erro ao carregar avaliações');
+      
+      // Em caso de erro, definir valores padrão
+      if (shouldRefresh || page === 0) {
+        setReviews([]);
+      }
+      setReviewCount(0);
+      setHasMoreReviews(false);
     } finally {
       setIsLoadingReviews(false);
     }
@@ -319,11 +331,43 @@ const ArtistScreen = ({ route }) => {
 
   const loadAvaliacoesStats = async () => {
     try {
+      // Verificar se o artista existe e tem ID
+      if (!artist || !artist.idProfissional) {
+        console.warn('Artista não encontrado ou sem ID profissional');
+        return;
+      }
+
       const stats = await AvaliacaoService.obterEstatisticasProfissional(artist.idProfissional);
-      setAvaliacoesStats(stats);
-      setReviewCount(stats.totalAvaliacoes || 0);
+      
+      // Verificar se stats existe e tem a estrutura esperada
+      if (stats && typeof stats === 'object') {
+        setAvaliacoesStats({
+          totalAvaliacoes: stats.totalAvaliacoes || 0,
+          mediaAvaliacoes: stats.mediaAvaliacoes || 0,
+          avaliacoesComComentario: stats.avaliacoesComComentario || 0,
+          avaliacoesSemComentario: stats.avaliacoesSemComentario || 0
+        });
+        setReviewCount(stats.totalAvaliacoes || 0);
+      } else {
+        // Fallback para valores padrão se a API não retornar dados válidos
+        setAvaliacoesStats({
+          totalAvaliacoes: 0,
+          mediaAvaliacoes: 0,
+          avaliacoesComComentario: 0,
+          avaliacoesSemComentario: 0
+        });
+        setReviewCount(0);
+      }
     } catch (error) {
       console.error('Erro ao carregar estatísticas de avaliações:', error);
+      // Em caso de erro, definir valores padrão
+      setAvaliacoesStats({
+        totalAvaliacoes: 0,
+        mediaAvaliacoes: 0,
+        avaliacoesComComentario: 0,
+        avaliacoesSemComentario: 0
+      });
+      setReviewCount(0);
     }
   };
 
@@ -468,15 +512,21 @@ const ArtistScreen = ({ route }) => {
           {/* Estatísticas das avaliações */}
           <View style={isMobile ? styles.statsContainerMobile : styles.statsContainer}>
             <View style={isMobile ? styles.statItemMobile : styles.statItem}>
-              <Text style={isMobile ? styles.statNumberMobile : styles.statNumber}>{avaliacoesStats.totalAvaliacoes}</Text>
+              <Text style={isMobile ? styles.statNumberMobile : styles.statNumber}>
+                {avaliacoesStats?.totalAvaliacoes || 0}
+              </Text>
               <Text style={isMobile ? styles.statLabelMobile : styles.statLabel}>Total</Text>
             </View>
             <View style={isMobile ? styles.statItemMobile : styles.statItem}>
-              <Text style={isMobile ? styles.statNumberMobile : styles.statNumber}>{avaliacoesStats.avaliacoesComComentario}</Text>
+              <Text style={isMobile ? styles.statNumberMobile : styles.statNumber}>
+                {avaliacoesStats?.avaliacoesComComentario || 0}
+              </Text>
               <Text style={isMobile ? styles.statLabelMobile : styles.statLabel}>Com Comentário</Text>
             </View>
             <View style={isMobile ? styles.statItemMobile : styles.statItem}>
-              <Text style={isMobile ? styles.statNumberMobile : styles.statNumber}>{avaliacoesStats.avaliacoesSemComentario}</Text>
+              <Text style={isMobile ? styles.statNumberMobile : styles.statNumber}>
+                {avaliacoesStats?.avaliacoesSemComentario || 0}
+              </Text>
               <Text style={isMobile ? styles.statLabelMobile : styles.statLabel}>Sem Comentário</Text>
             </View>
           </View>
