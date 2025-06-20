@@ -103,6 +103,27 @@ const BasicInfoForm = ({
     return nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
   };
 
+  const formatarPreco = (valor) => {
+    // Remove tudo que não é número
+    const apenasNumeros = valor.replace(/\D/g, '');
+    
+    if (!apenasNumeros) return '';
+    
+    // Converte para número e divide por 100 para ter centavos
+    const numero = parseInt(apenasNumeros) / 100;
+    
+    // Formata com separadores brasileiros
+    return numero.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  const handlePrecoChange = (tipoNome, valor) => {
+    const valorFormatado = formatarPreco(valor);
+    handlePrecoServicoChange(tipoNome, valorFormatado);
+  };
+
   return (
     <View style={styles.tabContent}>
       <View style={styles.formGroup}>
@@ -178,7 +199,7 @@ const BasicInfoForm = ({
                       style={styles.precoInput}
                       placeholder="0,00"
                       value={precosServicos[tipo.nome] || ''}
-                      onChangeText={(text) => handlePrecoServicoChange(tipo.nome, text)}
+                      onChangeText={(text) => handlePrecoChange(tipo.nome, text)}
                       keyboardType="numeric"
                     />
                   </View>
@@ -376,8 +397,8 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 4,
     padding: 8,
-    width: 100,
-    textAlign: 'right',
+    width: 120,
+    textAlign: 'left',
   },
   checkbox: {
     width: 20,
