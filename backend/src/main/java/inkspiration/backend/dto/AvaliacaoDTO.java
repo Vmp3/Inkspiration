@@ -21,10 +21,10 @@ public class AvaliacaoDTO {
 
         public AgendamentoInfo(inkspiration.backend.entities.Agendamento agendamento) {
             this.idAgendamento = agendamento.getIdAgendamento();
-            this.dataHora = agendamento.getDataHora().toString();
-            this.tipoTatuagem = agendamento.getTipoTatuagem().toString();
-            this.usuario = new UsuarioInfo(agendamento.getUsuario());
-            this.profissional = new ProfissionalInfo(agendamento.getProfissional());
+            this.dataHora = agendamento.getDtInicio() != null ? agendamento.getDtInicio().toString() : null;
+            this.tipoTatuagem = agendamento.getTipoServico() != null ? agendamento.getTipoServico().toString() : null;
+            this.usuario = agendamento.getUsuario() != null ? new UsuarioInfo(agendamento.getUsuario()) : null;
+            this.profissional = agendamento.getProfissional() != null ? new ProfissionalInfo(agendamento.getProfissional()) : null;
         }
 
         // Getters e Setters
@@ -57,7 +57,7 @@ public class AvaliacaoDTO {
             this.idUsuario = usuario.getIdUsuario();
             this.nome = usuario.getNome();
             this.email = usuario.getEmail();
-            this.fotoPerfil = usuario.getFotoPerfil();
+            this.fotoPerfil = usuario.getImagemPerfil();
         }
 
         // Getters e Setters
@@ -84,8 +84,8 @@ public class AvaliacaoDTO {
 
         public ProfissionalInfo(inkspiration.backend.entities.Profissional profissional) {
             this.idProfissional = profissional.getIdProfissional();
-            this.nome = profissional.getNome();
-            this.email = profissional.getEmail();
+            this.nome = profissional.getUsuario() != null ? profissional.getUsuario().getNome() : null;
+            this.email = profissional.getUsuario() != null ? profissional.getUsuario().getEmail() : null;
         }
 
         // Getters e Setters
