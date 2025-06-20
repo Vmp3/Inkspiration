@@ -268,88 +268,8 @@ const ArtistScreen = ({ route }) => {
   const loadReviews = async (page = 0, shouldRefresh = false) => {
     try {
       setIsLoadingReviews(true);
-      const response = await AvaliacaoService.listarPorProfissional(artist.idProfissional, page);
-      
-      let newReviews = [];
-      let totalAvaliacoes = 0;
-      
-      // Nova estrutura de resposta com informações paginadas
-      if (response && response.content && Array.isArray(response.content)) {
-        newReviews = response.content.map(review => ({
-          id: review.idAvaliacao,
-          userName: review.agendamento?.usuario?.nome || 'Usuário',
-          userImage: review.agendamento?.usuario?.fotoPerfil || DefaultUser,
-          rating: review.rating,
-          comment: review.descricao,
-          date: formatDate(new Date(review.agendamento?.dataHora)),
-          tattooType: review.agendamento?.tipoTatuagem
-        }));
-        totalAvaliacoes = response.totalElements || 0;
-        setHasMoreReviews(response.hasNext || false);
-      } else if (Array.isArray(response)) {
-        // Fallback para estrutura antiga
-        newReviews = response.map(review => ({
-          id: review.idAvaliacao,
-          userName: review.agendamento?.usuario?.nome || 'Usuário',
-          userImage: review.agendamento?.usuario?.fotoPerfil || DefaultUser,
-          rating: review.rating,
-          comment: review.descricao,
-          date: formatDate(new Date(review.agendamento?.dataHora)),
-          tattooType: review.agendamento?.tipoTatuagem
-        }));
-        totalAvaliacoes = page === 0 ? response.length : reviewCount;
-        setHasMoreReviews(newReviews.length === 10);
-      } else {
-        // Se a resposta não for válida, definir valores padrão
-        newReviews = [];
-        totalAvaliacoes = 0;
-        setHasMoreReviews(false);
-      }
-      
-      if (shouldRefresh || page === 0) {
-        setReviews(newReviews);
-      } else {
-        setReviews(prev => [...prev, ...newReviews]);
-      }
-      
-      setReviewCount(totalAvaliacoes);
-      setCurrentReviewPage(page);
-    } catch (error) {
-      console.error('Erro ao carregar avaliações:', error);
-      toastHelper.showError('Erro ao carregar avaliações');
-      
-      // Em caso de erro, definir valores padrão
-      if (shouldRefresh || page === 0) {
-        setReviews([]);
-      }
-      setReviewCount(0);
-      setHasMoreReviews(false);
-    } finally {
-      setIsLoadingReviews(false);
-    }
-  };
-
-  const loadAvaliacoesStats = async () => {
-    try {
-      // Verificar se o artista existe e tem ID
       if (!artist || !artist.idProfissional) {
-        console.warn('Artista não encontrado ou sem ID profissional');
-        return;
-      }
-
-      const stats = await AvaliacaoService.obterEstatisticasProfissional(artist.idProfissional);
-      
-      // Verificar se stats existe e tem a estrutura esperada
-      if (stats && typeof stats === 'object') {
-        setAvaliacoesStats({
-          totalAvaliacoes: stats.totalAvaliacoes || 0,
-          mediaAvaliacoes: stats.mediaAvaliacoes || 0,
-          avaliacoesComComentario: stats.avaliacoesComComentario || 0,
-          avaliacoesSemComentario: stats.avaliacoesSemComentario || 0
-        });
-        setReviewCount(stats.totalAvaliacoes || 0);
-      } else {
-        // Fallback para valores padrão se a API não retornar dados válidos
+        setReviews([]);
         setAvaliacoesStats({
           totalAvaliacoes: 0,
           mediaAvaliacoes: 0,
@@ -357,17 +277,97 @@ const ArtistScreen = ({ route }) => {
           avaliacoesSemComentario: 0
         });
         setReviewCount(0);
+        return;
       }
+      // Chamada correta
+      const apiResponse = await AvaliacaoService.listarPorProfissional(artist.idProfissional, page);
+      console.log('API Response (Reviews):', apiResponse);
+
+      let newReviews = [];
+      let totalAvaliacoes = 0;
+      let avaliacoesComComentario = 0;
+      let avaliacoesSemComentario = 0;
+
+      if (apiResponse && apiResponse.content && Array.isArray(apiResponse.content)) {
+        newReviews = apiResponse.content.map(review => ({
+          id: review.idAvaliacao,
+          userName: review.agendamento?.usuario?.nome || 'Usuário',
+          userImage: review.agendamento?.usuario?.fotoPerfil || DefaultUser,
+          rating: review.rating,
+          comment: review.descricao,
+          date: formatDate(new Date(review.agendamento?.dataHora)),
+          tattooType: review.agendamento?.tipoTatuagem
+        }));
+
+        totalAvaliacoes = apiResponse.totalElements || 0;
+        avaliacoesComComentario = newReviews.filter(r => r.comment && r.comment.trim() !== "").length;
+        avaliacoesSemComentario = totalAvaliacoes - avaliacoesComComentario;
+
+        setHasMoreReviews(apiResponse.hasNext || false);
+
+        setAvaliacoesStats({
+          totalAvaliacoes,
+          mediaAvaliacoes: 0,
+          avaliacoesComComentario,
+          avaliacoesSemComentario
+        });
+      } else if (Array.isArray(apiResponse)) {
+        // Fallback para estrutura antiga
+        newReviews = apiResponse.map(review => ({
+          id: review.idAvaliacao,
+          userName: review.agendamento?.usuario?.nome || 'Usuário',
+          userImage: review.agendamento?.usuario?.fotoPerfil || DefaultUser,
+          rating: review.rating,
+          comment: review.descricao,
+          date: formatDate(new Date(review.agendamento?.dataHora)),
+          tattooType: review.agendamento?.tipoTatuagem
+        }));
+        totalAvaliacoes = page === 0 ? apiResponse.length : reviewCount;
+        avaliacoesComComentario = newReviews.filter(r => r.comment && r.comment.trim() !== "").length;
+        avaliacoesSemComentario = totalAvaliacoes - avaliacoesComComentario;
+        setHasMoreReviews(newReviews.length === 10);
+        setAvaliacoesStats({
+          totalAvaliacoes,
+          mediaAvaliacoes: 0,
+          avaliacoesComComentario,
+          avaliacoesSemComentario
+        });
+      } else {
+        newReviews = [];
+        totalAvaliacoes = 0;
+        avaliacoesComComentario = 0;
+        avaliacoesSemComentario = 0;
+        setHasMoreReviews(false);
+        setAvaliacoesStats({
+          totalAvaliacoes: 0,
+          mediaAvaliacoes: 0,
+          avaliacoesComComentario: 0,
+          avaliacoesSemComentario: 0
+        });
+      }
+
+      if (shouldRefresh || page === 0) {
+        setReviews(newReviews);
+      } else {
+        setReviews(prev => [...prev, ...newReviews]);
+      }
+
+      setReviewCount(totalAvaliacoes);
+      setCurrentReviewPage(page);
     } catch (error) {
-      console.error('Erro ao carregar estatísticas de avaliações:', error);
-      // Em caso de erro, definir valores padrão
+      console.error('Erro ao carregar avaliações:', error);
+      toastHelper.showError('Erro ao carregar avaliações');
+      setReviews([]);
+      setReviewCount(0);
+      setHasMoreReviews(false);
       setAvaliacoesStats({
         totalAvaliacoes: 0,
         mediaAvaliacoes: 0,
         avaliacoesComComentario: 0,
         avaliacoesSemComentario: 0
       });
-      setReviewCount(0);
+    } finally {
+      setIsLoadingReviews(false);
     }
   };
 
@@ -389,11 +389,10 @@ const ArtistScreen = ({ route }) => {
   };
 
   useEffect(() => {
-    if (artist) {
+    if (artist && artist.idProfissional) {
       loadReviews(0, true);
-      loadAvaliacoesStats();
     }
-  }, [artist]);
+  }, [artist?.idProfissional]);
 
   const openSocialLink = async (url) => {
     try {
@@ -485,7 +484,9 @@ const ArtistScreen = ({ route }) => {
 
   const renderReviews = () => {
     // Filtrar apenas avaliações com comentários
-    const reviewsWithComments = reviews.filter(review => review.comment && review.comment.trim() !== '');
+    const reviewsWithComments = reviews.filter(
+      review => review.comment && review.comment.trim() !== ""
+    );
     
     return (
       <View style={styles.tabContent}>

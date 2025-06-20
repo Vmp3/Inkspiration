@@ -35,9 +35,11 @@ class AvaliacaoService {
   async listarPorProfissional(idProfissional, page = 0) {
     try {
       const response = await ApiService.get(`/avaliacoes/profissional/${idProfissional}?page=${page}`);
-      return response.data;
+      console.log('AvaliacaoService API response:', response);
+      return response;
     } catch (error) {
-      throw error;
+      console.error('Erro na API de avaliações:', error);
+      return undefined;
     }
   }
 
