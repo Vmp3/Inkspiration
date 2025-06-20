@@ -481,6 +481,7 @@ const MyAttendancesScreen = () => {
             visible={isCancelModalVisible}
             onClose={handleCloseCancelModal}
             onConfirm={handleConfirmCancel}
+            isProfessional={true}
             appointmentDetails={{
               date: selectedAttendance?.dtInicio,
               service: selectedAttendance?.tipoServico,
