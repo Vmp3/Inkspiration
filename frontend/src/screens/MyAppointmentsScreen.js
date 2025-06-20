@@ -52,6 +52,7 @@ const MyAppointmentsScreen = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isExportModalVisible, setIsExportModalVisible] = useState(false);
   const [pageSize] = useState(5);
+  const [existingReviewId, setExistingReviewId] = useState(null);
 
   const isMobile = screenData.width < 768;
 
@@ -268,20 +269,22 @@ const MyAppointmentsScreen = () => {
   const handleOpenReviewModal = async (appointment) => {
     setIsCompletedModalVisible(false);
     setReviewAppointment(appointment);
+    
+    // Reseta os estados
     setReviewStars(0);
     setReviewComment('');
+    setExistingReviewId(null);
 
     try {
       const avaliacao = await AvaliacaoService.buscarPorAgendamento(appointment.idAgendamento);
       if (avaliacao) {
-        // Atualiza o estado com os dados da avaliação encontrada
         setReviewStars(avaliacao.rating || 0);
         setReviewComment(avaliacao.descricao || '');
+        setExistingReviewId(avaliacao.idAvaliacao); // Guarda o ID da avaliação existente
       }
     } catch (error) {
       console.error('Erro ao buscar avaliação:', error);
     } finally {
-      // Força a exibição do modal no próximo ciclo de renderização
       setTimeout(() => {
         setShowReviewModal(true);
       }, 0);
@@ -293,6 +296,7 @@ const MyAppointmentsScreen = () => {
     setReviewAppointment(null);
     setReviewStars(0);
     setReviewComment('');
+    setExistingReviewId(null); // Limpa o ID ao fechar
   };
 
   const handleSendReview = async () => {
@@ -302,16 +306,27 @@ const MyAppointmentsScreen = () => {
     }
     setIsSubmittingReview(true);
     try {
-      await AvaliacaoService.criarAvaliacao(
-        reviewAppointment.idAgendamento,
-        reviewComment,
-        reviewStars
-      );
-      toastHelper.showSuccess('Avaliação enviada com sucesso!');
+      if (existingReviewId) {
+        // ATUALIZA avaliação existente
+        await AvaliacaoService.atualizarAvaliacao(
+          existingReviewId,
+          reviewComment,
+          reviewStars
+        );
+        toastHelper.showSuccess('Avaliação atualizada com sucesso!');
+      } else {
+        // CRIA nova avaliação
+        await AvaliacaoService.criarAvaliacao(
+          reviewAppointment.idAgendamento,
+          reviewComment,
+          reviewStars
+        );
+        toastHelper.showSuccess('Avaliação enviada com sucesso!');
+      }
       handleCloseReviewModal();
       loadAppointments(true);
     } catch (error) {
-      toastHelper.showError('Erro ao enviar avaliação. Tente novamente.');
+      toastHelper.showError('Erro ao salvar avaliação. Tente novamente.');
     } finally {
       setIsSubmittingReview(false);
     }
@@ -610,7 +625,7 @@ const MyAppointmentsScreen = () => {
               disabled={isSubmittingReview}
             >
               <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
-                {isSubmittingReview ? 'Enviando...' : 'Enviar avaliação'}
+                {isSubmittingReview ? 'Salvando...' : (existingReviewId ? 'Atualizar' : 'Enviar avaliação')}
               </Text>
             </TouchableOpacity>
           </View>

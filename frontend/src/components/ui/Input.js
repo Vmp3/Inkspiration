@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextInput, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import { TextInput, StyleSheet, View, TouchableOpacity, Text, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather'; // Changed to react-native-vector-icons
 import { MaterialIcons } from '@expo/vector-icons';
 
@@ -53,7 +53,7 @@ const Input = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View style={[
         styles.inputContainer,
         isFocused && styles.inputContainerFocused
@@ -61,11 +61,13 @@ const Input = ({
         {renderIcon()}
         <TextInput
           style={[
-            styles.input, 
+            styles.input,
+            isFocused && styles.inputFocused,
+            { outline: 'none', borderWidth: 0, boxShadow: 'none' },
             icon && styles.inputWithIcon,
             multiline && { textAlignVertical: 'top', minHeight: 100 },
             secureTextEntry && { paddingRight: 40 },
-            style
+            Platform.OS === 'web' ? { outlineStyle: 'none' } : {},
           ]}
           placeholder={placeholder}
           value={value}
@@ -122,6 +124,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     backgroundColor: 'transparent',
     borderWidth: 0,
+    outline: 'none',
   },
   inputWithIcon: {
     paddingLeft: 36,
@@ -151,6 +154,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 14,
+  },
+  inputFocused: {
+    borderColor: '#000000',
+    borderWidth: 1.5,
   },
 });
 
