@@ -409,6 +409,7 @@ const MyAppointmentsScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -460,9 +461,9 @@ const MyAppointmentsScreen = () => {
             </>
           )}
         </View>
+        
+        <Footer />
       </ScrollView>
-
-      <Footer />
 
       <AppointmentDetailsModal
         visible={isModalVisible}
@@ -507,6 +508,9 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -543,6 +547,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+    paddingBottom: 24,
   },
   section: {
     marginBottom: 24,

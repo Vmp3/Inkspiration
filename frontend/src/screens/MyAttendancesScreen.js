@@ -409,6 +409,7 @@ const MyAttendancesScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView 
         style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -454,8 +455,8 @@ const MyAttendancesScreen = () => {
             </>
           )}
         </View>
+        <Footer />
       </ScrollView>
-      <Footer />
 
       {selectedAttendance && (
         <>
@@ -506,6 +507,9 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -543,6 +547,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+    paddingBottom: 24,
   },
   section: {
     marginBottom: 24,
