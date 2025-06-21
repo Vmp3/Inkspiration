@@ -21,9 +21,9 @@ public class ImagemController {
         this.imagemService = imagemService;
     }
 
-    @GetMapping("/portifolio/{idPortifolio}")
-    public ResponseEntity<List<ImagemDTO>> listarPorPortifolio(@PathVariable Long idPortifolio) {
-        List<ImagemDTO> imagens = imagemService.listarPorPortifolioComValidacao(idPortifolio);
+    @GetMapping("/portfolio/{idPortfolio}")
+    public ResponseEntity<List<ImagemDTO>> listarPorPortfolio(@PathVariable Long idPortfolio) {
+        List<ImagemDTO> imagens = imagemService.listarPorPortfolioComValidacao(idPortfolio);
         return ResponseEntity.ok(imagens);
     }
 

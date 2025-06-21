@@ -1,9 +1,9 @@
 import ApiService from './ApiService';
 
-class PortifolioService {
-  async deletePortifolio(id) {
+class PortfolioService {
+  async deletePortfolio(id) {
     try {
-      const response = await ApiService.delete(`/portifolio/deletar/${id}`);
+      const response = await ApiService.delete(`/portfolio/deletar/${id}`);
       return response;
     } catch (error) {
       console.error('Erro ao deletar portfólio:', error);
@@ -11,9 +11,9 @@ class PortifolioService {
     }
   }
 
-  async getPortifolio(id) {
+  async getPortfolio(id) {
     try {
-      const response = await ApiService.get(`/portifolio/${id}`);
+      const response = await ApiService.get(`/portfolio/${id}`);
       return response;
     } catch (error) {
       console.error('Erro ao buscar portfólio:', error);
@@ -21,9 +21,9 @@ class PortifolioService {
     }
   }
 
-  async getAllPortifolios(page = 0) {
+  async getAllPortfolios(page = 0) {
     try {
-      const response = await ApiService.get(`/portifolio?page=${page}`);
+      const response = await ApiService.get(`/portfolio?page=${page}`);
       return response;
     } catch (error) {
       console.error('Erro ao buscar portfólios:', error);
@@ -32,4 +32,4 @@ class PortifolioService {
   }
 }
 
-export default new PortifolioService(); 
+export default new PortfolioService(); 

@@ -11,7 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import UserService from '../services/UserService';
-import PortifolioService from '../services/PortifolioService';
+import PortfolioService from '../services/PortfolioService';
 import toastHelper from '../utils/toastHelper';
 import textUtils from '../utils/textUtils';
 import { adminMessages } from '../components/admin/messages';
@@ -125,7 +125,7 @@ const AdminUsersScreen = () => {
         }
       } else if (modalAction === 'deletePortfolio') {
         try {
-          await PortifolioService.deletePortifolio(selectedUser.idUsuario);
+          await PortfolioService.deletePortfolio(selectedUser.idUsuario);
           toastHelper.showSuccess(adminMessages.success.portfolioDeleted(selectedUser.nome));
         } catch (error) {
           if (error.message.includes('404')) {

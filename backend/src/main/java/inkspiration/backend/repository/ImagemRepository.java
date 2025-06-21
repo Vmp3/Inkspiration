@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface ImagemRepository extends JpaRepository<Imagem, Long> {
-    List<Imagem> findByPortifolioIdPortifolio(Long idPortifolio);
+    List<Imagem> findByPortfolioIdPortfolio(Long idPortfolio);
 } 

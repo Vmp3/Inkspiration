@@ -16,45 +16,45 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import inkspiration.backend.dto.PortifolioDTO;
-import inkspiration.backend.service.PortifolioService;
+import inkspiration.backend.dto.PortfolioDTO;
+import inkspiration.backend.service.PortfolioService;
 import jakarta.validation.Valid;
 
 @RestController
-public class PortifolioController {
+public class PortfolioController {
 
-    private final PortifolioService portifolioService;
+    private final PortfolioService portfolioService;
 
     @Autowired
-    public PortifolioController(PortifolioService portifolioService) {
-        this.portifolioService = portifolioService;
+    public PortfolioController(PortfolioService portfolioService) {
+        this.portfolioService = portfolioService;
     }
 
-    @GetMapping("/portifolio")
-    public ResponseEntity<List<PortifolioDTO>> listar(
+    @GetMapping("/portfolio")
+    public ResponseEntity<List<PortfolioDTO>> listar(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size) {
             
         Pageable pageable = PageRequest.of(page, size);
-        List<PortifolioDTO> dtos = portifolioService.listarComAutorizacao(pageable);
+        List<PortfolioDTO> dtos = portfolioService.listarComAutorizacao(pageable);
         return ResponseEntity.ok(dtos);
     }
 
-    @GetMapping("/portifolio/{id}")
-    public ResponseEntity<PortifolioDTO> buscarPorId(@PathVariable Long id) {
-        PortifolioDTO portifolio = portifolioService.buscarPorIdComValidacao(id);
-        return ResponseEntity.ok(portifolio);
+    @GetMapping("/portfolio/{id}")
+    public ResponseEntity<PortfolioDTO> buscarPorId(@PathVariable Long id) {
+        PortfolioDTO portfolio = portfolioService.buscarPorIdComValidacao(id);
+        return ResponseEntity.ok(portfolio);
     }
 
-    @PutMapping("/portifolio/atualizar/{id}")
-    public ResponseEntity<PortifolioDTO> atualizar(@PathVariable Long id, @RequestBody @Valid PortifolioDTO dto) {
-        PortifolioDTO portifolio = portifolioService.atualizarComValidacao(id, dto);
-        return ResponseEntity.ok(portifolio);
+    @PutMapping("/portfolio/atualizar/{id}")
+    public ResponseEntity<PortfolioDTO> atualizar(@PathVariable Long id, @RequestBody @Valid PortfolioDTO dto) {
+        PortfolioDTO portfolio = portfolioService.atualizarComValidacao(id, dto);
+        return ResponseEntity.ok(portfolio);
     }
 
-    @DeleteMapping("/portifolio/deletar/{id}")
+    @DeleteMapping("/portfolio/deletar/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        portifolioService.deletarComValidacao(id);
+        portfolioService.deletarComValidacao(id);
         return ResponseEntity.noContent().build();
     }
 } 

@@ -227,7 +227,7 @@ const ArtistScreen = ({ route }) => {
           id: index.toString(),
           imagemBase64: img.imagemBase64,
           idImagem: img.idImagem,
-          idPortifolio: img.idPortifolio
+          idPortfolio: img.idPortfolio
         };
       });
       

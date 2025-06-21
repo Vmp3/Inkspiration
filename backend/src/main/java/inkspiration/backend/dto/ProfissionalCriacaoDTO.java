@@ -19,7 +19,7 @@ public class ProfissionalCriacaoDTO {
     // Preços dos serviços
     private Map<String, BigDecimal> precosServicos;
     
-    // Portifolio
+    // Portfolio
     @NotBlank(message = "Biografia é obrigatória")
     @Size(min = 20, max = 500, message = "Biografia deve ter entre 20 e 500 caracteres")
     private String descricao;

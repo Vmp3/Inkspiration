@@ -3,8 +3,8 @@ package inkspiration.backend.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import inkspiration.backend.entities.Portifolio;
+import inkspiration.backend.entities.Portfolio;
 
 @Repository
-public interface PortifolioRepository extends JpaRepository<Portifolio, Long> {
+public interface PortfolioRepository extends JpaRepository<Portfolio, Long> {
 } 

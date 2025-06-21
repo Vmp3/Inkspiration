@@ -19,7 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import inkspiration.backend.dto.PortifolioDTO;
+import inkspiration.backend.dto.PortfolioDTO;
 import inkspiration.backend.dto.ProfissionalCriacaoDTO;
 import inkspiration.backend.dto.ProfissionalDTO;
 import inkspiration.backend.entities.Endereco;
@@ -51,7 +51,7 @@ public class ProfissionalService {
     private final ProfissionalRepository profissionalRepository;
     private final UsuarioRepository usuarioRepository;
     private final EnderecoRepository enderecoRepository;
-    private final PortifolioService portifolioService;
+    private final PortfolioService portfolioService;
     private final DisponibilidadeService disponibilidadeService;
     private final AuthorizationService authorizationService;
     private final ImagemService imagemService;
@@ -62,7 +62,7 @@ public class ProfissionalService {
     public ProfissionalService(ProfissionalRepository profissionalRepository, 
                               UsuarioRepository usuarioRepository,
                               EnderecoRepository enderecoRepository,
-                              PortifolioService portifolioService,
+                              PortfolioService portfolioService,
                               UsuarioService usuarioService,
                               DisponibilidadeService disponibilidadeService,
                               AuthorizationService authorizationService,
@@ -71,7 +71,7 @@ public class ProfissionalService {
         this.profissionalRepository = profissionalRepository;
         this.usuarioRepository = usuarioRepository;
         this.enderecoRepository = enderecoRepository;
-        this.portifolioService = portifolioService;
+        this.portfolioService = portfolioService;
         this.disponibilidadeService = disponibilidadeService;
         this.authorizationService = authorizationService;
         this.imagemService = imagemService;
@@ -228,18 +228,18 @@ public class ProfissionalService {
         }
         
         // 2. Criar o portifólio
-        PortifolioDTO portifolioDTO = new PortifolioDTO();
-        portifolioDTO.setIdProfissional(profissional.getIdProfissional());
-        portifolioDTO.setDescricao(dto.getDescricao());
-        portifolioDTO.setEspecialidade(dto.getEspecialidade());
-        portifolioDTO.setExperiencia(dto.getExperiencia());
-        portifolioDTO.setWebsite(dto.getWebsite());
-        portifolioDTO.setTiktok(dto.getTiktok());
-        portifolioDTO.setInstagram(dto.getInstagram());
-        portifolioDTO.setFacebook(dto.getFacebook());
-        portifolioDTO.setTwitter(dto.getTwitter());
+        PortfolioDTO portfolioDTO = new PortfolioDTO();
+        portfolioDTO.setIdProfissional(profissional.getIdProfissional());
+        portfolioDTO.setDescricao(dto.getDescricao());
+        portfolioDTO.setEspecialidade(dto.getEspecialidade());
+        portfolioDTO.setExperiencia(dto.getExperiencia());
+        portfolioDTO.setWebsite(dto.getWebsite());
+        portfolioDTO.setTiktok(dto.getTiktok());
+        portfolioDTO.setInstagram(dto.getInstagram());
+        portfolioDTO.setFacebook(dto.getFacebook());
+        portfolioDTO.setTwitter(dto.getTwitter());
         
-        portifolioService.criar(portifolioDTO);
+        portfolioService.criar(portfolioDTO);
         
         // Recarregar o profissional para obter a referência atualizada do portfólio
         profissional = profissionalRepository.findById(profissional.getIdProfissional()).orElseThrow();
@@ -283,22 +283,22 @@ public class ProfissionalService {
         profissional = profissionalRepository.findById(profissional.getIdProfissional()).orElseThrow();
         
         // 3. Atualizar o portifólio
-        PortifolioDTO portifolioDTO = new PortifolioDTO();
-        portifolioDTO.setIdProfissional(profissional.getIdProfissional());
-        portifolioDTO.setDescricao(dto.getDescricao());
-        portifolioDTO.setEspecialidade(dto.getEspecialidade());
-        portifolioDTO.setExperiencia(dto.getExperiencia());
-        portifolioDTO.setWebsite(dto.getWebsite());
-        portifolioDTO.setTiktok(dto.getTiktok());
-        portifolioDTO.setInstagram(dto.getInstagram());
-        portifolioDTO.setFacebook(dto.getFacebook());
-        portifolioDTO.setTwitter(dto.getTwitter());
+        PortfolioDTO portfolioDTO = new PortfolioDTO();
+        portfolioDTO.setIdProfissional(profissional.getIdProfissional());
+        portfolioDTO.setDescricao(dto.getDescricao());
+        portfolioDTO.setEspecialidade(dto.getEspecialidade());
+        portfolioDTO.setExperiencia(dto.getExperiencia());
+        portfolioDTO.setWebsite(dto.getWebsite());
+        portfolioDTO.setTiktok(dto.getTiktok());
+        portfolioDTO.setInstagram(dto.getInstagram());
+        portfolioDTO.setFacebook(dto.getFacebook());
+        portfolioDTO.setTwitter(dto.getTwitter());
         
-        if (profissional.getPortifolio() != null) {
-            portifolioDTO.setIdPortifolio(profissional.getPortifolio().getIdPortifolio());
-            portifolioService.atualizar(profissional.getPortifolio().getIdPortifolio(), portifolioDTO);
+        if (profissional.getPortfolio() != null) {
+            portfolioDTO.setIdPortfolio(profissional.getPortfolio().getIdPortfolio());
+            portfolioService.atualizar(profissional.getPortfolio().getIdPortfolio(), portfolioDTO);
         } else {
-            portifolioService.criar(portifolioDTO);
+            portfolioService.criar(portfolioDTO);
         }
         
         // 4. Atualizar disponibilidades se fornecidas
@@ -404,8 +404,8 @@ public class ProfissionalService {
                 // Filtro por especialidades
                 if (selectedSpecialties != null && selectedSpecialties.length > 0) {
                     String especialidades = "";
-                    if (profissional.getPortifolio() != null && profissional.getPortifolio().getEspecialidade() != null) {
-                        especialidades = profissional.getPortifolio().getEspecialidade().toLowerCase();
+                    if (profissional.getPortfolio() != null && profissional.getPortfolio().getEspecialidade() != null) {
+                        especialidades = profissional.getPortfolio().getEspecialidade().toLowerCase();
                     }
                     
                     boolean hasSpecialty = false;
@@ -564,7 +564,7 @@ public class ProfissionalService {
 
     public class ProfissionalCompletoData {
         private ProfissionalDTO profissional;
-        private PortifolioDTO portfolio;
+        private PortfolioDTO portfolio;
         private List<ImagemDTO> imagens;
         private Map<String, List<Map<String, String>>> disponibilidades;
         private List<TipoServico> tiposServico;
@@ -575,8 +575,8 @@ public class ProfissionalService {
         public ProfissionalDTO getProfissional() { return profissional; }
         public void setProfissional(ProfissionalDTO profissional) { this.profissional = profissional; }
         
-        public PortifolioDTO getPortfolio() { return portfolio; }
-        public void setPortfolio(PortifolioDTO portfolio) { this.portfolio = portfolio; }
+        public PortfolioDTO getPortfolio() { return portfolio; }
+        public void setPortfolio(PortfolioDTO portfolio) { this.portfolio = portfolio; }
         
         public List<ImagemDTO> getImagens() { return imagens; }
         public void setImagens(List<ImagemDTO> imagens) { this.imagens = imagens; }
@@ -600,14 +600,14 @@ public class ProfissionalService {
         Profissional profissional = buscarPorUsuario(idUsuario);
         ProfissionalDTO profissionalDto = converterParaDto(profissional);
         
-        PortifolioDTO portfolioDto = null;
-        if (profissional.getPortifolio() != null) {
-            portfolioDto = portifolioService.converterParaDto(profissional.getPortifolio());
+        PortfolioDTO portfolioDto = null;
+        if (profissional.getPortfolio() != null) {
+            portfolioDto = portfolioService.converterParaDto(profissional.getPortfolio());
         }
         
         List<ImagemDTO> imagens = Collections.emptyList();
-        if (profissional.getPortifolio() != null) {
-            imagens = imagemService.listarPorPortifolio(profissional.getPortifolio().getIdPortifolio());
+        if (profissional.getPortfolio() != null) {
+            imagens = imagemService.listarPorPortfolio(profissional.getPortfolio().getIdPortfolio());
         }
         
         Map<String, List<Map<String, String>>> disponibilidades = Collections.emptyMap();
@@ -768,10 +768,10 @@ public class ProfissionalService {
             
             profissional = atualizarProfissionalCompleto(dto);
             
-            if (imagensData != null && profissional.getPortifolio() != null) {
-                Long portfolioId = profissional.getPortifolio().getIdPortifolio();
+            if (imagensData != null && profissional.getPortfolio() != null) {
+                Long portfolioId = profissional.getPortfolio().getIdPortfolio();
                 
-                List<ImagemDTO> imagensAtuais = imagemService.listarPorPortifolio(portfolioId);
+                List<ImagemDTO> imagensAtuais = imagemService.listarPorPortfolio(portfolioId);
                 for (ImagemDTO imagem : imagensAtuais) {
                     imagemService.deletar(imagem.getIdImagem());
                 }
@@ -780,7 +780,7 @@ public class ProfissionalService {
                     if (imagemData.containsKey("imagemBase64")) {
                         ImagemDTO imagemDto = new ImagemDTO();
                         imagemDto.setImagemBase64((String) imagemData.get("imagemBase64"));
-                        imagemDto.setIdPortifolio(portfolioId);
+                        imagemDto.setIdPortfolio(portfolioId);
                         imagemService.salvar(imagemDto);
                     }
                 }
@@ -842,15 +842,15 @@ public class ProfissionalService {
         }
         profissionalCompleto.put("endereco", enderecoInfo);
         
-        PortifolioDTO portfolioDto = null;
-        if (profissional.getPortifolio() != null) {
-            portfolioDto = portifolioService.converterParaDto(profissional.getPortifolio());
+        PortfolioDTO portfolioDto = null;
+        if (profissional.getPortfolio() != null) {
+            portfolioDto = portfolioService.converterParaDto(profissional.getPortfolio());
         }
         profissionalCompleto.put("portfolio", portfolioDto);
         
         List<ImagemDTO> imagens = Collections.emptyList();
-        if (profissional.getPortifolio() != null) {
-            imagens = imagemService.listarPorPortifolio(profissional.getPortifolio().getIdPortifolio());
+        if (profissional.getPortfolio() != null) {
+            imagens = imagemService.listarPorPortfolio(profissional.getPortfolio().getIdPortfolio());
         }
         profissionalCompleto.put("imagens", imagens);
         

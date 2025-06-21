@@ -14,10 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-public class Portifolio {
+public class Portfolio {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idPortifolio;
+    private Long idPortfolio;
     
     @Column(length = 2000)
     private String descricao;
@@ -43,22 +43,22 @@ public class Portifolio {
     @Column(length = 50)
     private String twitter;
     
-    @OneToOne(mappedBy = "portifolio", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "portfolio", cascade = CascadeType.ALL)
     @JsonIgnore
     private Profissional profissional;
     
-    @OneToMany(mappedBy = "portifolio", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "portfolio", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Imagem> imagens = new ArrayList<>();
     
-    public Portifolio() {}
+    public Portfolio() {}
     
     // Getters e Setters
-    public Long getIdPortifolio() {
-        return idPortifolio;
+    public Long getIdPortfolio() {
+        return idPortfolio;
     }
     
-    public void setIdPortifolio(Long idPortifolio) {
-        this.idPortifolio = idPortifolio;
+    public void setIdPortfolio(Long idPortfolio) {
+        this.idPortfolio = idPortfolio;
     }
     
     public Profissional getProfissional() {
@@ -143,11 +143,11 @@ public class Portifolio {
     
     public void adicionarImagem(Imagem imagem) {
         imagens.add(imagem);
-        imagem.setPortifolio(this);
+        imagem.setPortfolio(this);
     }
     
     public void removerImagem(Imagem imagem) {
         imagens.remove(imagem);
-        imagem.setPortifolio(null);
+        imagem.setPortfolio(null);
     }
 } 

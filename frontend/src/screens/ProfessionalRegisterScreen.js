@@ -397,7 +397,7 @@ const ProfessionalRegisterScreen = () => {
             
             const imagemDTO = {
               imagemBase64,
-              idPortifolio: portfolioId
+              idPortfolio: portfolioId
             };
             
             console.log('Enviando imagem para portfólio ID:', portfolioId);
@@ -714,8 +714,8 @@ const ProfessionalRegisterScreen = () => {
             // Obter o ID do portfólio dos dados retornados
             let portfolioId = null;
             
-            if (profissionalCadastrado.portfolio && profissionalCadastrado.portfolio.idPortifolio) {
-              portfolioId = profissionalCadastrado.portfolio.idPortifolio;
+            if (profissionalCadastrado.portfolio && profissionalCadastrado.portfolio.idPortfolio) {
+              portfolioId = profissionalCadastrado.portfolio.idPortfolio;
             }
             
             console.log('ID do portfólio para upload:', portfolioId);

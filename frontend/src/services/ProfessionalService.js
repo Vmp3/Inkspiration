@@ -135,8 +135,8 @@ class ProfessionalService {
         id: professional.idProfissional?.toString() || professional.id?.toString(),
         name: professional.usuario?.nome || professional.name,
         rating: professional.nota !== undefined && professional.nota !== null ? professional.nota : 0,
-        specialties: professional.portifolio?.especialidade 
-          ? professional.portifolio.especialidade.split(',').map(s => s.trim())
+        specialties: professional.portfolio?.especialidade 
+          ? professional.portfolio.especialidade.split(',').map(s => s.trim())
           : ['Tatuagem'],
         location: professional.endereco 
           ? `${professional.endereco.cidade}, ${professional.endereco.estado}`
@@ -146,13 +146,13 @@ class ProfessionalService {
         coverImage: professional.usuario?.imagemPerfil || 
                    'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png',
         // Dados adicionais do backend
-        experience: professional.portifolio?.experiencia,
-        description: professional.portifolio?.descricao,
-        instagram: professional.portifolio?.instagram,
-        tiktok: professional.portifolio?.tiktok,
-        facebook: professional.portifolio?.facebook,
-        twitter: professional.portifolio?.twitter,
-        website: professional.portifolio?.website,
+        experience: professional.portfolio?.experiencia,
+        description: professional.portfolio?.descricao,
+        instagram: professional.portfolio?.instagram,
+        tiktok: professional.portfolio?.tiktok,
+        facebook: professional.portfolio?.facebook,
+        twitter: professional.portfolio?.twitter,
+        website: professional.portfolio?.website,
         email: professional.usuario?.email,
         phone: professional.usuario?.telefone,
       };

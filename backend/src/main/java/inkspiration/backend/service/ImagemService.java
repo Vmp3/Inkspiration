@@ -6,14 +6,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import inkspiration.backend.dto.ImagemDTO;
 import inkspiration.backend.entities.Imagem;
-import inkspiration.backend.entities.Portifolio;
+import inkspiration.backend.entities.Portfolio;
 import inkspiration.backend.exception.portfolio.PortfolioNaoEncontradoException;
 import inkspiration.backend.exception.imagem.ImagemNaoEncontradaException;
 import inkspiration.backend.exception.imagem.ImagemProcessamentoException;
 import inkspiration.backend.exception.imagem.ImagemRemocaoException;
 import inkspiration.backend.exception.imagem.ImagemSalvamentoException;
 import inkspiration.backend.repository.ImagemRepository;
-import inkspiration.backend.repository.PortifolioRepository;
+import inkspiration.backend.repository.PortfolioRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,16 +22,16 @@ import java.util.stream.Collectors;
 public class ImagemService {
 
     private final ImagemRepository imagemRepository;
-    private final PortifolioRepository portifolioRepository;
+    private final PortfolioRepository portfolioRepository;
 
     @Autowired
-    public ImagemService(ImagemRepository imagemRepository, PortifolioRepository portifolioRepository) {
+    public ImagemService(ImagemRepository imagemRepository, PortfolioRepository portfolioRepository) {
         this.imagemRepository = imagemRepository;
-        this.portifolioRepository = portifolioRepository;
+        this.portfolioRepository = portfolioRepository;
     }
 
-    public List<ImagemDTO> listarPorPortifolio(Long idPortifolio) {
-        List<Imagem> imagens = imagemRepository.findByPortifolioIdPortifolio(idPortifolio);
+    public List<ImagemDTO> listarPorPortfolio(Long idPortfolio) {
+        List<Imagem> imagens = imagemRepository.findByPortfolioIdPortfolio(idPortfolio);
         return imagens.stream().map(this::converterParaDto).collect(Collectors.toList());
     }
 
@@ -43,12 +43,12 @@ public class ImagemService {
 
     @Transactional
     public ImagemDTO salvar(ImagemDTO dto) {
-        Portifolio portifolio = portifolioRepository.findById(dto.getIdPortifolio())
-                .orElseThrow(() -> new PortfolioNaoEncontradoException("Portifólio não encontrado com ID: " + dto.getIdPortifolio()));
+        Portfolio portfolio = portfolioRepository.findById(dto.getIdPortfolio())
+                .orElseThrow(() -> new PortfolioNaoEncontradoException("Portifólio não encontrado com ID: " + dto.getIdPortfolio()));
         
         Imagem imagem = new Imagem();
         imagem.setImagemBase64(dto.getImagemBase64());
-        imagem.setPortifolio(portifolio);
+        imagem.setPortfolio(portfolio);
         
         imagem = imagemRepository.save(imagem);
         
@@ -67,14 +67,14 @@ public class ImagemService {
         return new ImagemDTO(
             imagem.getIdImagem(),
             imagem.getImagemBase64(),
-            imagem.getPortifolio().getIdPortifolio()
+            imagem.getPortfolio().getIdPortfolio()
         );
     }
 
     // Novos métodos movidos do controller
-    public List<ImagemDTO> listarPorPortifolioComValidacao(Long idPortifolio) {
+    public List<ImagemDTO> listarPorPortfolioComValidacao(Long idPortfolio) {
         try {
-            return listarPorPortifolio(idPortifolio);
+            return listarPorPortfolio(idPortfolio);
         } catch (Exception e) {
             throw new ImagemProcessamentoException("Erro ao listar imagens do portfólio: " + e.getMessage());
         }
@@ -88,7 +88,7 @@ public class ImagemService {
         try {
             return salvar(dto);
         } catch (PortfolioNaoEncontradoException e) {
-            throw new ImagemSalvamentoException("Portfólio não encontrado com ID: " + dto.getIdPortifolio());
+            throw new ImagemSalvamentoException("Portfólio não encontrado com ID: " + dto.getIdPortfolio());
         } catch (Exception e) {
             throw new ImagemSalvamentoException("Erro ao salvar imagem: " + e.getMessage());
         }
