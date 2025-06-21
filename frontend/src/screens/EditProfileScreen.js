@@ -274,10 +274,12 @@ const EditProfileScreen = () => {
     }
 
     if (field === 'novaSenha') {
-      if (formData.novaSenha && formData.novaSenha.length < 6) {
-        setPasswordError('A senha deve ter pelo menos 6 caracteres');
-      } else {
-        setPasswordError('');
+      if (formData.novaSenha) {
+        if (!formatters.validatePassword(formData.novaSenha)) {
+          setPasswordError('A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, um número e um caractere especial');
+        } else {
+          setPasswordError('');
+        }
       }
     }
 

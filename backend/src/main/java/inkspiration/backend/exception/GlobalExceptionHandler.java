@@ -63,6 +63,10 @@ import inkspiration.backend.exception.disponibilidade.DisponibilidadeAcessoExcep
 import inkspiration.backend.exception.disponibilidade.DisponibilidadeCadastroException;
 import inkspiration.backend.exception.disponibilidade.DisponibilidadeConsultaException;
 import inkspiration.backend.exception.disponibilidade.TipoServicoInvalidoDisponibilidadeException;
+import inkspiration.backend.exception.endereco.EnderecoValidacaoException;
+import inkspiration.backend.exception.endereco.CepInvalidoException;
+import inkspiration.backend.exception.endereco.EstadoInvalidoException;
+import inkspiration.backend.exception.endereco.CidadeInvalidaException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -103,7 +107,9 @@ public class GlobalExceptionHandler {
         UsuarioValidationException.CpfInvalidoException.class,
         UsuarioValidationException.DataNascimentoObrigatoriaException.class,
         UsuarioValidationException.DataInvalidaException.class,
-        UsuarioValidationException.SenhaObrigatoriaException.class
+        UsuarioValidationException.SenhaObrigatoriaException.class,
+        UsuarioValidationException.IdadeMinimaException.class,
+        UsuarioValidationException.EnderecoObrigatorioException.class
     })
     public ResponseEntity<Map<String, String>> handleUsuarioValidationExceptions(RuntimeException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -550,5 +556,18 @@ public class GlobalExceptionHandler {
         response.put("erro", "Erro de validação de horário");
         response.put("mensagem", ex.getMessage());
         return ResponseEntity.badRequest().body(response);
+    }
+
+    // Exceções de Endereço
+    @ExceptionHandler({
+        EnderecoValidacaoException.class,
+        CepInvalidoException.class,
+        EstadoInvalidoException.class,
+        CidadeInvalidaException.class
+    })
+    public ResponseEntity<Map<String, String>> handleEnderecoValidacaoExceptions(RuntimeException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 }

@@ -266,19 +266,6 @@ public class DisponibilidadeService {
     }
     
     /**
-     * Busca uma disponibilidade por ID e retorna como DTO.
-     * 
-     * @param id ID da disponibilidade
-     * @return DTO com os dados da disponibilidade
-     */
-    public DisponibilidadeDTO buscarPorIdDTO(Long id) {
-        Disponibilidade disponibilidade = disponibilidadeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Disponibilidade não encontrada"));
-        
-        return new DisponibilidadeDTO(disponibilidade);
-    }
-    
-    /**
      * Busca a disponibilidade de um profissional e retorna como DTO.
      * 
      * @param idProfissional ID do profissional

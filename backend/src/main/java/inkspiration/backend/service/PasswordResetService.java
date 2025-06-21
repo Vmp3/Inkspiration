@@ -4,18 +4,21 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import inkspiration.backend.entities.PasswordResetCode;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.entities.UsuarioAutenticar;
+import inkspiration.backend.exception.UsuarioValidationException;
 import inkspiration.backend.exception.passwordreset.PasswordResetGeracaoException;
 import inkspiration.backend.exception.passwordreset.PasswordResetProcessamentoException;
 import inkspiration.backend.exception.passwordreset.PasswordResetValidacaoException;
 import inkspiration.backend.repository.PasswordResetCodeRepository;
 import inkspiration.backend.repository.UsuarioRepository;
 import inkspiration.backend.util.Hashing;
+import inkspiration.backend.util.PasswordValidator;
 
 @Service
 public class PasswordResetService {
@@ -28,6 +31,9 @@ public class PasswordResetService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private final SecureRandom random = new SecureRandom();
 
@@ -83,6 +89,11 @@ public class PasswordResetService {
     public void resetPassword(String cpf, String code, String newPassword) {
         String cleanCpf = cpf.replaceAll("[^0-9]", "");
         
+        // Validar nova senha
+        if (!PasswordValidator.isValid(newPassword)) {
+            throw new UsuarioValidationException.SenhaInvalidaException(PasswordValidator.getPasswordRequirements());
+        }
+        
         // Verificar se o código é válido
         PasswordResetCode resetCode = passwordResetCodeRepository
             .findByCpfAndCodeAndUsedFalse(cleanCpf, code)
@@ -99,7 +110,7 @@ public class PasswordResetService {
         // Atualizar senha
         UsuarioAutenticar usuarioAuth = usuario.getUsuarioAutenticar();
         if (usuarioAuth != null) {
-            usuarioAuth.setSenha(Hashing.hash(newPassword));
+            usuarioAuth.setSenha(passwordEncoder.encode(newPassword));
             usuario.setUsuarioAutenticar(usuarioAuth);
         }
 
@@ -143,7 +154,6 @@ public class PasswordResetService {
         }
     }
 
-    // Novos métodos movidos do controller
     public String gerarCodigoRecuperacaoComValidacao(String cpf) {
         try {
             return generatePasswordResetCode(cpf);

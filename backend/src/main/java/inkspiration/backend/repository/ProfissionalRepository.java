@@ -19,5 +19,4 @@ public interface ProfissionalRepository extends JpaRepository<Profissional, Long
     Page<Profissional> findAll(Pageable pageable);
     boolean existsByUsuario(Usuario usuario);
     boolean existsByUsuario_IdUsuario(Long idUsuario);
-    List<Profissional> findByPortifolio(Portifolio portifolio);
 } 

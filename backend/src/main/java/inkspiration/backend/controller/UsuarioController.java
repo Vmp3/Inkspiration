@@ -56,12 +56,6 @@ public class UsuarioController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/buscar-por-cpf/{cpf}")
-    public ResponseEntity<UsuarioSeguroDTO> buscarPorCpf(@PathVariable String cpf) {
-        UsuarioSeguroDTO dto = service.buscarPorCpfSeguro(cpf);
-        return ResponseEntity.ok(dto);
-    }
-
     @PutMapping("/atualizar/{id}")
     public ResponseEntity<UsuarioSeguroDTO> atualizar(@PathVariable Long id, @RequestBody @Valid UsuarioDTO dto) {
         UsuarioSeguroDTO usuario = service.atualizarComAutorizacao(id, dto);

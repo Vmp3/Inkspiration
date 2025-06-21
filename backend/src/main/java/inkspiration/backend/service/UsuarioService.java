@@ -23,7 +23,6 @@ import inkspiration.backend.entities.UsuarioAutenticar;
 import inkspiration.backend.exception.UsuarioException;
 import inkspiration.backend.exception.UsuarioValidationException;
 import inkspiration.backend.repository.TokenRevogadoRepository;
-import inkspiration.backend.repository.UsuarioAutenticarRepository;
 import inkspiration.backend.repository.UsuarioRepository;
 import inkspiration.backend.security.JwtService;
 import inkspiration.backend.util.CpfValidator;
@@ -38,6 +37,7 @@ import inkspiration.backend.security.AuthorizationService;
 import java.util.Map;
 import java.util.HashMap;
 import jakarta.servlet.http.HttpServletRequest;
+import inkspiration.backend.util.PasswordValidator;
 
 @Service
 public class UsuarioService {
@@ -48,22 +48,24 @@ public class UsuarioService {
     private final ProfissionalRepository profissionalRepository;
     private final TokenRevogadoRepository tokenRevogadoRepository;
     private final AuthorizationService authorizationService;
+    private final EnderecoService enderecoService;
 
     @Autowired
     public UsuarioService(UsuarioRepository repository, 
-                         UsuarioAutenticarRepository autenticarRepository,
                          ProfissionalRepository profissionalRepository,
                          PasswordEncoder passwordEncoder,
                          JwtService jwtService,
                          HttpServletRequest request,
                          TokenRevogadoRepository tokenRevogadoRepository,
-                         AuthorizationService authorizationService) {
+                         AuthorizationService authorizationService,
+                         EnderecoService enderecoService) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.profissionalRepository = profissionalRepository;
         this.tokenRevogadoRepository = tokenRevogadoRepository;
         this.authorizationService = authorizationService;
+        this.enderecoService = enderecoService;
     }
 
     @Transactional
@@ -93,6 +95,8 @@ public class UsuarioService {
         
         // Configura o endereço se fornecido
         if (dto.getEndereco() != null) {
+            // Validar endereço usando ViaCEP
+            enderecoService.validarEndereco(dto.getEndereco());
             usuario.setEndereco(dto.getEndereco());
         }
         
@@ -110,10 +114,6 @@ public class UsuarioService {
     public Usuario buscarPorId(Long id) {
         return repository.findById(id)
             .orElseThrow(() -> new UsuarioException.UsuarioNaoEncontradoException("Usuário não encontrado"));
-    }
-
-    public Page<Usuario> listarTodos(Pageable pageable) {
-        return repository.findAll(pageable);
     }
 
     public List<UsuarioResponseDTO> listarTodosResponse(Pageable pageable) {
@@ -178,6 +178,9 @@ public class UsuarioService {
         
         // Atualiza o endereço se fornecido
         if (dto.getEndereco() != null) {
+            // Validar endereço usando ViaCEP
+            enderecoService.validarEndereco(dto.getEndereco());
+            
             if (usuarioExistente.getEndereco() == null) {
                 usuarioExistente.setEndereco(new Endereco());
             }
@@ -191,6 +194,12 @@ public class UsuarioService {
             usuarioAuth.setRole(usuarioExistente.getRole());
             if (dto.getSenha() != null && !dto.getSenha().isEmpty() && 
                 !"SENHA_NAO_ALTERADA".equals(dto.getSenha()) && !dto.isManterSenhaAtual()) {
+                
+                // Validar nova senha
+                if (!PasswordValidator.isValid(dto.getSenha())) {
+                    throw new UsuarioValidationException.SenhaInvalidaException(PasswordValidator.getPasswordRequirements());
+                }
+                
                 usuarioAuth.setSenha(passwordEncoder.encode(dto.getSenha()));
             }
             usuarioExistente.setUsuarioAutenticar(usuarioAuth);
@@ -202,6 +211,11 @@ public class UsuarioService {
             // Só atualiza a senha se não for o valor especial e se não tiver a flag manterSenhaAtual
             if (dto.getSenha() != null && !dto.getSenha().isEmpty() && 
                 !"SENHA_NAO_ALTERADA".equals(dto.getSenha()) && !dto.isManterSenhaAtual()) {
+                
+                // Validar nova senha
+                if (!PasswordValidator.isValid(dto.getSenha())) {
+                    throw new UsuarioValidationException.SenhaInvalidaException(PasswordValidator.getPasswordRequirements());
+                }
                 
                 // Se tiver senhaAtual, verificar se ela corresponde à senha atual
                 if (dto.getSenhaAtual() != null && !dto.getSenhaAtual().isEmpty()) {
@@ -311,8 +325,14 @@ public class UsuarioService {
         if (!DateValidator.isValid(dto.getDataNascimento())) {
             throw new UsuarioValidationException.DataInvalidaException("Data de nascimento inválida. Use o formato DD/MM/YYYY");
         }
+        if (!DateValidator.hasMinimumAge(dto.getDataNascimento(), 18)) {
+            throw new UsuarioValidationException.IdadeMinimaException(18);
+        }
         if (dto.getSenha() == null || dto.getSenha().trim().isEmpty()) {
             throw new UsuarioValidationException.SenhaObrigatoriaException();
+        }
+        if (!PasswordValidator.isValid(dto.getSenha())) {
+            throw new UsuarioValidationException.SenhaInvalidaException(PasswordValidator.getPasswordRequirements());
         }
     }
 
@@ -356,10 +376,6 @@ public class UsuarioService {
         enderecoAtual.setNumero(novoEndereco.getNumero());
     }
 
-    public boolean existsByRole(String role) {
-        return repository.existsByRole(role);
-    }
-
     private void atualizarToken(Usuario usuario, String novoToken) {
         if (usuario.getTokenAtual() != null) {
             TokenRevogado tokenRevogado = new TokenRevogado(usuario.getTokenAtual());
@@ -399,18 +415,6 @@ public class UsuarioService {
         repository.save(usuario);
     }
 
-    public String atualizarTokenUsuario(Long idUsuario) {
-        Usuario usuario = buscarPorId(idUsuario);
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String novoToken = jwtService.generateToken(auth);
-        
-        // Atualizar o token no usuário sem revogar o antigo
-        usuario.setTokenAtual(novoToken);
-        repository.save(usuario);
-        
-        return novoToken;
-    }
-
     public List<UsuarioResponseDTO> listarTodosComAutorizacao(Pageable pageable) {
         authorizationService.requireAdmin();
         return listarTodosResponse(pageable);
@@ -443,15 +447,6 @@ public class UsuarioService {
             usuario.getEndereco(),
             usuario.getRole()
         );
-    }
-
-    public UsuarioSeguroDTO buscarPorCpfSeguro(String cpf) {
-        try {
-            Usuario usuario = buscarPorCpf(cpf);
-            return UsuarioSeguroDTO.fromUsuario(usuario);
-        } catch (Exception e) {
-            throw new UsuarioException.UsuarioNaoEncontradoException("Usuário não encontrado");
-        }
     }
 
     public UsuarioSeguroDTO atualizarComAutorizacao(Long id, UsuarioDTO dto) {

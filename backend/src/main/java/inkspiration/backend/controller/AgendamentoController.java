@@ -75,16 +75,6 @@ public class AgendamentoController {
         return ResponseEntity.ok(agendamentos);
     }
     
-    @GetMapping("/profissional/{idProfissional}/periodo")
-    public ResponseEntity<List<AgendamentoDTO>> listarPorProfissionalEPeriodo(
-            @PathVariable Long idProfissional,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim) {
-        
-        List<AgendamentoDTO> agendamentos = agendamentoService.listarPorProfissionalEPeriodoComValidacao(idProfissional, inicio, fim);
-        return ResponseEntity.ok(agendamentos);
-    }
-    
     @PutMapping("/{id}")
     public ResponseEntity<AgendamentoDTO> atualizarAgendamento(
             @PathVariable Long id,

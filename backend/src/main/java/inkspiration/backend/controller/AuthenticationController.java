@@ -48,18 +48,6 @@ public class AuthenticationController {
         return ResponseEntity.status(201).body(novoUsuario);
     }
     
-    @PostMapping("/register/usuario")
-    public ResponseEntity<Usuario> registerUsuario(@RequestBody @Valid UsuarioDTO usuarioDTO) {
-        Usuario novoUsuario = usuarioService.criar(usuarioDTO);
-        return ResponseEntity.status(201).body(novoUsuario);
-    }
-    
-    @PostMapping("/refresh-token/{userId}")
-    public ResponseEntity<String> refreshToken(@PathVariable Long userId) {
-        String newToken = authService.refreshToken(userId);
-        return ResponseEntity.ok(newToken);
-    }
-    
     @PostMapping("/reauth/{userId}")
     public ResponseEntity<String> reautenticar(@PathVariable Long userId) {
         String newToken = authService.reautenticar(userId);

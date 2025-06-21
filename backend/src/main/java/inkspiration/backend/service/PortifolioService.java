@@ -162,15 +162,6 @@ public class PortifolioService {
         return converterParaDto(portifolio);
     }
 
-    public PortifolioDTO criarComValidacao(PortifolioDTO dto) {
-        try {
-            Portifolio portifolio = criar(dto);
-            return converterParaDto(portifolio);
-        } catch (Exception e) {
-            throw new PortfolioCriacaoException(e.getMessage());
-        }
-    }
-
     public PortifolioDTO atualizarComValidacao(Long id, PortifolioDTO dto) {
         try {
             Portifolio portifolio = atualizar(id, dto);

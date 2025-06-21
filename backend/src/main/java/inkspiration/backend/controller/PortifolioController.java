@@ -46,12 +46,6 @@ public class PortifolioController {
         return ResponseEntity.ok(portifolio);
     }
 
-    @PostMapping("/auth/register/portifolio")
-    public ResponseEntity<PortifolioDTO> criar(@RequestBody @Valid PortifolioDTO dto) {
-        PortifolioDTO portifolio = portifolioService.criarComValidacao(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(portifolio);
-    }
-
     @PutMapping("/portifolio/atualizar/{id}")
     public ResponseEntity<PortifolioDTO> atualizar(@PathVariable Long id, @RequestBody @Valid PortifolioDTO dto) {
         PortifolioDTO portifolio = portifolioService.atualizarComValidacao(id, dto);

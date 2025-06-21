@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -44,6 +44,11 @@ const RegisterScreen = () => {
   const [verificationEmail, setVerificationEmail] = useState('');
   const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [cepError, setCepError] = useState('');
+  const [estadoError, setEstadoError] = useState('');
+  const [cidadeError, setCidadeError] = useState('');
+  const [enderecoValidationError, setEnderecoValidationError] = useState('');
+  const [dadosCep, setDadosCep] = useState(null);
 
   const emailTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.DEFAULT_TIMEOUT);
   const resendTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.RESEND_TIMEOUT);
@@ -58,7 +63,7 @@ const RegisterScreen = () => {
     }
     return () => clearInterval(interval);
   }, [resendCooldown]);
-  
+
   const [formData, setFormData] = useState({
     // Dados pessoais
     nome: '',
@@ -82,6 +87,27 @@ const RegisterScreen = () => {
     confirmarSenha: '',
     termsAccepted: false
   });
+
+  // Effect para validar consistência de endereço automaticamente
+  useEffect(() => {
+    if (dadosCep && formData.estado && formData.cidade) {
+      // Validar estado
+      if (formData.estado.toUpperCase().trim() !== dadosCep.uf?.toUpperCase().trim()) {
+        const errorMsg = `Estado deve ser ${dadosCep.uf} para este CEP`;
+        setEstadoError(errorMsg);
+      } else {
+        setEstadoError('');
+      }
+      
+      // Validar cidade
+      if (formData.cidade.toLowerCase().trim() !== dadosCep.localidade?.toLowerCase().trim()) {
+        const errorMsg = `Cidade deve ser ${dadosCep.localidade} para este CEP`;
+        setCidadeError(errorMsg);
+      } else {
+        setCidadeError('');
+      }
+    }
+  }, [dadosCep, formData.estado, formData.cidade]);
 
   const handleChange = (field, value) => {
     let formattedValue = value;
@@ -114,6 +140,8 @@ const RegisterScreen = () => {
         break;
       case 'cep':
         formattedValue = formatters.formatCEP(value);
+        setCepError('');
+        setEnderecoValidationError('');
         break;
       case 'telefone':
         formattedValue = formatters.formatPhone(value);
@@ -141,6 +169,20 @@ const RegisterScreen = () => {
           setConfirmPasswordError('As senhas não coincidem');
         }
         break;
+      case 'estado':
+        setEstadoError('');
+        setEnderecoValidationError('');
+        break;
+      case 'cidade':
+        setCidadeError('');
+        setEnderecoValidationError('');
+        break;
+      case 'rua':
+      case 'bairro':
+      case 'numero':
+      case 'complemento':
+        setEnderecoValidationError('');
+        break;
     }
 
     setFormData({
@@ -154,79 +196,66 @@ const RegisterScreen = () => {
   };
 
   const handleBlur = (field) => {
-    if (field === 'nome' && formData.nome) {
-      if (!formatters.validateFirstName(formData.nome)) {
-        setNomeError('Nome inválido');
-      } else {
-        setNomeError('');
-      }
-    }
-    
-    if (field === 'sobrenome' && formData.sobrenome) {
-      if (!formatters.validateSurname(formData.sobrenome)) {
-        setSobrenomeError('Sobrenome inválido');
-      } else {
-        setSobrenomeError('');
-      }
-    }
-    
-    if ((field === 'nome' || field === 'sobrenome') && formData.nome && formData.sobrenome) {
-      if (!formatters.validateFullNameLength(formData.nome, formData.sobrenome)) {
-        setFullNameError('Nome e sobrenome não podem ultrapassar 255 caracteres');
-      } else {
-        setFullNameError('');
-      }
-    }
-    
-    if (field === 'cpf' && formData.cpf) {
-      if (!formatters.validateCPF(formData.cpf)) {
-        setCpfError('CPF inválido');
-      } else {
-        setCpfError('');
-      }
-    }
-    
-    if (field === 'email' && formData.email) {
-      if (!formatters.validateEmail(formData.email)) {
-        setEmailError('Email inválido');
-      } else {
-        setEmailError('');
-      }
+    if (field === 'nome' && formData.nome && !formatters.validateFirstName(formData.nome)) {
+      setNomeError(authMessages.registerErrors.invalidName);
     }
 
-    if (field === 'telefone' && formData.telefone) {
-      if (!formatters.validatePhone(formData.telefone)) {
-        setPhoneError('Telefone inválido');
-      } else {
-        setPhoneError('');
-      }
+    if (field === 'sobrenome' && formData.sobrenome && !formatters.validateSurname(formData.sobrenome)) {
+      setSobrenomeError(authMessages.registerErrors.invalidName);
     }
 
-    if (field === 'dataNascimento' && formData.dataNascimento) {
-      if (!formatters.validateBirthDate(formData.dataNascimento)) {
-        setBirthDateError('Você deve ter pelo menos 18 anos para se registrar');
-      } else {
-        setBirthDateError('');
-      }
+    if (field === 'cpf' && formData.cpf && !formatters.validateCPF(formData.cpf)) {
+      setCpfError(authMessages.registerErrors.invalidCPF);
+    }
+
+    if (field === 'email' && formData.email && !formatters.validateEmail(formData.email)) {
+      setEmailError(authMessages.registerErrors.invalidEmail);
+    }
+
+    if (field === 'telefone' && formData.telefone && !formatters.validatePhone(formData.telefone)) {
+      setPhoneError(authMessages.registerErrors.invalidPhone);
+    }
+
+    if (field === 'dataNascimento' && formData.dataNascimento && !formatters.validateBirthDate(formData.dataNascimento)) {
+      setBirthDateError(authMessages.registerErrors.invalidBirthDate);
     }
 
     if (field === 'senha') {
-      if (!formData.senha) {
-        setPasswordError('Senha é obrigatória');
-      } else if (formData.senha.length < 6) {
-        setPasswordError('A senha deve ter pelo menos 6 caracteres');
-      } else {
-        setPasswordError('');
+      if (formData.senha) {
+        if (!formatters.validatePassword(formData.senha)) {
+          setPasswordError('A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, um número e um caractere especial');
+        } else {
+          setPasswordError('');
+        }
       }
     }
 
     if (field === 'confirmarSenha') {
-      if (!formData.confirmarSenha) {
-        setConfirmPasswordError('Confirmação de senha é obrigatória');
-      } else if (formData.senha !== formData.confirmarSenha) {
-        setConfirmPasswordError('As senhas não coincidem');
+      if (formData.confirmarSenha) {
+        if (formData.senha !== formData.confirmarSenha) {
+          setConfirmPasswordError('As senhas não coincidem');
+        } else {
+          setConfirmPasswordError('');
+        }
+      }
+    }
+
+    // Validação de consistência de endereço quando sai do campo estado ou cidade
+    if (field === 'estado' && formData.estado && dadosCep) {
+      if (formData.estado.toUpperCase().trim() !== dadosCep.uf?.toUpperCase().trim()) {
+        const errorMsg = `Estado deve ser ${dadosCep.uf} para este CEP`;
+        setEstadoError(errorMsg);
       } else {
-        setConfirmPasswordError('');
+        setEstadoError('');
+      }
+    }
+
+    if (field === 'cidade' && formData.cidade && dadosCep) {
+      if (formData.cidade.toLowerCase().trim() !== dadosCep.localidade?.toLowerCase().trim()) {
+        const errorMsg = `Cidade deve ser ${dadosCep.localidade} para este CEP`;
+        setCidadeError(errorMsg);
+      } else {
+        setCidadeError('');
       }
     }
   };
@@ -235,6 +264,12 @@ const RegisterScreen = () => {
     try {
       // Remove caracteres não numéricos
       const cepLimpo = cep.replace(/\D/g, '');
+      
+      if (cepLimpo.length !== 8) {
+        setCepError('CEP deve conter exatamente 8 dígitos');
+        setDadosCep(null);
+        return;
+      }
       
       // URL da API ViaCEP
       const response = await axios.get(`https://viacep.com.br/ws/${cepLimpo}/json/`);
@@ -250,11 +285,21 @@ const RegisterScreen = () => {
           cidade: endereco.localidade || '',
           estado: endereco.uf || '',
         }));
+        setDadosCep(endereco);
+        setCepError('');
+        
+        // Limpar erros de validação quando busca novo CEP
+        setEstadoError('');
+        setCidadeError('');
+        setEnderecoValidationError('');
       } else {
-        console.log('CEP não encontrado');
+        setCepError('CEP não encontrado');
+        setDadosCep(null);
       }
     } catch (error) {
       console.error('Erro ao buscar CEP:', error);
+      setCepError('Erro ao consultar CEP. Verifique sua conexão.');
+      setDadosCep(null);
     }
   };
 
@@ -362,19 +407,53 @@ const RegisterScreen = () => {
   };
 
   const isAddressTabValid = () => {
-    return (
+    const basicFieldsValid = (
       formData.cep &&
       formData.rua &&
       formData.numero &&
       formData.bairro &&
       formData.cidade &&
-      formData.estado
+      formData.estado &&
+      !cepError &&
+      !estadoError &&
+      !cidadeError &&
+      !enderecoValidationError
     );
+    
+    // Se os campos básicos não estão válidos, retornar false
+    if (!basicFieldsValid) {
+      return false;
+    }
+    
+    // Verificar se os dados do CEP existem e se há consistência básica
+    if (dadosCep) {
+      // Verificar consistência sem atualizar estados
+      const estadoConsistente = !formData.estado || !dadosCep.uf || 
+        formData.estado.toUpperCase() === dadosCep.uf.toUpperCase();
+      
+      const cidadeConsistente = !formData.cidade || !dadosCep.localidade || 
+        formData.cidade.toLowerCase() === dadosCep.localidade.toLowerCase();
+      
+      return estadoConsistente && cidadeConsistente;
+    }
+    
+    // Se não tem dados do CEP, só considerar válido se não há erro de CEP
+    return !cepError;
   };
 
   const validateAddressTab = () => {
     if (!formData.cep) {
       toastHelper.showError(authMessages.registerErrors.requiredFields);
+      return false;
+    }
+    
+    if (cepError) {
+      toastHelper.showError(cepError);
+      return false;
+    }
+    
+    if (!dadosCep) {
+      toastHelper.showError('Busque um CEP válido primeiro');
       return false;
     }
     
@@ -403,13 +482,26 @@ const RegisterScreen = () => {
       return false;
     }
     
+    // Validar consistência do endereço
+    if (dadosCep) {
+      if (formData.estado && dadosCep.uf && formData.estado.toUpperCase() !== dadosCep.uf.toUpperCase()) {
+        toastHelper.showError(`Estado deve ser ${dadosCep.uf} para este CEP`);
+        return false;
+      }
+      
+      if (formData.cidade && dadosCep.localidade && formData.cidade.toLowerCase() !== dadosCep.localidade.toLowerCase()) {
+        toastHelper.showError(`Cidade deve ser ${dadosCep.localidade} para este CEP`);
+        return false;
+      }
+    }
+    
     return true;
   };
 
   const isSecurityTabValid = () => {
     return (
       formData.senha &&
-      formData.senha.length >= 6 &&
+      formatters.validatePassword(formData.senha) &&
       formData.confirmarSenha &&
       formData.senha === formData.confirmarSenha &&
       formData.termsAccepted &&
@@ -420,12 +512,12 @@ const RegisterScreen = () => {
 
   const validateSecurityTab = () => {
     if (!formData.senha) {
-      toastHelper.showError(authMessages.registerErrors.invalidPassword);
+      toastHelper.showError('Senha é obrigatória');
       return false;
     }
     
-    if (formData.senha.length < 6) {
-      toastHelper.showError(authMessages.registerErrors.invalidPassword);
+    if (!formatters.validatePassword(formData.senha)) {
+      toastHelper.showError('A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, um número e um caractere especial');
       return false;
     }
 
@@ -487,6 +579,32 @@ const RegisterScreen = () => {
     } else if (activeTab === 'address') {
       if (validateAddressTab()) {
         setActiveTab('security');
+      } else {
+        if (dadosCep) {
+          // Limpar erros anteriores
+          setEstadoError('');
+          setCidadeError('');
+          
+          // Validar estado
+          if (formData.estado && dadosCep.uf) {
+            const estadoForm = formData.estado.toUpperCase().trim();
+            const estadoCep = dadosCep.uf.toUpperCase().trim();
+            
+            if (estadoForm !== estadoCep) {
+              setEstadoError(`Estado deve ser ${dadosCep.uf} para este CEP`);
+            }
+          }
+          
+          // Validar cidade
+          if (formData.cidade && dadosCep.localidade) {
+            const cidadeForm = formData.cidade.toLowerCase().trim();
+            const cidadeCep = dadosCep.localidade.toLowerCase().trim();
+            
+            if (cidadeForm !== cidadeCep) {
+              setCidadeError(`Cidade deve ser ${dadosCep.localidade} para este CEP`);
+            }
+          }
+        }
       }
     }
   };
@@ -694,6 +812,10 @@ const RegisterScreen = () => {
                       formData={formData}
                       handleChange={handleChange}
                       buscarCep={buscarCep}
+                      cepError={cepError}
+                      estadoError={estadoError}
+                      cidadeError={cidadeError}
+                      enderecoValidationError={enderecoValidationError}
                     />
                     <FormNavigation
                       onPrev={handlePrevTab}

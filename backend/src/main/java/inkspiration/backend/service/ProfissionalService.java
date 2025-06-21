@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import inkspiration.backend.dto.EnderecoDTO;
 import inkspiration.backend.dto.PortifolioDTO;
 import inkspiration.backend.dto.ProfissionalCriacaoDTO;
 import inkspiration.backend.dto.ProfissionalDTO;
@@ -42,6 +41,8 @@ import java.util.Collections;
 import inkspiration.backend.repository.EnderecoRepository;
 import inkspiration.backend.repository.ProfissionalRepository;
 import inkspiration.backend.repository.UsuarioRepository;
+import inkspiration.backend.dto.DisponibilidadeDTO;
+import inkspiration.backend.service.EnderecoService;
 
 @Service
 public class ProfissionalService {
@@ -53,6 +54,7 @@ public class ProfissionalService {
     private final DisponibilidadeService disponibilidadeService;
     private final AuthorizationService authorizationService;
     private final ImagemService imagemService;
+    private final EnderecoService enderecoService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
@@ -63,7 +65,8 @@ public class ProfissionalService {
                               UsuarioService usuarioService,
                               DisponibilidadeService disponibilidadeService,
                               AuthorizationService authorizationService,
-                              ImagemService imagemService) {
+                              ImagemService imagemService,
+                              EnderecoService enderecoService) {
         this.profissionalRepository = profissionalRepository;
         this.usuarioRepository = usuarioRepository;
         this.enderecoRepository = enderecoRepository;
@@ -71,6 +74,7 @@ public class ProfissionalService {
         this.disponibilidadeService = disponibilidadeService;
         this.authorizationService = authorizationService;
         this.imagemService = imagemService;
+        this.enderecoService = enderecoService;
     }
 
     /**
@@ -124,6 +128,9 @@ public class ProfissionalService {
         Endereco endereco = enderecoRepository.findById(dto.getIdEndereco())
             .orElseThrow(() -> new EnderecoNaoEncontradoException("Endereço não encontrado com ID: " + dto.getIdEndereco()));
         
+        // Validar endereço usando ViaCEP
+        enderecoService.validarEndereco(endereco);
+        
         // Atualiza o papel (role) do usuário para ROLE_PROF
         usuario.setRole("ROLE_PROF");
         if (usuario.getUsuarioAutenticar() != null) {
@@ -160,6 +167,10 @@ public class ProfissionalService {
         if (dto.getIdEndereco() != null) {
             Endereco endereco = enderecoRepository.findById(dto.getIdEndereco())
                 .orElseThrow(() -> new EnderecoNaoEncontradoException("Endereço não encontrado com ID: " + dto.getIdEndereco()));
+            
+            // Validar endereço usando ViaCEP
+            enderecoService.validarEndereco(endereco);
+            
             profissional.setEndereco(endereco);
         }
         
@@ -416,25 +427,6 @@ public class ProfissionalService {
         profissionalRepository.delete(profissional);
     }
     
-    
-    public Endereco converterEnderecoDTO(EnderecoDTO dto) {
-        Endereco endereco = new Endereco();
-        atualizarEndereco(endereco, dto);
-        return endereco;
-    }
-    
-    private void atualizarEndereco(Endereco endereco, EnderecoDTO dto) {
-        endereco.setCep(dto.getCep());
-        endereco.setRua(dto.getRua());
-        endereco.setBairro(dto.getBairro());
-        endereco.setComplemento(dto.getComplemento());
-        endereco.setCidade(dto.getCidade());
-        endereco.setEstado(dto.getEstado());
-        endereco.setLatitude(dto.getLatitude());
-        endereco.setLongitude(dto.getLongitude());
-        endereco.setNumero(dto.getNumero());
-    }
-    
     public ProfissionalDTO converterParaDto(Profissional profissional) {
         if (profissional == null) return null;
         
@@ -451,23 +443,8 @@ public class ProfissionalService {
             profissional.getTiposServico()
         );
     }
-    
-    public EnderecoDTO converterEnderecoParaDto(Endereco endereco) {
-        return new EnderecoDTO(
-            endereco.getIdEndereco(),
-            endereco.getCep(),
-            endereco.getRua(),
-            endereco.getBairro(),
-            endereco.getComplemento(),
-            endereco.getCidade(),
-            endereco.getEstado(),
-            endereco.getLatitude(),
-            endereco.getLongitude(),
-            endereco.getNumero()
-        );
-    }
 
-        public Endereco buscarEnderecoPorId(Long idEndereco) {
+    public Endereco buscarEnderecoPorId(Long idEndereco) {
         return enderecoRepository.findById(idEndereco)
                 .orElseThrow(() -> new EnderecoNaoEncontradoException("Endereço não encontrado com ID: " + idEndereco));
     }
@@ -840,5 +817,9 @@ public class ProfissionalService {
         profissionalCompleto.put("disponibilidades", disponibilidades);
         
         return profissionalCompleto;
+    }
+
+    private void validarCamposObrigatorios(ProfissionalDTO dto) {
+        // ... existing code ...
     }
 } 

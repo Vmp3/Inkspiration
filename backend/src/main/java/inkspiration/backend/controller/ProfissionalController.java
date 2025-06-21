@@ -100,7 +100,7 @@ public class ProfissionalController {
     public ResponseEntity<Map<String, Object>> buscarProfissionalCompleto(@PathVariable Long idUsuario) {
         ProfissionalService.ProfissionalCompletoData data = profissionalService.buscarProfissionalCompletoComAutorizacao(idUsuario);
         
-        Map<String, Object> response = new HashMap<>();
+            Map<String, Object> response = new HashMap<>();
         response.put("profissional", data.getProfissional());
         response.put("portfolio", data.getPortfolio());
         response.put("imagens", data.getImagens());
@@ -108,8 +108,8 @@ public class ProfissionalController {
         response.put("tiposServico", data.getTiposServico());
         response.put("precosServicos", data.getPrecosServicos());
         response.put("tiposServicoPrecos", data.getTiposServicoPrecos());
-        
-        return ResponseEntity.ok(response);
+            
+            return ResponseEntity.ok(response);
     }
     
     @GetMapping("/profissional/verificar/{idUsuario}")
@@ -127,7 +127,7 @@ public class ProfissionalController {
     @GetMapping("/tipos-servico/{idProfissional}")
     public ResponseEntity<List<Map<String, Object>>> listarTiposServicoPorProfissional(@PathVariable Long idProfissional) {
         List<Map<String, Object>> tiposServico = profissionalService.listarTiposServicoPorProfissionalComValidacao(idProfissional);
-        return ResponseEntity.ok(tiposServico);
+            return ResponseEntity.ok(tiposServico);
     }
 
     @PostMapping("/auth/register/profissional-completo")

@@ -196,12 +196,6 @@ public class AgendamentoService {
         return agendamentoRepository.findByProfissional(profissional, pageable);
     }
     
-    public List<Agendamento> listarPorProfissionalEPeriodo(Long idProfissional, 
-            LocalDateTime inicio, LocalDateTime fim) {
-        
-        return agendamentoRepository.findByProfissionalAndPeriod(idProfissional, inicio, fim);
-    }
-    
     @Transactional
     public Agendamento atualizarAgendamento(Long id, Long idUsuarioLogado, String tipoServicoStr, String descricao,
             LocalDateTime dtInicio) throws Exception {
@@ -318,13 +312,6 @@ public class AgendamentoService {
                 .collect(Collectors.toList());
         
         return new PageImpl<>(agendamentosDTO, pageable, agendamentosPage.getTotalElements());
-    }
-    
-    public List<AgendamentoDTO> listarPorProfissionalEPeriodoDTO(Long idProfissional, 
-            LocalDateTime inicio, LocalDateTime fim) {
-        return listarPorProfissionalEPeriodo(idProfissional, inicio, fim).stream()
-                .map(AgendamentoDTO::new)
-                .collect(Collectors.toList());
     }
     
     @Transactional
@@ -887,14 +874,6 @@ public class AgendamentoService {
         try {
             Page<AgendamentoDTO> agendamentosPage = listarPorProfissionalDTO(idProfissional, pageable);
             return agendamentosPage.getContent();
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
-    }
-
-    public List<AgendamentoDTO> listarPorProfissionalEPeriodoComValidacao(Long idProfissional, LocalDateTime inicio, LocalDateTime fim) {
-        try {
-            return listarPorProfissionalEPeriodoDTO(idProfissional, inicio, fim);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

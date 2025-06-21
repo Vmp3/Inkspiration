@@ -5,7 +5,11 @@ import Input from '../ui/Input';
 const AddressForm = ({ 
   formData, 
   handleChange, 
-  buscarCep 
+  buscarCep,
+  cepError,
+  estadoError,
+  cidadeError,
+  enderecoValidationError
 }) => {
   const [numeroError, setNumeroError] = useState('');
 
@@ -20,7 +24,7 @@ const AddressForm = ({
   };
 
   return (
-    <View style={styles.tabContent}>
+    <View style={styles.tabContent}>   
       <View style={styles.formRow}>
         <View style={styles.formGroup}>
           <Text style={styles.formLabel}>CEP</Text>
@@ -29,10 +33,11 @@ const AddressForm = ({
             value={formData.cep}
             onChangeText={(text) => handleChange('cep', text)}
             keyboardType="numeric"
-            style={styles.inputField}
+            style={[styles.inputField, cepError ? styles.inputError : null]}
             maxLength={9}
           />
-          <Text style={styles.helperText}>Digite o CEP para preenchimento automático</Text>
+          {cepError ? <Text style={styles.errorText}>{cepError}</Text> : null}
+          {!cepError && <Text style={styles.helperText}>Digite o CEP para preenchimento automático</Text>}
         </View>
         
         <View style={styles.formGroup}>
@@ -41,9 +46,10 @@ const AddressForm = ({
             placeholder="UF"
             value={formData.estado}
             onChangeText={(text) => handleChange('estado', text)}
-            style={styles.inputField}
+            style={[styles.inputField, estadoError ? styles.inputError : null]}
             maxLength={2}
           />
+          {estadoError ? <Text style={styles.errorText}>{estadoError}</Text> : null}
         </View>
       </View>
       
@@ -98,8 +104,9 @@ const AddressForm = ({
             placeholder="Sua cidade"
             value={formData.cidade}
             onChangeText={(text) => handleChange('cidade', text)}
-            style={styles.inputField}
+            style={[styles.inputField, cidadeError ? styles.inputError : null]}
           />
+          {cidadeError ? <Text style={styles.errorText}>{cidadeError}</Text> : null}
         </View>
       </View>
     </View>
@@ -150,6 +157,17 @@ const styles = StyleSheet.create({
     color: '#ff0000',
     fontSize: 12,
     marginTop: 4,
+  },
+  errorContainer: {
+    backgroundColor: '#ffd7d7',
+    padding: 10,
+    borderRadius: 4,
+    marginBottom: 24,
+  },
+  errorTextGeneral: {
+    color: '#ff0000',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

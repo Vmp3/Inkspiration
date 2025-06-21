@@ -114,15 +114,6 @@ public class AuthenticationService {
         return token;
     }
 
-    public String refreshToken(Long userId) {
-        try {
-            String newToken = usuarioService.atualizarTokenUsuario(userId);
-            return newToken;
-        } catch (Exception e) {
-            throw new AuthenticationFailedException("Erro ao atualizar token: " + e.getMessage());
-        }
-    }
-
     public String reautenticar(Long userId) {
         try {
             System.out.println("Reautenticando usuário ID: " + userId);
