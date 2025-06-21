@@ -4,6 +4,13 @@ import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.entities.TwoFactorRecoveryCode;
 import inkspiration.backend.repository.UsuarioRepository;
 import inkspiration.backend.repository.TwoFactorRecoveryCodeRepository;
+import inkspiration.backend.exception.twofactor.CodigoRecuperacaoException;
+import inkspiration.backend.exception.twofactor.CodigoVerificacaoInvalidoException;
+import inkspiration.backend.exception.twofactor.QRCodeGeracaoException;
+import inkspiration.backend.exception.twofactor.TwoFactorAtivacaoException;
+import inkspiration.backend.exception.twofactor.TwoFactorDesativacaoException;
+import inkspiration.backend.exception.twofactor.TwoFactorStatusException;
+import inkspiration.backend.security.JwtService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,6 +43,9 @@ public class TwoFactorAuthService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private JwtService jwtService;
 
     private final GoogleAuthenticator gAuth = new GoogleAuthenticator();
 
@@ -289,5 +299,130 @@ public class TwoFactorAuthService {
         
         byte[] imageBytes = outputStream.toByteArray();
         return Base64.getEncoder().encodeToString(imageBytes);
+    }
+
+    public Map<String, String> gerarQRCodeComValidacao(String authHeader) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long userId = jwtService.getUserIdFromToken(token);
+
+            return generateQRCodeAndSecret(userId);
+        } catch (Exception e) {
+            throw new QRCodeGeracaoException(e.getMessage());
+        }
+    }
+
+    public boolean ativarTwoFactorComValidacao(String authHeader, Integer verificationCode) {
+        if (verificationCode == null) {
+            throw new CodigoVerificacaoInvalidoException("Código de verificação é obrigatório");
+        }
+
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long userId = jwtService.getUserIdFromToken(token);
+
+            boolean success = enableTwoFactor(userId, verificationCode);
+            
+            if (!success) {
+                throw new CodigoVerificacaoInvalidoException("Código de verificação inválido");
+            }
+            
+            return success;
+        } catch (CodigoVerificacaoInvalidoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new TwoFactorAtivacaoException(e.getMessage());
+        }
+    }
+
+    public boolean desativarTwoFactorComValidacao(String authHeader, Integer verificationCode) {
+        if (verificationCode == null) {
+            throw new CodigoVerificacaoInvalidoException("Código de verificação é obrigatório");
+        }
+
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long userId = jwtService.getUserIdFromToken(token);
+
+            boolean success = disableTwoFactor(userId, verificationCode);
+            
+            if (!success) {
+                throw new CodigoVerificacaoInvalidoException("Código de verificação inválido");
+            }
+            
+            return success;
+        } catch (CodigoVerificacaoInvalidoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new TwoFactorDesativacaoException(e.getMessage());
+        }
+    }
+
+    public boolean obterStatusTwoFactorComValidacao(String authHeader) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long userId = jwtService.getUserIdFromToken(token);
+
+            return isTwoFactorEnabled(userId);
+        } catch (Exception e) {
+            throw new TwoFactorStatusException(e.getMessage());
+        }
+    }
+
+    public boolean validarCodigoComValidacao(String authHeader, Integer verificationCode) {
+        if (verificationCode == null) {
+            throw new CodigoVerificacaoInvalidoException("Código de verificação é obrigatório");
+        }
+
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long userId = jwtService.getUserIdFromToken(token);
+
+            return validateCode(userId, verificationCode);
+        } catch (Exception e) {
+            throw new CodigoVerificacaoInvalidoException("Erro ao validar código: " + e.getMessage());
+        }
+    }
+
+    public boolean enviarCodigoRecuperacaoComValidacao(String authHeader) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long userId = jwtService.getUserIdFromToken(token);
+
+            boolean success = sendRecoveryCodeByEmail(userId);
+            
+            if (!success) {
+                throw new CodigoRecuperacaoException("Erro ao enviar código de recuperação");
+            }
+            
+            return success;
+        } catch (CodigoRecuperacaoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CodigoRecuperacaoException("Erro ao enviar código de recuperação: " + e.getMessage());
+        }
+    }
+
+    public boolean desativarComCodigoRecuperacaoComValidacao(String authHeader, String recoveryCode) {
+        if (recoveryCode == null || recoveryCode.trim().isEmpty()) {
+            throw new CodigoRecuperacaoException("Código de recuperação é obrigatório");
+        }
+
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long userId = jwtService.getUserIdFromToken(token);
+
+            boolean success = disableTwoFactorWithRecoveryCode(userId, recoveryCode);
+            
+            if (!success) {
+                throw new CodigoRecuperacaoException("Código de recuperação inválido ou expirado");
+            }
+            
+            return success;
+        } catch (CodigoRecuperacaoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new TwoFactorDesativacaoException("Erro ao desativar 2FA: " + e.getMessage());
+        }
     }
 } 

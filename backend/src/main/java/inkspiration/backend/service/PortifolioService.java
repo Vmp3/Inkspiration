@@ -9,20 +9,33 @@ import org.springframework.transaction.annotation.Transactional;
 import inkspiration.backend.dto.PortifolioDTO;
 import inkspiration.backend.entities.Portifolio;
 import inkspiration.backend.entities.Profissional;
-import inkspiration.backend.exception.ResourceNotFoundException;
+import inkspiration.backend.exception.profissional.ProfissionalNaoEncontradoException;
+import inkspiration.backend.exception.portfolio.PortfolioAcessoNegadoException;
+import inkspiration.backend.exception.portfolio.PortfolioAtualizacaoException;
+import inkspiration.backend.exception.portfolio.PortfolioCriacaoException;
+import inkspiration.backend.exception.portfolio.PortfolioNaoEncontradoException;
+import inkspiration.backend.exception.portfolio.PortfolioRemocaoException;
 import inkspiration.backend.repository.PortifolioRepository;
 import inkspiration.backend.repository.ProfissionalRepository;
+import inkspiration.backend.security.AuthorizationService;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.PageRequest;
 
 @Service
 public class PortifolioService {
 
     private final PortifolioRepository portifolioRepository;
     private final ProfissionalRepository profissionalRepository;
+    private final AuthorizationService authorizationService;
 
     @Autowired
-    public PortifolioService(PortifolioRepository portifolioRepository, ProfissionalRepository profissionalRepository) {
+    public PortifolioService(PortifolioRepository portifolioRepository, 
+                            ProfissionalRepository profissionalRepository,
+                            AuthorizationService authorizationService) {
         this.portifolioRepository = portifolioRepository;
         this.profissionalRepository = profissionalRepository;
+        this.authorizationService = authorizationService;
     }
 
     public Page<Portifolio> listarTodos(Pageable pageable) {
@@ -40,7 +53,7 @@ public class PortifolioService {
         // Se fornecido, associar ao profissional
         if (dto.getIdProfissional() != null) {
             Profissional profissional = profissionalRepository.findById(dto.getIdProfissional())
-                .orElseThrow(() -> new ResourceNotFoundException("Profissional não encontrado com ID: " + dto.getIdProfissional()));
+                .orElseThrow(() -> new ProfissionalNaoEncontradoException("Profissional não encontrado com ID: " + dto.getIdProfissional()));
             
             profissional.setPortifolio(portifolio);
             portifolio.setProfissional(profissional);
@@ -69,7 +82,7 @@ public class PortifolioService {
             
             // Associar ao novo profissional
             Profissional novoProfissional = profissionalRepository.findById(dto.getIdProfissional())
-                .orElseThrow(() -> new ResourceNotFoundException("Profissional não encontrado com ID: " + dto.getIdProfissional()));
+                .orElseThrow(() -> new ProfissionalNaoEncontradoException("Profissional não encontrado com ID: " + dto.getIdProfissional()));
             
             novoProfissional.setPortifolio(portifolio);
             portifolio.setProfissional(novoProfissional);
@@ -81,7 +94,7 @@ public class PortifolioService {
 
     public Portifolio buscarPorId(Long id) {
         return portifolioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Portifolio não encontrado com ID: " + id));
+                .orElseThrow(() -> new PortfolioNaoEncontradoException("Portifolio não encontrado com ID: " + id));
     }
 
     @Transactional
@@ -131,5 +144,51 @@ public class PortifolioService {
             portifolio.getFacebook(),
             portifolio.getTwitter()
         );
+    }
+
+    // Novos métodos movidos do controller
+    public List<PortifolioDTO> listarComAutorizacao(Pageable pageable) {
+        authorizationService.requireAdmin();
+        
+        Page<Portifolio> portifolios = listarTodos(pageable);
+        
+        return portifolios.getContent().stream()
+                .map(this::converterParaDto)
+                .collect(Collectors.toList());
+    }
+
+    public PortifolioDTO buscarPorIdComValidacao(Long id) {
+        Portifolio portifolio = buscarPorId(id);
+        return converterParaDto(portifolio);
+    }
+
+    public PortifolioDTO criarComValidacao(PortifolioDTO dto) {
+        try {
+            Portifolio portifolio = criar(dto);
+            return converterParaDto(portifolio);
+        } catch (Exception e) {
+            throw new PortfolioCriacaoException(e.getMessage());
+        }
+    }
+
+    public PortifolioDTO atualizarComValidacao(Long id, PortifolioDTO dto) {
+        try {
+            Portifolio portifolio = atualizar(id, dto);
+            return converterParaDto(portifolio);
+        } catch (PortfolioNaoEncontradoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PortfolioAtualizacaoException(e.getMessage());
+        }
+    }
+
+    public void deletarComValidacao(Long id) {
+        try {
+            deletar(id);
+        } catch (PortfolioNaoEncontradoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PortfolioRemocaoException(e.getMessage());
+        }
     }
 } 

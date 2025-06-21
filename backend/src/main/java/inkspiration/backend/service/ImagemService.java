@@ -7,7 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 import inkspiration.backend.dto.ImagemDTO;
 import inkspiration.backend.entities.Imagem;
 import inkspiration.backend.entities.Portifolio;
-import inkspiration.backend.exception.ResourceNotFoundException;
+import inkspiration.backend.exception.portfolio.PortfolioNaoEncontradoException;
+import inkspiration.backend.exception.imagem.ImagemNaoEncontradaException;
+import inkspiration.backend.exception.imagem.ImagemProcessamentoException;
+import inkspiration.backend.exception.imagem.ImagemRemocaoException;
+import inkspiration.backend.exception.imagem.ImagemSalvamentoException;
 import inkspiration.backend.repository.ImagemRepository;
 import inkspiration.backend.repository.PortifolioRepository;
 
@@ -33,14 +37,14 @@ public class ImagemService {
 
     public ImagemDTO buscarPorId(Long id) {
         Imagem imagem = imagemRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Imagem não encontrada com ID: " + id));
+                .orElseThrow(() -> new ImagemNaoEncontradaException("Imagem não encontrada com ID: " + id));
         return converterParaDto(imagem);
     }
 
     @Transactional
     public ImagemDTO salvar(ImagemDTO dto) {
         Portifolio portifolio = portifolioRepository.findById(dto.getIdPortifolio())
-                .orElseThrow(() -> new ResourceNotFoundException("Portifólio não encontrado com ID: " + dto.getIdPortifolio()));
+                .orElseThrow(() -> new PortfolioNaoEncontradoException("Portifólio não encontrado com ID: " + dto.getIdPortifolio()));
         
         Imagem imagem = new Imagem();
         imagem.setImagemBase64(dto.getImagemBase64());
@@ -54,7 +58,7 @@ public class ImagemService {
     @Transactional
     public void deletar(Long id) {
         Imagem imagem = imagemRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Imagem não encontrada com ID: " + id));
+                .orElseThrow(() -> new ImagemNaoEncontradaException("Imagem não encontrada com ID: " + id));
         
         imagemRepository.delete(imagem);
     }
@@ -65,5 +69,38 @@ public class ImagemService {
             imagem.getImagemBase64(),
             imagem.getPortifolio().getIdPortifolio()
         );
+    }
+
+    // Novos métodos movidos do controller
+    public List<ImagemDTO> listarPorPortifolioComValidacao(Long idPortifolio) {
+        try {
+            return listarPorPortifolio(idPortifolio);
+        } catch (Exception e) {
+            throw new ImagemProcessamentoException("Erro ao listar imagens do portfólio: " + e.getMessage());
+        }
+    }
+
+    public ImagemDTO buscarPorIdComValidacao(Long id) {
+        return buscarPorId(id);
+    }
+
+    public ImagemDTO salvarComValidacao(ImagemDTO dto) {
+        try {
+            return salvar(dto);
+        } catch (PortfolioNaoEncontradoException e) {
+            throw new ImagemSalvamentoException("Portfólio não encontrado com ID: " + dto.getIdPortifolio());
+        } catch (Exception e) {
+            throw new ImagemSalvamentoException("Erro ao salvar imagem: " + e.getMessage());
+        }
+    }
+
+    public void deletarComValidacao(Long id) {
+        try {
+            deletar(id);
+        } catch (ImagemNaoEncontradaException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ImagemRemocaoException("Erro ao deletar imagem: " + e.getMessage());
+        }
     }
 } 

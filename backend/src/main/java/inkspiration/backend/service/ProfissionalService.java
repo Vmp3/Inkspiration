@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,8 +27,18 @@ import inkspiration.backend.entities.Endereco;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.enums.TipoServico;
-import inkspiration.backend.exception.ResourceNotFoundException;
 import inkspiration.backend.exception.UsuarioException;
+import inkspiration.backend.exception.profissional.DadosCompletosProfissionalException;
+import inkspiration.backend.exception.profissional.EnderecoNaoEncontradoException;
+import inkspiration.backend.exception.profissional.DisponibilidadeProcessamentoException;
+import inkspiration.backend.exception.profissional.ProfissionalAcessoNegadoException;
+import inkspiration.backend.exception.profissional.ProfissionalNaoEncontradoException;
+import inkspiration.backend.exception.profissional.TipoServicoInvalidoProfissionalException;
+import inkspiration.backend.security.AuthorizationService;
+import inkspiration.backend.dto.ImagemDTO;
+import inkspiration.backend.service.ImagemService;
+import java.util.Arrays;
+import java.util.Collections;
 import inkspiration.backend.repository.EnderecoRepository;
 import inkspiration.backend.repository.ProfissionalRepository;
 import inkspiration.backend.repository.UsuarioRepository;
@@ -40,6 +51,8 @@ public class ProfissionalService {
     private final EnderecoRepository enderecoRepository;
     private final PortifolioService portifolioService;
     private final DisponibilidadeService disponibilidadeService;
+    private final AuthorizationService authorizationService;
+    private final ImagemService imagemService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
@@ -48,12 +61,16 @@ public class ProfissionalService {
                               EnderecoRepository enderecoRepository,
                               PortifolioService portifolioService,
                               UsuarioService usuarioService,
-                              DisponibilidadeService disponibilidadeService) {
+                              DisponibilidadeService disponibilidadeService,
+                              AuthorizationService authorizationService,
+                              ImagemService imagemService) {
         this.profissionalRepository = profissionalRepository;
         this.usuarioRepository = usuarioRepository;
         this.enderecoRepository = enderecoRepository;
         this.portifolioService = portifolioService;
         this.disponibilidadeService = disponibilidadeService;
+        this.authorizationService = authorizationService;
+        this.imagemService = imagemService;
     }
 
     /**
@@ -105,7 +122,7 @@ public class ProfissionalService {
         
         // Verifica se o endereço existe
         Endereco endereco = enderecoRepository.findById(dto.getIdEndereco())
-            .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado com ID: " + dto.getIdEndereco()));
+            .orElseThrow(() -> new EnderecoNaoEncontradoException("Endereço não encontrado com ID: " + dto.getIdEndereco()));
         
         // Atualiza o papel (role) do usuário para ROLE_PROF
         usuario.setRole("ROLE_PROF");
@@ -142,7 +159,7 @@ public class ProfissionalService {
         // Atualiza o endereço se o ID for fornecido
         if (dto.getIdEndereco() != null) {
             Endereco endereco = enderecoRepository.findById(dto.getIdEndereco())
-                .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado com ID: " + dto.getIdEndereco()));
+                .orElseThrow(() -> new EnderecoNaoEncontradoException("Endereço não encontrado com ID: " + dto.getIdEndereco()));
             profissional.setEndereco(endereco);
         }
         
@@ -184,7 +201,7 @@ public class ProfissionalService {
         try {
             profissional = buscarPorUsuario(dto.getIdUsuario());
             isUpdate = true;
-        } catch (ResourceNotFoundException e) {
+        } catch (ProfissionalNaoEncontradoException e) {
             // Profissional não existe, criar um novo
             ProfissionalDTO profissionalDTO = new ProfissionalDTO();
             profissionalDTO.setIdUsuario(dto.getIdUsuario());
@@ -261,7 +278,7 @@ public class ProfissionalService {
 
     public Profissional buscarPorId(Long id) {
         Profissional profissional = profissionalRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Profissional não encontrado com ID: " + id));
+                .orElseThrow(() -> new ProfissionalNaoEncontradoException("Profissional não encontrado com ID: " + id));
         
         // Carregar preços do JSON para o Map transiente
         carregarTiposServicoPrecos(profissional);
@@ -271,7 +288,7 @@ public class ProfissionalService {
     
     public Profissional buscarPorUsuario(Long idUsuario) {
         Profissional profissional = profissionalRepository.findByUsuario_IdUsuario(idUsuario)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil profissional não encontrado para o usuário com ID: " + idUsuario));
+                .orElseThrow(() -> new ProfissionalNaoEncontradoException("Perfil profissional não encontrado para o usuário com ID: " + idUsuario));
         
         // Carregar preços do JSON para o Map transiente
         carregarTiposServicoPrecos(profissional);
@@ -452,7 +469,7 @@ public class ProfissionalService {
 
         public Endereco buscarEnderecoPorId(Long idEndereco) {
         return enderecoRepository.findById(idEndereco)
-                .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado com ID: " + idEndereco));
+                .orElseThrow(() -> new EnderecoNaoEncontradoException("Endereço não encontrado com ID: " + idEndereco));
     }
     
     /**
@@ -479,5 +496,349 @@ public class ProfissionalService {
         }
         
         profissional.setTiposServicoPrecos(tiposComPrecos);
+    }
+
+    // Novos métodos movidos do controller
+    public List<ProfissionalDTO> listarComAutorizacao(Pageable pageable) {
+        authorizationService.requireAdmin();
+        
+        Page<Profissional> profissionais = listar(pageable);
+        
+        return profissionais.getContent().stream()
+                .map(this::converterParaDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<ProfissionalDTO> listarPublico(Pageable pageable) {
+        Page<Profissional> profissionais = listar(pageable);
+        
+        return profissionais.getContent().stream()
+                .map(this::converterParaDto)
+                .collect(Collectors.toList());
+    }
+
+    public Page<Map<String, Object>> listarCompletoComFiltros(Pageable pageable, String searchTerm, String locationTerm,
+                                                        double minRating, String[] selectedSpecialties, String sortBy) {
+        Page<Profissional> profissionais = listarComFiltros(pageable, searchTerm, locationTerm, minRating, selectedSpecialties, sortBy);
+        
+        List<Map<String, Object>> profissionaisCompletos = profissionais.getContent().stream()
+                .map(this::montarProfissionalCompleto)
+                .collect(Collectors.toList());
+        
+        return new PageImpl<>(profissionaisCompletos, pageable, profissionais.getTotalElements());
+    }
+
+    public Map<String, Object> buscarCompletoComValidacao(Long id) {
+        Profissional profissional = buscarPorId(id);
+        return montarProfissionalCompleto(profissional);
+    }
+
+    public ProfissionalDTO buscarPorUsuarioComAutorizacao(Long idUsuario) {
+        authorizationService.requireUserAccessOrAdmin(idUsuario);
+        Profissional profissional = buscarPorUsuario(idUsuario);
+        return converterParaDto(profissional);
+    }
+
+    public class ProfissionalCompletoData {
+        private ProfissionalDTO profissional;
+        private PortifolioDTO portfolio;
+        private List<ImagemDTO> imagens;
+        private Map<String, List<Map<String, String>>> disponibilidades;
+        private List<TipoServico> tiposServico;
+        private Map<String, BigDecimal> precosServicos;
+        private Map<String, BigDecimal> tiposServicoPrecos;
+        
+        // Getters e setters
+        public ProfissionalDTO getProfissional() { return profissional; }
+        public void setProfissional(ProfissionalDTO profissional) { this.profissional = profissional; }
+        
+        public PortifolioDTO getPortfolio() { return portfolio; }
+        public void setPortfolio(PortifolioDTO portfolio) { this.portfolio = portfolio; }
+        
+        public List<ImagemDTO> getImagens() { return imagens; }
+        public void setImagens(List<ImagemDTO> imagens) { this.imagens = imagens; }
+        
+        public Map<String, List<Map<String, String>>> getDisponibilidades() { return disponibilidades; }
+        public void setDisponibilidades(Map<String, List<Map<String, String>>> disponibilidades) { this.disponibilidades = disponibilidades; }
+        
+        public List<TipoServico> getTiposServico() { return tiposServico; }
+        public void setTiposServico(List<TipoServico> tiposServico) { this.tiposServico = tiposServico; }
+        
+        public Map<String, BigDecimal> getPrecosServicos() { return precosServicos; }
+        public void setPrecosServicos(Map<String, BigDecimal> precosServicos) { this.precosServicos = precosServicos; }
+        
+        public Map<String, BigDecimal> getTiposServicoPrecos() { return tiposServicoPrecos; }
+        public void setTiposServicoPrecos(Map<String, BigDecimal> tiposServicoPrecos) { this.tiposServicoPrecos = tiposServicoPrecos; }
+    }
+
+    public ProfissionalCompletoData buscarProfissionalCompletoComAutorizacao(Long idUsuario) {
+        authorizationService.requireUserAccessOrAdmin(idUsuario);
+        
+        Profissional profissional = buscarPorUsuario(idUsuario);
+        ProfissionalDTO profissionalDto = converterParaDto(profissional);
+        
+        PortifolioDTO portfolioDto = null;
+        if (profissional.getPortifolio() != null) {
+            portfolioDto = portifolioService.converterParaDto(profissional.getPortifolio());
+        }
+        
+        List<ImagemDTO> imagens = Collections.emptyList();
+        if (profissional.getPortifolio() != null) {
+            imagens = imagemService.listarPorPortifolio(profissional.getPortifolio().getIdPortifolio());
+        }
+        
+        Map<String, List<Map<String, String>>> disponibilidades = Collections.emptyMap();
+        try {
+            disponibilidades = disponibilidadeService.obterDisponibilidade(profissional.getIdProfissional());
+        } catch (Exception e) {
+            System.out.println("Nenhuma disponibilidade encontrada para o profissional: " + e.getMessage());
+        }
+        
+        ProfissionalCompletoData data = new ProfissionalCompletoData();
+        data.setProfissional(profissionalDto);
+        data.setPortfolio(portfolioDto);
+        data.setImagens(imagens);
+        data.setDisponibilidades(disponibilidades);
+        data.setTiposServico(profissional.getTiposServico());
+        data.setPrecosServicos(profissional.getPrecosServicos());
+        data.setTiposServicoPrecos(profissional.getTiposServicoPrecos());
+        
+        return data;
+    }
+
+    public Boolean verificarPerfilComAutorizacao(Long idUsuario) {
+        authorizationService.requireUserAccessOrAdmin(idUsuario);
+        return existePerfil(idUsuario);
+    }
+
+    public List<Map<String, Object>> listarTiposServico() {
+        return Arrays.stream(TipoServico.values())
+            .map(tipo -> {
+                Map<String, Object> tipoMap = new HashMap<>();
+                tipoMap.put("nome", tipo.name());
+                tipoMap.put("descricao", tipo.getDescricao());
+                tipoMap.put("duracaoHoras", tipo.getDuracaoHoras());
+                return tipoMap;
+            })
+            .collect(Collectors.toList());
+    }
+
+    public List<Map<String, Object>> listarTiposServicoPorProfissionalComValidacao(Long idProfissional) {
+        Profissional profissional = buscarPorId(idProfissional);
+        Map<String, BigDecimal> precosServicos = profissional.getPrecosServicos();
+        
+        return profissional.getTiposServico().stream()
+            .map(tipo -> {
+                Map<String, Object> tipoMap = new HashMap<>();
+                tipoMap.put("tipo", tipo.name());
+                tipoMap.put("duracaoHoras", tipo.getDuracaoHoras());
+                tipoMap.put("exemplo", tipo.name().startsWith("TATUAGEM_") ? 
+                    "Tatuagem " + tipo.name().replace("TATUAGEM_", "").toLowerCase() + " - " + tipo.getDuracaoHoras() + " horas" :
+                    "Sessão completa - " + tipo.getDuracaoHoras() + " horas");
+                
+                BigDecimal preco = precosServicos.getOrDefault(tipo.name(), BigDecimal.ZERO);
+                tipoMap.put("preco", preco);
+                
+                return tipoMap;
+            })
+            .collect(Collectors.toList());
+    }
+
+    public ProfissionalDTO criarProfissionalCompletoComValidacao(ProfissionalCriacaoDTO dto) {
+        try {
+            System.out.println("LOG: Recebendo DTO com tipos de serviço: " + dto.getTiposServico());
+            System.out.println("LOG: Recebendo DTO com preços: " + dto.getPrecosServicos());
+            
+            Profissional profissional = criarProfissionalCompleto(dto);
+            return converterParaDto(profissional);
+        } catch (JsonProcessingException e) {
+            throw new DisponibilidadeProcessamentoException("Erro ao processar disponibilidades: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public ProfissionalDTO atualizarComAutorizacao(Long id, ProfissionalDTO dto) {
+        Profissional profissionalExistente = buscarPorId(id);
+        Long idUsuario = profissionalExistente.getUsuario().getIdUsuario();
+        
+        authorizationService.requireUserAccessOrAdmin(idUsuario);
+        
+        Profissional profissionalAtualizado = atualizar(id, dto);
+        return converterParaDto(profissionalAtualizado);
+    }
+
+    public ProfissionalDTO atualizarProfissionalCompletoComAutorizacao(Long idUsuario, ProfissionalCriacaoDTO dto) {
+        authorizationService.requireUserAccessOrAdmin(idUsuario);
+        
+        dto.setIdUsuario(idUsuario);
+        
+        try {
+            Profissional profissionalAtualizado = criarProfissionalCompleto(dto);
+            return converterParaDto(profissionalAtualizado);
+        } catch (Exception e) {
+            throw new DadosCompletosProfissionalException(e.getMessage());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> atualizarProfissionalCompletoComImagensComAutorizacao(Long idUsuario, Map<String, Object> requestData) {
+        authorizationService.requireUserAccessOrAdmin(idUsuario);
+        
+        try {
+            Map<String, Object> portfolioData = (Map<String, Object>) requestData.get("portfolio");
+            List<Map<String, Object>> imagensData = (List<Map<String, Object>>) requestData.get("imagens");
+            Map<String, List<Map<String, String>>> disponibilidadesData = (Map<String, List<Map<String, String>>>) requestData.get("disponibilidades");
+            List<String> tiposServicoStr = (List<String>) requestData.get("tiposServico");
+            Map<String, Object> precosServicosData = (Map<String, Object>) requestData.get("precosServicos");
+            
+            System.out.println("LOG Controller: Recebendo preços na atualização: " + precosServicosData);
+            
+            Profissional profissional = buscarPorUsuario(idUsuario);
+            
+            ProfissionalCriacaoDTO dto = new ProfissionalCriacaoDTO();
+            dto.setIdUsuario(idUsuario);
+            dto.setIdEndereco(profissional.getEndereco().getIdEndereco());
+            
+            if (tiposServicoStr != null) {
+                try {
+                    List<TipoServico> tiposServico = tiposServicoStr.stream()
+                            .map(TipoServico::valueOf)
+                            .collect(Collectors.toList());
+                    dto.setTiposServico(tiposServico);
+                } catch (IllegalArgumentException e) {
+                    throw new TipoServicoInvalidoProfissionalException("Tipo de serviço inválido: " + e.getMessage());
+                }
+            }
+            
+            if (precosServicosData != null && !precosServicosData.isEmpty()) {
+                Map<String, BigDecimal> precosFormatados = new HashMap<>();
+                precosServicosData.forEach((tipo, preco) -> {
+                    try {
+                        BigDecimal precoDecimal;
+                        if (preco instanceof Number) {
+                            precoDecimal = BigDecimal.valueOf(((Number) preco).doubleValue());
+                        } else if (preco instanceof String) {
+                            precoDecimal = new BigDecimal(preco.toString());
+                        } else {
+                            precoDecimal = new BigDecimal(preco.toString());
+                        }
+                        precosFormatados.put(tipo, precoDecimal);
+                        System.out.println("LOG Controller: Preço processado para " + tipo + ": " + precoDecimal);
+                    } catch (Exception e) {
+                        System.err.println("Erro ao processar preço para " + tipo + ": " + e.getMessage());
+                    }
+                });
+                dto.setPrecosServicos(precosFormatados);
+            }
+            
+            if (portfolioData != null) {
+                dto.setDescricao((String) portfolioData.get("descricao"));
+                dto.setEspecialidade((String) portfolioData.get("especialidade"));
+                dto.setExperiencia((String) portfolioData.get("experiencia"));
+                dto.setInstagram((String) portfolioData.get("instagram"));
+                dto.setTiktok((String) portfolioData.get("tiktok"));
+                dto.setFacebook((String) portfolioData.get("facebook"));
+                dto.setTwitter((String) portfolioData.get("twitter"));
+                dto.setWebsite((String) portfolioData.get("website"));
+            }
+            
+            profissional = criarProfissionalCompleto(dto);
+            
+            if (imagensData != null && profissional.getPortifolio() != null) {
+                Long portfolioId = profissional.getPortifolio().getIdPortifolio();
+                
+                List<ImagemDTO> imagensAtuais = imagemService.listarPorPortifolio(portfolioId);
+                for (ImagemDTO imagem : imagensAtuais) {
+                    imagemService.deletar(imagem.getIdImagem());
+                }
+                
+                for (Map<String, Object> imagemData : imagensData) {
+                    if (imagemData.containsKey("imagemBase64")) {
+                        ImagemDTO imagemDto = new ImagemDTO();
+                        imagemDto.setImagemBase64((String) imagemData.get("imagemBase64"));
+                        imagemDto.setIdPortifolio(portfolioId);
+                        imagemService.salvar(imagemDto);
+                    }
+                }
+            }
+            
+            if (disponibilidadesData != null) {
+                disponibilidadeService.cadastrarDisponibilidade(profissional.getIdProfissional(), disponibilidadesData);
+            }
+            
+            profissional = buscarPorId(profissional.getIdProfissional());
+            return montarProfissionalCompleto(profissional);
+            
+        } catch (Exception e) {
+            throw new DadosCompletosProfissionalException("Erro ao atualizar dados completos: " + e.getMessage());
+        }
+    }
+
+    public void deletarComAutorizacao(Long id) {
+        Profissional profissional = buscarPorId(id);
+        Long idUsuario = profissional.getUsuario().getIdUsuario();
+        
+        authorizationService.requireUserAccessOrAdmin(idUsuario);
+        
+        deletar(id);
+    }
+
+    private Map<String, Object> montarProfissionalCompleto(Profissional profissional) {
+        Map<String, Object> profissionalCompleto = new HashMap<>();
+        
+        ProfissionalDTO profissionalDto = converterParaDto(profissional);
+        profissionalCompleto.put("profissional", profissionalDto);
+        
+        Map<String, Object> usuarioInfo = new HashMap<>();
+        if (profissional.getUsuario() != null) {
+            usuarioInfo.put("idUsuario", profissional.getUsuario().getIdUsuario());
+            usuarioInfo.put("nome", profissional.getUsuario().getNome());
+            usuarioInfo.put("email", profissional.getUsuario().getEmail());
+            usuarioInfo.put("telefone", profissional.getUsuario().getTelefone());
+            usuarioInfo.put("imagemPerfil", profissional.getUsuario().getImagemPerfil());
+        }
+        profissionalCompleto.put("usuario", usuarioInfo);
+        
+        profissionalCompleto.put("tiposServico", profissional.getTiposServico());
+        profissionalCompleto.put("precosServicos", profissional.getPrecosServicos());
+        profissionalCompleto.put("tiposServicoPrecos", profissional.getTiposServicoPrecos());
+        
+        Map<String, Object> enderecoInfo = new HashMap<>();
+        if (profissional.getEndereco() != null) {
+            enderecoInfo.put("idEndereco", profissional.getEndereco().getIdEndereco());
+            enderecoInfo.put("cep", profissional.getEndereco().getCep());
+            enderecoInfo.put("rua", profissional.getEndereco().getRua());
+            enderecoInfo.put("bairro", profissional.getEndereco().getBairro());
+            enderecoInfo.put("cidade", profissional.getEndereco().getCidade());
+            enderecoInfo.put("estado", profissional.getEndereco().getEstado());
+            enderecoInfo.put("numero", profissional.getEndereco().getNumero());
+            enderecoInfo.put("complemento", profissional.getEndereco().getComplemento());
+            enderecoInfo.put("latitude", profissional.getEndereco().getLatitude());
+            enderecoInfo.put("longitude", profissional.getEndereco().getLongitude());
+        }
+        profissionalCompleto.put("endereco", enderecoInfo);
+        
+        PortifolioDTO portfolioDto = null;
+        if (profissional.getPortifolio() != null) {
+            portfolioDto = portifolioService.converterParaDto(profissional.getPortifolio());
+        }
+        profissionalCompleto.put("portfolio", portfolioDto);
+        
+        List<ImagemDTO> imagens = Collections.emptyList();
+        if (profissional.getPortifolio() != null) {
+            imagens = imagemService.listarPorPortifolio(profissional.getPortifolio().getIdPortifolio());
+        }
+        profissionalCompleto.put("imagens", imagens);
+        
+        Map<String, List<Map<String, String>>> disponibilidades = Collections.emptyMap();
+        try {
+            disponibilidades = disponibilidadeService.obterDisponibilidade(profissional.getIdProfissional());
+        } catch (Exception e) {
+            System.out.println("Nenhuma disponibilidade encontrada para o profissional: " + e.getMessage());
+        }
+        profissionalCompleto.put("disponibilidades", disponibilidades);
+        
+        return profissionalCompleto;
     }
 } 

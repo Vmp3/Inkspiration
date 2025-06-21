@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +30,13 @@ import inkspiration.backend.util.CpfValidator;
 import inkspiration.backend.util.DateValidator;
 import inkspiration.backend.util.EmailValidator;
 import inkspiration.backend.repository.ProfissionalRepository;
+import inkspiration.backend.exception.usuario.UserAccessDeniedException;
+import inkspiration.backend.exception.usuario.TokenValidationException;
+import inkspiration.backend.exception.usuario.InvalidProfileImageException;
+import inkspiration.backend.dto.UsuarioSeguroDTO;
+import inkspiration.backend.security.AuthorizationService;
+import java.util.Map;
+import java.util.HashMap;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Service
@@ -39,6 +47,7 @@ public class UsuarioService {
     private final JwtService jwtService;
     private final ProfissionalRepository profissionalRepository;
     private final TokenRevogadoRepository tokenRevogadoRepository;
+    private final AuthorizationService authorizationService;
 
     @Autowired
     public UsuarioService(UsuarioRepository repository, 
@@ -47,12 +56,14 @@ public class UsuarioService {
                          PasswordEncoder passwordEncoder,
                          JwtService jwtService,
                          HttpServletRequest request,
-                         TokenRevogadoRepository tokenRevogadoRepository) {
+                         TokenRevogadoRepository tokenRevogadoRepository,
+                         AuthorizationService authorizationService) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.profissionalRepository = profissionalRepository;
         this.tokenRevogadoRepository = tokenRevogadoRepository;
+        this.authorizationService = authorizationService;
     }
 
     @Transactional
@@ -398,5 +409,89 @@ public class UsuarioService {
         repository.save(usuario);
         
         return novoToken;
+    }
+
+    public List<UsuarioResponseDTO> listarTodosComAutorizacao(Pageable pageable) {
+        authorizationService.requireAdmin();
+        return listarTodosResponse(pageable);
+    }
+
+    public UsuarioSeguroDTO buscarPorIdComAutorizacao(Long id) {
+        authorizationService.requireUserAccessOrAdmin(id);
+        Usuario usuario = buscarPorId(id);
+        return UsuarioSeguroDTO.fromUsuario(usuario);
+    }
+
+    public UsuarioResponseDTO buscarDetalhesComAutorizacao(Long id) {
+        authorizationService.requireUserAccessOrAdmin(id);
+        Usuario usuario = buscarPorId(id);
+        
+        String dataNascimentoStr = null;
+        if (usuario.getDataNascimento() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            dataNascimentoStr = usuario.getDataNascimento().format(formatter);
+        }
+        
+        return new UsuarioResponseDTO(
+            usuario.getIdUsuario(),
+            usuario.getNome(),
+            usuario.getCpf(),
+            usuario.getEmail(),
+            dataNascimentoStr,
+            usuario.getTelefone(),
+            usuario.getImagemPerfil(),
+            usuario.getEndereco(),
+            usuario.getRole()
+        );
+    }
+
+    public UsuarioSeguroDTO buscarPorCpfSeguro(String cpf) {
+        try {
+            Usuario usuario = buscarPorCpf(cpf);
+            return UsuarioSeguroDTO.fromUsuario(usuario);
+        } catch (Exception e) {
+            throw new UsuarioException.UsuarioNaoEncontradoException("Usuário não encontrado");
+        }
+    }
+
+    public UsuarioSeguroDTO atualizarComAutorizacao(Long id, UsuarioDTO dto) {
+        authorizationService.requireUserAccessOrAdmin(id);
+        Usuario usuario = atualizar(id, dto);
+        return UsuarioSeguroDTO.fromUsuario(usuario);
+    }
+
+    public void inativarComAutorizacao(Long id) {
+        authorizationService.requireAdmin();
+        inativar(id);
+    }
+
+    public void deletarComAutorizacao(Long id) {
+        authorizationService.requireAdmin();
+        deletar(id);
+    }
+
+    public void atualizarFotoPerfilComAutorizacao(Long id, String imagemBase64) {
+        authorizationService.requireUserAccessOrAdmin(id);
+        
+        if (imagemBase64 == null || imagemBase64.isEmpty()) {
+            throw new InvalidProfileImageException("Imagem não fornecida");
+        }
+        
+        atualizarFotoPerfil(id, imagemBase64);
+    }
+
+    public boolean validateTokenComplete(Long id, String token) {
+        if (token == null || token.isEmpty()) {
+            throw new TokenValidationException("Token não fornecido");
+        }
+        
+        Usuario usuario = buscarPorId(id);
+        String tokenAtual = usuario.getTokenAtual();
+        
+        if (tokenAtual == null) {
+            throw new TokenValidationException("Usuário não possui token ativo");
+        }
+        
+        return token.equals(tokenAtual);
     }
 }

@@ -23,25 +23,25 @@ public class ImagemController {
 
     @GetMapping("/portifolio/{idPortifolio}")
     public ResponseEntity<List<ImagemDTO>> listarPorPortifolio(@PathVariable Long idPortifolio) {
-        List<ImagemDTO> imagens = imagemService.listarPorPortifolio(idPortifolio);
+        List<ImagemDTO> imagens = imagemService.listarPorPortifolioComValidacao(idPortifolio);
         return ResponseEntity.ok(imagens);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ImagemDTO> buscarPorId(@PathVariable Long id) {
-        ImagemDTO imagem = imagemService.buscarPorId(id);
+        ImagemDTO imagem = imagemService.buscarPorIdComValidacao(id);
         return ResponseEntity.ok(imagem);
     }
 
     @PostMapping
     public ResponseEntity<ImagemDTO> salvar(@RequestBody ImagemDTO dto) {
-        ImagemDTO imagemSalva = imagemService.salvar(dto);
+        ImagemDTO imagemSalva = imagemService.salvarComValidacao(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(imagemSalva);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        imagemService.deletar(id);
+        imagemService.deletarComValidacao(id);
         return ResponseEntity.noContent().build();
     }
 } 
