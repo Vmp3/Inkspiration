@@ -18,6 +18,7 @@ import ProfessionalService from '../services/ProfessionalService';
 import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import textUtils from '../utils/textUtils';
+import { formatCurrency } from '../utils/formatters';
 import { artistMessages } from '../components/common/messages';
 import { mockReviews } from '../data/reviews';
 import DefaultUser from '../../assets/default_user.png'
@@ -538,7 +539,7 @@ const ArtistScreen = ({ route }) => {
                 <View key={index} style={styles.serviceItemContainer}>
                   <Text style={styles.serviceItem}>{service.name}</Text>
                   <Text style={styles.servicePrice}>
-                    R$ {(service.price || 0).toFixed(2).replace('.', ',')}
+                    {formatCurrency(service.price || 0)}
                   </Text>
                 </View>
               ))
