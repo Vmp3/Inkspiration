@@ -34,6 +34,7 @@ import inkspiration.backend.exception.agendamento.TokenInvalidoException;
 import inkspiration.backend.exception.profissional.DadosCompletosProfissionalException;
 import inkspiration.backend.exception.profissional.DisponibilidadeProcessamentoException;
 import inkspiration.backend.exception.profissional.ProfissionalAcessoNegadoException;
+import inkspiration.backend.exception.profissional.ProfissionalJaExisteException;
 import inkspiration.backend.exception.profissional.ProfissionalNaoEncontradoException;
 import inkspiration.backend.exception.profissional.TipoServicoInvalidoProfissionalException;
 import inkspiration.backend.exception.profissional.EnderecoNaoEncontradoException;
@@ -296,6 +297,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(ProfissionalJaExisteException.class)
+    public ResponseEntity<Map<String, String>> handleProfissionalJaExisteException(ProfissionalJaExisteException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(ProfissionalAcessoNegadoException.class)
     public ResponseEntity<Map<String, String>> handleProfissionalAcessoNegadoException(ProfissionalAcessoNegadoException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -313,14 +321,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DisponibilidadeProcessamentoException.class)
     public ResponseEntity<Map<String, String>> handleDisponibilidadeProcessamentoException(DisponibilidadeProcessamentoException ex) {
         Map<String, String> errors = new HashMap<>();
-        errors.put("error", "Erro ao processar disponibilidades: " + ex.getMessage());
+        errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(DadosCompletosProfissionalException.class)
     public ResponseEntity<Map<String, String>> handleDadosCompletosProfissionalException(DadosCompletosProfissionalException ex) {
         Map<String, String> errors = new HashMap<>();
-        errors.put("error", "Erro ao atualizar dados completos: " + ex.getMessage());
+        errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
@@ -336,7 +344,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleQRCodeGeracaoException(QRCodeGeracaoException ex) {
         Map<String, Object> errors = new HashMap<>();
         errors.put("success", false);
-        errors.put("message", "Erro ao gerar QR Code: " + ex.getMessage());
+        errors.put("message", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
@@ -352,7 +360,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleTwoFactorAtivacaoException(TwoFactorAtivacaoException ex) {
         Map<String, Object> errors = new HashMap<>();
         errors.put("success", false);
-        errors.put("message", "Erro ao ativar 2FA: " + ex.getMessage());
+        errors.put("message", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
@@ -360,7 +368,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleTwoFactorDesativacaoException(TwoFactorDesativacaoException ex) {
         Map<String, Object> errors = new HashMap<>();
         errors.put("success", false);
-        errors.put("message", "Erro ao desativar 2FA: " + ex.getMessage());
+        errors.put("message", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
@@ -368,7 +376,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleTwoFactorStatusException(TwoFactorStatusException ex) {
         Map<String, Object> errors = new HashMap<>();
         errors.put("success", false);
-        errors.put("message", "Erro ao verificar status do 2FA: " + ex.getMessage());
+        errors.put("message", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
@@ -398,21 +406,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PortfolioCriacaoException.class)
     public ResponseEntity<Map<String, String>> handlePortfolioCriacaoException(PortfolioCriacaoException ex) {
         Map<String, String> errors = new HashMap<>();
-        errors.put("error", "Erro ao criar portfolio: " + ex.getMessage());
+        errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(PortfolioAtualizacaoException.class)
     public ResponseEntity<Map<String, String>> handlePortfolioAtualizacaoException(PortfolioAtualizacaoException ex) {
         Map<String, String> errors = new HashMap<>();
-        errors.put("error", "Erro ao atualizar portfolio: " + ex.getMessage());
+        errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(PortfolioRemocaoException.class)
     public ResponseEntity<Map<String, String>> handlePortfolioRemocaoException(PortfolioRemocaoException ex) {
         Map<String, String> errors = new HashMap<>();
-        errors.put("error", "Erro ao remover portfolio: " + ex.getMessage());
+        errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
@@ -429,7 +437,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PasswordResetProcessamentoException.class)
     public ResponseEntity<String> handlePasswordResetProcessamentoException(PasswordResetProcessamentoException ex) {
-        return new ResponseEntity<>("Erro interno do servidor. Tente novamente mais tarde.", HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     // Exceções de Imagem
@@ -443,21 +451,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ImagemProcessamentoException.class)
     public ResponseEntity<Map<String, String>> handleImagemProcessamentoException(ImagemProcessamentoException ex) {
         Map<String, String> errors = new HashMap<>();
-        errors.put("error", "Erro ao processar imagem: " + ex.getMessage());
+        errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ImagemSalvamentoException.class)
     public ResponseEntity<Map<String, String>> handleImagemSalvamentoException(ImagemSalvamentoException ex) {
         Map<String, String> errors = new HashMap<>();
-        errors.put("error", "Erro ao salvar imagem: " + ex.getMessage());
+        errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ImagemRemocaoException.class)
     public ResponseEntity<Map<String, String>> handleImagemRemocaoException(ImagemRemocaoException ex) {
         Map<String, String> errors = new HashMap<>();
-        errors.put("error", "Erro ao remover imagem: " + ex.getMessage());
+        errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
@@ -514,7 +522,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DisponibilidadeConsultaException.class)
     public ResponseEntity<Map<String, String>> handleDisponibilidadeConsultaException(DisponibilidadeConsultaException ex) {
         Map<String, String> errors = new HashMap<>();
-        errors.put("erro", "Erro ao processar JSON");
+        errors.put("erro", "Erro de validação");
         errors.put("mensagem", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
@@ -536,7 +544,7 @@ public class GlobalExceptionHandler {
         } else if (ex.getMessage().contains("User is disabled")) {
             errors.put("error", "Usuário está inativo ou foi excluído do sistema");
         } else {
-            errors.put("error", "Erro de autenticação: " + ex.getMessage());
+            errors.put("error", ex.getMessage());
         }
         
         return new ResponseEntity<>(errors, HttpStatus.UNAUTHORIZED);
@@ -545,7 +553,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
         Map<String, String> errors = new HashMap<>();
-        errors.put("error", "Erro interno do servidor: " + ex.getMessage());
+        errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

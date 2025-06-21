@@ -31,6 +31,7 @@ import inkspiration.backend.exception.profissional.DadosCompletosProfissionalExc
 import inkspiration.backend.exception.profissional.EnderecoNaoEncontradoException;
 import inkspiration.backend.exception.profissional.DisponibilidadeProcessamentoException;
 import inkspiration.backend.exception.profissional.ProfissionalAcessoNegadoException;
+import inkspiration.backend.exception.profissional.ProfissionalJaExisteException;
 import inkspiration.backend.exception.profissional.ProfissionalNaoEncontradoException;
 import inkspiration.backend.exception.profissional.TipoServicoInvalidoProfissionalException;
 import inkspiration.backend.security.AuthorizationService;
@@ -197,54 +198,36 @@ public class ProfissionalService {
     /**
      * Cria um profissional completo, com portifólio e disponibilidade em uma única transação.
      * Se qualquer parte do processo falhar, toda a transação é revertida.
-     * Se o profissional já existir, será atualizado em vez de criado.
+     * Este método é exclusivo para CRIAÇÃO de novos profissionais.
      * 
      * @param dto O DTO contendo todas as informações para criar o profissional e suas entidades relacionadas
-     * @return O profissional criado ou atualizado
+     * @return O profissional criado
      * @throws JsonProcessingException Caso ocorra um erro no processamento do JSON de disponibilidade
+     * @throws ProfissionalJaExisteException Caso já exista um profissional para este usuário
      */
     @Transactional
     public Profissional criarProfissionalCompleto(ProfissionalCriacaoDTO dto) throws JsonProcessingException {
-        // 1. Verificar se já existe um profissional para este usuário
-        Profissional profissional;
-        boolean isUpdate = false;
-        
-        try {
-            profissional = buscarPorUsuario(dto.getIdUsuario());
-            isUpdate = true;
-        } catch (ProfissionalNaoEncontradoException e) {
-            // Profissional não existe, criar um novo
-            ProfissionalDTO profissionalDTO = new ProfissionalDTO();
-            profissionalDTO.setIdUsuario(dto.getIdUsuario());
-            profissionalDTO.setIdEndereco(dto.getIdEndereco());
-            profissionalDTO.setNota(new BigDecimal("0.0")); // Nota inicial sempre zero
-            // Define os tipos de serviço via processamento
-            
-            profissional = criar(profissionalDTO);
-            
-            // Processar preços dos serviços na criação usando o método do service
-            if (dto.getPrecosServicos() != null && !dto.getPrecosServicos().isEmpty()) {
-                processarTiposServicoComPrecos(profissional, dto.getTiposServico(), dto.getPrecosServicos());
-                // Salvar preços no JSON antes de persistir
-                salvarTiposServicoPrecos(profissional);
-                profissional = profissionalRepository.save(profissional);
-            }
+        // Verificar se já existe um profissional para este usuário
+        if (profissionalRepository.existsByUsuario_IdUsuario(dto.getIdUsuario())) {
+            throw new ProfissionalJaExisteException("Já existe um profissional cadastrado para este usuário");
         }
         
-        if (isUpdate) {
-            // Processar tipos de serviço com preços usando o método do service
+        // 1. Criar o profissional
+        ProfissionalDTO profissionalDTO = new ProfissionalDTO();
+        profissionalDTO.setIdUsuario(dto.getIdUsuario());
+        profissionalDTO.setIdEndereco(dto.getIdEndereco());
+        profissionalDTO.setNota(new BigDecimal("0.0")); // Nota inicial sempre zero
+        
+        Profissional profissional = criar(profissionalDTO);
+        
+        // Processar preços dos serviços na criação
+        if (dto.getPrecosServicos() != null && !dto.getPrecosServicos().isEmpty()) {
             processarTiposServicoComPrecos(profissional, dto.getTiposServico(), dto.getPrecosServicos());
-            
-            // Salvar preços no JSON antes de persistir
             salvarTiposServicoPrecos(profissional);
-            
             profissional = profissionalRepository.save(profissional);
-            
-            profissionalRepository.flush();
-            profissional = profissionalRepository.findById(profissional.getIdProfissional()).orElseThrow();
         }
         
-        // 2. Criar ou atualizar o portifólio
+        // 2. Criar o portifólio
         PortifolioDTO portifolioDTO = new PortifolioDTO();
         portifolioDTO.setIdProfissional(profissional.getIdProfissional());
         portifolioDTO.setDescricao(dto.getDescricao());
@@ -256,35 +239,98 @@ public class ProfissionalService {
         portifolioDTO.setFacebook(dto.getFacebook());
         portifolioDTO.setTwitter(dto.getTwitter());
         
-        if (isUpdate && profissional.getPortifolio() != null) {
+        portifolioService.criar(portifolioDTO);
+        
+        // Recarregar o profissional para obter a referência atualizada do portfólio
+        profissional = profissionalRepository.findById(profissional.getIdProfissional()).orElseThrow();
+        
+        // 3. Criar disponibilidades se fornecidas
+        if (dto.getDisponibilidades() != null && !dto.getDisponibilidades().isEmpty()) {
+            criarDisponibilidades(profissional.getIdProfissional(), dto.getDisponibilidades());
+        }
+        
+        return profissional;
+    }
+
+    /**
+     * Atualiza um profissional completo, incluindo portifólio e disponibilidade em uma única transação.
+     * Se qualquer parte do processo falhar, toda a transação é revertida.
+     * Este método é exclusivo para ATUALIZAÇÃO de profissionais existentes.
+     * 
+     * @param dto O DTO contendo todas as informações para atualizar o profissional e suas entidades relacionadas
+     * @return O profissional atualizado
+     * @throws JsonProcessingException Caso ocorra um erro no processamento do JSON de disponibilidade
+     * @throws ProfissionalNaoEncontradoException Caso o profissional não exista
+     */
+    @Transactional
+    public Profissional atualizarProfissionalCompleto(ProfissionalCriacaoDTO dto) throws JsonProcessingException {
+        // 1. Buscar o profissional existente
+        Profissional profissional = buscarPorUsuario(dto.getIdUsuario());
+        
+        // 2. Atualizar tipos de serviço com preços
+        if (dto.getPrecosServicos() != null && !dto.getPrecosServicos().isEmpty()) {
+            processarTiposServicoComPrecos(profissional, dto.getTiposServico(), dto.getPrecosServicos());
+            salvarTiposServicoPrecos(profissional);
+        }
+        
+        // Atualizar endereço se fornecido
+        if (dto.getIdEndereco() != null) {
+            profissional.getUsuario().getEndereco().setIdEndereco(dto.getIdEndereco());
+        }
+        
+        profissional = profissionalRepository.save(profissional);
+        profissionalRepository.flush();
+        profissional = profissionalRepository.findById(profissional.getIdProfissional()).orElseThrow();
+        
+        // 3. Atualizar o portifólio
+        PortifolioDTO portifolioDTO = new PortifolioDTO();
+        portifolioDTO.setIdProfissional(profissional.getIdProfissional());
+        portifolioDTO.setDescricao(dto.getDescricao());
+        portifolioDTO.setEspecialidade(dto.getEspecialidade());
+        portifolioDTO.setExperiencia(dto.getExperiencia());
+        portifolioDTO.setWebsite(dto.getWebsite());
+        portifolioDTO.setTiktok(dto.getTiktok());
+        portifolioDTO.setInstagram(dto.getInstagram());
+        portifolioDTO.setFacebook(dto.getFacebook());
+        portifolioDTO.setTwitter(dto.getTwitter());
+        
+        if (profissional.getPortifolio() != null) {
             portifolioDTO.setIdPortifolio(profissional.getPortifolio().getIdPortifolio());
             portifolioService.atualizar(profissional.getPortifolio().getIdPortifolio(), portifolioDTO);
         } else {
             portifolioService.criar(portifolioDTO);
         }
         
+        // 4. Atualizar disponibilidades se fornecidas
         if (dto.getDisponibilidades() != null && !dto.getDisponibilidades().isEmpty()) {
-            Map<String, List<Map<String, String>>> horarios = new HashMap<>();
-            
-            dto.getDisponibilidades().forEach(dispDTO -> {
-                String[] partes = dispDTO.getHrAtendimento().split("-");
-                if (partes.length == 3) {
-                    String diaSemana = partes[0];
-                    String inicio = partes[1];
-                    String fim = partes[2];
-                    
-                    Map<String, String> periodo = new HashMap<>();
-                    periodo.put("inicio", inicio);
-                    periodo.put("fim", fim);
-                    
-                    horarios.computeIfAbsent(diaSemana, k -> new ArrayList<>()).add(periodo);
-                }
-            });
-            
-            disponibilidadeService.cadastrarDisponibilidade(profissional.getIdProfissional(), horarios);
+            criarDisponibilidades(profissional.getIdProfissional(), dto.getDisponibilidades());
         }
         
         return profissional;
+    }
+
+    /**
+     * Método auxiliar para criar disponibilidades a partir de uma lista de DTOs
+     */
+    private void criarDisponibilidades(Long idProfissional, List<DisponibilidadeDTO> disponibilidades) throws JsonProcessingException {
+        Map<String, List<Map<String, String>>> horarios = new HashMap<>();
+        
+        disponibilidades.forEach(dispDTO -> {
+            String[] partes = dispDTO.getHrAtendimento().split("-");
+            if (partes.length == 3) {
+                String diaSemana = partes[0];
+                String inicio = partes[1];
+                String fim = partes[2];
+                
+                Map<String, String> periodo = new HashMap<>();
+                periodo.put("inicio", inicio);
+                periodo.put("fim", fim);
+                
+                horarios.computeIfAbsent(diaSemana, k -> new ArrayList<>()).add(periodo);
+            }
+        });
+        
+        disponibilidadeService.cadastrarDisponibilidade(idProfissional, horarios);
     }
 
     public Profissional buscarPorId(Long id) {
@@ -651,7 +697,7 @@ public class ProfissionalService {
         dto.setIdUsuario(idUsuario);
         
         try {
-            Profissional profissionalAtualizado = criarProfissionalCompleto(dto);
+            Profissional profissionalAtualizado = atualizarProfissionalCompleto(dto);
             return converterParaDto(profissionalAtualizado);
         } catch (Exception e) {
             throw new DadosCompletosProfissionalException(e.getMessage());
@@ -720,7 +766,7 @@ public class ProfissionalService {
                 dto.setWebsite((String) portfolioData.get("website"));
             }
             
-            profissional = criarProfissionalCompleto(dto);
+            profissional = atualizarProfissionalCompleto(dto);
             
             if (imagensData != null && profissional.getPortifolio() != null) {
                 Long portfolioId = profissional.getPortifolio().getIdPortifolio();

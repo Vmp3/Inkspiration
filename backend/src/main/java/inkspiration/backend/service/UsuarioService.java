@@ -135,7 +135,7 @@ public class UsuarioService {
 
     @Transactional
     public Usuario atualizar(Long id, UsuarioDTO dto) {
-        validarCamposObrigatorios(dto);
+        validarCamposObrigatoriosParaEdicao(dto);
         Usuario usuarioExistente = buscarPorId(id);
         
         boolean precisaRevogarToken = false;
@@ -301,6 +301,41 @@ public class UsuarioService {
         }
 
         repository.delete(usuario);
+    }
+
+    private void validarCamposObrigatoriosParaEdicao(UsuarioDTO dto) {
+        if (dto.getNome() == null || dto.getNome().trim().isEmpty()) {
+            throw new UsuarioValidationException.NomeObrigatorioException();
+        }
+        if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
+            throw new UsuarioValidationException.EmailObrigatorioException();
+        }
+        if (!EmailValidator.isValid(dto.getEmail())) {
+            throw new UsuarioValidationException.EmailInvalidoException("Email inválido");
+        }
+        if (dto.getCpf() == null || dto.getCpf().trim().isEmpty()) {
+            throw new UsuarioValidationException.CpfObrigatorioException();
+        }
+        if (!CpfValidator.isValid(dto.getCpf())) {
+            throw new UsuarioValidationException.CpfInvalidoException("CPF inválido");
+        }
+        if (dto.getDataNascimento() == null || dto.getDataNascimento().trim().isEmpty()) {
+            throw new UsuarioValidationException.DataNascimentoObrigatoriaException();
+        }
+        if (!DateValidator.isValid(dto.getDataNascimento())) {
+            throw new UsuarioValidationException.DataInvalidaException("Data de nascimento inválida. Use o formato DD/MM/YYYY");
+        }
+        if (!DateValidator.hasMinimumAge(dto.getDataNascimento(), 18)) {
+            throw new UsuarioValidationException.IdadeMinimaException(18);
+        }
+        
+        // Para edição, só valida a senha se ela estiver sendo alterada
+        if (dto.getSenha() != null && !dto.getSenha().isEmpty() && 
+            !"SENHA_NAO_ALTERADA".equals(dto.getSenha()) && !dto.isManterSenhaAtual()) {
+            if (!PasswordValidator.isValid(dto.getSenha())) {
+                throw new UsuarioValidationException.SenhaInvalidaException(PasswordValidator.getPasswordRequirements());
+            }
+        }
     }
 
     private void validarCamposObrigatorios(UsuarioDTO dto) {

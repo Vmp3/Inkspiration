@@ -377,7 +377,7 @@ const ProfessionalRegisterScreen = () => {
   };
   
   // Upload de imagens para o servidor
-  const uploadImages = async (profissionalId) => {
+  const uploadImages = async (portfolioId) => {
     try {
       // Upload da imagem de perfil
       if (profileImage && profileImage.base64) {
@@ -389,20 +389,25 @@ const ProfessionalRegisterScreen = () => {
       }
       
       // Upload das imagens do portfólio em base64
-      for (const image of portfolioImages) {
-        if (image && image.base64) {
-          const base64Data = image.base64;
-          const imagemBase64 = base64Data.startsWith('data:') ? base64Data : `data:image/jpeg;base64,${base64Data}`;
-          
-          const imagemDTO = {
-            imagemBase64,
-            idPortifolio: profissionalId
-          };
-          
-          try {
-            await ApiService.post('/imagens', imagemDTO);
-          } catch (error) {
-            console.error('Falha ao enviar imagem do portfólio:', error);
+      if (portfolioId && portfolioImages.length > 0) {
+        for (const image of portfolioImages) {
+          if (image && image.base64) {
+            const base64Data = image.base64;
+            const imagemBase64 = base64Data.startsWith('data:') ? base64Data : `data:image/jpeg;base64,${base64Data}`;
+            
+            const imagemDTO = {
+              imagemBase64,
+              idPortifolio: portfolioId
+            };
+            
+            console.log('Enviando imagem para portfólio ID:', portfolioId);
+            
+            try {
+              await ApiService.post('/imagens', imagemDTO);
+            } catch (error) {
+              console.error('Falha ao enviar imagem do portfólio:', error);
+              throw error; // Re-throw para que o erro seja capturado no nível superior
+            }
           }
         }
       }
@@ -699,14 +704,29 @@ const ProfessionalRegisterScreen = () => {
         
         // Enviar dados para o backend
         const profissionalCadastrado = await ApiService.post('/auth/register/profissional-completo', professionalData);
+        console.log('Resposta do cadastro:', profissionalCadastrado);
         
         // Se houver imagens, fazer o upload
         if ((profileImage && profileImage.uri) || portfolioImages.some(img => img && img.uri)) {
           toastHelper.showInfo(professionalRegisterMessages.info.uploadingImages);
           
           try {
-            // Tentativa de envio das imagens
-            await uploadImages(profissionalCadastrado.idProfissional);
+            // Obter o ID do portfólio dos dados retornados
+            let portfolioId = null;
+            
+            if (profissionalCadastrado.portfolio && profissionalCadastrado.portfolio.idPortifolio) {
+              portfolioId = profissionalCadastrado.portfolio.idPortifolio;
+            }
+            
+            console.log('ID do portfólio para upload:', portfolioId);
+            
+            if (portfolioId) {
+              // Tentativa de envio das imagens
+              await uploadImages(portfolioId);
+            } else {
+              console.warn('ID do portfólio não encontrado nos dados retornados');
+              toastHelper.showWarning('Não foi possível salvar as imagens do portfólio');
+            }
           } catch (imageError) {
             console.error('Erro ao enviar imagens:', imageError);
             toastHelper.showWarning(professionalRegisterMessages.warnings.imageUploadPartialFailure);

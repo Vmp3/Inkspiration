@@ -131,9 +131,29 @@ public class ProfissionalController {
     }
 
     @PostMapping("/auth/register/profissional-completo")
-    public ResponseEntity<ProfissionalDTO> criarProfissionalCompleto(@RequestBody @Valid ProfissionalCriacaoDTO dto) {
+    public ResponseEntity<Map<String, Object>> criarProfissionalCompleto(@RequestBody @Valid ProfissionalCriacaoDTO dto) {
         ProfissionalDTO profissional = profissionalService.criarProfissionalCompletoComValidacao(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(profissional);
+        
+        // Buscar dados completos do profissional criado para incluir informações do portfólio
+        try {
+            ProfissionalService.ProfissionalCompletoData data = profissionalService.buscarProfissionalCompletoComAutorizacao(dto.getIdUsuario());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("profissional", data.getProfissional());
+            response.put("portfolio", data.getPortfolio());
+            response.put("imagens", data.getImagens());
+            response.put("disponibilidades", data.getDisponibilidades());
+            response.put("tiposServico", data.getTiposServico());
+            response.put("precosServicos", data.getPrecosServicos());
+            response.put("tiposServicoPrecos", data.getTiposServicoPrecos());
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            // Se não conseguir buscar dados completos, retornar apenas o profissional básico
+            Map<String, Object> response = new HashMap<>();
+            response.put("profissional", profissional);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        }
     }
 
     @PutMapping("/profissional/atualizar/{id}")
