@@ -1,9 +1,13 @@
 import ApiService from './ApiService';
 
 class UserService {
-  async getAllUsers(page = 0) {
+  async getAllUsers(page = 0, size = 10, searchTerm = '') {
     try {
-      const response = await ApiService.get(`/usuario?page=${page}`);
+      let url = `/usuario?page=${page}&size=${size}`;
+      if (searchTerm && searchTerm.trim()) {
+        url += `&searchTerm=${encodeURIComponent(searchTerm.trim())}`;
+      }
+      const response = await ApiService.get(url);
       return response;
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);

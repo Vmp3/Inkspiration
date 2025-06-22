@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,7 +28,6 @@ import inkspiration.backend.util.CpfValidator;
 import inkspiration.backend.util.DateValidator;
 import inkspiration.backend.util.EmailValidator;
 import inkspiration.backend.repository.ProfissionalRepository;
-import inkspiration.backend.exception.usuario.UserAccessDeniedException;
 import inkspiration.backend.exception.usuario.TokenValidationException;
 import inkspiration.backend.exception.usuario.InvalidProfileImageException;
 import inkspiration.backend.dto.UsuarioSeguroDTO;
@@ -131,6 +129,40 @@ public class UsuarioService {
                     usuario.getEndereco(),
                     usuario.getRole()))
                 .collect(Collectors.toList());
+    }
+
+    public Map<String, Object> listarTodosResponseComPaginacao(Pageable pageable, String searchTerm) {
+        Page<Usuario> usuarios;
+        
+        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+            usuarios = repository.findByNomeContainingIgnoreCase(searchTerm.trim(), pageable);
+        } else {
+            usuarios = repository.findAll(pageable);
+        }
+        
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        List<UsuarioResponseDTO> usuariosResponse = usuarios.getContent().stream()
+                .map(usuario -> new UsuarioResponseDTO(
+                    usuario.getIdUsuario(), 
+                    usuario.getNome(), 
+                    usuario.getCpf(),
+                    usuario.getEmail(), 
+                    usuario.getDataNascimento() != null ? usuario.getDataNascimento().format(formatter) : null,
+                    usuario.getTelefone(),
+                    usuario.getImagemPerfil(),
+                    usuario.getEndereco(),
+                    usuario.getRole()))
+                .collect(Collectors.toList());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("usuarios", usuariosResponse);
+        response.put("totalElements", usuarios.getTotalElements());
+        response.put("totalPages", usuarios.getTotalPages());
+        response.put("currentPage", usuarios.getNumber());
+        response.put("hasNext", usuarios.hasNext());
+        response.put("hasPrevious", usuarios.hasPrevious());
+        
+        return response;
     }
 
     @Transactional
@@ -455,6 +487,11 @@ public class UsuarioService {
         return listarTodosResponse(pageable);
     }
 
+    public Map<String, Object> listarTodosComPaginacaoComAutorizacao(Pageable pageable, String searchTerm) {
+        authorizationService.requireAdmin();
+        return listarTodosResponseComPaginacao(pageable, searchTerm);
+    }
+
     public UsuarioSeguroDTO buscarPorIdComAutorizacao(Long id) {
         authorizationService.requireUserAccessOrAdmin(id);
         Usuario usuario = buscarPorId(id);
@@ -493,6 +530,11 @@ public class UsuarioService {
     public void inativarComAutorizacao(Long id) {
         authorizationService.requireAdmin();
         inativar(id);
+    }
+
+    public void reativarComAutorizacao(Long id) {
+        authorizationService.requireAdmin();
+        reativar(id);
     }
 
     public void deletarComAutorizacao(Long id) {

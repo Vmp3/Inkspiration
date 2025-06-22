@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Input from '../ui/Input';
+import { isMobileView } from '../../utils/responsive';
 
 const PersonalForm = ({ 
   formData, 
@@ -17,33 +18,66 @@ const PersonalForm = ({
   setIsArtist,
   isEditMode = false
 }) => {
+  const isMobile = isMobileView();
+
   return (
     <View style={styles.tabContent}>
-      <View style={styles.formRow}>
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Nome</Text>
-          <Input
-            placeholder="Seu nome"
-            value={formData.nome}
-            onChangeText={(text) => handleChange('nome', text)}
-            onBlur={() => handleBlur('nome')}
-            style={[styles.inputField, nomeError && styles.inputError]}
-          />
-          {nomeError ? <Text style={styles.errorText}>{nomeError}</Text> : null}
+      {/* Nome e Sobrenome */}
+      {isMobile ? (
+        // Layout mobile: um campo por linha
+        <>
+          <View style={styles.formFullWidth}>
+            <Text style={styles.formLabel}>Nome</Text>
+            <Input
+              placeholder="Seu nome"
+              value={formData.nome}
+              onChangeText={(text) => handleChange('nome', text)}
+              onBlur={() => handleBlur('nome')}
+              style={[styles.inputField, nomeError && styles.inputError]}
+            />
+            {nomeError ? <Text style={styles.errorText}>{nomeError}</Text> : null}
+          </View>
+          
+          <View style={styles.formFullWidth}>
+            <Text style={styles.formLabel}>Sobrenome</Text>
+            <Input
+              placeholder="Seu sobrenome"
+              value={formData.sobrenome}
+              onChangeText={(text) => handleChange('sobrenome', text)}
+              onBlur={() => handleBlur('sobrenome')}
+              style={[styles.inputField, sobrenomeError && styles.inputError]}
+            />
+            {sobrenomeError ? <Text style={styles.errorText}>{sobrenomeError}</Text> : null}
+          </View>
+        </>
+      ) : (
+        // Layout web/tablet: dois campos por linha
+        <View style={styles.formRow}>
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Nome</Text>
+            <Input
+              placeholder="Seu nome"
+              value={formData.nome}
+              onChangeText={(text) => handleChange('nome', text)}
+              onBlur={() => handleBlur('nome')}
+              style={[styles.inputField, nomeError && styles.inputError]}
+            />
+            {nomeError ? <Text style={styles.errorText}>{nomeError}</Text> : null}
+          </View>
+          
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Sobrenome</Text>
+            <Input
+              placeholder="Seu sobrenome"
+              value={formData.sobrenome}
+              onChangeText={(text) => handleChange('sobrenome', text)}
+              onBlur={() => handleBlur('sobrenome')}
+              style={[styles.inputField, sobrenomeError && styles.inputError]}
+            />
+            {sobrenomeError ? <Text style={styles.errorText}>{sobrenomeError}</Text> : null}
+          </View>
         </View>
-        
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Sobrenome</Text>
-          <Input
-            placeholder="Seu sobrenome"
-            value={formData.sobrenome}
-            onChangeText={(text) => handleChange('sobrenome', text)}
-            onBlur={() => handleBlur('sobrenome')}
-            style={[styles.inputField, sobrenomeError && styles.inputError]}
-          />
-          {sobrenomeError ? <Text style={styles.errorText}>{sobrenomeError}</Text> : null}
-        </View>
-      </View>
+      )}
 
       {fullNameError ? (
         <View style={styles.fullNameErrorContainer}>
@@ -70,33 +104,68 @@ const PersonalForm = ({
         {cpfError ? <Text style={styles.errorText}>{cpfError}</Text> : null}
       </View>
       
-      <View style={styles.formRow}>
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Email</Text>
-          <Input
-            placeholder="seu@email.com"
-            keyboardType="email-address"
-            value={formData.email}
-            onChangeText={(text) => handleChange('email', text)}
-            onBlur={() => handleBlur('email')}
-            style={[styles.inputField, emailError && styles.inputError]}
-          />
-          {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+      {/* Email e Telefone */}
+      {isMobile ? (
+        // Layout mobile: um campo por linha
+        <>
+          <View style={styles.formFullWidth}>
+            <Text style={styles.formLabel}>Email</Text>
+            <Input
+              placeholder="seu@email.com"
+              keyboardType="email-address"
+              value={formData.email}
+              onChangeText={(text) => handleChange('email', text)}
+              onBlur={() => handleBlur('email')}
+              style={[styles.inputField, emailError && styles.inputError]}
+            />
+            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+          </View>
+          
+          <View style={styles.formFullWidth}>
+            <Text style={styles.formLabel}>Telefone</Text>
+            <Input
+              placeholder="(00) 00000-0000"
+              keyboardType="phone-pad"
+              value={formData.telefone}
+              onChangeText={(text) => handleChange('telefone', text)}
+              onBlur={() => handleBlur('telefone')}
+              maxLength={15}
+              style={[styles.inputField, phoneError && styles.inputError]}
+            />
+            {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
+          </View>
+        </>
+      ) : (
+        // Layout web/tablet: dois campos por linha
+        <View style={styles.formRow}>
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Email</Text>
+            <Input
+              placeholder="seu@email.com"
+              keyboardType="email-address"
+              value={formData.email}
+              onChangeText={(text) => handleChange('email', text)}
+              onBlur={() => handleBlur('email')}
+              style={[styles.inputField, emailError && styles.inputError]}
+            />
+            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+          </View>
+          
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Telefone</Text>
+            <Input
+              placeholder="(00) 00000-0000"
+              keyboardType="phone-pad"
+              value={formData.telefone}
+              onChangeText={(text) => handleChange('telefone', text)}
+              onBlur={() => handleBlur('telefone')}
+              maxLength={15}
+              style={[styles.inputField, phoneError && styles.inputError]}
+            />
+            {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
+          </View>
         </View>
-        
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Telefone</Text>
-          <Input
-            placeholder="(00) 00000-0000"
-            keyboardType="phone-pad"
-            value={formData.telefone}
-            onChangeText={(text) => handleChange('telefone', text)}
-            onBlur={() => handleBlur('telefone')}
-            style={[styles.inputField, phoneError && styles.inputError]}
-          />
-          {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
-        </View>
-      </View>
+      )}
 
       <View style={styles.formFullWidth}>
         <Text style={styles.formLabel}>Data de Nascimento</Text>
@@ -106,6 +175,7 @@ const PersonalForm = ({
           onChangeText={(text) => handleChange('dataNascimento', text)}
           onBlur={() => handleBlur('dataNascimento')}
           keyboardType="numeric"
+          maxLength={10}
           style={[
             styles.inputField, 
             birthDateError && styles.inputError,

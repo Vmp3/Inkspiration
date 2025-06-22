@@ -6,6 +6,7 @@ import axios from 'axios';
 import * as formatters from '../utils/formatters';
 import toastHelper from '../utils/toastHelper';
 import { useAuth } from '../context/AuthContext';
+import { isMobileView } from '../utils/responsive';
 
 import TabHeader from '../components/ui/TabHeader';
 import PersonalForm from '../components/forms/PersonalForm';
@@ -760,6 +761,8 @@ const RegisterScreen = () => {
     { id: 'security', label: 'Segurança' }
   ];
 
+  const isMobile = isMobileView();
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -840,18 +843,18 @@ const RegisterScreen = () => {
                 )}
               </View>
             </View>
-          </View>
-          
-          <View style={styles.loginPrompt}>
-            <Text style={styles.loginPromptText}>
-              Já tem uma conta?{' '}
-              <Text 
-                style={styles.loginLink}
-                onPress={() => navigation.navigate('Login')}
-              >
-                Entrar
+            
+            <View style={[styles.loginPrompt, isMobile && styles.loginPromptMobile]}>
+              <Text style={styles.loginPromptText}>
+                Já tem uma conta?{' '}
+                <Text 
+                  style={styles.loginLink}
+                  onPress={() => navigation.navigate('Login')}
+                >
+                  Entrar
+                </Text>
               </Text>
-            </Text>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -1004,6 +1007,9 @@ const styles = StyleSheet.create({
   loginPrompt: {
     alignItems: 'center',
     marginTop: 16,
+  },
+  loginPromptMobile: {
+    marginTop: 8,
   },
   loginPromptText: {
     fontSize: 14,
