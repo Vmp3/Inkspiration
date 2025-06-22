@@ -70,8 +70,12 @@ export const useFormValidation = () => {
       if (!formatters.validateSocialMedia(instagram) ||
           !formatters.validateSocialMedia(tiktok) ||
           !formatters.validateSocialMedia(facebook) ||
-          !formatters.validateSocialMedia(twitter) ||
-          !formatters.validateWebsite(website)) {
+          !formatters.validateSocialMedia(twitter)) {
+        return false;
+      }
+      
+      const websiteError = formatters.getWebsiteValidationMessage(website);
+      if (websiteError) {
         return false;
       }
     }
@@ -299,8 +303,9 @@ export const useFormValidation = () => {
         return false;
       }
       
-      if (!formatters.validateWebsite(website)) {
-        toastHelper.showError(editProfileMessages.validations.websiteTooLong);
+      const websiteError = formatters.getWebsiteValidationMessage(website);
+      if (websiteError) {
+        toastHelper.showError(websiteError);
         return false;
       }
     }

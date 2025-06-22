@@ -23,6 +23,7 @@ import inkspiration.backend.exception.authentication.UserNotFoundException;
 import inkspiration.backend.exception.usuario.InvalidProfileImageException;
 import inkspiration.backend.exception.usuario.TokenValidationException;
 import inkspiration.backend.exception.usuario.UserAccessDeniedException;
+import inkspiration.backend.exception.usuario.TelefoneValidationException;
 import inkspiration.backend.exception.agendamento.AgendamentoNaoAutorizadoException;
 import inkspiration.backend.exception.agendamento.AutoAgendamentoException;
 import inkspiration.backend.exception.agendamento.CancelamentoNaoPermitidoException;
@@ -110,7 +111,9 @@ public class GlobalExceptionHandler {
         UsuarioValidationException.DataInvalidaException.class,
         UsuarioValidationException.SenhaObrigatoriaException.class,
         UsuarioValidationException.IdadeMinimaException.class,
-        UsuarioValidationException.EnderecoObrigatorioException.class
+        UsuarioValidationException.EnderecoObrigatorioException.class,
+        UsuarioValidationException.TelefoneObrigatorioException.class,
+        UsuarioValidationException.TelefoneInvalidoException.class
     })
     public ResponseEntity<Map<String, String>> handleUsuarioValidationExceptions(RuntimeException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -196,6 +199,13 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
         errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(TelefoneValidationException.class)
+    public ResponseEntity<Map<String, String>> handleTelefoneValidationException(TelefoneValidationException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(InvalidProfileImageException.class)

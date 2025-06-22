@@ -15,6 +15,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.Future;
 
 import inkspiration.backend.enums.TipoServico;
 import inkspiration.backend.enums.StatusAgendamento;
@@ -32,22 +35,29 @@ public class Agendamento {
     
     @Column(nullable = false, length = 500)
     @NotBlank(message = "Descrição é obrigatória")
-    @Size(max = 500, message = "Descrição deve ter no máximo 500 caracteres")
+    @Size(min = 10, max = 500, message = "Descrição deve ter entre 10 e 500 caracteres")
     private String descricao;
     
     @Column(nullable = false)
+    @NotNull(message = "Data de início é obrigatória")
+    @Future(message = "Data de início deve ser no futuro")
     private LocalDateTime dtInicio;
     
     @Column(nullable = false)
+    @NotNull(message = "Data de fim é obrigatória")
     private LocalDateTime dtFim;
     
+    @DecimalMin(value = "0.0", inclusive = false, message = "Valor deve ser maior que zero")
+    @DecimalMax(value = "999999.99", message = "Valor não pode exceder R$ 999.999,99")
     @Column(precision = 10, scale = 2)
     private BigDecimal valor;
     
+    @NotNull(message = "Profissional é obrigatório")
     @ManyToOne
     @JoinColumn(name = "profissional_id", nullable = false)
     private Profissional profissional;
     
+    @NotNull(message = "Usuário é obrigatório")
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
@@ -72,6 +82,9 @@ public class Agendamento {
     }
     
     public void setTipoServico(TipoServico tipoServico) {
+        if (tipoServico == null) {
+            throw new IllegalArgumentException("Tipo de serviço não pode ser nulo");
+        }
         this.tipoServico = tipoServico;
     }
     
@@ -80,7 +93,14 @@ public class Agendamento {
     }
     
     public void setDescricao(String descricao) {
-        this.descricao = descricao;
+        if (descricao == null || descricao.trim().isEmpty()) {
+            throw new IllegalArgumentException("Descrição não pode ser nula ou vazia");
+        }
+        String cleanDescricao = descricao.trim();
+        if (cleanDescricao.length() < 10 || cleanDescricao.length() > 500) {
+            throw new IllegalArgumentException("Descrição deve ter entre 10 e 500 caracteres");
+        }
+        this.descricao = cleanDescricao;
     }
     
     public LocalDateTime getDtInicio() {
@@ -88,6 +108,12 @@ public class Agendamento {
     }
     
     public void setDtInicio(LocalDateTime dtInicio) {
+        if (dtInicio == null) {
+            throw new IllegalArgumentException("Data de início não pode ser nula");
+        }
+        if (dtInicio.isBefore(LocalDateTime.now()) || dtInicio.isEqual(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Data de início deve ser no futuro");
+        }
         this.dtInicio = dtInicio;
     }
     
@@ -96,6 +122,15 @@ public class Agendamento {
     }
     
     public void setDtFim(LocalDateTime dtFim) {
+        if (dtFim == null) {
+            throw new IllegalArgumentException("Data de fim não pode ser nula");
+        }
+        if (dtInicio != null && dtFim.isBefore(dtInicio)) {
+            throw new IllegalArgumentException("Data de fim deve ser posterior à data de início");
+        }
+        if (dtInicio != null && dtFim.equals(dtInicio)) {
+            throw new IllegalArgumentException("Data de fim deve ser diferente da data de início");
+        }
         this.dtFim = dtFim;
     }
     
@@ -104,6 +139,14 @@ public class Agendamento {
     }
     
     public void setValor(BigDecimal valor) {
+        if (valor != null) {
+            if (valor.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Valor deve ser maior que zero quando fornecido");
+            }
+            if (valor.compareTo(new BigDecimal("999999.99")) > 0) {
+                throw new IllegalArgumentException("Valor não pode exceder R$ 999.999,99");
+            }
+        }
         this.valor = valor;
     }
     
@@ -112,6 +155,9 @@ public class Agendamento {
     }
     
     public void setProfissional(Profissional profissional) {
+        if (profissional == null) {
+            throw new IllegalArgumentException("Profissional não pode ser nulo");
+        }
         this.profissional = profissional;
     }
     
@@ -120,6 +166,9 @@ public class Agendamento {
     }
     
     public void setUsuario(Usuario usuario) {
+        if (usuario == null) {
+            throw new IllegalArgumentException("Usuário não pode ser nulo");
+        }
         this.usuario = usuario;
     }
 
@@ -128,6 +177,9 @@ public class Agendamento {
     }
 
     public void setStatus(StatusAgendamento status) {
+        if (status == null) {
+            throw new IllegalArgumentException("Status não pode ser nulo");
+        }
         this.status = status;
     }
 } 

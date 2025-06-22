@@ -158,6 +158,13 @@ const RegisterScreen = () => {
       case 'telefone':
         formattedValue = formatters.formatPhone(value);
         setPhoneError('');
+        // Validar telefone quando completo (11 dígitos)
+        if (value.replace(/\D/g, '').length >= 10) {
+          const errorMessage = formatters.getPhoneValidationMessage(formatters.formatPhone(value));
+          if (errorMessage) {
+            setPhoneError(errorMessage);
+          }
+        }
         break;
       case 'dataNascimento':
         formattedValue = formatters.formatBirthDate(value);
@@ -227,8 +234,13 @@ const RegisterScreen = () => {
       setEmailError(authMessages.registerErrors.invalidEmail);
     }
 
-    if (field === 'telefone' && formData.telefone && !formatters.validatePhone(formData.telefone)) {
-      setPhoneError(authMessages.registerErrors.invalidPhone);
+    if (field === 'telefone' && formData.telefone) {
+      const errorMessage = formatters.getPhoneValidationMessage(formData.telefone);
+      if (errorMessage) {
+        setPhoneError(errorMessage);
+      } else {
+        setPhoneError('');
+      }
     }
 
     if (field === 'dataNascimento' && formData.dataNascimento && !formatters.validateBirthDate(formData.dataNascimento)) {

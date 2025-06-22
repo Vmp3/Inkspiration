@@ -40,6 +40,7 @@ const EditProfileScreen = () => {
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [bioError, setBioError] = useState('');
   const [biographyError, setBiographyError] = useState('');
+  const [websiteError, setWebsiteError] = useState('');
   const [profileImage, setProfileImage] = useState(null);
   
   // Estados de validação de endereço
@@ -286,6 +287,13 @@ const EditProfileScreen = () => {
       case 'telefone':
         formattedValue = formatters.formatPhone(value);
         setPhoneError('');
+        // Validar telefone quando completo (10 ou 11 dígitos)
+        if (value.replace(/\D/g, '').length >= 10) {
+          const errorMessage = formatters.getPhoneValidationMessage(formatters.formatPhone(value));
+          if (errorMessage) {
+            setPhoneError(errorMessage);
+          }
+        }
         break;
       case 'email':
         setEmailError('');
@@ -398,8 +406,9 @@ const EditProfileScreen = () => {
     }
 
     if (field === 'telefone' && formData.telefone) {
-      if (!formatters.validatePhone(formData.telefone)) {
-        setPhoneError('Telefone inválido');
+      const errorMessage = formatters.getPhoneValidationMessage(formData.telefone);
+      if (errorMessage) {
+        setPhoneError(errorMessage);
       } else {
         setPhoneError('');
       }
@@ -582,6 +591,8 @@ const EditProfileScreen = () => {
                   handleTipoServicoChange={professionalData.handleTipoServicoChange}
                   precosServicos={professionalData.professionalFormData.precosServicos}
                   handlePrecoServicoChange={professionalData.handlePrecoServicoChange}
+                  websiteError={websiteError}
+                  setWebsiteError={setWebsiteError}
                     />
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}

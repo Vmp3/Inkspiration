@@ -9,6 +9,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Column;
 import jakarta.persistence.Transient;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -25,6 +29,7 @@ public class Profissional {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idProfissional;
     
+    @NotNull(message = "O usuário é obrigatório")
     @OneToOne
     @JoinColumn(name = "usuario_idUsuario")
     private Usuario usuario;
@@ -37,9 +42,12 @@ public class Profissional {
     @JoinColumn(name = "portfolio_idPortfolio")
     private Portfolio portfolio;
     
+    @DecimalMin(value = "0.0", message = "A nota deve ser maior ou igual a 0")
+    @DecimalMax(value = "5.0", message = "A nota deve ser menor ou igual a 5")
     @Column(precision = 3, scale = 1)
     private BigDecimal nota;
     
+    @Size(max = 1000, message = "Os tipos de serviço não podem exceder 1000 caracteres")
     @Column(name = "tipos_servico", length = 1000)
     private String tiposServicoStr;
     
@@ -62,6 +70,9 @@ public class Profissional {
     }
     
     public void setUsuario(Usuario usuario) {
+        if (usuario == null) {
+            throw new IllegalArgumentException("O usuário não pode ser nulo");
+        }
         this.usuario = usuario;
     }
     
@@ -86,6 +97,14 @@ public class Profissional {
     }
     
     public void setNota(BigDecimal nota) {
+        if (nota != null) {
+            if (nota.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("A nota deve ser maior ou igual a 0");
+            }
+            if (nota.compareTo(new BigDecimal("5.0")) > 0) {
+                throw new IllegalArgumentException("A nota deve ser menor ou igual a 5");
+            }
+        }
         this.nota = nota;
     }
     
@@ -94,6 +113,9 @@ public class Profissional {
     }
     
     public void setTiposServicoStr(String tiposServicoStr) {
+        if (tiposServicoStr != null && tiposServicoStr.length() > 1000) {
+            throw new IllegalArgumentException("Os tipos de serviço não podem exceder 1000 caracteres");
+        }
         this.tiposServicoStr = tiposServicoStr;
     }
     

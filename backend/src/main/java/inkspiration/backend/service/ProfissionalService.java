@@ -26,6 +26,7 @@ import inkspiration.backend.entities.Endereco;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.enums.TipoServico;
+import inkspiration.backend.enums.UserRole;
 import inkspiration.backend.exception.UsuarioException;
 import inkspiration.backend.exception.profissional.DadosCompletosProfissionalException;
 import inkspiration.backend.exception.profissional.EnderecoNaoEncontradoException;
@@ -133,9 +134,9 @@ public class ProfissionalService {
         enderecoService.validarEndereco(endereco);
         
         // Atualiza o papel (role) do usuário para ROLE_PROF
-        usuario.setRole("ROLE_PROF");
+        usuario.setRole(UserRole.ROLE_PROF.getRole());
         if (usuario.getUsuarioAutenticar() != null) {
-            usuario.getUsuarioAutenticar().setRole("ROLE_PROF");
+            usuario.getUsuarioAutenticar().setRole(UserRole.ROLE_PROF.getRole());
         }
         usuarioRepository.save(usuario);
         
