@@ -7,7 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as formatters from '../utils/formatters';
 import toastHelper from '../utils/toastHelper';
 import { useAuth } from '../context/AuthContext';
-import { isMobileView } from '../utils/responsive';
+import { isMobileView, isDesktopView } from '../utils/responsive';
 
 import TabHeader from '../components/ui/TabHeader';
 import PersonalForm from '../components/forms/PersonalForm';
@@ -834,17 +834,30 @@ const RegisterScreen = () => {
   ];
 
   const isMobile = isMobileView();
+  const isDesktop = isDesktopView();
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.contentContainer}>
-          <View style={styles.pageHeaderContainer}>
+        <View style={[styles.contentContainer, isDesktop && styles.contentContainerDesktop]}>
+          <View style={[styles.pageHeaderContainer, isDesktop && styles.pageHeaderContainerDesktop]}>
             <Text style={styles.pageTitle}>Criar Conta</Text>
             <Text style={styles.pageSubtitle}>Registre-se para encontrar os melhores tatuadores</Text>
           </View>
           
-          <View style={styles.cardWrapper}>
+          <View style={[styles.loginPrompt, isMobile && styles.loginPromptMobile]}>
+            <Text style={styles.loginPromptText}>
+              Já tem uma conta?{' '}
+              <Text 
+                style={styles.loginLink}
+                onPress={() => navigation.navigate('Login')}
+              >
+                Entrar
+              </Text>
+            </Text>
+          </View>
+          
+          <View style={[styles.cardWrapper, isDesktop && styles.cardWrapperDesktop]}>
             <View style={styles.formCard}>
               <View style={styles.tabHeaderWrapper}>
                 <TabHeader 
@@ -856,7 +869,7 @@ const RegisterScreen = () => {
                 />
               </View>
               
-              <View style={styles.formContainer}>
+              <View style={[styles.formContainer, isDesktop && styles.formContainerDesktop]}>
                 {activeTab === 'personal' && (
                   <>
                                     <PersonalForm
@@ -917,18 +930,6 @@ const RegisterScreen = () => {
                   />
                 )}
               </View>
-            </View>
-            
-            <View style={[styles.loginPrompt, isMobile && styles.loginPromptMobile]}>
-              <Text style={styles.loginPromptText}>
-                Já tem uma conta?{' '}
-                <Text 
-                  style={styles.loginLink}
-                  onPress={() => navigation.navigate('Login')}
-                >
-                  Entrar
-                </Text>
-              </Text>
             </View>
           </View>
         </View>
@@ -1026,11 +1027,18 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 40,
   },
+  contentContainerDesktop: {
+    marginTop: 15,
+  },
   pageHeaderContainer: {
     marginBottom: 20,
     alignItems: 'center',
     zIndex: 2,
     marginTop: 15,
+  },
+  pageHeaderContainerDesktop: {
+    marginBottom: 5,
+    marginTop: 10,
   },
   pageTitle: {
     fontSize: 28,
@@ -1052,6 +1060,10 @@ const styles = StyleSheet.create({
     maxWidth: 1200,
     width: '100%',
     alignSelf: 'center',
+  },
+  cardWrapperDesktop: {
+    marginTop: 5,
+    paddingVertical: 5,
   },
   formCard: {
     backgroundColor: '#fff',
@@ -1078,6 +1090,9 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     padding: 30,
+  },
+  formContainerDesktop: {
+    padding: 5,
   },
   loginPrompt: {
     alignItems: 'center',
