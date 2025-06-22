@@ -8,7 +8,6 @@ const PortfolioForm = ({
   biographyError,
   handleBiographyChange,
   portfolioImages, 
-  profileImage, 
   handleAddPortfolioImage,
   handleRemovePortfolioImage,
   pickImage
@@ -16,36 +15,6 @@ const PortfolioForm = ({
   const isValid = biographyError === '' && biography.trim().length >= 20;
   return (
     <View style={styles.tabContent}>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Foto de Perfil</Text>
-        <View style={styles.profileSection}>
-          <TouchableOpacity 
-            style={styles.profileImageContainer}
-            onPress={() => pickImage('profile')}
-          >
-            {profileImage ? (
-              <Image 
-                source={{ uri: profileImage.uri }}
-                style={styles.profileImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.profileImagePlaceholder}>
-                <Feather name="user-plus" size={32} color="#999" />
-              </View>
-            )}
-          </TouchableOpacity>
-          <View style={styles.profileImageInfo}>
-            <Text style={styles.profileImageText}>
-              {profileImage ? 'Toque para alterar sua foto' : 'Toque para adicionar sua foto'}
-            </Text>
-            <Text style={styles.profileImageSubtext}>
-              Recomendado: imagem quadrada, máximo 5MB
-            </Text>
-          </View>
-        </View>
-      </View>
-
       <View style={styles.formGroup}>
         <Text style={styles.label}>Biografia *</Text>
         <TextInput
@@ -206,47 +175,6 @@ const styles = StyleSheet.create({
   portfolioImage: {
     width: '100%',
     height: '100%',
-  },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  profileImageContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 3,
-    borderColor: '#E5E7EB',
-    borderStyle: 'solid',
-    overflow: 'hidden',
-    backgroundColor: '#F9FAFB',
-    marginRight: 20,
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  profileImagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-  },
-  profileImageInfo: {
-    flex: 1,
-  },
-  profileImageText: {
-    fontSize: 16,
-    color: '#374151',
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  profileImageSubtext: {
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
   },
   removeImageButton: {
     position: 'absolute',

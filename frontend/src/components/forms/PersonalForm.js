@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import Input from '../ui/Input';
 import { isMobileView } from '../../utils/responsive';
 
@@ -16,12 +17,47 @@ const PersonalForm = ({
   fullNameError,
   isArtist, 
   setIsArtist,
-  isEditMode = false
+  isEditMode = false,
+  profileImage,
+  pickImage
 }) => {
   const isMobile = isMobileView();
 
   return (
     <View style={styles.tabContent}>
+      {/* Foto de Perfil */}
+      {(profileImage !== undefined && pickImage) && (
+        <View style={styles.formFullWidth}>
+          <Text style={styles.formLabel}>Foto de Perfil</Text>
+          <View style={styles.profileSection}>
+            <TouchableOpacity 
+              style={styles.profileImageContainer}
+              onPress={() => pickImage('profile')}
+            >
+              {profileImage ? (
+                <Image 
+                  source={{ uri: profileImage.uri }}
+                  style={styles.profileImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.profileImagePlaceholder}>
+                  <Feather name="user-plus" size={32} color="#999" />
+                </View>
+              )}
+            </TouchableOpacity>
+            <View style={styles.profileImageInfo}>
+              <Text style={styles.profileImageText}>
+                {profileImage ? 'Toque para alterar sua foto' : 'Toque para adicionar sua foto'}
+              </Text>
+              <Text style={styles.profileImageSubtext}>
+                Recomendado: imagem quadrada, máximo 5MB
+              </Text>
+            </View>
+          </View>
+        </View>
+      )}
+
       {/* Nome e Sobrenome */}
       {isMobile ? (
         // Layout mobile: um campo por linha
@@ -245,6 +281,48 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#777',
     marginTop: 4,
+  },
+  // Estilos para foto de perfil
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  profileImageContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#E5E7EB',
+    borderStyle: 'solid',
+    overflow: 'hidden',
+    backgroundColor: '#F9FAFB',
+    marginRight: 20,
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+  },
+  profileImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+  },
+  profileImageInfo: {
+    flex: 1,
+  },
+  profileImageText: {
+    fontSize: 16,
+    color: '#374151',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  profileImageSubtext: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
   },
 });
 
