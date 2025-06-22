@@ -41,7 +41,7 @@ const BasicInfoForm = ({
             setTiposServico(response);
           }
         } catch (error) {
-          console.error('Erro ao carregar tipos de serviço:', error);
+          // console.error('Erro ao carregar tipos de serviço:', error);
         } finally {
           setIsLoading(false);
         }

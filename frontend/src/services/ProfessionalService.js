@@ -9,7 +9,7 @@ class ProfessionalService {
       const response = await PublicApiService.get(`/profissional/${id}`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar profissional:', error);
+      // console.error('Erro ao buscar profissional:', error);
       throw error;
     }
   }
@@ -19,7 +19,7 @@ class ProfessionalService {
       const response = await ApiService.get(`/profissional/${id}`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar profissional:', error);
+      // console.error('Erro ao buscar profissional:', error);
       throw error;
     }
   }
@@ -29,7 +29,7 @@ class ProfessionalService {
       const response = await ApiService.get(`/profissional/usuario/${userId}`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar profissional por usuário:', error);
+      // console.error('Erro ao buscar profissional por usuário:', error);
       throw error;
     }
   }
@@ -39,7 +39,7 @@ class ProfessionalService {
       const response = await ApiService.get(`/profissional/verificar/${userId}`);
       return response;
     } catch (error) {
-      console.error('Erro ao verificar perfil profissional:', error);
+      // console.error('Erro ao verificar perfil profissional:', error);
       throw error;
     }
   }
@@ -50,7 +50,7 @@ class ProfessionalService {
       const response = await PublicApiService.get(`/profissional/completo/${id}`);
       return response.imagens || [];
     } catch (error) {
-      console.error('Erro ao buscar imagens do profissional:', error);
+      // console.error('Erro ao buscar imagens do profissional:', error);
       throw error;
     }
   }
@@ -83,7 +83,7 @@ class ProfessionalService {
       const response = await PublicApiService.get(requestUrl);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar profissionais completos:', error);
+      // console.error('Erro ao buscar profissionais completos:', error);
       throw error;
     }
   }
@@ -93,7 +93,7 @@ class ProfessionalService {
       const response = await PublicApiService.get(`/profissional/completo/${id}`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar profissional completo:', error);
+      // console.error('Erro ao buscar profissional completo:', error);
       throw error;
     }
   }
@@ -221,7 +221,7 @@ class ProfessionalService {
         hasPrevious: response.hasPrevious
       };
     } catch (error) {
-      console.error('Erro ao buscar e transformar profissionais completos:', error);
+      // console.error('Erro ao buscar e transformar profissionais completos:', error);
       throw error;
     }
   }

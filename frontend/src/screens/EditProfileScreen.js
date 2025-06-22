@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import axios from 'axios';
+import * as ImagePicker from 'expo-image-picker';
 import * as formatters from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import toastHelper from '../utils/toastHelper';
@@ -39,6 +40,7 @@ const EditProfileScreen = () => {
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [bioError, setBioError] = useState('');
   const [biographyError, setBiographyError] = useState('');
+  const [profileImage, setProfileImage] = useState(null);
   
   // Form data state
   const [formData, setFormData] = useState({
@@ -113,6 +115,16 @@ const EditProfileScreen = () => {
           website: userData.redesSociais?.website || ''
         }
       });
+
+      // Carregar foto de perfil se disponível
+      if (userData.imagemPerfil) {
+        setProfileImage({
+          uri: userData.imagemPerfil,
+          base64: userData.imagemPerfil,
+          type: 'image/jpeg',
+          name: 'profile.jpg'
+        });
+      }
     }
   }, [userData]);
 
@@ -127,6 +139,30 @@ const EditProfileScreen = () => {
       return 'Biografia deve ter no máximo 500 caracteres';
     }
     return '';
+  };
+
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled) {
+        const selectedImage = result.assets[0];
+        setProfileImage({
+          uri: selectedImage.uri,
+          base64: `data:image/jpeg;base64,${selectedImage.base64}`,
+          type: 'image/jpeg',
+          name: 'profile.jpg'
+        });
+      }
+    } catch (error) {
+      toastHelper.showError('Erro ao selecionar imagem');
+    }
   };
 
   const handleBiographyChange = (text) => {
@@ -311,7 +347,7 @@ const EditProfileScreen = () => {
         }));
       }
     } catch (error) {
-      console.error('Erro ao buscar CEP:', error);
+      // console.error('Erro ao buscar CEP:', error);
     }
   };
 
@@ -333,19 +369,21 @@ const EditProfileScreen = () => {
           >
             {tabNavigation.activeTab === 'personal' && (
                   <>
-                    <PersonalForm
-                      formData={formData}
-                      handleChange={handleChange}
-                      handleBlur={handleBlur}
-                      emailError={emailError}
-                      phoneError={phoneError}
-                      isArtist={isArtist}
-                      setIsArtist={setIsArtist}
-                      nomeError={nomeError}
-                      sobrenomeError={sobrenomeError}
-                      fullNameError={fullNameError}
-                      isEditMode={true}
-                    />
+                                    <PersonalForm
+                  formData={formData}
+                  handleChange={handleChange}
+                  handleBlur={handleBlur}
+                  emailError={emailError}
+                  phoneError={phoneError}
+                  isArtist={isArtist}
+                  setIsArtist={setIsArtist}
+                  nomeError={nomeError}
+                  sobrenomeError={sobrenomeError}
+                  fullNameError={fullNameError}
+                  isEditMode={true}
+                  profileImage={profileImage}
+                  pickImage={pickImage}
+                />
                     <FormNavigation
                   onNext={tabNavigation.handleNextTab}
                       showPrev={false}
@@ -415,17 +453,16 @@ const EditProfileScreen = () => {
                 
             {isArtist && tabNavigation.activeTab === 'portfolio' && (
                   <>
-                    <PortfolioForm 
+                                    <PortfolioForm 
                   biography={professionalData.professionalFormData.biography}
                   setBiography={professionalData.setBiography}
                   biographyError={biographyError}
                   handleBiographyChange={handleBiographyChange}
                   portfolioImages={professionalData.professionalFormData.portfolioImages}
-                  profileImage={professionalData.professionalFormData.profileImage}
                   handleAddPortfolioImage={professionalData.handleAddPortfolioImage}
                   handleRemovePortfolioImage={professionalData.handleRemovePortfolioImage}
                   pickImage={professionalData.pickImage}
-                    />
+                />
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
@@ -461,7 +498,7 @@ const EditProfileScreen = () => {
 
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
-                  onNext={() => profileUpdate.handleUpdateProfile(formData, tabNavigation.validateCurrentTab, professionalData.professionalFormData)}
+                  onNext={() => profileUpdate.handleUpdateProfile(formData, tabNavigation.validateCurrentTab, professionalData.professionalFormData, profileImage)}
                       showNext={true}
                       nextText="Salvar Alterações"
                   isLoading={profileUpdate.isLoading}

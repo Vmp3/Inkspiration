@@ -1,12 +1,16 @@
 import ApiService from './ApiService';
 
 class UserService {
-  async getAllUsers(page = 0) {
+  async getAllUsers(page = 0, size = 10, searchTerm = '') {
     try {
-      const response = await ApiService.get(`/usuario?page=${page}`);
+      let url = `/usuario?page=${page}&size=${size}`;
+      if (searchTerm && searchTerm.trim()) {
+        url += `&searchTerm=${encodeURIComponent(searchTerm.trim())}`;
+      }
+      const response = await ApiService.get(url);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
+      // console.error('Erro ao buscar usuários:', error);
       throw new Error(error.message || 'Erro ao buscar usuários');
     }
   }
@@ -16,7 +20,7 @@ class UserService {
       const response = await ApiService.get(`/usuario/${id}`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar usuário:', error);
+      // console.error('Erro ao buscar usuário:', error);
       throw new Error(error.message || 'Erro ao buscar usuário');
     }
   }
@@ -26,7 +30,7 @@ class UserService {
       const response = await ApiService.put(`/usuario/atualizar/${id}`, userData);
       return response;
     } catch (error) {
-      console.error('Erro ao atualizar usuário:', error);
+      // console.error('Erro ao atualizar usuário:', error);
       throw new Error(error.message || 'Erro ao atualizar usuário');
     }
   }
@@ -36,7 +40,7 @@ class UserService {
       const response = await ApiService.post(`/usuario/inativar/${id}`);
       return response;
     } catch (error) {
-      console.error('Erro ao desativar usuário:', error);
+      // console.error('Erro ao desativar usuário:', error);
       throw new Error(error.message || 'Erro ao desativar usuário');
     }
   }
@@ -46,7 +50,7 @@ class UserService {
       const response = await ApiService.post(`/usuario/reativar/${id}`);
       return response;
     } catch (error) {
-      console.error('Erro ao reativar usuário:', error);
+      // console.error('Erro ao reativar usuário:', error);
       throw new Error(error.message || 'Erro ao reativar usuário');
     }
   }
@@ -56,7 +60,7 @@ class UserService {
       const response = await ApiService.delete(`/usuario/deletar/${id}`);
       return response;
     } catch (error) {
-      console.error('Erro ao excluir usuário:', error);
+      // console.error('Erro ao excluir usuário:', error);
       throw new Error(error.message || 'Erro ao excluir usuário');
     }
   }
@@ -66,7 +70,7 @@ class UserService {
       const response = await ApiService.put(`/usuario/${id}/foto-perfil`, { imagemBase64: imageBase64 });
       return response;
     } catch (error) {
-      console.error('Erro ao atualizar foto do perfil:', error);
+      // console.error('Erro ao atualizar foto do perfil:', error);
       throw new Error(error.message || 'Erro ao atualizar foto do perfil');
     }
   }

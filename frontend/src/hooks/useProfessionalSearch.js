@@ -98,7 +98,7 @@ const useProfessionalSearch = ({
       const endTime = performance.now();
       const timeElapsed = (endTime - startTime) / 1000;
       setLoadingTime(timeElapsed.toFixed(2));
-      console.log(`%c[TEMPO DE RESPOSTA] ${timeElapsed.toFixed(2)} segundos para carregar ${response.content?.length || 0} profissionais`, 'background: #222; color: #bada55; font-size: 14px; padding: 5px;');
+      // console.log(`%c[TEMPO DE RESPOSTA] ${timeElapsed.toFixed(2)} segundos para carregar ${response.content?.length || 0} profissionais`, 'background: #222; color: #bada55; font-size: 14px; padding: 5px;');
       
       // Se limitResults for true, limitar o número de resultados
       const professionals = response.content || [];
@@ -109,7 +109,7 @@ const useProfessionalSearch = ({
       setHasPrevious(response.hasPrevious);
       updateActiveFilters();
     } catch (error) {
-      console.error('Erro ao carregar profissionais:', error);
+      // console.error('Erro ao carregar profissionais:', error);
       toastHelper.showError('Erro ao carregar profissionais');
       setDisplayedArtists([]);
       setTotalPages(0);

@@ -105,7 +105,7 @@ const LoginScreen = () => {
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
-      console.error('Erro no login:', error);
+      // console.error('Erro no login:', error);
       
       // Verificar se é erro de rede
       if (error.code === 'NETWORK_ERROR' || 

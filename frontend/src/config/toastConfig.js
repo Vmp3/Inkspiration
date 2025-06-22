@@ -1,41 +1,63 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 const toastConfig = {
   success: (props) => (
-    <View style={[styles.toast, styles.successToast]}>
+    <TouchableOpacity 
+      style={[styles.toast, styles.successToast]}
+      onPress={() => Toast.hide()}
+      activeOpacity={0.8}
+    >
       <Text style={styles.text1}>{props.text1}</Text>
       <Text style={styles.text2}>{props.text2}</Text>
-    </View>
+    </TouchableOpacity>
   ),
   error: (props) => (
-    <View style={[styles.toast, styles.errorToast]}>
+    <TouchableOpacity 
+      style={[styles.toast, styles.errorToast]}
+      onPress={() => Toast.hide()}
+      activeOpacity={0.8}
+    >
       <Text style={styles.text1}>{props.text1}</Text>
       <Text style={styles.text2}>{props.text2}</Text>
-    </View>
+    </TouchableOpacity>
   ),
   info: (props) => (
-    <View style={[styles.toast, styles.infoToast]}>
+    <TouchableOpacity 
+      style={[styles.toast, styles.infoToast]}
+      onPress={() => Toast.hide()}
+      activeOpacity={0.8}
+    >
       <Text style={styles.text1}>{props.text1}</Text>
       <Text style={styles.text2}>{props.text2}</Text>
-    </View>
+    </TouchableOpacity>
   ),
   warning: (props) => (
-    <View style={[styles.toast, styles.warningToast]}>
+    <TouchableOpacity 
+      style={[styles.toast, styles.warningToast]}
+      onPress={() => Toast.hide()}
+      activeOpacity={0.8}
+    >
       <Text style={styles.text1}>{props.text1}</Text>
       <Text style={styles.text2}>{props.text2}</Text>
-    </View>
+    </TouchableOpacity>
   ),
   any_custom_type: (props) => (
-    <View style={[styles.toast, styles.defaultToast]}>
+    <TouchableOpacity 
+      style={[styles.toast, styles.defaultToast]}
+      onPress={() => Toast.hide()}
+      activeOpacity={0.8}
+    >
       <Text style={styles.text1}>{props.text1}</Text>
       <Text style={styles.text2}>{props.text2}</Text>
-    </View>
+    </TouchableOpacity>
   ),
   config: {
     position: 'bottom',
     visibilityTime: 4000,
     bottomOffset: 16,
+    zIndex: 999999,
   }
 };
 
@@ -46,7 +68,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 16,
     boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
-    elevation: 5,
+    elevation: 999999,
+    zIndex: 999999,
     alignSelf: 'flex-end',
     maxWidth: '80%',
   },

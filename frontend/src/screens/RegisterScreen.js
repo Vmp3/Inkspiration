@@ -3,9 +3,11 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, Modal, TextInput, Tou
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import * as ImagePicker from 'expo-image-picker';
 import * as formatters from '../utils/formatters';
 import toastHelper from '../utils/toastHelper';
 import { useAuth } from '../context/AuthContext';
+import { isMobileView } from '../utils/responsive';
 
 import TabHeader from '../components/ui/TabHeader';
 import PersonalForm from '../components/forms/PersonalForm';
@@ -49,6 +51,7 @@ const RegisterScreen = () => {
   const [cidadeError, setCidadeError] = useState('');
   const [enderecoValidationError, setEnderecoValidationError] = useState('');
   const [dadosCep, setDadosCep] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
 
   const emailTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.DEFAULT_TIMEOUT);
   const resendTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.RESEND_TIMEOUT);
@@ -260,6 +263,30 @@ const RegisterScreen = () => {
     }
   };
 
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled) {
+        const selectedImage = result.assets[0];
+        setProfileImage({
+          uri: selectedImage.uri,
+          base64: `data:image/jpeg;base64,${selectedImage.base64}`,
+          type: 'image/jpeg',
+          name: 'profile.jpg'
+        });
+      }
+    } catch (error) {
+      toastHelper.showError('Erro ao selecionar imagem');
+    }
+  };
+
   const buscarCep = async (cep) => {
     try {
       // Remove caracteres não numéricos
@@ -297,7 +324,7 @@ const RegisterScreen = () => {
         setDadosCep(null);
       }
     } catch (error) {
-      console.error('Erro ao buscar CEP:', error);
+      // console.error('Erro ao buscar CEP:', error);
       setCepError('Erro ao consultar CEP. Verifique sua conexão.');
       setDadosCep(null);
     }
@@ -678,6 +705,11 @@ const RegisterScreen = () => {
       role: 'user'
     };
 
+    // Adicionar foto de perfil se disponível
+    if (profileImage) {
+      userData.imagemPerfil = profileImage.base64;
+    }
+
     try {
       // Mostrar mensagem de loading específica para envio de email
       toastHelper.showInfo(authMessages.info.sendingEmailConfirmation);
@@ -760,6 +792,8 @@ const RegisterScreen = () => {
     { id: 'security', label: 'Segurança' }
   ];
 
+  const isMobile = isMobileView();
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -784,20 +818,22 @@ const RegisterScreen = () => {
               <View style={styles.formContainer}>
                 {activeTab === 'personal' && (
                   <>
-                    <PersonalForm
-                      formData={formData}
-                      handleChange={handleChange}
-                      handleBlur={handleBlur}
-                      cpfError={cpfError}
-                      emailError={emailError}
-                      phoneError={phoneError}
-                      birthDateError={birthDateError}
-                      isArtist={isArtist}
-                      setIsArtist={setIsArtist}
-                      nomeError={nomeError}
-                      sobrenomeError={sobrenomeError}
-                      fullNameError={fullNameError}
-                    />
+                                    <PersonalForm
+                  formData={formData}
+                  handleChange={handleChange}
+                  handleBlur={handleBlur}
+                  cpfError={cpfError}
+                  emailError={emailError}
+                  phoneError={phoneError}
+                  birthDateError={birthDateError}
+                  isArtist={isArtist}
+                  setIsArtist={setIsArtist}
+                  nomeError={nomeError}
+                  sobrenomeError={sobrenomeError}
+                  fullNameError={fullNameError}
+                  profileImage={profileImage}
+                  pickImage={pickImage}
+                />
                     <FormNavigation
                       onNext={handleNextTab}
                       showPrev={false}
@@ -840,18 +876,18 @@ const RegisterScreen = () => {
                 )}
               </View>
             </View>
-          </View>
-          
-          <View style={styles.loginPrompt}>
-            <Text style={styles.loginPromptText}>
-              Já tem uma conta?{' '}
-              <Text 
-                style={styles.loginLink}
-                onPress={() => navigation.navigate('Login')}
-              >
-                Entrar
+            
+            <View style={[styles.loginPrompt, isMobile && styles.loginPromptMobile]}>
+              <Text style={styles.loginPromptText}>
+                Já tem uma conta?{' '}
+                <Text 
+                  style={styles.loginLink}
+                  onPress={() => navigation.navigate('Login')}
+                >
+                  Entrar
+                </Text>
               </Text>
-            </Text>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -1004,6 +1040,9 @@ const styles = StyleSheet.create({
   loginPrompt: {
     alignItems: 'center',
     marginTop: 16,
+  },
+  loginPromptMobile: {
+    marginTop: 8,
   },
   loginPromptText: {
     fontSize: 14,

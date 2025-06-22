@@ -115,7 +115,7 @@ const MyAttendancesScreen = () => {
         setCurrentFuturePage(0);
       }
     } catch (error) {
-      console.error('Erro ao carregar atendimentos futuros:', error);
+      // console.error('Erro ao carregar atendimentos futuros:', error);
       toastHelper.showError(attendancesMessages.errors.loadFutureAttendances);
     } finally {
       setIsLoadingFuture(false);
@@ -142,7 +142,7 @@ const MyAttendancesScreen = () => {
         setCurrentPastPage(0);
       }
     } catch (error) {
-      console.error('Erro ao carregar atendimentos passados:', error);
+      // console.error('Erro ao carregar atendimentos passados:', error);
       toastHelper.showError(attendancesMessages.errors.loadPastAttendances);
     } finally {
       setIsLoadingPast(false);
@@ -241,7 +241,7 @@ const MyAttendancesScreen = () => {
       await loadAttendances(true);
       
     } catch (error) {
-      console.error('Erro ao cancelar agendamento:', error);
+      // console.error('Erro ao cancelar agendamento:', error);
       let errorMessage = attendancesMessages.errors.cancelAppointmentGeneric;
       
       if (error.response?.status === 400) {

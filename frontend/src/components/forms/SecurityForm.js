@@ -5,6 +5,7 @@ import Input from '../ui/Input';
 import Checkbox from '../ui/Checkbox';
 import FormNavigation from '../ui/FormNavigation';
 import TermsAndPolicies from './TermsAndPolicies';
+import { isMobileView } from '../../utils/responsive';
 
 const SecurityForm = ({ 
   formData, 
@@ -19,6 +20,7 @@ const SecurityForm = ({
 }) => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const isMobile = isMobileView();
 
   const openTerms = () => {
     setShowTermsModal(true);
@@ -30,39 +32,78 @@ const SecurityForm = ({
 
   return (
     <View style={styles.tabContent}>
-      <View style={styles.formRow}>
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Senha</Text>
-          <Input
-            placeholder="••••••••"
-            secureTextEntry
-            value={formData.senha}
-            onChangeText={(text) => handleChange('senha', text)}
-            onBlur={() => handleBlur('senha')}
-            style={[
-              styles.inputField,
-              passwordError && styles.inputError
-            ]}
-          />
-          {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+      {/* Senha e Confirmar Senha */}
+      {isMobile ? (
+        // Layout mobile: um campo por linha
+        <>
+          <View style={styles.formFullWidth}>
+            <Text style={styles.formLabel}>Senha</Text>
+            <Input
+              placeholder="••••••••"
+              secureTextEntry
+              value={formData.senha}
+              onChangeText={(text) => handleChange('senha', text)}
+              onBlur={() => handleBlur('senha')}
+              style={[
+                styles.inputField,
+                passwordError && styles.inputError
+              ]}
+            />
+            {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+          </View>
+          
+          <View style={styles.formFullWidth}>
+            <Text style={styles.formLabel}>Confirmar Senha</Text>
+            <Input
+              placeholder="••••••••"
+              secureTextEntry
+              value={formData.confirmarSenha}
+              onChangeText={(text) => handleChange('confirmarSenha', text)}
+              onBlur={() => handleBlur('confirmarSenha')}
+              style={[
+                styles.inputField,
+                confirmPasswordError && styles.inputError
+              ]}
+            />
+            {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
+          </View>
+        </>
+      ) : (
+        // Layout web/tablet: dois campos por linha
+        <View style={styles.formRow}>
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Senha</Text>
+            <Input
+              placeholder="••••••••"
+              secureTextEntry
+              value={formData.senha}
+              onChangeText={(text) => handleChange('senha', text)}
+              onBlur={() => handleBlur('senha')}
+              style={[
+                styles.inputField,
+                passwordError && styles.inputError
+              ]}
+            />
+            {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+          </View>
+          
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Confirmar Senha</Text>
+            <Input
+              placeholder="••••••••"
+              secureTextEntry
+              value={formData.confirmarSenha}
+              onChangeText={(text) => handleChange('confirmarSenha', text)}
+              onBlur={() => handleBlur('confirmarSenha')}
+              style={[
+                styles.inputField,
+                confirmPasswordError && styles.inputError
+              ]}
+            />
+            {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
+          </View>
         </View>
-        
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Confirmar Senha</Text>
-          <Input
-            placeholder="••••••••"
-            secureTextEntry
-            value={formData.confirmarSenha}
-            onChangeText={(text) => handleChange('confirmarSenha', text)}
-            onBlur={() => handleBlur('confirmarSenha')}
-            style={[
-              styles.inputField,
-              confirmPasswordError && styles.inputError
-            ]}
-          />
-          {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
-        </View>
-      </View>
+      )}
 
       <View style={styles.checkboxContainer}>
         <Checkbox
@@ -168,6 +209,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 10,
   },
+  formFullWidth: {
+    marginBottom: 24,
+  },
   formLabel: {
     marginBottom: 8,
     fontSize: 14,
@@ -271,6 +315,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  formFullWidth: {
+    flex: 1,
+    marginHorizontal: 10,
   },
 });
 

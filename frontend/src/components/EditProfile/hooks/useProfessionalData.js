@@ -114,7 +114,7 @@ const useProfessionalData = (userData) => {
             }
           });
         }
-        console.log('LOG: Preços carregados do backend:', precosCarregados);
+        // console.log('LOG: Preços carregados do backend:', precosCarregados);
 
         // Transformar especialidades
         const specialties = portfolio?.especialidade ? 
@@ -286,7 +286,7 @@ const useProfessionalData = (userData) => {
         }
       });
       
-      console.log('LOG: Preços formatados para envio:', precosFormatados);
+      // console.log('LOG: Preços formatados para envio:', precosFormatados);
 
       const requestData = {
         profissional: {},
@@ -303,7 +303,7 @@ const useProfessionalData = (userData) => {
               toastHelper.showSuccess(editProfileMessages.success.profileUpdated);
       return true;
     } catch (error) {
-      console.error('Erro ao atualizar dados profissionais:', error);
+      // console.error('Erro ao atualizar dados profissionais:', error);
               toastHelper.showError(editProfileMessages.errors.saveProfile);
       return false;
     }

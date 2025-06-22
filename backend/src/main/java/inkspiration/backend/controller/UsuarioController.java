@@ -1,7 +1,6 @@
 package inkspiration.backend.controller;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.domain.PageRequest;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 import inkspiration.backend.dto.UsuarioDTO;
 import inkspiration.backend.dto.UsuarioResponseDTO;
 import inkspiration.backend.dto.UsuarioSeguroDTO;
-import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.service.UsuarioService;
 import jakarta.validation.Valid;
 
@@ -35,13 +33,14 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UsuarioResponseDTO>> listarTodos(
+    public ResponseEntity<Map<String, Object>> listarTodos(
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size) {
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(required = false) String searchTerm) {
 
         Pageable pageable = PageRequest.of(page, size);
-        List<UsuarioResponseDTO> usuarios = service.listarTodosComAutorizacao(pageable);
-        return ResponseEntity.ok(usuarios);
+        Map<String, Object> response = service.listarTodosComPaginacaoComAutorizacao(pageable, searchTerm);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
@@ -70,7 +69,7 @@ public class UsuarioController {
     
     @PostMapping("/reativar/{id}")
     public ResponseEntity<String> reativarUsuario(@PathVariable Long id) {
-        service.reativar(id);
+        service.reativarComAutorizacao(id);
         return ResponseEntity.ok("Usuário reativado com sucesso.");
     }
 
