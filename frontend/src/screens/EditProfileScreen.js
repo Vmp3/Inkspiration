@@ -42,6 +42,14 @@ const EditProfileScreen = () => {
   const [biographyError, setBiographyError] = useState('');
   const [profileImage, setProfileImage] = useState(null);
   
+  // Estados de validação de endereço
+  const [cepError, setCepError] = useState('');
+  const [estadoError, setEstadoError] = useState('');
+  const [cidadeError, setCidadeError] = useState('');
+  const [bairroError, setBairroError] = useState('');
+  const [enderecoValidationError, setEnderecoValidationError] = useState('');
+  const [dadosCep, setDadosCep] = useState(null);
+  
   // Form data state
   const [formData, setFormData] = useState({
     nome: '',
@@ -75,7 +83,44 @@ const EditProfileScreen = () => {
   // Hooks customizados
   const validation = useFormValidation();
   const professionalData = useProfessionalData(userData);
-  const tabNavigation = useTabNavigation(isArtist, formData, professionalData.professionalFormData);
+  const tabNavigation = useTabNavigation(isArtist, formData, professionalData.professionalFormData, {
+    cepError,
+    estadoError,
+    cidadeError,
+    bairroError,
+    enderecoValidationError,
+    forceAddressValidation: () => {
+      if (dadosCep) {
+        // Forçar validação igual ao RegisterScreen
+        if (formData.estado && dadosCep.uf) {
+          const estadoForm = formData.estado.toUpperCase().trim();
+          const estadoCep = dadosCep.uf.toUpperCase().trim();
+          
+          if (estadoForm !== estadoCep) {
+            setEstadoError(`Estado deve ser ${dadosCep.uf} para este CEP`);
+          }
+        }
+        
+        if (formData.cidade && dadosCep.localidade) {
+          const cidadeForm = formData.cidade.toLowerCase().trim();
+          const cidadeCep = dadosCep.localidade.toLowerCase().trim();
+          
+          if (cidadeForm !== cidadeCep) {
+            setCidadeError(`Cidade deve ser ${dadosCep.localidade} para este CEP`);
+          }
+        }
+        
+        if (formData.bairro && dadosCep.bairro) {
+          const bairroForm = formData.bairro.toLowerCase().trim();
+          const bairroCep = dadosCep.bairro.toLowerCase().trim();
+          
+          if (bairroForm !== bairroCep) {
+            setBairroError(`Bairro deve ser ${dadosCep.bairro} para este CEP`);
+          }
+        }
+      }
+    }
+  });
   const profileUpdate = useProfileUpdate(isArtist, professionalData.updateProfessionalData);
 
   // Load user data when component mounts
@@ -125,8 +170,44 @@ const EditProfileScreen = () => {
           name: 'profile.jpg'
         });
       }
+
+      // Validar CEP se já houver dados de endereço carregados
+      if (userData.endereco?.cep) {
+        setTimeout(() => {
+          buscarCep(userData.endereco.cep);
+        }, 500); // Pequeno delay para garantir que o estado foi atualizado
+      }
     }
   }, [userData]);
+
+  // Effect para validar consistência de endereço automaticamente
+  useEffect(() => {
+    if (dadosCep && formData.estado && formData.cidade) {
+      // Validar estado
+      if (formData.estado.toUpperCase().trim() !== dadosCep.uf?.toUpperCase().trim()) {
+        const errorMsg = `Estado deve ser ${dadosCep.uf} para este CEP`;
+        setEstadoError(errorMsg);
+      } else {
+        setEstadoError('');
+      }
+      
+      // Validar cidade
+      if (formData.cidade.toLowerCase().trim() !== dadosCep.localidade?.toLowerCase().trim()) {
+        const errorMsg = `Cidade deve ser ${dadosCep.localidade} para este CEP`;
+        setCidadeError(errorMsg);
+      } else {
+        setCidadeError('');
+      }
+      
+      // Validar bairro
+      if (formData.bairro.toLowerCase().trim() !== dadosCep.bairro?.toLowerCase().trim()) {
+        const errorMsg = `Bairro deve ser ${dadosCep.bairro} para este CEP`;
+        setBairroError(errorMsg);
+      } else {
+        setBairroError('');
+      }
+    }
+  }, [dadosCep, formData.estado, formData.cidade, formData.bairro]);
 
   const validateBio = (text) => {
     if (!text || text.trim().length === 0) {
@@ -199,6 +280,8 @@ const EditProfileScreen = () => {
         return; // CPF is read-only in edit mode
       case 'cep':
         formattedValue = formatters.formatCEP(value);
+        setCepError('');
+        setEnderecoValidationError('');
         break;
       case 'telefone':
         formattedValue = formatters.formatPhone(value);
@@ -229,7 +312,24 @@ const EditProfileScreen = () => {
           setConfirmPasswordError('');
         } else if (value) {
           setConfirmPasswordError('As senhas não coincidem');
-        }
+                  }
+          break;
+      case 'estado':
+        setEstadoError('');
+        setEnderecoValidationError('');
+        break;
+      case 'cidade':
+        setCidadeError('');
+        setEnderecoValidationError('');
+        break;
+      case 'bairro':
+        setBairroError('');
+        setEnderecoValidationError('');
+        break;
+      case 'rua':
+      case 'numero':
+      case 'complemento':
+        setEnderecoValidationError('');
         break;
       case 'redesSociais':
         return setFormData(prev => ({
@@ -328,16 +428,54 @@ const EditProfileScreen = () => {
         setConfirmPasswordError('');
       }
     }
+
+    // Validação de consistência de endereço quando sai do campo estado ou cidade
+    if (field === 'estado' && formData.estado && dadosCep) {
+      if (formData.estado.toUpperCase().trim() !== dadosCep.uf?.toUpperCase().trim()) {
+        const errorMsg = `Estado deve ser ${dadosCep.uf} para este CEP`;
+        setEstadoError(errorMsg);
+      } else {
+        setEstadoError('');
+      }
+    }
+
+    if (field === 'cidade' && formData.cidade && dadosCep) {
+      if (formData.cidade.toLowerCase().trim() !== dadosCep.localidade?.toLowerCase().trim()) {
+        const errorMsg = `Cidade deve ser ${dadosCep.localidade} para este CEP`;
+        setCidadeError(errorMsg);
+      } else {
+        setCidadeError('');
+      }
+    }
+
+    if (field === 'bairro' && formData.bairro && dadosCep) {
+      if (formData.bairro.toLowerCase().trim() !== dadosCep.bairro?.toLowerCase().trim()) {
+        const errorMsg = `Bairro deve ser ${dadosCep.bairro} para este CEP`;
+        setBairroError(errorMsg);
+      } else {
+        setBairroError('');
+      }
+    }
   };
 
   const buscarCep = async (cep) => {
     try {
+      // Remove caracteres não numéricos
       const cepLimpo = cep.replace(/\D/g, '');
+      
+      if (cepLimpo.length !== 8) {
+        setCepError('CEP deve conter exatamente 8 dígitos');
+        setDadosCep(null);
+        return;
+      }
+      
+      // URL da API ViaCEP
       const response = await axios.get(`https://viacep.com.br/ws/${cepLimpo}/json/`);
       
       if (response.data && !response.data.erro) {
         const endereco = response.data;
         
+        // Atualiza os campos do formulário com os dados retornados
         setFormData(prev => ({
           ...prev,
           rua: endereco.logradouro || '',
@@ -345,9 +483,21 @@ const EditProfileScreen = () => {
           cidade: endereco.localidade || '',
           estado: endereco.uf || '',
         }));
+        setDadosCep(endereco);
+        setCepError('');
+        
+        // Limpar erros de validação quando busca novo CEP
+        setEstadoError('');
+        setCidadeError('');
+        setBairroError('');
+        setEnderecoValidationError('');
+      } else {
+        setCepError('CEP não encontrado');
+        setDadosCep(null);
       }
     } catch (error) {
-      // console.error('Erro ao buscar CEP:', error);
+      setCepError('Erro ao consultar CEP. Verifique sua conexão.');
+      setDadosCep(null);
     }
   };
 
@@ -398,12 +548,18 @@ const EditProfileScreen = () => {
                     <AddressForm
                       formData={formData}
                       handleChange={handleChange}
+                      handleBlur={handleBlur}
                       buscarCep={buscarCep}
+                      cepError={cepError}
+                      estadoError={estadoError}
+                      cidadeError={cidadeError}
+                      bairroError={bairroError}
+                      enderecoValidationError={enderecoValidationError}
                     />
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
-                      nextDisabled={!validation.isAddressTabValid(formData)}
+                      nextDisabled={!validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError)}
                     />
                   </>
                 )}

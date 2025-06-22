@@ -6,10 +6,12 @@ import { isMobileView } from '../../utils/responsive';
 const AddressForm = ({ 
   formData, 
   handleChange, 
+  handleBlur,
   buscarCep,
   cepError,
   estadoError,
   cidadeError,
+  bairroError,
   enderecoValidationError
 }) => {
   const [numeroError, setNumeroError] = useState('');
@@ -49,6 +51,7 @@ const AddressForm = ({
               placeholder="UF"
               value={formData.estado}
               onChangeText={(text) => handleChange('estado', text)}
+              onBlur={() => handleBlur && handleBlur('estado')}
               style={[styles.inputField, estadoError ? styles.inputError : null]}
               maxLength={2}
             />
@@ -77,6 +80,7 @@ const AddressForm = ({
               placeholder="UF"
               value={formData.estado}
               onChangeText={(text) => handleChange('estado', text)}
+              onBlur={() => handleBlur && handleBlur('estado')}
               style={[styles.inputField, estadoError ? styles.inputError : null]}
               maxLength={2}
             />
@@ -155,8 +159,10 @@ const AddressForm = ({
               placeholder="Seu bairro"
               value={formData.bairro}
               onChangeText={(text) => handleChange('bairro', text)}
-              style={styles.inputField}
+              onBlur={() => handleBlur && handleBlur('bairro')}
+              style={[styles.inputField, bairroError ? styles.inputError : null]}
             />
+            {bairroError ? <Text style={styles.errorText}>{bairroError}</Text> : null}
           </View>
           
           <View style={styles.formFullWidth}>
@@ -165,6 +171,7 @@ const AddressForm = ({
               placeholder="Sua cidade"
               value={formData.cidade}
               onChangeText={(text) => handleChange('cidade', text)}
+              onBlur={() => handleBlur && handleBlur('cidade')}
               style={[styles.inputField, cidadeError ? styles.inputError : null]}
             />
             {cidadeError ? <Text style={styles.errorText}>{cidadeError}</Text> : null}
@@ -179,8 +186,10 @@ const AddressForm = ({
               placeholder="Seu bairro"
               value={formData.bairro}
               onChangeText={(text) => handleChange('bairro', text)}
-              style={styles.inputField}
+              onBlur={() => handleBlur && handleBlur('bairro')}
+              style={[styles.inputField, bairroError ? styles.inputError : null]}
             />
+            {bairroError ? <Text style={styles.errorText}>{bairroError}</Text> : null}
           </View>
           
           <View style={styles.formGroup}>
@@ -189,6 +198,7 @@ const AddressForm = ({
               placeholder="Sua cidade"
               value={formData.cidade}
               onChangeText={(text) => handleChange('cidade', text)}
+              onBlur={() => handleBlur && handleBlur('cidade')}
               style={[styles.inputField, cidadeError ? styles.inputError : null]}
             />
             {cidadeError ? <Text style={styles.errorText}>{cidadeError}</Text> : null}

@@ -17,14 +17,19 @@ export const useFormValidation = () => {
     );
   };
 
-  const isAddressTabValid = (formData) => {
+  const isAddressTabValid = (formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError) => {
     return (
       formData.cep &&
       formData.rua &&
       formData.numero &&
       formData.bairro &&
       formData.cidade &&
-      formData.estado
+      formData.estado &&
+      !cepError &&
+      !estadoError &&
+      !cidadeError &&
+      !bairroError &&
+      !enderecoValidationError
     );
   };
 
