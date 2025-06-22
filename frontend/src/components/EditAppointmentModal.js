@@ -13,10 +13,12 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { differenceInDays } from 'date-fns';
+import Toast from 'react-native-toast-message';
 import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import { editAppointmentMessages } from './editAppointment/messages';
 import { formatCurrency } from '../utils/formatters';
+import toastConfig from '../config/toastConfig';
 
 const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
   const [step, setStep] = useState(1);
@@ -622,6 +624,18 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
+      
+      <Toast 
+        config={toastConfig} 
+        style={{ 
+          zIndex: 999999, 
+          elevation: 999999,
+          position: 'absolute',
+          bottom: 50,
+          left: 0,
+          right: 0
+        }} 
+      />
     </Modal>
   );
 };

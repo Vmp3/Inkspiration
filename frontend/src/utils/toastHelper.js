@@ -6,7 +6,10 @@ export const showToast = (type, title, message) => {
     type,
     text1: title,
     text2: message,
-    ...toastConfig.config
+    ...toastConfig.config,
+    position: 'bottom',
+    bottomOffset: 50,
+    visibilityTime: 5000
   });
 };
 

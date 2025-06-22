@@ -12,8 +12,10 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import Toast from 'react-native-toast-message';
 import DefaultUser from '../../assets/default_user.png';
 import { formatCurrency } from '../utils/formatters';
+import toastConfig from '../config/toastConfig';
 
 
 const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCancel, isProfessional = false, showEditButton = true, showCancelButton = true }) => {
@@ -263,6 +265,18 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
+      
+      <Toast 
+        config={toastConfig} 
+        style={{ 
+          zIndex: 999999, 
+          elevation: 999999,
+          position: 'absolute',
+          bottom: 50,
+          left: 0,
+          right: 0
+        }} 
+      />
     </Modal>
   );
 };
