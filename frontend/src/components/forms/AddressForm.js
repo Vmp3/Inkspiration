@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Input from '../ui/Input';
+import { isMobileView } from '../../utils/responsive';
 
 const AddressForm = ({ 
   formData, 
   handleChange, 
-  buscarCep 
+  handleBlur,
+  buscarCep,
+  cepError,
+  estadoError,
+  cidadeError,
+  bairroError,
+  enderecoValidationError
 }) => {
   const [numeroError, setNumeroError] = useState('');
+  const isMobile = isMobileView();
 
   const handleNumeroChange = (text) => {
     if (text !== '' && !/^\d+$/.test(text)) {
@@ -20,32 +28,66 @@ const AddressForm = ({
   };
 
   return (
-    <View style={styles.tabContent}>
-      <View style={styles.formRow}>
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>CEP</Text>
-          <Input
-            placeholder="00000-000"
-            value={formData.cep}
-            onChangeText={(text) => handleChange('cep', text)}
-            keyboardType="numeric"
-            style={styles.inputField}
-            maxLength={9}
-          />
-          <Text style={styles.helperText}>Digite o CEP para preenchimento automático</Text>
+    <View style={styles.tabContent}>   
+      {isMobile ? (
+        <>
+          <View style={styles.formFullWidth}>
+            <Text style={styles.formLabel}>CEP</Text>
+            <Input
+              placeholder="00000-000"
+              value={formData.cep}
+              onChangeText={(text) => handleChange('cep', text)}
+              keyboardType="numeric"
+              style={[styles.inputField, cepError ? styles.inputError : null]}
+              maxLength={9}
+            />
+            {cepError ? <Text style={styles.errorText}>{cepError}</Text> : null}
+            {!cepError && <Text style={styles.helperText}>Digite o CEP para preenchimento automático</Text>}
+          </View>
+          
+          <View style={styles.formFullWidth}>
+            <Text style={styles.formLabel}>Estado</Text>
+            <Input
+              placeholder="UF"
+              value={formData.estado}
+              onChangeText={(text) => handleChange('estado', text)}
+              onBlur={() => handleBlur && handleBlur('estado')}
+              style={[styles.inputField, estadoError ? styles.inputError : null]}
+              maxLength={2}
+            />
+            {estadoError ? <Text style={styles.errorText}>{estadoError}</Text> : null}
+          </View>
+        </>
+      ) : (
+        <View style={styles.formRow}>
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>CEP</Text>
+            <Input
+              placeholder="00000-000"
+              value={formData.cep}
+              onChangeText={(text) => handleChange('cep', text)}
+              keyboardType="numeric"
+              style={[styles.inputField, cepError ? styles.inputError : null]}
+              maxLength={9}
+            />
+            {cepError ? <Text style={styles.errorText}>{cepError}</Text> : null}
+            {!cepError && <Text style={styles.helperText}>Digite o CEP para preenchimento automático</Text>}
+          </View>
+          
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Estado</Text>
+            <Input
+              placeholder="UF"
+              value={formData.estado}
+              onChangeText={(text) => handleChange('estado', text)}
+              onBlur={() => handleBlur && handleBlur('estado')}
+              style={[styles.inputField, estadoError ? styles.inputError : null]}
+              maxLength={2}
+            />
+            {estadoError ? <Text style={styles.errorText}>{estadoError}</Text> : null}
+          </View>
         </View>
-        
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Estado</Text>
-          <Input
-            placeholder="UF"
-            value={formData.estado}
-            onChangeText={(text) => handleChange('estado', text)}
-            style={styles.inputField}
-            maxLength={2}
-          />
-        </View>
-      </View>
+      )}
       
       <View style={styles.formFullWidth}>
         <Text style={styles.formLabel}>Logradouro</Text>
@@ -57,51 +99,112 @@ const AddressForm = ({
         />
       </View>
       
-      <View style={styles.formRow}>
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Número</Text>
-          <Input
-            placeholder="123"
-            keyboardType="numeric"
-            value={formData.numero}
-            onChangeText={handleNumeroChange}
-            style={[styles.inputField, numeroError ? styles.inputError : null]}
-          />
-          {numeroError ? <Text style={styles.errorText}>{numeroError}</Text> : null}
+      {isMobile ? (
+        <>
+          <View style={styles.formFullWidth}>
+            <Text style={styles.formLabel}>Número</Text>
+            <Input
+              placeholder="123"
+              keyboardType="numeric"
+              value={formData.numero}
+              onChangeText={handleNumeroChange}
+              style={[styles.inputField, numeroError ? styles.inputError : null]}
+            />
+            {numeroError ? <Text style={styles.errorText}>{numeroError}</Text> : null}
+          </View>
+          
+          <View style={styles.formFullWidth}>
+            <Text style={styles.formLabel}>Complemento</Text>
+            <Input
+              placeholder="Apto, bloco, etc."
+              value={formData.complemento}
+              onChangeText={(text) => handleChange('complemento', text)}
+              style={styles.inputField}
+            />
+          </View>
+        </>
+      ) : (
+        <View style={styles.formRow}>
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Número</Text>
+            <Input
+              placeholder="123"
+              keyboardType="numeric"
+              value={formData.numero}
+              onChangeText={handleNumeroChange}
+              style={[styles.inputField, numeroError ? styles.inputError : null]}
+            />
+            {numeroError ? <Text style={styles.errorText}>{numeroError}</Text> : null}
+          </View>
+          
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Complemento</Text>
+            <Input
+              placeholder="Apto, bloco, etc."
+              value={formData.complemento}
+              onChangeText={(text) => handleChange('complemento', text)}
+              style={styles.inputField}
+            />
+          </View>
         </View>
-        
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Complemento</Text>
-          <Input
-            placeholder="Apto, bloco, etc."
-            value={formData.complemento}
-            onChangeText={(text) => handleChange('complemento', text)}
-            style={styles.inputField}
-          />
-        </View>
-      </View>
+      )}
       
-      <View style={styles.formRow}>
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Bairro</Text>
-          <Input
-            placeholder="Seu bairro"
-            value={formData.bairro}
-            onChangeText={(text) => handleChange('bairro', text)}
-            style={styles.inputField}
-          />
+      {/* Bairro e Cidade */}
+      {isMobile ? (
+        // Layout mobile: um campo por linha
+        <>
+          <View style={styles.formFullWidth}>
+            <Text style={styles.formLabel}>Bairro</Text>
+            <Input
+              placeholder="Seu bairro"
+              value={formData.bairro}
+              onChangeText={(text) => handleChange('bairro', text)}
+              onBlur={() => handleBlur && handleBlur('bairro')}
+              style={[styles.inputField, bairroError ? styles.inputError : null]}
+            />
+            {bairroError ? <Text style={styles.errorText}>{bairroError}</Text> : null}
+          </View>
+          
+          <View style={styles.formFullWidth}>
+            <Text style={styles.formLabel}>Cidade</Text>
+            <Input
+              placeholder="Sua cidade"
+              value={formData.cidade}
+              onChangeText={(text) => handleChange('cidade', text)}
+              onBlur={() => handleBlur && handleBlur('cidade')}
+              style={[styles.inputField, cidadeError ? styles.inputError : null]}
+            />
+            {cidadeError ? <Text style={styles.errorText}>{cidadeError}</Text> : null}
+          </View>
+        </>
+      ) : (
+        // Layout web/tablet: dois campos por linha
+        <View style={styles.formRow}>
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Bairro</Text>
+            <Input
+              placeholder="Seu bairro"
+              value={formData.bairro}
+              onChangeText={(text) => handleChange('bairro', text)}
+              onBlur={() => handleBlur && handleBlur('bairro')}
+              style={[styles.inputField, bairroError ? styles.inputError : null]}
+            />
+            {bairroError ? <Text style={styles.errorText}>{bairroError}</Text> : null}
+          </View>
+          
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Cidade</Text>
+            <Input
+              placeholder="Sua cidade"
+              value={formData.cidade}
+              onChangeText={(text) => handleChange('cidade', text)}
+              onBlur={() => handleBlur && handleBlur('cidade')}
+              style={[styles.inputField, cidadeError ? styles.inputError : null]}
+            />
+            {cidadeError ? <Text style={styles.errorText}>{cidadeError}</Text> : null}
+          </View>
         </View>
-        
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Cidade</Text>
-          <Input
-            placeholder="Sua cidade"
-            value={formData.cidade}
-            onChangeText={(text) => handleChange('cidade', text)}
-            style={styles.inputField}
-          />
-        </View>
-      </View>
+      )}
     </View>
   );
 };
@@ -150,6 +253,17 @@ const styles = StyleSheet.create({
     color: '#ff0000',
     fontSize: 12,
     marginTop: 4,
+  },
+  errorContainer: {
+    backgroundColor: '#ffd7d7',
+    padding: 10,
+    borderRadius: 4,
+    marginBottom: 24,
+  },
+  errorTextGeneral: {
+    color: '#ff0000',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

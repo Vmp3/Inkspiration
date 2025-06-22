@@ -9,7 +9,17 @@ class ProfessionalService {
       const response = await PublicApiService.get(`/profissional/${id}`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar profissional:', error);
+      // console.error('Erro ao buscar profissional:', error);
+      throw error;
+    }
+  }
+
+  async buscarPorId(id) {
+    try {
+      const response = await ApiService.get(`/profissional/${id}`);
+      return response;
+    } catch (error) {
+      // console.error('Erro ao buscar profissional:', error);
       throw error;
     }
   }
@@ -19,7 +29,7 @@ class ProfessionalService {
       const response = await ApiService.get(`/profissional/usuario/${userId}`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar profissional por usuário:', error);
+      // console.error('Erro ao buscar profissional por usuário:', error);
       throw error;
     }
   }
@@ -29,7 +39,7 @@ class ProfessionalService {
       const response = await ApiService.get(`/profissional/verificar/${userId}`);
       return response;
     } catch (error) {
-      console.error('Erro ao verificar perfil profissional:', error);
+      // console.error('Erro ao verificar perfil profissional:', error);
       throw error;
     }
   }
@@ -40,17 +50,40 @@ class ProfessionalService {
       const response = await PublicApiService.get(`/profissional/completo/${id}`);
       return response.imagens || [];
     } catch (error) {
-      console.error('Erro ao buscar imagens do profissional:', error);
+      // console.error('Erro ao buscar imagens do profissional:', error);
       throw error;
     }
   }
 
-  async getAllProfessionalsComplete(page = 0) {
+  async getAllProfessionalsComplete(page = 0, filters = {}) {
     try {
-      const response = await PublicApiService.get(`/profissional/completo?page=${page}`);
+      const params = new URLSearchParams();
+      params.append('page', page);
+      params.append('size', 9);
+      
+      if (filters.searchTerm) {
+        params.append('searchTerm', filters.searchTerm);
+      }
+      if (filters.locationTerm) {
+        params.append('locationTerm', filters.locationTerm);
+      }
+      if (filters.minRating && filters.minRating > 0) {
+        params.append('minRating', filters.minRating);
+      }
+      if (filters.selectedSpecialties && filters.selectedSpecialties.length > 0) {
+        filters.selectedSpecialties.forEach(specialty => {
+          params.append('selectedSpecialties', specialty);
+        });
+      }
+      if (filters.sortBy) {
+        params.append('sortBy', filters.sortBy);
+      }
+      
+      const requestUrl = `/profissional/completo?${params.toString()}`;
+      const response = await PublicApiService.get(requestUrl);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar profissionais completos:', error);
+      // console.error('Erro ao buscar profissionais completos:', error);
       throw error;
     }
   }
@@ -60,7 +93,7 @@ class ProfessionalService {
       const response = await PublicApiService.get(`/profissional/completo/${id}`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar profissional completo:', error);
+      // console.error('Erro ao buscar profissional completo:', error);
       throw error;
     }
   }
@@ -102,8 +135,8 @@ class ProfessionalService {
         id: professional.idProfissional?.toString() || professional.id?.toString(),
         name: professional.usuario?.nome || professional.name,
         rating: professional.nota !== undefined && professional.nota !== null ? professional.nota : 0,
-        specialties: professional.portifolio?.especialidade 
-          ? professional.portifolio.especialidade.split(',').map(s => s.trim())
+        specialties: professional.portfolio?.especialidade 
+          ? professional.portfolio.especialidade.split(',').map(s => s.trim())
           : ['Tatuagem'],
         location: professional.endereco 
           ? `${professional.endereco.cidade}, ${professional.endereco.estado}`
@@ -113,13 +146,13 @@ class ProfessionalService {
         coverImage: professional.usuario?.imagemPerfil || 
                    'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png',
         // Dados adicionais do backend
-        experience: professional.portifolio?.experiencia,
-        description: professional.portifolio?.descricao,
-        instagram: professional.portifolio?.instagram,
-        tiktok: professional.portifolio?.tiktok,
-        facebook: professional.portifolio?.facebook,
-        twitter: professional.portifolio?.twitter,
-        website: professional.portifolio?.website,
+        experience: professional.portfolio?.experiencia,
+        description: professional.portfolio?.descricao,
+        instagram: professional.portfolio?.instagram,
+        tiktok: professional.portfolio?.tiktok,
+        facebook: professional.portfolio?.facebook,
+        twitter: professional.portfolio?.twitter,
+        website: professional.portfolio?.website,
         email: professional.usuario?.email,
         phone: professional.usuario?.telefone,
       };
@@ -171,12 +204,24 @@ class ProfessionalService {
   }
 
   // Método para buscar e transformar todos os profissionais completos
-  async getTransformedCompleteProfessionals(page = 0) {
+  async getTransformedCompleteProfessionals(page = 0, filters = {}) {
     try {
-      const professionals = await this.getAllProfessionalsComplete(page);
-      return professionals.map(professional => this.transformCompleteProfessionalData(professional));
+      const response = await this.getAllProfessionalsComplete(page, filters);
+      const transformedProfessionals = response.content.map(professional => 
+        this.transformCompleteProfessionalData(professional)
+      );
+      
+      return {
+        content: transformedProfessionals,
+        totalElements: response.totalElements,
+        totalPages: response.totalPages,
+        currentPage: response.currentPage,
+        size: response.size,
+        hasNext: response.hasNext,
+        hasPrevious: response.hasPrevious
+      };
     } catch (error) {
-      console.error('Erro ao buscar e transformar profissionais completos:', error);
+      // console.error('Erro ao buscar e transformar profissionais completos:', error);
       throw error;
     }
   }

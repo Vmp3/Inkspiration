@@ -8,7 +8,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Column;
+import jakarta.persistence.Transient;
+
 import java.math.BigDecimal;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+
+import inkspiration.backend.enums.TipoServico;
 
 @Entity
 public class Profissional {
@@ -25,11 +34,17 @@ public class Profissional {
     private Endereco endereco;
     
     @OneToOne
-    @JoinColumn(name = "portifolio_idPortifolio")
-    private Portifolio portifolio;
+    @JoinColumn(name = "portfolio_idPortfolio")
+    private Portfolio portfolio;
     
     @Column(precision = 3, scale = 1)
     private BigDecimal nota;
+    
+    @Column(name = "tipos_servico", length = 1000)
+    private String tiposServicoStr;
+    
+    @Transient
+    private Map<String, BigDecimal> tiposServicoPrecos = new HashMap<>();
     
     public Profissional() {}
     
@@ -58,12 +73,12 @@ public class Profissional {
         this.endereco = endereco;
     }
     
-    public Portifolio getPortifolio() {
-        return portifolio;
+    public Portfolio getPortfolio() {
+        return portfolio;
     }
     
-    public void setPortifolio(Portifolio portifolio) {
-        this.portifolio = portifolio;
+    public void setPortfolio(Portfolio portfolio) {
+        this.portfolio = portfolio;
     }
     
     public BigDecimal getNota() {
@@ -72,5 +87,36 @@ public class Profissional {
     
     public void setNota(BigDecimal nota) {
         this.nota = nota;
+    }
+    
+    public String getTiposServicoStr() {
+        return tiposServicoStr;
+    }
+    
+    public void setTiposServicoStr(String tiposServicoStr) {
+        this.tiposServicoStr = tiposServicoStr;
+    }
+    
+    public Map<String, BigDecimal> getTiposServicoPrecos() {
+        return tiposServicoPrecos;
+    }
+    
+    public void setTiposServicoPrecos(Map<String, BigDecimal> tiposServicoPrecos) {
+        this.tiposServicoPrecos = tiposServicoPrecos != null ? tiposServicoPrecos : new HashMap<>();
+    }
+    
+    // Métodos de compatibilidade para obter tipos de serviço como lista
+    public List<TipoServico> getTiposServico() {
+        if (tiposServicoPrecos == null || tiposServicoPrecos.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return tiposServicoPrecos.keySet().stream()
+                .map(TipoServico::valueOf)
+                .collect(Collectors.toList());
+    }
+    
+    // Método para obter apenas os preços
+    public Map<String, BigDecimal> getPrecosServicos() {
+        return new HashMap<>(tiposServicoPrecos != null ? tiposServicoPrecos : new HashMap<>());
     }
 } 

@@ -9,11 +9,13 @@ export const artistMessages = {
   // Mensagens de erro
   errors: {
     noArtistId: 'ID do profissional não encontrado',
+    professionalIdNotFound: 'ID do profissional não encontrado',
     loadProfile: 'Erro ao carregar dados do profissional',
     notFound: 'Profissional não encontrado',
     openLink: 'Não foi possível abrir o link',
     linkError: 'Erro ao abrir o link',
-    generic: 'Ocorreu um erro inesperado'
+    generic: 'Ocorreu um erro inesperado',
+    loginRequired: 'É necessário fazer login para agendar'
   },
 
   // Mensagens de sucesso

@@ -1,10 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import Input from '../ui/Input';
-import SearchInput from '../ui/SearchInput';
+
 import RatingFilter from './RatingFilter';
 import SpecialtiesFilter from './SpecialtiesFilter';
-import DistanceSlider from './DistanceSlider';
 import FilterSection from './FilterSection';
 import Button from '../ui/Button';
 
@@ -15,8 +14,6 @@ const FiltersPanel = ({
   setLocationTerm,
   minRating,
   setMinRating,
-  maxDistance,
-  setMaxDistance,
   selectedSpecialties,
   toggleSpecialty,
   handleSearch,
@@ -31,11 +28,13 @@ const FiltersPanel = ({
       {isTablet ? (
         <View style={styles.searchColumn}>
           <View style={styles.searchInputContainer}>
-            <SearchInput
+            <Input
               icon="search"
               placeholder="Buscar artistas"
               value={searchTerm}
               onChangeText={setSearchTerm}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
             />
           </View>
           <Button
@@ -50,11 +49,13 @@ const FiltersPanel = ({
       ) : (
         <View style={styles.searchRow}>
           <View style={styles.searchInputContainer}>
-            <SearchInput
+            <Input
               icon="search"
               placeholder="Buscar artistas"
               value={searchTerm}
               onChangeText={setSearchTerm}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
             />
           </View>
           <Button
@@ -75,20 +76,15 @@ const FiltersPanel = ({
       </View>
       
       <FilterSection title="Localização">
-        <SearchInput
+        <Input
           icon="location-on"
           placeholder="Sua localização"
           value={locationTerm}
           onChangeText={setLocationTerm}
+          onSubmitEditing={handleSearch}
+          returnKeyType="search"
         />
       </FilterSection>
-      
-      <DistanceSlider 
-        maxDistance={maxDistance} 
-        setMaxDistance={setMaxDistance}
-        onSliderRelease={updateActiveFilters}
-      />
-      
       <RatingFilter minRating={minRating} setMinRating={setMinRating} />
       
       <SpecialtiesFilter 

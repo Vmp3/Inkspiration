@@ -11,36 +11,49 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
-import SearchInput from '../components/ui/SearchInput';
+import Input from '../components/ui/Input';
 import FilterButton from '../components/FilterButton';
 import FilterDropdown from '../components/common/FilterDropdown';
 import ArtistCard from '../components/ArtistCard';
 import Footer from '../components/Footer';
 import ActiveFilters from '../components/common/ActiveFilters';
 import MobileFiltersModal from '../components/common/MobileFiltersModal';
-import ProfessionalService from '../services/ProfessionalService';
-import toastHelper from '../utils/toastHelper';
 import { homeMessages } from '../components/home/messages';
 import Button from '../components/ui/Button';
+import useProfessionalSearch from '../hooks/useProfessionalSearch';
 
 const HomeScreen = ({ navigation }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [locationTerm, setLocationTerm] = useState('');
-  const [viewType, setViewType] = useState('artists');
-  const [minRating, setMinRating] = useState(0);
-  const [selectedSpecialties, setSelectedSpecialties] = useState([]);
+  // Usar o hook personalizado com configurações para a Home
+  const {
+    searchTerm,
+    setSearchTerm,
+    locationTerm,
+    setLocationTerm,
+    minRating,
+    setMinRating,
+    selectedSpecialties,
+    setSelectedSpecialties,
+    activeFilters,
+    displayedArtists,
+    isLoading,
+    loadingTime,
+    handleSearch,
+    toggleSpecialty,
+    resetFilters,
+    removeFilter,
+    updateActiveFilters,
+    loadProfessionals
+  } = useProfessionalSearch({
+    initialSortBy: 'relevancia',
+    limitResults: true,
+    resultLimit: 6
+  });
+
   const [isFilterDropdownVisible, setIsFilterDropdownVisible] = useState(false);
   const [filterButtonPosition, setFilterButtonPosition] = useState({ top: 0, left: 0 });
   const filterButtonRef = useRef(null);
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
-  const [activeFilters, setActiveFilters] = useState([]);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
-  
-  // Estado para resultados filtrados
-  const [allArtists, setAllArtists] = useState([]);
-  const [filteredArtists, setFilteredArtists] = useState([]);
-  const [displayedArtists, setDisplayedArtists] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Detectar tamanho da tela para responsividade
   const updateLayout = () => {
@@ -74,127 +87,6 @@ const HomeScreen = ({ navigation }) => {
       }
     };
   }, []);
-
-  useEffect(() => {
-    loadProfessionals();
-  }, []);
-
-  const loadProfessionals = async () => {
-    try {
-      setIsLoading(true);
-      const professionals = await ProfessionalService.getTransformedCompleteProfessionals();
-      setAllArtists(professionals);
-      setFilteredArtists(professionals);
-      setDisplayedArtists(professionals.slice(0, 6));
-    } catch (error) {
-      console.error('Erro ao carregar profissionais:', error);
-      toastHelper.showError('Erro ao carregar profissionais');
-      setAllArtists([]);
-      setFilteredArtists([]);
-      setDisplayedArtists([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Todas as especialidades disponíveis
-  const allSpecialties = [
-    "Tradicional",
-    "Japonês",
-    "Aquarela",
-    "Minimalista",
-    "Blackwork",
-    "Geométrico",
-    "Realista",
-    "Retratos",
-    "Neo-Tradicional",
-    "Old School",
-  ];
-
-  // Função de busca
-  const handleSearch = () => {
-    // Filtrar artistas
-    const artistResults = allArtists.filter((artist) => {
-      const matchesSearch = 
-        searchTerm === "" || 
-        artist.name.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesLocation = 
-        locationTerm === "" || 
-        artist.location.toLowerCase().includes(locationTerm.toLowerCase());
-
-      return matchesSearch && matchesLocation;
-    });
-
-    setFilteredArtists(artistResults);
-    updateDisplayedResults(viewType, artistResults);
-  };
-
-  // Aplicar filtros
-  const applyFilters = () => {
-    // Filtrar artistas
-    const artistResults = filteredArtists.filter((artist) => {
-      const matchesRating = artist.rating >= minRating;
-
-      const matchesSpecialties =
-        selectedSpecialties.length === 0 ||
-        selectedSpecialties.some((specialty) => artist.specialties.includes(specialty));
-
-      return matchesRating && matchesSpecialties;
-    });
-
-    updateDisplayedResults(viewType, artistResults);
-    updateActiveFilters();
-  };
-
-  // Atualizar resultados exibidos com base no tipo de visualização
-  const updateDisplayedResults = (type, artists) => {
-    setDisplayedArtists(artists.slice(0, 6));
-  };
-
-  // Alternar seleção de especialidade
-  const toggleSpecialty = (specialty) => {
-    setSelectedSpecialties((prev) =>
-      prev.includes(specialty) ? prev.filter((s) => s !== specialty) : [...prev, specialty]
-    );
-  };
-
-  // Resetar filtros
-  const resetFilters = () => {
-    setMinRating(0);
-    setSelectedSpecialties([]);
-    setActiveFilters([]);
-  };
-
-  // Atualizar filtros ativos
-  const updateActiveFilters = () => {
-    const filters = [];
-    
-    if (minRating > 0) {
-      filters.push({ type: 'rating', value: `${minRating}★` });
-    }
-    
-    selectedSpecialties.forEach(specialty => {
-      filters.push({ type: 'specialty', value: specialty });
-    });
-    
-    setActiveFilters(filters);
-  };
-
-  // Remover filtro específico
-  const removeFilter = (filter) => {
-    if (filter.type === 'rating') {
-      setMinRating(0);
-    } else if (filter.type === 'specialty') {
-      setSelectedSpecialties(prev => prev.filter(s => s !== filter.value));
-    }
-    updateActiveFilters();
-  };
-
-  // Efeito para aplicar filtros quando eles mudam
-  useEffect(() => {
-    applyFilters();
-  }, [minRating, selectedSpecialties]);
 
   // Renderização dos itens de artista
   const renderArtistItem = ({ item }) => {
@@ -246,6 +138,15 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  // Renderizar o componente de carregamento
+  const renderLoading = useMemo(() => (
+    <View style={styles.loadingContainer}>
+      <MaterialIcons name="hourglass-top" size={32} color="#6B7280" />
+      <Text style={styles.loadingText}>Carregando profissionais...</Text>
+      <Text style={styles.loadingSubtext}>Aguarde enquanto buscamos os melhores profissionais para você</Text>
+    </View>
+  ), []);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -264,20 +165,24 @@ const HomeScreen = ({ navigation }) => {
                   // Layout para dispositivos móveis
                   <View style={styles.mobileSearchContainer}>
                     <View style={styles.mobileInputWrapper}>
-                      <SearchInput
+                      <Input
                         icon="search"
                         placeholder="Buscar artistas"
                         value={searchTerm}
                         onChangeText={setSearchTerm}
+                        onSubmitEditing={handleSearch}
+                        returnKeyType="search"
                       />
                     </View>
                     
                     <View style={styles.mobileInputWrapper}>
-                      <SearchInput
+                      <Input
                         icon="location-on"
                         placeholder="Sua localização"
                         value={locationTerm}
                         onChangeText={setLocationTerm}
+                        onSubmitEditing={handleSearch}
+                        returnKeyType="search"
                       />
                     </View>
                     
@@ -294,20 +199,24 @@ const HomeScreen = ({ navigation }) => {
                   // Layout para desktop/tablet
                   <View style={styles.searchInputRow}>
                     <View style={styles.searchInputContainer}>
-                      <SearchInput
+                      <Input
                         icon="search"
                         placeholder="Buscar artistas"
                         value={searchTerm}
                         onChangeText={setSearchTerm}
+                        onSubmitEditing={handleSearch}
+                        returnKeyType="search"
                       />
                     </View>
                     
                     <View style={styles.searchInputContainer}>
-                      <SearchInput
+                      <Input
                         icon="location-on"
                         placeholder="Sua localização"
                         value={locationTerm}
                         onChangeText={setLocationTerm}
+                        onSubmitEditing={handleSearch}
+                        returnKeyType="search"
                       />
                     </View>
                     
@@ -341,9 +250,7 @@ const HomeScreen = ({ navigation }) => {
             </View>
 
             {isLoading ? (
-              <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Carregando profissionais...</Text>
-              </View>
+              renderLoading
             ) : displayedArtists.length > 0 ? (
               <View style={styles.artistsSection}>
                 <View style={styles.sectionHeader}>
@@ -352,6 +259,12 @@ const HomeScreen = ({ navigation }) => {
                     <Text style={styles.seeAllButton}>Ver todos</Text>
                   </TouchableOpacity>
                 </View>
+
+                {loadingTime > 0 && (
+                  <Text style={styles.loadingTimeText}>
+                    Carregado em {loadingTime} segundos
+                  </Text>
+                )}
 
                 <FlatList
                   key={flatListKey}
@@ -390,7 +303,7 @@ const HomeScreen = ({ navigation }) => {
         selectedSpecialties={selectedSpecialties}
         toggleSpecialty={toggleSpecialty}
         resetFilters={resetFilters}
-        applyFilters={applyFilters}
+        applyFilters={() => loadProfessionals(true)}
         anchorPosition={filterButtonPosition}
       />
 
@@ -404,13 +317,11 @@ const HomeScreen = ({ navigation }) => {
         setLocationTerm={setLocationTerm}
         minRating={minRating}
         setMinRating={setMinRating}
-        maxDistance={0}
-        setMaxDistance={() => {}}
         selectedSpecialties={selectedSpecialties}
         toggleSpecialty={toggleSpecialty}
         handleSearch={handleSearch}
         resetFilters={resetFilters}
-        applyFilters={applyFilters}
+        applyFilters={() => loadProfessionals(true)}
         updateActiveFilters={updateActiveFilters}
       />
     </SafeAreaView>
@@ -574,6 +485,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  loadingSubtext: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+  loadingTimeText: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'right',
+    marginBottom: 8,
+    fontStyle: 'italic',
   },
 });
 

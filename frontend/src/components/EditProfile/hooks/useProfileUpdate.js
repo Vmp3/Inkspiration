@@ -10,7 +10,7 @@ const useProfileUpdate = (isArtist, updateProfessionalData) => {
   const navigation = useNavigation();
   const { updateUserData, userData } = useAuth();
 
-  const handleUpdateProfile = async (formData, validateCurrentTab) => {
+  const handleUpdateProfile = async (formData, validateCurrentTab, professionalFormData, profileImage = null) => {
     if (!validateCurrentTab()) return;
 
     try {
@@ -44,6 +44,13 @@ const useProfileUpdate = (isArtist, updateProfessionalData) => {
         manterSenhaAtual: true
       };
 
+      // Adicionar imagem de perfil se existir
+      if (profileImage && profileImage.base64) {
+        updateData.imagemPerfil = profileImage.base64;
+      } else if (professionalFormData && professionalFormData.profileImage && professionalFormData.profileImage.base64) {
+        updateData.imagemPerfil = professionalFormData.profileImage.base64;
+      }
+
       if (isArtist) {
         updateData.especialidades = formData.especialidades || [];
         updateData.bio = formData.bio || '';
@@ -73,19 +80,19 @@ const useProfileUpdate = (isArtist, updateProfessionalData) => {
       // Redirecionar para a tela inicial
       navigation.navigate('Home');
     } catch (error) {
-      console.error('Erro ao atualizar perfil:', error);
+      // console.error('Erro ao atualizar perfil:', error);
       // Novo tratamento para mensagem do backend
       if (error.response && error.response.data && typeof error.response.data.error === 'string') {
         const msg = error.response.data.error;
         if (msg.includes('Senha atual incorreta')) {
-          toastHelper.showError('Senha atual incorreta');
+          toastHelper.showError(editProfileMessages.validations.passwordIncorrect);
           return;
         }
         toastHelper.showError(msg);
         return;
       }
       if (error.message && error.message.includes('Senha atual incorreta')) {
-        toastHelper.showError('Senha atual incorreta');
+        toastHelper.showError(editProfileMessages.validations.passwordIncorrect);
       } else {
         toastHelper.showError(editProfileMessages.errors.saveProfile);
       }

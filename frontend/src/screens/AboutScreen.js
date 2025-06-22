@@ -17,8 +17,6 @@ import MissionSection from '../components/about/MissionSection';
 import HowItWorksSection from '../components/about/HowItWorksSection';
 import WhyChooseSection from '../components/about/WhyChooseSection';
 import CTASection from '../components/about/CTASection';
-import toastHelper from '../utils/toastHelper';
-import { aboutMessages } from '../components/about/messages';
 
 const AboutScreen = ({ navigation }) => {
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
@@ -47,12 +45,10 @@ const AboutScreen = ({ navigation }) => {
 
   // Navigation handlers
   const handleExplorePress = () => {
-    toastHelper.showInfo(aboutMessages.navigation.explore);
     navigation.navigate('Explore');
   };
   
   const handleCreateAccountPress = () => {
-    toastHelper.showInfo(aboutMessages.navigation.createAccount);
     navigation.navigate('Register');
   };
 

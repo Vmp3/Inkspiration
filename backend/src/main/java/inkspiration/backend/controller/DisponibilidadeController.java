@@ -1,6 +1,6 @@
 package inkspiration.backend.controller;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -15,11 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import inkspiration.backend.dto.DisponibilidadeDTO;
 import inkspiration.backend.service.DisponibilidadeService;
-import inkspiration.backend.security.AuthorizationService;
 import inkspiration.backend.service.ProfissionalService;
 
 @RestController
@@ -27,93 +24,61 @@ import inkspiration.backend.service.ProfissionalService;
 public class DisponibilidadeController {
     
     private final DisponibilidadeService disponibilidadeService;
-    private final AuthorizationService authorizationService;
     private final ProfissionalService profissionalService;
     
-    public DisponibilidadeController(DisponibilidadeService disponibilidadeService, AuthorizationService authorizationService, ProfissionalService profissionalService) {
+    public DisponibilidadeController(DisponibilidadeService disponibilidadeService, ProfissionalService profissionalService) {
         this.disponibilidadeService = disponibilidadeService;
-        this.authorizationService = authorizationService;
         this.profissionalService = profissionalService;
     }
     
     @PostMapping("/profissional/{idProfissional}")
-    public ResponseEntity<?> cadastrarDisponibilidade(
+    public ResponseEntity<DisponibilidadeDTO> cadastrarDisponibilidade(
             @PathVariable Long idProfissional,
             @RequestBody Map<String, List<Map<String, String>>> horarios) {
         
-        try {
             // Busca o profissional para obter o ID do usuário
             var profissional = profissionalService.buscarPorId(idProfissional);
             Long idUsuario = profissional.getUsuario().getIdUsuario();
             
-            // Verifica se o usuário pode cadastrar disponibilidade para este profissional
-            authorizationService.requireUserAccessOrAdmin(idUsuario);
+        DisponibilidadeDTO disponibilidadeDTO = disponibilidadeService.cadastrarDisponibilidadeDTOComValidacao(
+                idProfissional, horarios, idUsuario);
             
-            DisponibilidadeDTO disponibilidadeDTO = disponibilidadeService.cadastrarDisponibilidadeDTO(
-                    idProfissional, horarios);
             return ResponseEntity.status(HttpStatus.CREATED).body(disponibilidadeDTO);
-        } catch (JsonProcessingException e) {
-            return ResponseEntity.badRequest().body("Erro ao processar JSON: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
     }
     
     @GetMapping("/profissional/{idProfissional}")
-    public ResponseEntity<?> obterDisponibilidade(@PathVariable Long idProfissional) {
-        try {
+    public ResponseEntity<Map<String, List<Map<String, String>>>> obterDisponibilidade(@PathVariable Long idProfissional) {
             Map<String, List<Map<String, String>>> disponibilidade = 
-                    disponibilidadeService.obterDisponibilidade(idProfissional);
+                disponibilidadeService.obterDisponibilidadeComValidacao(idProfissional);
+        
             return ResponseEntity.ok(disponibilidade);
-        } catch (JsonProcessingException e) {
-            return ResponseEntity.badRequest().body("Erro ao processar JSON: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
     }
     
     @GetMapping("/profissional/{idProfissional}/dto")
-    public ResponseEntity<?> obterDisponibilidadeDTO(@PathVariable Long idProfissional) {
-        try {
+    public ResponseEntity<DisponibilidadeDTO> obterDisponibilidadeDTO(@PathVariable Long idProfissional) {
             // Busca o profissional para obter o ID do usuário
             var profissional = profissionalService.buscarPorId(idProfissional);
             Long idUsuario = profissional.getUsuario().getIdUsuario();
             
-            // Verifica se o usuário pode acessar a disponibilidade deste profissional
-            authorizationService.requireUserAccessOrAdmin(idUsuario);
+        DisponibilidadeDTO disponibilidadeDTO = disponibilidadeService.buscarPorProfissionalDTOComValidacao(idProfissional, idUsuario);
             
-            DisponibilidadeDTO disponibilidadeDTO = disponibilidadeService.buscarPorProfissionalDTO(idProfissional);
             return ResponseEntity.ok(disponibilidadeDTO);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
     }
     
-    @GetMapping("/profissional/{idProfissional}/verificar")
-    public ResponseEntity<?> verificarDisponibilidade(
-            @PathVariable Long idProfissional,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim) {
+    @GetMapping("/verificar")
+    public ResponseEntity<?> obterHorariosDisponiveis(
+            @RequestParam Long idProfissional,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
+            @RequestParam String tipoServico) {
         
-        try {
-            boolean disponivel = disponibilidadeService.isProfissionalDisponivel(
-                    idProfissional, inicio, fim);
+        List<String> horariosDisponiveis = disponibilidadeService.obterHorariosDisponiveisComValidacao(
+                idProfissional, data, tipoServico);
             
-            if (disponivel) {
-                return ResponseEntity.ok(Map.of(
-                    "disponivel", true,
-                    "mensagem", "O profissional está trabalhando nesse horário"
-                ));
-            } else {
-                return ResponseEntity.ok(Map.of(
-                    "disponivel", false,
-                    "mensagem", "O profissional não está trabalhando nesse horário"
-                ));
+            if (horariosDisponiveis.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                        .body(Map.of("mensagem", "Não há horários disponíveis para este dia e tipo de serviço"));
             }
-        } catch (JsonProcessingException e) {
-            return ResponseEntity.badRequest().body("Erro ao processar JSON: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+            
+            return ResponseEntity.ok(horariosDisponiveis);
     }
 } 

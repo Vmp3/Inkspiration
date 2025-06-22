@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
 import SectionTitle from './SectionTitle';
 import ChecklistItem from './ChecklistItem';
+import aboutScreen from '../../../assets/aboutScreen.png';
 
 /**
  * Mission section component for the About page
@@ -45,7 +45,7 @@ const MissionSection = ({ isMobile }) => {
         {!isMobile && (
           <View style={styles.imageContainer}>
             <View style={styles.imagePlaceholder}>
-              <MaterialIcons name="image" size={48} color="#d1d5db" />
+              <Image source={aboutScreen} style={styles.image} />
             </View>
           </View>
         )}
@@ -84,6 +84,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
+    minWidth: 300,
   },
   imagePlaceholder: {
     width: '100%',
@@ -92,7 +93,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-  }
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
 });
 
 export default MissionSection; 

@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import inkspiration.backend.entities.Portifolio;
+import inkspiration.backend.entities.Portfolio;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
 
@@ -19,5 +19,4 @@ public interface ProfissionalRepository extends JpaRepository<Profissional, Long
     Page<Profissional> findAll(Pageable pageable);
     boolean existsByUsuario(Usuario usuario);
     boolean existsByUsuario_IdUsuario(Long idUsuario);
-    List<Profissional> findByPortifolio(Portifolio portifolio);
 } 

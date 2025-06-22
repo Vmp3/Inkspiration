@@ -17,6 +17,7 @@ import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import PublicAuthService from '../services/PublicAuthService';
 import { authMessages } from '../components/auth/messages';
+import { useEmailTimeout, EMAIL_TIMEOUT_CONFIG } from '../components/ui/EmailTimeout';
 
 const ForgotPasswordScreen = () => {
   const navigation = useNavigation();
@@ -24,9 +25,11 @@ const ForgotPasswordScreen = () => {
   const [formData, setFormData] = useState({
     cpf: '',
   });
-  const [loading, setLoading] = useState(false);
   const [cpfError, setCpfError] = useState('');
   const [emailSent, setEmailSent] = useState(false);
+  
+  // Hook para timeout de email
+  const emailTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.DEFAULT_TIMEOUT);
 
   const handleChange = (field, value) => {
     let formattedValue = value;
@@ -62,15 +65,20 @@ const ForgotPasswordScreen = () => {
       return;
     }
 
-    setLoading(true);
     try {
-      await PublicAuthService.forgotPassword(formData.cpf.replace(/\D/g, ''));
-        setEmailSent(true);
-      toastHelper.showSuccess(authMessages.success.forgotPasswordSuccess);
+      await emailTimeout.executeWithTimeout(
+        () => PublicAuthService.forgotPassword(formData.cpf.replace(/\D/g, '')),
+        {
+          successMessage: authMessages.success.forgotPasswordSuccess,
+          timeoutMessage: 'Tempo limite para envio do email esgotado. Verifique sua conexão e tente novamente.',
+          errorMessage: 'Erro ao enviar email de recuperação.',
+          onSuccess: () => {
+            setEmailSent(true);
+          }
+        }
+      );
     } catch (error) {
-      toastHelper.showError(error.message);
-    } finally {
-      setLoading(false);
+      // Erro já tratado pelo hook
     }
   };
 
@@ -113,10 +121,10 @@ const ForgotPasswordScreen = () => {
                 </View>
 
                 <Button
-                  label={loading ? authMessages.loading.forgotPassword : "Enviar link de recuperação"}
+                  label={emailTimeout.isLoading ? authMessages.loading.forgotPassword : "Enviar email de recuperação"}
                   onPress={handleSubmit}
-                  loading={loading}
-                  disabled={loading}
+                  loading={emailTimeout.isLoading}
+                  disabled={emailTimeout.isLoading}
                   style={styles.submitButton}
                 />
               </View>
@@ -138,12 +146,12 @@ const ForgotPasswordScreen = () => {
                 />
 
                 <TouchableOpacity 
-                  style={[styles.resendButton, loading && styles.resendButtonDisabled]}
+                  style={[styles.resendButton, emailTimeout.isLoading && styles.resendButtonDisabled]}
                   onPress={handleSubmit}
-                  disabled={loading}
+                  disabled={emailTimeout.isLoading}
                 >
-                  <Text style={[styles.resendText, loading && styles.resendTextDisabled]}>
-                    {loading ? authMessages.loading.resendCode : "Reenviar código"}
+                  <Text style={[styles.resendText, emailTimeout.isLoading && styles.resendTextDisabled]}>
+                    {emailTimeout.isLoading ? authMessages.loading.resendCode : "Reenviar código"}
                   </Text>
                 </TouchableOpacity>
               </View>

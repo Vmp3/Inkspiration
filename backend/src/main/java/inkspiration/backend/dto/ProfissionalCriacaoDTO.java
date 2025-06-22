@@ -1,20 +1,44 @@
 package inkspiration.backend.dto;
 
 import java.util.List;
+import java.util.Map;
+import java.math.BigDecimal;
+
+import inkspiration.backend.enums.TipoServico;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 
 public class ProfissionalCriacaoDTO {
     private Long idUsuario;
     private Long idEndereco;
     
-    // Portifolio
+    @NotEmpty(message = "Pelo menos um tipo de serviço é obrigatório")
+    private List<TipoServico> tiposServico;
+    
+    // Preços dos serviços
+    private Map<String, BigDecimal> precosServicos;
+    
+    // Portfolio
+    @NotBlank(message = "Biografia é obrigatória")
+    @Size(min = 20, max = 500, message = "Biografia deve ter entre 20 e 500 caracteres")
     private String descricao;
     private String experiencia;
     private String especialidade;
-    private List<String> estilosTatuagem;
+    
+    @Size(max = 255, message = "Website deve ter no máximo 255 caracteres")
     private String website;
+    
+    @Size(max = 50, message = "TikTok deve ter no máximo 50 caracteres")
     private String tiktok;
+    
+    @Size(max = 50, message = "Instagram deve ter no máximo 50 caracteres")
     private String instagram;
+    
+    @Size(max = 50, message = "Facebook deve ter no máximo 50 caracteres")
     private String facebook;
+    
+    @Size(max = 50, message = "Twitter deve ter no máximo 50 caracteres")
     private String twitter;
     
     // Disponibilidade
@@ -23,22 +47,24 @@ public class ProfissionalCriacaoDTO {
     public ProfissionalCriacaoDTO() {
     }
     
-    public ProfissionalCriacaoDTO(Long idUsuario, Long idEndereco, String descricao, 
+    public ProfissionalCriacaoDTO(Long idUsuario, Long idEndereco, List<TipoServico> tiposServico, String descricao, 
                                 String experiencia, String especialidade,
                                 List<String> estilosTatuagem, List<DisponibilidadeDTO> disponibilidades,
-                                String website, String tiktok, String instagram, String facebook, String twitter) {
+                                String website, String tiktok, String instagram, String facebook, String twitter,
+                                Map<String, BigDecimal> precosServicos) {
         this.idUsuario = idUsuario;
         this.idEndereco = idEndereco;
+        this.tiposServico = tiposServico;
         this.descricao = descricao;
         this.experiencia = experiencia;
         this.especialidade = especialidade;
-        this.estilosTatuagem = estilosTatuagem;
         this.disponibilidades = disponibilidades;
         this.website = website;
         this.tiktok = tiktok;
         this.instagram = instagram;
         this.facebook = facebook;
         this.twitter = twitter;
+        this.precosServicos = precosServicos;
     }
 
     public Long getIdUsuario() {
@@ -55,6 +81,14 @@ public class ProfissionalCriacaoDTO {
 
     public void setIdEndereco(Long idEndereco) {
         this.idEndereco = idEndereco;
+    }
+    
+    public List<TipoServico> getTiposServico() {
+        return tiposServico;
+    }
+    
+    public void setTiposServico(List<TipoServico> tiposServico) {
+        this.tiposServico = tiposServico;
     }
 
     public String getDescricao() {
@@ -79,14 +113,6 @@ public class ProfissionalCriacaoDTO {
 
     public void setEspecialidade(String especialidade) {
         this.especialidade = especialidade;
-    }
-
-    public List<String> getEstilosTatuagem() {
-        return estilosTatuagem;
-    }
-
-    public void setEstilosTatuagem(List<String> estilosTatuagem) {
-        this.estilosTatuagem = estilosTatuagem;
     }
 
     public List<DisponibilidadeDTO> getDisponibilidades() {
@@ -135,5 +161,13 @@ public class ProfissionalCriacaoDTO {
 
     public void setTwitter(String twitter) {
         this.twitter = twitter;
+    }
+
+    public Map<String, BigDecimal> getPrecosServicos() {
+        return precosServicos;
+    }
+    
+    public void setPrecosServicos(Map<String, BigDecimal> precosServicos) {
+        this.precosServicos = precosServicos;
     }
 } 

@@ -1,9 +1,57 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { TimeInput } from '../TimeInput';
+import toastHelper from '../../utils/toastHelper';
 
 const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleNextTab }) => {
+  const isTimeComplete = (time) => {
+    return time && time.length === 5;
+  };
+  
+  const validateTimeFormat = (time, period) => {
+    if (!isTimeComplete(time)) {
+      return false;
+    }
+    
+    const [hours, minutes] = time.split(':').map(num => parseInt(num, 10));
+    const timeInMinutes = hours * 60 + minutes;
+    
+    if (period === 'morning' && timeInMinutes > 11 * 60 + 59) {
+      return false;
+    } else if (period === 'afternoon' && timeInMinutes < 12 * 60) {
+      return false;
+    }
+    
+    return true;
+  };
+
+  const validateEndTime = (startTime, endTime, period) => {
+    if (!isTimeComplete(startTime) || !isTimeComplete(endTime)) {
+      return false;
+    }
+    
+    if (!validateTimeFormat(startTime, period) || !validateTimeFormat(endTime, period)) {
+      return false;
+    }
+    
+    const [startHours, startMinutes] = startTime.split(':').map(num => parseInt(num, 10));
+    const [endHours, endMinutes] = endTime.split(':').map(num => parseInt(num, 10));
+    
+    const startInMinutes = startHours * 60 + startMinutes;
+    const endInMinutes = endHours * 60 + endMinutes;
+    
+    if (endInMinutes <= startInMinutes) {
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleTimeChange = (index, period, field, value) => {
+    handleWorkHourChange(index, period, field, value);
+  };
+
   return (
     <View style={styles.tabContent}>
       <Text style={styles.workHoursTitle}>Horário de Trabalho</Text>
@@ -41,14 +89,19 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
                   <View style={styles.timeInputContainer}>
                     <TimeInput
                       value={day.morning.start}
-                      onChange={(value) => handleWorkHourChange(index, 'morning', 'start', value)}
+                      onChange={(value) => handleTimeChange(index, 'morning', 'start', value)}
                       disabled={!day.morning.enabled}
+                      period="morning"
+                      type="start"
                     />
                     <Text style={styles.timeInputSeparator}>às</Text>
                     <TimeInput
                       value={day.morning.end}
-                      onChange={(value) => handleWorkHourChange(index, 'morning', 'end', value)}
+                      onChange={(value) => handleTimeChange(index, 'morning', 'end', value)}
                       disabled={!day.morning.enabled}
+                      period="morning"
+                      type="end"
+                      startTime={day.morning.start}
                     />
                   </View>
                 </View>
@@ -67,14 +120,19 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
                   <View style={styles.timeInputContainer}>
                     <TimeInput
                       value={day.afternoon.start}
-                      onChange={(value) => handleWorkHourChange(index, 'afternoon', 'start', value)}
+                      onChange={(value) => handleTimeChange(index, 'afternoon', 'start', value)}
                       disabled={!day.afternoon.enabled}
+                      period="afternoon"
+                      type="start"
                     />
                     <Text style={styles.timeInputSeparator}>às</Text>
                     <TimeInput
                       value={day.afternoon.end}
-                      onChange={(value) => handleWorkHourChange(index, 'afternoon', 'end', value)}
+                      onChange={(value) => handleTimeChange(index, 'afternoon', 'end', value)}
                       disabled={!day.afternoon.enabled}
+                      period="afternoon"
+                      type="end"
+                      startTime={day.afternoon.start}
                     />
                   </View>
                 </View>

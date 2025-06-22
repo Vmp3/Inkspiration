@@ -1,6 +1,7 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import ApiService from '../../services/ApiService';
 
 const BasicInfoForm = ({ 
   experience, 
@@ -11,9 +12,16 @@ const BasicInfoForm = ({
   handleSocialMediaChange, 
   handleNextTab, 
   experienceDropdownOpen, 
-  setExperienceDropdownOpen 
+  setExperienceDropdownOpen,
+  tiposServico,
+  setTiposServico,
+  tipoServicoSelecionados,
+  handleTipoServicoChange,
+  precosServicos,
+  handlePrecoServicoChange
 }) => {
   const dropdownRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   const experienceOptions = [
     'Menos de 1 ano',
@@ -24,8 +32,27 @@ const BasicInfoForm = ({
   ];
   
   useEffect(() => {
+    const fetchTiposServico = async () => {
+      if (!tiposServico || tiposServico.length === 0) {
+        setIsLoading(true);
+        try {
+          const response = await ApiService.get('/tipos-servico');
+          if (response && Array.isArray(response)) {
+            setTiposServico(response);
+          }
+        } catch (error) {
+          // console.error('Erro ao carregar tipos de serviço:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    fetchTiposServico();
+  }, []);
+  
+  useEffect(() => {
     if (Platform.OS === 'web') {
-      // Função para remover o z-index:0 dos elementos com a classe .css-view-175oi2r
       const removeZIndexFromViews = () => {
         const cssViewElements = document.querySelectorAll('.css-view-175oi2r');
         cssViewElements.forEach(element => {
@@ -38,7 +65,6 @@ const BasicInfoForm = ({
           const parentElements = [];
           let currentParent = dropdownRef.current.parentElement;
           
-          // Percorre os elementos pais até encontrar o body
           while (currentParent && currentParent !== document.body) {
             parentElements.push(currentParent);
             currentParent = currentParent.parentElement;
@@ -66,6 +92,36 @@ const BasicInfoForm = ({
   const handleExperienceSelect = (option) => {
     setExperience(option);
     setExperienceDropdownOpen(false);
+  };
+
+  const formatarNomeTipo = (nome) => {
+    if (nome === 'SESSAO') return 'Sessão';
+    if (nome.startsWith('TATUAGEM_')) {
+      const tipo = nome.replace('TATUAGEM_', '').toLowerCase();
+      return 'Tatuagem ' + tipo.charAt(0).toUpperCase() + tipo.slice(1);
+    }
+    return nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
+  };
+
+  const formatarPreco = (valor) => {
+    // Remove tudo que não é número
+    const apenasNumeros = valor.replace(/\D/g, '');
+    
+    if (!apenasNumeros) return '';
+    
+    // Converte para número e divide por 100 para ter centavos
+    const numero = parseInt(apenasNumeros) / 100;
+    
+    // Formata com separadores brasileiros
+    return numero.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  const handlePrecoChange = (tipoNome, valor) => {
+    const valorFormatado = formatarPreco(valor);
+    handlePrecoServicoChange(tipoNome, valorFormatado);
   };
 
   return (
@@ -111,6 +167,50 @@ const BasicInfoForm = ({
       </View>
       
       <View style={styles.formGroup}>
+        <Text style={styles.label}>Tipos de Serviço</Text>
+        {isLoading ? (
+          <ActivityIndicator size="small" color="#000" />
+        ) : (
+          <View style={styles.checkboxGrid}>
+            {tiposServico && tiposServico.map((tipo, index) => (
+              <View key={index} style={styles.checkboxTipoServicoContainer}>
+                <View style={styles.checkboxTipoServico}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.checkbox, 
+                      tipoServicoSelecionados[tipo.nome] && styles.checkboxChecked
+                    ]}
+                    onPress={() => handleTipoServicoChange(tipo.nome)}
+                  >
+                    {tipoServicoSelecionados[tipo.nome] && <Feather name="check" size={16} color="#fff" />}
+                  </TouchableOpacity>
+                  <View style={styles.tipoServicoTextContainer}>
+                    <Text style={styles.checkboxLabel}>
+                      {formatarNomeTipo(tipo.nome)} | Duração: {tipo.duracaoHoras} {tipo.duracaoHoras === 1 ? 'hora' : 'horas'}
+                    </Text>
+                  </View>
+                </View>
+                
+                {/* Input de preço aparece quando o serviço é selecionado */}
+                {tipoServicoSelecionados[tipo.nome] && (
+                  <View style={styles.precoInputContainer}>
+                    <Text style={styles.precoLabel}>Preço (R$):</Text>
+                    <TextInput
+                      style={styles.precoInput}
+                      placeholder="0,00"
+                      value={precosServicos[tipo.nome] || ''}
+                      onChangeText={(text) => handlePrecoChange(tipo.nome, text)}
+                      keyboardType="numeric"
+                    />
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+      
+      <View style={styles.formGroup}>
         <Text style={styles.label}>Especialidades</Text>
         <View style={styles.checkboxGrid}>
           {Object.entries(specialties).map(([name, checked], index) => (
@@ -137,6 +237,7 @@ const BasicInfoForm = ({
             placeholder="@seu_instagram"
             value={socialMedia.instagram}
             onChangeText={(text) => handleSocialMediaChange('instagram', text)}
+            maxLength={50}
           />
         </View>
         
@@ -147,6 +248,7 @@ const BasicInfoForm = ({
             placeholder="@seu_tiktok"
             value={socialMedia.tiktok}
             onChangeText={(text) => handleSocialMediaChange('tiktok', text)}
+            maxLength={50}
           />
         </View>
         
@@ -157,6 +259,7 @@ const BasicInfoForm = ({
             placeholder="facebook.com/seuperfil"
             value={socialMedia.facebook}
             onChangeText={(text) => handleSocialMediaChange('facebook', text)}
+            maxLength={50}
           />
         </View>
         
@@ -167,6 +270,7 @@ const BasicInfoForm = ({
             placeholder="@seu_twitter"
             value={socialMedia.twitter}
             onChangeText={(text) => handleSocialMediaChange('twitter', text)}
+            maxLength={50}
           />
         </View>
         
@@ -177,6 +281,7 @@ const BasicInfoForm = ({
             placeholder="seusite.com"
             value={socialMedia.website}
             onChangeText={(text) => handleSocialMediaChange('website', text)}
+            maxLength={255}
           />
         </View>
       </View>
@@ -264,6 +369,37 @@ const styles = StyleSheet.create({
     width: '33.33%',
     marginBottom: 12,
   },
+  checkboxTipoServicoContainer: {
+    width: '100%',
+    marginBottom: 16,
+    paddingRight: 8,
+  },
+  checkboxTipoServico: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    width: '100%',
+    marginBottom: 8,
+  },
+  precoInputContainer: {
+    marginTop: 8,
+    marginLeft: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  precoLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginRight: 8,
+    minWidth: 70,
+  },
+  precoInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 4,
+    padding: 8,
+    width: 120,
+    textAlign: 'left',
+  },
   checkbox: {
     width: 20,
     height: 20,
@@ -273,6 +409,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
+    marginTop: 2,
   },
   checkboxChecked: {
     backgroundColor: '#000',
@@ -280,6 +417,11 @@ const styles = StyleSheet.create({
   },
   checkboxLabel: {
     fontSize: 14,
+  },
+  checkboxSubLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
   },
   socialInputRow: {
     flexDirection: 'row',
@@ -294,6 +436,11 @@ const styles = StyleSheet.create({
     padding: 10,
     marginLeft: 10,
   },
+  tipoServicoTextContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
 });
 
-export default BasicInfoForm; 
+export default BasicInfoForm;

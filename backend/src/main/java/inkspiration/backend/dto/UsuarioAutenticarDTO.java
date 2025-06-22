@@ -11,6 +11,12 @@ public class UsuarioAutenticarDTO {
     private String senha;
 
     private String role;
+    
+    // Campo opcional para código de 2FA
+    private Integer twoFactorCode;
+    
+    // Campo opcional para "Lembrar de mim"
+    private Boolean rememberMe;
 
     public UsuarioAutenticarDTO() {
     }
@@ -52,5 +58,21 @@ public class UsuarioAutenticarDTO {
 
     public void setRole(String role) {
         this.role = role;
+    }
+    
+    public Integer getTwoFactorCode() {
+        return twoFactorCode;
+    }
+    
+    public void setTwoFactorCode(Integer twoFactorCode) {
+        this.twoFactorCode = twoFactorCode;
+    }
+    
+    public Boolean getRememberMe() {
+        return rememberMe;
+    }
+    
+    public void setRememberMe(Boolean rememberMe) {
+        this.rememberMe = rememberMe;
     }
 }

@@ -10,12 +10,14 @@ import {
   Alert,
   ActivityIndicator
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import toastHelper from '../utils/toastHelper';
 import ApiService from '../services/ApiService';
 import TwoFactorService from '../services/TwoFactorService';
 import { professionalMessages } from '../components/professional/messages';
+import { useEmailTimeout, EMAIL_TIMEOUT_CONFIG } from '../components/ui/EmailTimeout';
+import useNavigationHelper from '../hooks/useNavigationHelper';
 
 // Componentes
 import StepIndicator from '../components/TwoFactorSetup/StepIndicator';
@@ -26,9 +28,9 @@ import NavigationButtons from '../components/TwoFactorSetup/NavigationButtons';
 import RecoverySection from '../components/TwoFactorSetup/RecoverySection';
 
 const TwoFactorSetupScreen = () => {
-  const navigation = useNavigation();
+  const { safeGoBackToProfile } = useNavigationHelper();
   const route = useRoute();
-  const { action, onSuccess } = route.params; // 'enable' ou 'disable'
+  const { action } = route.params;
   
   const [step, setStep] = useState(1); // 1: instrucoes, 2: qrcode/codigo, 3: verificacao
   const [qrCode, setQrCode] = useState(null);
@@ -42,10 +44,11 @@ const TwoFactorSetupScreen = () => {
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
   const [showRecoveryOption, setShowRecoveryOption] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState('');
-  const [isLoadingRecovery, setIsLoadingRecovery] = useState(false);
   const [qrCodeData, setQrCodeData] = useState('');
   const [error, setError] = useState('');
-  const [isSendingRecovery, setIsSendingRecovery] = useState(false);
+  
+  // Hook para timeout de email
+  const recoveryTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.RECOVERY_TIMEOUT);
 
   useEffect(() => {
     if (action === 'enable' && step === 2) {
@@ -64,13 +67,13 @@ const TwoFactorSetupScreen = () => {
       setOtpAuthUrl(response.otpAuthUrl);
       setQrCode(response.qrCode);
     } catch (error) {
-      console.error('Error generating QR code:', error);
+      // console.error('Error generating QR code:', error);
       setError(error.message || professionalMessages.twoFactorErrors.generateQR);
-      navigation.goBack();
+      safeGoBackToProfile();
     } finally {
       setIsGeneratingQR(false);
     }
-  }, [navigation]);
+  }, [safeGoBackToProfile]);
 
   const handleNextStep = () => {
     if (step < 3) {
@@ -148,7 +151,7 @@ const TwoFactorSetupScreen = () => {
 
       if (response && response.success) {
         toastHelper.showSuccess(response.message);
-        navigation.goBack();
+        safeGoBackToProfile();
       } else {
         toastHelper.showError(response.message || professionalMessages.twoFactorErrors.verifyCode);
       }
@@ -161,19 +164,21 @@ const TwoFactorSetupScreen = () => {
 
   const handleSendRecoveryCode = async () => {
     try {
-      setIsLoadingRecovery(true);
-      const response = await ApiService.post('/two-factor/send-recovery-code');
-      
-      if (response && response.success) {
-        toastHelper.showSuccess(professionalMessages.success.recoveryCodeSent);
-        setShowRecoveryOption(true);
-      } else {
-        toastHelper.showError(professionalMessages.twoFactorErrors.sendRecovery);
-      }
+      await recoveryTimeout.executeWithTimeout(
+        () => ApiService.post('/two-factor/send-recovery-code'),
+        {
+          successMessage: professionalMessages.success.recoveryCodeSent,
+          timeoutMessage: 'Tempo limite para envio do código de recuperação esgotado. Tente novamente.',
+          errorMessage: professionalMessages.twoFactorErrors.sendRecovery,
+          onSuccess: (response) => {
+            if (response && response.success) {
+              setShowRecoveryOption(true);
+            }
+          }
+        }
+      );
     } catch (error) {
-      toastHelper.showError(professionalMessages.twoFactorErrors.sendRecovery);
-    } finally {
-      setIsLoadingRecovery(false);
+      // Erro já tratado pelo hook
     }
   };
 
@@ -192,10 +197,7 @@ const TwoFactorSetupScreen = () => {
 
       if (response && response.success) {
         toastHelper.showSuccess(response.message);
-        if (onSuccess) {
-          onSuccess();
-        }
-        navigation.goBack();
+        safeGoBackToProfile();
       } else {
         toastHelper.showError(response.message || professionalMessages.twoFactorErrors.verifyRecovery);
       }
@@ -242,7 +244,7 @@ const TwoFactorSetupScreen = () => {
       )}
 
       <NavigationButtons
-        onPrev={() => navigation.goBack()}
+        onPrev={safeGoBackToProfile}
         onNext={handleNextStep}
         prevText="Cancelar"
         nextText={action === 'enable' ? 'Começar Configuração' : 'Continuar'}
@@ -319,10 +321,10 @@ const TwoFactorSetupScreen = () => {
 
       {/* Opção de recuperação por email para desativação */}
       {action === 'disable' && !showRecoveryOption && (
-        <RecoverySection
-          onSendRecoveryCode={handleSendRecoveryCode}
-          isLoading={isLoadingRecovery}
-        />
+              <RecoverySection
+        onSendRecoveryCode={handleSendRecoveryCode}
+        isLoading={recoveryTimeout.isLoading}
+      />
       )}
 
       <NavigationButtons
@@ -343,7 +345,7 @@ const TwoFactorSetupScreen = () => {
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton} 
-            onPress={() => navigation.goBack()}
+            onPress={safeGoBackToProfile}
           >
             <Text style={styles.backButtonText}>← Voltar</Text>
           </TouchableOpacity>

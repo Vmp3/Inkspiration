@@ -10,12 +10,22 @@ const LoginForm = ({
   handleChange, 
   handleBlur, 
   handleSubmit, 
-  cpfError, 
+  cpfError,
+  twoFactorCodeError,
+  showTwoFactor,
   rememberMe, 
   setRememberMe, 
   loading 
 }) => {
   const navigation = useNavigation();
+  
+  const handleKeyPress = (event) => {
+    // Suporte para React Native Web e React Native
+    const key = event.nativeEvent?.key || event.key;
+    if (key === 'Enter' && !loading) {
+      handleSubmit();
+    }
+  };
   
   return (
     <View style={styles.form}>
@@ -26,6 +36,7 @@ const LoginForm = ({
           value={formData.cpf}
           onChangeText={(text) => handleChange('cpf', text)}
           onBlur={() => handleBlur('cpf')}
+          onKeyPress={handleKeyPress}
           keyboardType="numeric"
           style={[styles.inputField, cpfError && styles.inputError]}
         />
@@ -43,10 +54,29 @@ const LoginForm = ({
           placeholder="••••••••"
           value={formData.password}
           onChangeText={(text) => handleChange('password', text)}
+          onKeyPress={handleKeyPress}
           secureTextEntry
           style={styles.inputField}
         />
       </View>
+
+      {showTwoFactor && (
+        <View style={styles.formFieldGroup}>
+          <Text style={styles.formLabel}>Código de Autenticação (2FA)</Text>
+          <Text style={styles.twoFactorHint}>Digite o código de 6 dígitos do seu Google Authenticator</Text>
+          <Input
+            placeholder="123456"
+            value={formData.twoFactorCode}
+            onChangeText={(text) => handleChange('twoFactorCode', text)}
+            onBlur={() => handleBlur('twoFactorCode')}
+            onKeyPress={handleKeyPress}
+            keyboardType="numeric"
+            maxLength={6}
+            style={[styles.inputField, twoFactorCodeError && styles.inputError]}
+          />
+          {twoFactorCodeError ? <Text style={styles.errorText}>{twoFactorCodeError}</Text> : null}
+        </View>
+      )}
 
       <View style={styles.checkboxWrapper}>
         <Checkbox
@@ -56,15 +86,14 @@ const LoginForm = ({
         />
       </View>
 
-      <Button 
+      <Button
         variant="primary"
-        label={loading ? "" : "Entrar"}
+        label="Entrar"
         onPress={handleSubmit} 
         style={styles.primaryButton}
         fullWidth={true}
-      >
-        {loading && <ActivityIndicator color="#fff" />}
-      </Button>
+        loading={loading}
+      />
     </View>
   );
 };
@@ -112,6 +141,11 @@ const styles = StyleSheet.create({
     color: '#ff0000',
     fontSize: 12,
     marginTop: 4,
+  },
+  twoFactorHint: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 8,
   },
 });
 

@@ -5,24 +5,43 @@ import { Feather } from '@expo/vector-icons';
 const PortfolioForm = ({ 
   biography, 
   setBiography, 
+  biographyError, 
+  handleBiographyChange,
   portfolioImages, 
-  profileImage, 
   handleAddPortfolioImage,
   handleRemovePortfolioImage,
   pickImage
 }) => {
+  const isValid = biographyError === '' && biography.trim().length >= 20;
   return (
     <View style={styles.tabContent}>
+
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Biografia</Text>
+        <Text style={styles.label}>Biografia *</Text>
         <TextInput
-          style={styles.biographyInput}
-          placeholder="Conte sobre sua experiência, estilo e trajetória como tatuador"
+          style={[
+            styles.biographyInput,
+            biographyError ? styles.biographyInputError : null,
+            isValid ? styles.biographyInputValid : null
+          ]}
+          placeholder="Conte sobre sua experiência, estilo e trajetória como tatuador (mínimo 20 caracteres)"
           multiline={true}
           numberOfLines={6}
           value={biography}
-          onChangeText={setBiography}
+          onChangeText={handleBiographyChange}
+          maxLength={500}
         />
+        <View style={styles.inputInfo}>
+          <Text style={[
+            styles.characterCount,
+            biography.length > 500 ? styles.characterCountError : null
+          ]}>
+            {biography.length}/500 caracteres
+          </Text>
+        </View>
+        {biographyError ? (
+          <Text style={styles.errorText}>{biographyError}</Text>
+        ) : null}
       </View>
       
       <View style={styles.formGroup}>
@@ -64,32 +83,6 @@ const PortfolioForm = ({
           ))}
         </View>
       </View>
-      
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Foto de Perfil</Text>
-        <TouchableOpacity 
-          style={styles.profileImageContainer}
-          onPress={() => pickImage('profile')}
-        >
-          {profileImage ? (
-            <Image 
-              source={{ uri: profileImage.uri }}
-              style={styles.profileImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.profileImagePlaceholder}>
-              <Feather name="upload" size={24} color="#666" />
-              <Text style={styles.profileImageText}>
-                Arraste e solte uma imagem aqui, ou clique para selecionar
-              </Text>
-              <Text style={styles.profileImageSubtext}>
-                Recomendado: formato quadrado, máximo 5MB
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };
@@ -114,6 +107,32 @@ const styles = StyleSheet.create({
     padding: 12,
     height: 120,
     textAlignVertical: 'top',
+  },
+  biographyInputError: {
+    borderColor: '#ef4444',
+    backgroundColor: '#fef2f2',
+  },
+  biographyInputValid: {
+    borderColor: '#10b981',
+    backgroundColor: '#f0fdf4',
+  },
+  inputInfo: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  characterCount: {
+    fontSize: 12,
+    color: '#64748b',
+  },
+  characterCountError: {
+    color: '#ef4444',
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#ef4444',
+    marginTop: 4,
   },
   portfolioHeader: {
     flexDirection: 'row',
@@ -158,35 +177,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  profileImageContainer: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderStyle: 'dashed',
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  profileImage: {
-    width: '100%',
-    height: 200,
-  },
-  profileImagePlaceholder: {
-    height: 200,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  profileImageText: {
-    textAlign: 'center',
-    marginVertical: 8,
-    color: '#666',
-    fontSize: 14,
-  },
-  profileImageSubtext: {
-    textAlign: 'center',
-    color: '#999',
-    fontSize: 12,
-    marginBottom: 16,
-  },
+
   removeImageButton: {
     position: 'absolute',
     top: 12,

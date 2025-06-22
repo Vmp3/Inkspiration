@@ -1,13 +1,13 @@
 import axios from 'axios';
 import AuthService from './AuthService';
-
-const API_URL = 'http://localhost:8080';
+import { API_CONFIG } from '../config/apiConfig';
 
 class ApiService {
   constructor() {
     this.authService = AuthService;
     this.api = axios.create({
-      baseURL: API_URL,
+      baseURL: API_CONFIG.BASE_URL,
+      timeout: API_CONFIG.TIMEOUT,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -33,7 +33,7 @@ class ApiService {
         // Verificar se há um novo token no header
         const newToken = response.headers['new-auth-token'];
         if (newToken) {
-          console.log('Recebido novo token do servidor na resposta');
+          // console.log('Recebido novo token do servidor na resposta');
           this.authService.setToken(newToken);
         }
         return response;
@@ -51,9 +51,14 @@ class ApiService {
   async get(endpoint, options = {}) {
     try {
       const response = await this.api.get(endpoint, options);
+      
+      if (options.responseType === 'blob') {
+        return response;
+      }
+      
       return response.data;
     } catch (error) {
-      console.error(`Erro na requisição GET para ${endpoint}:`, error);
+      // console.error(`Erro na requisição GET para ${endpoint}:`, error);
       throw error;
     }
   }
@@ -63,7 +68,7 @@ class ApiService {
       const response = await this.api.post(endpoint, data, options);
       return response.data;
     } catch (error) {
-      console.error(`Erro na requisição POST para ${endpoint}:`, error);
+      // console.error(`Erro na requisição POST para ${endpoint}:`, error);
       throw error;
     }
   }
@@ -73,7 +78,7 @@ class ApiService {
       const response = await this.api.put(endpoint, data, options);
       return response.data;
     } catch (error) {
-      console.error(`Erro na requisição PUT para ${endpoint}:`, error);
+      // console.error(`Erro na requisição PUT para ${endpoint}:`, error);
       throw error;
     }
   }
@@ -83,7 +88,7 @@ class ApiService {
       const response = await this.api.delete(endpoint, options);
       return response.data;
     } catch (error) {
-      console.error(`Erro na requisição DELETE para ${endpoint}:`, error);
+      // console.error(`Erro na requisição DELETE para ${endpoint}:`, error);
       throw error;
     }
   }

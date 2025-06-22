@@ -2,7 +2,6 @@ package inkspiration.backend.service;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,37 +22,48 @@ import inkspiration.backend.entities.UsuarioAutenticar;
 import inkspiration.backend.exception.UsuarioException;
 import inkspiration.backend.exception.UsuarioValidationException;
 import inkspiration.backend.repository.TokenRevogadoRepository;
-import inkspiration.backend.repository.UsuarioAutenticarRepository;
 import inkspiration.backend.repository.UsuarioRepository;
 import inkspiration.backend.security.JwtService;
 import inkspiration.backend.util.CpfValidator;
 import inkspiration.backend.util.DateValidator;
 import inkspiration.backend.util.EmailValidator;
+import inkspiration.backend.repository.ProfissionalRepository;
+import inkspiration.backend.exception.usuario.TokenValidationException;
+import inkspiration.backend.exception.usuario.InvalidProfileImageException;
+import inkspiration.backend.dto.UsuarioSeguroDTO;
+import inkspiration.backend.security.AuthorizationService;
+import java.util.Map;
+import java.util.HashMap;
 import jakarta.servlet.http.HttpServletRequest;
+import inkspiration.backend.util.PasswordValidator;
 
 @Service
 public class UsuarioService {
 
     private final UsuarioRepository repository;
-    private final UsuarioAutenticarRepository autenticarRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final HttpServletRequest request;
+    private final ProfissionalRepository profissionalRepository;
     private final TokenRevogadoRepository tokenRevogadoRepository;
+    private final AuthorizationService authorizationService;
+    private final EnderecoService enderecoService;
 
     @Autowired
     public UsuarioService(UsuarioRepository repository, 
-                         UsuarioAutenticarRepository autenticarRepository,
+                         ProfissionalRepository profissionalRepository,
                          PasswordEncoder passwordEncoder,
                          JwtService jwtService,
                          HttpServletRequest request,
-                         TokenRevogadoRepository tokenRevogadoRepository) {
+                         TokenRevogadoRepository tokenRevogadoRepository,
+                         AuthorizationService authorizationService,
+                         EnderecoService enderecoService) {
         this.repository = repository;
-        this.autenticarRepository = autenticarRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
-        this.request = request;
+        this.profissionalRepository = profissionalRepository;
         this.tokenRevogadoRepository = tokenRevogadoRepository;
+        this.authorizationService = authorizationService;
+        this.enderecoService = enderecoService;
     }
 
     @Transactional
@@ -83,11 +93,15 @@ public class UsuarioService {
         
         // Configura o endereço se fornecido
         if (dto.getEndereco() != null) {
+            // Validar endereço usando ViaCEP
+            enderecoService.validarEndereco(dto.getEndereco());
             usuario.setEndereco(dto.getEndereco());
         }
         
         // Associa o usuarioAutenticar ao usuário
         usuario.setUsuarioAutenticar(usuarioAuth);
+        
+        usuario.setCreatedAt(java.time.LocalDateTime.now());
         
         // Salva o usuário com suas associações
         usuario = repository.save(usuario);
@@ -98,10 +112,6 @@ public class UsuarioService {
     public Usuario buscarPorId(Long id) {
         return repository.findById(id)
             .orElseThrow(() -> new UsuarioException.UsuarioNaoEncontradoException("Usuário não encontrado"));
-    }
-
-    public Page<Usuario> listarTodos(Pageable pageable) {
-        return repository.findAll(pageable);
     }
 
     public List<UsuarioResponseDTO> listarTodosResponse(Pageable pageable) {
@@ -121,9 +131,43 @@ public class UsuarioService {
                 .collect(Collectors.toList());
     }
 
+    public Map<String, Object> listarTodosResponseComPaginacao(Pageable pageable, String searchTerm) {
+        Page<Usuario> usuarios;
+        
+        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+            usuarios = repository.findByNomeContainingIgnoreCase(searchTerm.trim(), pageable);
+        } else {
+            usuarios = repository.findAll(pageable);
+        }
+        
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        List<UsuarioResponseDTO> usuariosResponse = usuarios.getContent().stream()
+                .map(usuario -> new UsuarioResponseDTO(
+                    usuario.getIdUsuario(), 
+                    usuario.getNome(), 
+                    usuario.getCpf(),
+                    usuario.getEmail(), 
+                    usuario.getDataNascimento() != null ? usuario.getDataNascimento().format(formatter) : null,
+                    usuario.getTelefone(),
+                    usuario.getImagemPerfil(),
+                    usuario.getEndereco(),
+                    usuario.getRole()))
+                .collect(Collectors.toList());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("usuarios", usuariosResponse);
+        response.put("totalElements", usuarios.getTotalElements());
+        response.put("totalPages", usuarios.getTotalPages());
+        response.put("currentPage", usuarios.getNumber());
+        response.put("hasNext", usuarios.hasNext());
+        response.put("hasPrevious", usuarios.hasPrevious());
+        
+        return response;
+    }
+
     @Transactional
     public Usuario atualizar(Long id, UsuarioDTO dto) {
-        validarCamposObrigatorios(dto);
+        validarCamposObrigatoriosParaEdicao(dto);
         Usuario usuarioExistente = buscarPorId(id);
         
         boolean precisaRevogarToken = false;
@@ -146,7 +190,6 @@ public class UsuarioService {
             if (repository.existsByEmail(dto.getEmail())) {
                 throw new UsuarioException.EmailJaExisteException("Email já cadastrado");
             }
-            precisaRevogarToken = true;
         }
         
         // Verifica se o CPF está sendo alterado
@@ -167,6 +210,9 @@ public class UsuarioService {
         
         // Atualiza o endereço se fornecido
         if (dto.getEndereco() != null) {
+            // Validar endereço usando ViaCEP
+            enderecoService.validarEndereco(dto.getEndereco());
+            
             if (usuarioExistente.getEndereco() == null) {
                 usuarioExistente.setEndereco(new Endereco());
             }
@@ -180,6 +226,12 @@ public class UsuarioService {
             usuarioAuth.setRole(usuarioExistente.getRole());
             if (dto.getSenha() != null && !dto.getSenha().isEmpty() && 
                 !"SENHA_NAO_ALTERADA".equals(dto.getSenha()) && !dto.isManterSenhaAtual()) {
+                
+                // Validar nova senha
+                if (!PasswordValidator.isValid(dto.getSenha())) {
+                    throw new UsuarioValidationException.SenhaInvalidaException(PasswordValidator.getPasswordRequirements());
+                }
+                
                 usuarioAuth.setSenha(passwordEncoder.encode(dto.getSenha()));
             }
             usuarioExistente.setUsuarioAutenticar(usuarioAuth);
@@ -191,6 +243,11 @@ public class UsuarioService {
             // Só atualiza a senha se não for o valor especial e se não tiver a flag manterSenhaAtual
             if (dto.getSenha() != null && !dto.getSenha().isEmpty() && 
                 !"SENHA_NAO_ALTERADA".equals(dto.getSenha()) && !dto.isManterSenhaAtual()) {
+                
+                // Validar nova senha
+                if (!PasswordValidator.isValid(dto.getSenha())) {
+                    throw new UsuarioValidationException.SenhaInvalidaException(PasswordValidator.getPasswordRequirements());
+                }
                 
                 // Se tiver senhaAtual, verificar se ela corresponde à senha atual
                 if (dto.getSenhaAtual() != null && !dto.getSenhaAtual().isEmpty()) {
@@ -234,6 +291,38 @@ public class UsuarioService {
     }
 
     @Transactional
+    public void reativar(Long id) {
+        Usuario usuario = buscarPorId(id);
+        
+        if (!"ROLE_DELETED".equals(usuario.getRole())) {
+            throw new UsuarioException.UsuarioNaoEncontradoException("Usuário não está desativado");
+        }
+        
+        String roleOriginal = determinarRoleOriginal(usuario);
+        usuario.setRole(roleOriginal);
+
+        if (usuario.getUsuarioAutenticar() != null) {
+            usuario.getUsuarioAutenticar().setRole(roleOriginal);
+        }
+        
+        repository.save(usuario);
+    }
+
+    private String determinarRoleOriginal(Usuario usuario) {
+        // Verifica se o usuário tem um registro de profissional associado
+        // Se tiver, era um profissional (ROLE_PROF)
+        // Caso contrário, era um usuário comum (ROLE_USER)
+        
+        boolean isProfissional = profissionalRepository.existsByUsuario_IdUsuario(usuario.getIdUsuario());
+        
+        if (isProfissional) {
+            return "ROLE_PROF";
+        } else {
+            return "ROLE_USER";
+        }
+    }
+
+    @Transactional
     public void deletar(Long id) {
         Usuario usuario = buscarPorId(id);
         
@@ -244,6 +333,41 @@ public class UsuarioService {
         }
 
         repository.delete(usuario);
+    }
+
+    private void validarCamposObrigatoriosParaEdicao(UsuarioDTO dto) {
+        if (dto.getNome() == null || dto.getNome().trim().isEmpty()) {
+            throw new UsuarioValidationException.NomeObrigatorioException();
+        }
+        if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
+            throw new UsuarioValidationException.EmailObrigatorioException();
+        }
+        if (!EmailValidator.isValid(dto.getEmail())) {
+            throw new UsuarioValidationException.EmailInvalidoException("Email inválido");
+        }
+        if (dto.getCpf() == null || dto.getCpf().trim().isEmpty()) {
+            throw new UsuarioValidationException.CpfObrigatorioException();
+        }
+        if (!CpfValidator.isValid(dto.getCpf())) {
+            throw new UsuarioValidationException.CpfInvalidoException("CPF inválido");
+        }
+        if (dto.getDataNascimento() == null || dto.getDataNascimento().trim().isEmpty()) {
+            throw new UsuarioValidationException.DataNascimentoObrigatoriaException();
+        }
+        if (!DateValidator.isValid(dto.getDataNascimento())) {
+            throw new UsuarioValidationException.DataInvalidaException("Data de nascimento inválida. Use o formato DD/MM/YYYY");
+        }
+        if (!DateValidator.hasMinimumAge(dto.getDataNascimento(), 18)) {
+            throw new UsuarioValidationException.IdadeMinimaException(18);
+        }
+        
+        // Para edição, só valida a senha se ela estiver sendo alterada
+        if (dto.getSenha() != null && !dto.getSenha().isEmpty() && 
+            !"SENHA_NAO_ALTERADA".equals(dto.getSenha()) && !dto.isManterSenhaAtual()) {
+            if (!PasswordValidator.isValid(dto.getSenha())) {
+                throw new UsuarioValidationException.SenhaInvalidaException(PasswordValidator.getPasswordRequirements());
+            }
+        }
     }
 
     private void validarCamposObrigatorios(UsuarioDTO dto) {
@@ -268,8 +392,14 @@ public class UsuarioService {
         if (!DateValidator.isValid(dto.getDataNascimento())) {
             throw new UsuarioValidationException.DataInvalidaException("Data de nascimento inválida. Use o formato DD/MM/YYYY");
         }
+        if (!DateValidator.hasMinimumAge(dto.getDataNascimento(), 18)) {
+            throw new UsuarioValidationException.IdadeMinimaException(18);
+        }
         if (dto.getSenha() == null || dto.getSenha().trim().isEmpty()) {
             throw new UsuarioValidationException.SenhaObrigatoriaException();
+        }
+        if (!PasswordValidator.isValid(dto.getSenha())) {
+            throw new UsuarioValidationException.SenhaInvalidaException(PasswordValidator.getPasswordRequirements());
         }
     }
 
@@ -313,16 +443,12 @@ public class UsuarioService {
         enderecoAtual.setNumero(novoEndereco.getNumero());
     }
 
-    public boolean existsByRole(String role) {
-        return repository.existsByRole(role);
-    }
-
     private void atualizarToken(Usuario usuario, String novoToken) {
-        String tokenAntigo = usuario.getTokenAtual();
-        if (tokenAntigo != null) {
-            TokenRevogado tokenRevogado = new TokenRevogado(tokenAntigo);
+        if (usuario.getTokenAtual() != null) {
+            TokenRevogado tokenRevogado = new TokenRevogado(usuario.getTokenAtual());
             tokenRevogadoRepository.save(tokenRevogado);
         }
+        
         usuario.setTokenAtual(novoToken);
         repository.save(usuario);
     }
@@ -337,6 +463,14 @@ public class UsuarioService {
             .orElseThrow(() -> new UsuarioException.UsuarioNaoEncontradoException("Usuário não encontrado"));
     }
 
+    public Usuario buscarPorEmailOptional(String email) {
+        return repository.findByEmail(email).orElse(null);
+    }
+    
+    public Usuario buscarPorCpfOptional(String cpf) {
+        return repository.findByCpf(cpf).orElse(null);
+    }
+
     public void salvar(Usuario usuario) {
         repository.save(usuario);
     }
@@ -348,15 +482,88 @@ public class UsuarioService {
         repository.save(usuario);
     }
 
-    public String atualizarTokenUsuario(Long idUsuario) {
-        Usuario usuario = buscarPorId(idUsuario);
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String novoToken = jwtService.generateToken(auth);
+    public List<UsuarioResponseDTO> listarTodosComAutorizacao(Pageable pageable) {
+        authorizationService.requireAdmin();
+        return listarTodosResponse(pageable);
+    }
+
+    public Map<String, Object> listarTodosComPaginacaoComAutorizacao(Pageable pageable, String searchTerm) {
+        authorizationService.requireAdmin();
+        return listarTodosResponseComPaginacao(pageable, searchTerm);
+    }
+
+    public UsuarioSeguroDTO buscarPorIdComAutorizacao(Long id) {
+        authorizationService.requireUserAccessOrAdmin(id);
+        Usuario usuario = buscarPorId(id);
+        return UsuarioSeguroDTO.fromUsuario(usuario);
+    }
+
+    public UsuarioResponseDTO buscarDetalhesComAutorizacao(Long id) {
+        authorizationService.requireUserAccessOrAdmin(id);
+        Usuario usuario = buscarPorId(id);
         
-        // Atualizar o token no usuário sem revogar o antigo
-        usuario.setTokenAtual(novoToken);
-        repository.save(usuario);
+        String dataNascimentoStr = null;
+        if (usuario.getDataNascimento() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            dataNascimentoStr = usuario.getDataNascimento().format(formatter);
+        }
         
-        return novoToken;
+        return new UsuarioResponseDTO(
+            usuario.getIdUsuario(),
+            usuario.getNome(),
+            usuario.getCpf(),
+            usuario.getEmail(),
+            dataNascimentoStr,
+            usuario.getTelefone(),
+            usuario.getImagemPerfil(),
+            usuario.getEndereco(),
+            usuario.getRole()
+        );
+    }
+
+    public UsuarioSeguroDTO atualizarComAutorizacao(Long id, UsuarioDTO dto) {
+        authorizationService.requireUserAccessOrAdmin(id);
+        Usuario usuario = atualizar(id, dto);
+        return UsuarioSeguroDTO.fromUsuario(usuario);
+    }
+
+    public void inativarComAutorizacao(Long id) {
+        authorizationService.requireAdmin();
+        inativar(id);
+    }
+
+    public void reativarComAutorizacao(Long id) {
+        authorizationService.requireAdmin();
+        reativar(id);
+    }
+
+    public void deletarComAutorizacao(Long id) {
+        authorizationService.requireAdmin();
+        deletar(id);
+    }
+
+    public void atualizarFotoPerfilComAutorizacao(Long id, String imagemBase64) {
+        authorizationService.requireUserAccessOrAdmin(id);
+        
+        if (imagemBase64 == null || imagemBase64.isEmpty()) {
+            throw new InvalidProfileImageException("Imagem não fornecida");
+        }
+        
+        atualizarFotoPerfil(id, imagemBase64);
+    }
+
+    public boolean validateTokenComplete(Long id, String token) {
+        if (token == null || token.isEmpty()) {
+            throw new TokenValidationException("Token não fornecido");
+        }
+        
+        Usuario usuario = buscarPorId(id);
+        String tokenAtual = usuario.getTokenAtual();
+        
+        if (tokenAtual == null) {
+            throw new TokenValidationException("Usuário não possui token ativo");
+        }
+        
+        return token.equals(tokenAtual);
     }
 }

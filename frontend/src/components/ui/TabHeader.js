@@ -1,35 +1,63 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { isMobileView } from '../../utils/responsive';
 
-const TabHeader = ({ tabs, activeTab, setActiveTab }) => {
+const TabHeader = ({ tabs, activeTab, setActiveTab, onTabPress, availableTabs }) => {
+  const isMobile = isMobileView();
+  
+  const handleTabPress = (tabId) => {
+    if (availableTabs && !availableTabs.includes(tabId)) {
+      return;
+    }
+    
+    if (onTabPress) {
+      onTabPress(tabId);
+    } else {
+      setActiveTab(tabId);
+    }
+  };
+
   return (
     <ScrollView 
       horizontal 
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.tabsScrollContainer}
+      contentContainerStyle={[
+        styles.tabsScrollContainer,
+        isMobile && styles.tabsScrollContainerMobile
+      ]}
     >
       <View style={styles.tabsContainer}>
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.id}
-            style={[
-              styles.tabItem,
-              activeTab === tab.id && styles.activeTabItem,
-            ]}
-            onPress={() => setActiveTab(tab.id)}
-          >
-            <Text
+        {tabs.map((tab) => {
+          const isAvailable = !availableTabs || availableTabs.includes(tab.id);
+          const isActive = activeTab === tab.id;
+          
+          return (
+            <TouchableOpacity
+              key={tab.id}
               style={[
-                styles.tabText,
-                activeTab === tab.id && styles.activeTabText
+                styles.tabItem,
+                isMobile && styles.tabItemMobile,
+                isActive && styles.activeTabItem,
+                !isAvailable && styles.disabledTabItem,
               ]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
+              onPress={() => handleTabPress(tab.id)}
+              disabled={!isAvailable}
             >
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  styles.tabText,
+                  isMobile && styles.tabTextMobile,
+                  isActive && styles.activeTabText,
+                  !isAvailable && styles.disabledTabText
+                ]}
+                numberOfLines={isMobile ? 2 : 1}
+                ellipsizeMode="tail"
+              >
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </ScrollView>
   );
@@ -39,6 +67,9 @@ const styles = StyleSheet.create({
   tabsScrollContainer: {
     flexGrow: 1,
     width: '100%',
+  },
+  tabsScrollContainerMobile: {
+    minWidth: '100%',
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -54,10 +85,20 @@ const styles = StyleSheet.create({
     minWidth: 80,
     flex: 1,
   },
+  tabItemMobile: {
+    paddingHorizontal: 6,
+    paddingVertical: 12,
+    minWidth: 0,
+    flex: 1,
+  },
   activeTabItem: {
     backgroundColor: '#fff',
     borderBottomWidth: 3,
     borderBottomColor: '#eaeaea',
+  },
+  disabledTabItem: {
+    backgroundColor: '#f8f8f8',
+    opacity: 0.5,
   },
   tabText: {
     fontSize: 13.5,
@@ -65,9 +106,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '400',
   },
+  tabTextMobile: {
+    fontSize: 12,
+    lineHeight: 14,
+  },
   activeTabText: {
     fontWeight: '600',
     color: '#111',
+  },
+  disabledTabText: {
+    color: '#ccc',
+    fontWeight: '400',
   },
 });
 

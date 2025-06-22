@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -20,8 +19,6 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class TokenOwnershipFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private AuthorizationService authorizationService;
 
     // Padrões de URLs que contêm IDs de usuário que precisam ser validados
     private static final Pattern[] USER_ID_PATTERNS = {
@@ -96,7 +93,7 @@ public class TokenOwnershipFilter extends OncePerRequestFilter {
                requestURI.equals("/profissional/publico") ||
                requestURI.matches("/profissional/\\d+") ||
                requestURI.matches("/profissional/\\d+/imagens") ||
-               requestURI.matches("/portifolio/\\d+") ||
+               requestURI.matches("/portfolio/\\d+") ||
                requestURI.matches("/disponibilidades/profissional/\\d+") ||
                requestURI.matches("/disponibilidades/profissional/\\d+/verificar");
     }

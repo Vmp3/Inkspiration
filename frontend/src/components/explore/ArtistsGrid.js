@@ -48,14 +48,14 @@ const ArtistsGrid = ({ artists, numColumns, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  artistsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
     width: '100%',
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
+  artistCard: {
     marginBottom: 16,
-    width: '100%',
   },
   noResultsContainer: {
     padding: 48,
