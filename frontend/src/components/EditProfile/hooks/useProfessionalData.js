@@ -383,8 +383,55 @@ const useProfessionalData = (userData) => {
       const result = await ImagePicker.launchImageLibraryAsync(imagePickerOptions);
       if (!result.canceled) {
         const selectedImage = result.assets[0];
+        
+        const validMimeTypes = ['image/jpeg', 'image/png'];
+        const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
+        
+        // Verificar MIME type
+        if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
+          toastHelper.showError(editProfileMessages.imageUploadErrors.invalidFormat);
+          return;
+        }
+        
+        // Verificar extensão do arquivo
+        if (selectedImage.fileName) {
+          const fileExtension = selectedImage.fileName.toLowerCase().slice(selectedImage.fileName.lastIndexOf('.'));
+          if (!validExtensions.includes(fileExtension)) {
+            toastHelper.showError(editProfileMessages.imageUploadErrors.invalidFormat);
+            return;
+          }
+        }
+        
+        const maxSizeInMB = imageType === 'portfolio' ? 10 : 5;
+        const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+        
+        if (selectedImage.fileSize && selectedImage.fileSize > maxSizeInBytes) {
+          if (imageType === 'portfolio') {
+            toastHelper.showError(editProfileMessages.imageUploadErrors.portfolioFileTooLarge);
+          } else {
+            toastHelper.showError(editProfileMessages.imageUploadErrors.fileTooLarge);
+          }
+          return;
+        }
+        
+        const base64String = selectedImage.base64;
+        const base64SizeInBytes = (base64String.length * 3) / 4;
+        
+        if (base64SizeInBytes > maxSizeInBytes) {
+          if (imageType === 'portfolio') {
+            toastHelper.showError(editProfileMessages.imageUploadErrors.portfolioProcessedImageTooLarge);
+          } else {
+            toastHelper.showError(editProfileMessages.imageUploadErrors.processedImageTooLarge);
+          }
+          return;
+        }
+        
+        const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
+        const mimeType = selectedImage.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
+        
         const imageUri = selectedImage.uri;
-        const imageBase64 = `data:image/jpeg;base64,${selectedImage.base64}`;
+        const imageBase64 = `data:${mimeType};base64,${selectedImage.base64}`;
+        
         if (imageType === 'portfolio') {
           setProfessionalFormData(prev => ({
             ...prev,
@@ -393,8 +440,8 @@ const useProfessionalData = (userData) => {
               {
                 uri: imageUri,
                 base64: imageBase64,
-                type: 'image/jpeg',
-                name: `portfolio_${prev.portfolioImages.length}.jpg`
+                type: mimeType,
+                name: `portfolio_${prev.portfolioImages.length}.${imageFormat === 'png' ? 'png' : 'jpg'}`
               }
             ]
           }));
@@ -404,14 +451,14 @@ const useProfessionalData = (userData) => {
             profileImage: {
               uri: imageUri,
               base64: imageBase64,
-              type: 'image/jpeg',
-              name: 'profile.jpg'
+              type: mimeType,
+              name: `profile.${imageFormat === 'png' ? 'png' : 'jpg'}`
             }
           }));
         }
       }
     } catch (error) {
-              toastHelper.showError(editProfileMessages.validations.imageSelectionFailed);
+              toastHelper.showError(editProfileMessages.imageUploadErrors.selectionFailed);
     }
   };
   

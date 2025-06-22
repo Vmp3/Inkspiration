@@ -111,6 +111,8 @@ export const editProfileMessages = {
   imageUploadErrors: {
     fileTooLarge: 'Imagem muito grande. Tamanho máximo permitido: 5MB',
     processedImageTooLarge: 'Imagem muito grande após processamento. Tamanho máximo permitido: 5MB',
+    portfolioFileTooLarge: 'Imagem do portfólio muito grande. Tamanho máximo permitido: 10MB',
+    portfolioProcessedImageTooLarge: 'Imagem do portfólio muito grande após processamento. Tamanho máximo permitido: 10MB',
     invalidFormat: 'Formato de imagem inválido. Apenas PNG, JPG, JPEG e JFIF são permitidos',
     selectionFailed: 'Erro ao selecionar imagem',
     uploadFailed: 'Erro ao enviar imagem'

@@ -367,11 +367,16 @@ const ProfessionalRegisterScreen = () => {
           }
         }
         
-        const maxSizeInMB = 5;
+        // Validação de tamanho - limite diferente para perfil vs portfólio
+        const maxSizeInMB = imageType === 'portfolio' ? 10 : 5;
         const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
         
         if (selectedImage.fileSize && selectedImage.fileSize > maxSizeInBytes) {
-          toastHelper.showError(professionalRegisterMessages.imageUploadErrors.fileTooLarge);
+          if (imageType === 'portfolio') {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.portfolioFileTooLarge);
+          } else {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.fileTooLarge);
+          }
           return;
         }
         
@@ -379,7 +384,11 @@ const ProfessionalRegisterScreen = () => {
         const base64SizeInBytes = (base64String.length * 3) / 4;
         
         if (base64SizeInBytes > maxSizeInBytes) {
-          toastHelper.showError(professionalRegisterMessages.imageUploadErrors.processedImageTooLarge);
+          if (imageType === 'portfolio') {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.portfolioProcessedImageTooLarge);
+          } else {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.processedImageTooLarge);
+          }
           return;
         }
         
