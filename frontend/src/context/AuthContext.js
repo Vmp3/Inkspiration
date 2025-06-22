@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
 
   // Callback para quando o token for inválido
   const handleTokenInvalid = useCallback(async () => {
-    console.log('Token inválido detectado, fazendo logout automático');
+    // console.log('Token inválido detectado, fazendo logout automático');
     setIsAuthenticated(false);
     setUserData(null);
     try {
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
           // Usar o método isAuthenticated que já faz todas as verificações
           const isStillAuth = await AuthService.isAuthenticated();
           if (!isStillAuth) {
-            console.log('Token inválido detectado na verificação periódica, fazendo logout');
+            // console.log('Token inválido detectado na verificação periódica, fazendo logout');
             setIsAuthenticated(false);
             setUserData(null);
           }

@@ -23,7 +23,7 @@ const useTokenMonitor = (isAuthenticated, onTokenInvalid) => {
         
         // Se não há token atual mas deveria haver (usuário estava autenticado)
         if (!currentToken && lastTokenRef.current) {
-          console.log('Token removido detectado, fazendo logout');
+          // console.log('Token removido detectado, fazendo logout');
           onTokenInvalid();
           return;
         }
@@ -38,12 +38,12 @@ const useTokenMonitor = (isAuthenticated, onTokenInvalid) => {
 
           // Se o token mudou
           if (lastTokenRef.current !== currentToken) {
-            console.log('Mudança no token detectada, verificando validade');
+            // console.log('Mudança no token detectada, verificando validade');
             
             // Verificar se o novo token é válido
             const isValid = await AuthService.isAuthenticated();
             if (!isValid) {
-              console.log('Token modificado é inválido, fazendo logout');
+              // console.log('Token modificado é inválido, fazendo logout');
               onTokenInvalid();
               return;
             }

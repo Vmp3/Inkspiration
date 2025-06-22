@@ -220,14 +220,14 @@ class AuthService {
       // Verificar se o token tem formato válido
       const tokenData = this.parseJwt(token);
       if (!tokenData) {
-        console.log('Token com formato inválido detectado, fazendo logout automático');
+        // console.log('Token com formato inválido detectado, fazendo logout automático');
         await this.logout();
         return false;
       }
       
       // Verificar se o token está expirado
       if (!tokenData.exp || tokenData.exp * 1000 <= Date.now()) {
-        console.log('Token expirado, fazendo logout automático');
+        // console.log('Token expirado, fazendo logout automático');
         await this.logout();
         return false;
       }
@@ -237,14 +237,14 @@ class AuthService {
         try {
           const validationResult = await this.validateToken(token, tokenData.userId);
           if (!validationResult.valid) {
-            console.log('Token inválido no servidor:', validationResult.reason);
+            // console.log('Token inválido no servidor:', validationResult.reason);
             await this.logout();
             return false;
           }
           
           // Se há um novo token, atualizá-lo
           if (validationResult.newToken) {
-            console.log('Recebido novo token do servidor');
+            // console.log('Recebido novo token do servidor');
             await this.setToken(validationResult.newToken);
           }
         } catch (error) {
@@ -429,7 +429,7 @@ class AuthService {
     // Verificar se a resposta contém um novo token no header
     const newToken = response.headers.get('New-Auth-Token');
     if (newToken) {
-      console.log('Recebido novo token do servidor na resposta');
+      // console.log('Recebido novo token do servidor na resposta');
       await this.setToken(newToken);
     }
     

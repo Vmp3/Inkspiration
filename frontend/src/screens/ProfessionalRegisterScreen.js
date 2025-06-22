@@ -400,7 +400,7 @@ const ProfessionalRegisterScreen = () => {
               idPortfolio: portfolioId
             };
             
-            console.log('Enviando imagem para portfólio ID:', portfolioId);
+            // console.log('Enviando imagem para portfólio ID:', portfolioId);
             
             try {
               await ApiService.post('/imagens', imagemDTO);
@@ -682,7 +682,7 @@ const ProfessionalRegisterScreen = () => {
           precosFormatados[tipo] = parseFloat(precoLimpo) || 0;
         });
         
-        console.log('LOG Frontend: Preços formatados:', precosFormatados);
+        // console.log('LOG Frontend: Preços formatados:', precosFormatados);
         
         // Preparar objeto com formato esperado pelo backend (ProfissionalCriacaoDTO)
         const professionalData = {
@@ -704,7 +704,7 @@ const ProfessionalRegisterScreen = () => {
         
         // Enviar dados para o backend
         const profissionalCadastrado = await ApiService.post('/auth/register/profissional-completo', professionalData);
-        console.log('Resposta do cadastro:', profissionalCadastrado);
+        // console.log('Resposta do cadastro:', profissionalCadastrado);
         
         // Se houver imagens, fazer o upload
         if ((profileImage && profileImage.uri) || portfolioImages.some(img => img && img.uri)) {
@@ -718,7 +718,7 @@ const ProfessionalRegisterScreen = () => {
               portfolioId = profissionalCadastrado.portfolio.idPortfolio;
             }
             
-            console.log('ID do portfólio para upload:', portfolioId);
+            // console.log('ID do portfólio para upload:', portfolioId);
             
             if (portfolioId) {
               // Tentativa de envio das imagens

@@ -33,7 +33,7 @@ class ApiService {
         // Verificar se há um novo token no header
         const newToken = response.headers['new-auth-token'];
         if (newToken) {
-          console.log('Recebido novo token do servidor na resposta');
+          // console.log('Recebido novo token do servidor na resposta');
           this.authService.setToken(newToken);
         }
         return response;
