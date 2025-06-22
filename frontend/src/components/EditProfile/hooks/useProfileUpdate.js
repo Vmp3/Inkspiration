@@ -10,7 +10,7 @@ const useProfileUpdate = (isArtist, updateProfessionalData) => {
   const navigation = useNavigation();
   const { updateUserData, userData } = useAuth();
 
-  const handleUpdateProfile = async (formData, validateCurrentTab, professionalFormData, profileImage) => {
+  const handleUpdateProfile = async (formData, validateCurrentTab, professionalFormData) => {
     if (!validateCurrentTab()) return;
 
     try {
@@ -45,8 +45,8 @@ const useProfileUpdate = (isArtist, updateProfessionalData) => {
       };
 
       // Adicionar imagem de perfil se existir
-      if (profileImage && profileImage.base64) {
-        updateData.imagemPerfil = profileImage.base64;
+      if (professionalFormData && professionalFormData.profileImage && professionalFormData.profileImage.base64) {
+        updateData.imagemPerfil = professionalFormData.profileImage.base64;
       }
 
       if (isArtist) {

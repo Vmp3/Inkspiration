@@ -853,6 +853,7 @@ const ProfessionalRegisterScreen = () => {
                     biographyError={biographyError}
                     handleBiographyChange={handleBiographyChange}
                     portfolioImages={portfolioImages}
+                    profileImage={profileImage}
                     handleAddPortfolioImage={handleAddPortfolioImage}
                     handleRemovePortfolioImage={handleRemovePortfolioImage}
                     pickImage={pickImage}

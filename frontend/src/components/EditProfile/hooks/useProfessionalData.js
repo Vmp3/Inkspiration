@@ -72,6 +72,12 @@ const useProfessionalData = (userData) => {
     ],
     biography: '',
     portfolioImages: [],
+    profileImage: userData?.imagemPerfil ? {
+      uri: userData.imagemPerfil,
+      base64: userData.imagemPerfil,
+      type: 'image/jpeg',
+      name: 'profile.jpg'
+    } : null,
     tiposServico: [],
     tipoServicoSelecionados: {},
     precosServicos: {}
@@ -79,54 +85,36 @@ const useProfessionalData = (userData) => {
 
   // Carregar dados profissionais
   const loadProfessionalData = async () => {
+    if (!userData?.idUsuario || userData.role !== 'ROLE_PROF') {
+      return;
+    }
+
     try {
-      if (!userData?.idUsuario) {
-        toastHelper.showError(editProfileMessages.validations.professionalDataError);
-        return;
-      }
-
-      const response = await ApiService.get(`/profissional/usuario/${userData.idUsuario}`);
+      const response = await ApiService.get(`/profissional/usuario/${userData.idUsuario}/completo`);
       
-      if (response.success && response.data) {
-        const data = response.data;
-        const { portfolio, endereco, profissional } = data;
+      if (response && response.profissional) {
+        const { profissional, portfolio, imagens, disponibilidades, tiposServico, precosServicos } = response;
         
-        // Buscar dados das imagens do portfólio
-        let imagens = [];
-        if (portfolio?.idPortfolio) {
-          try {
-            const imagensResponse = await ApiService.get(`/imagem/portfolio/${portfolio.idPortfolio}`);
-            if (imagensResponse.success && imagensResponse.data) {
-              imagens = imagensResponse.data;
-            }
-          } catch (error) {
-            console.warn('Não foi possível carregar as imagens do portfólio:', error);
-          }
-        }
-
-        // Buscar tipos de serviço
-        let allTiposServico = [];
-        let tipoServicoSelecionados = {};
-        let precosCarregados = {};
+        const allTiposServico = await ApiService.get('/tipos-servico');
         
-        try {
-          const tiposServicoResponse = await ApiService.get('/tipo-servico');
-          if (tiposServicoResponse.success && tiposServicoResponse.data) {
-            allTiposServico = tiposServicoResponse.data;
-            
-            if (profissional?.idProfissional) {
-              const servicosResponse = await ApiService.get(`/profissional/${profissional.idProfissional}/servicos`);
-              if (servicosResponse.success && servicosResponse.data) {
-                servicosResponse.data.forEach(servico => {
-                  tipoServicoSelecionados[servico.tipoServico.tipo] = true;
-                  precosCarregados[servico.tipoServico.tipo] = servico.preco ? servico.preco.toString().replace('.', ',') : '';
-                });
-              }
+        const tipoServicoSelecionados = {};
+        allTiposServico.forEach(tipo => {
+          tipoServicoSelecionados[tipo.nome] = tiposServico.includes(tipo.nome);
+        });
+        
+        // Carregar preços dos serviços
+        const precosCarregados = {};
+        if (precosServicos && typeof precosServicos === 'object') {
+          Object.entries(precosServicos).forEach(([tipo, preco]) => {
+            // Converter números para string formatada para exibição
+            if (typeof preco === 'number') {
+              precosCarregados[tipo] = preco.toString().replace('.', ',');
+            } else {
+              precosCarregados[tipo] = preco?.toString() || '';
             }
-          }
-        } catch (error) {
-          console.warn('Não foi possível carregar tipos de serviço:', error);
+          });
         }
+        console.log('LOG: Preços carregados do backend:', precosCarregados);
 
         // Transformar especialidades
         const specialties = portfolio?.especialidade ? 
@@ -159,14 +147,51 @@ const useProfessionalData = (userData) => {
 
         // Transformar horários de trabalho
         const workHours = [
-          { day: 'Segunda', available: true, morning: { enabled: true, start: '07:00', end: '11:00' }, afternoon: { enabled: true, start: '13:00', end: '20:00' } },
-          { day: 'Terça', available: true, morning: { enabled: true, start: '07:00', end: '11:00' }, afternoon: { enabled: true, start: '13:00', end: '20:00' } },
-          { day: 'Quarta', available: true, morning: { enabled: true, start: '07:00', end: '11:00' }, afternoon: { enabled: true, start: '13:00', end: '20:00' } },
-          { day: 'Quinta', available: true, morning: { enabled: true, start: '07:00', end: '11:00' }, afternoon: { enabled: true, start: '13:00', end: '20:00' } },
-          { day: 'Sexta', available: true, morning: { enabled: true, start: '07:00', end: '11:00' }, afternoon: { enabled: true, start: '13:00', end: '20:00' } },
-          { day: 'Sábado', available: false, morning: { enabled: false, start: '07:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '20:00' } },
-          { day: 'Domingo', available: false, morning: { enabled: false, start: '07:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '20:00' } }
+          { day: 'Segunda', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Terça', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Quarta', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Quinta', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Sexta', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Sábado', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } },
+          { day: 'Domingo', available: false, morning: { enabled: false, start: '08:00', end: '11:00' }, afternoon: { enabled: false, start: '13:00', end: '18:00' } }
         ];
+
+        if (disponibilidades && Object.keys(disponibilidades).length > 0) {
+          Object.entries(disponibilidades).forEach(([day, horarios]) => {
+            const dayIndex = workHours.findIndex(wh => wh.day === day);
+            
+            if (dayIndex >= 0 && Array.isArray(horarios) && horarios.length > 0) {
+              workHours[dayIndex].available = true;
+              
+              horarios.forEach(horario => {
+                if (horario && horario.inicio && horario.fim) {
+                  const startHour = parseInt(horario.inicio.split(':')[0]);
+                  const endHour = parseInt(horario.fim.split(':')[0]);
+                  
+                  if (endHour <= 12) {
+                    workHours[dayIndex].morning.enabled = true;
+                    workHours[dayIndex].morning.start = horario.inicio;
+                    workHours[dayIndex].morning.end = horario.fim;
+                  }
+                  else if (startHour >= 12) {
+                    workHours[dayIndex].afternoon.enabled = true;
+                    workHours[dayIndex].afternoon.start = horario.inicio;
+                    workHours[dayIndex].afternoon.end = horario.fim;
+                  }
+                  else {
+                    workHours[dayIndex].morning.enabled = true;
+                    workHours[dayIndex].morning.start = horario.inicio;
+                    workHours[dayIndex].morning.end = "11:59";
+                    
+                    workHours[dayIndex].afternoon.enabled = true;
+                    workHours[dayIndex].afternoon.start = "12:00";
+                    workHours[dayIndex].afternoon.end = horario.fim;
+                  }
+                }
+              });
+            }
+          });
+        }
 
         setProfessionalFormData(prev => ({
           ...prev,
@@ -187,13 +212,19 @@ const useProfessionalData = (userData) => {
             type: 'image/jpeg',
             name: `portfolio_${img.idImagem || Date.now()}.jpg`
           })),
+          profileImage: userData?.imagemPerfil ? {
+            uri: userData.imagemPerfil,
+            base64: userData.imagemPerfil,
+            type: 'image/jpeg',
+            name: 'profile.jpg'
+          } : null,
           tiposServico: allTiposServico,
           tipoServicoSelecionados,
           precosServicos: precosCarregados
         }));
       }
     } catch (error) {
-      toastHelper.showError(editProfileMessages.validations.professionalDataError);
+              toastHelper.showError(editProfileMessages.validations.professionalDataError);
     }
   };
 
@@ -269,11 +300,11 @@ const useProfessionalData = (userData) => {
       };
 
       await ApiService.put(`/profissional/usuario/${userData.idUsuario}/atualizar-completo-com-imagens`, requestData);
-      toastHelper.showSuccess(editProfileMessages.success.profileUpdated);
+              toastHelper.showSuccess(editProfileMessages.success.profileUpdated);
       return true;
     } catch (error) {
       // console.error('Erro ao atualizar dados profissionais:', error);
-      toastHelper.showError(editProfileMessages.errors.saveProfile);
+              toastHelper.showError(editProfileMessages.errors.saveProfile);
       return false;
     }
   };
@@ -333,20 +364,27 @@ const useProfessionalData = (userData) => {
   
   const pickImage = async (imageType, index = null) => {
     try {
+      // Configurações diferentes para imagem de perfil vs portfólio
       const imagePickerOptions = {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         quality: 0.8,
-        base64: true,
-        aspect: [4, 3] // Para portfólio, formato mais livre
+        base64: true
       };
+
+      // Para imagem de perfil, usar aspect ratio circular
+      if (imageType === 'profile') {
+        imagePickerOptions.aspect = [1, 1]; // Quadrado para facilitar o crop circular
+        imagePickerOptions.allowsMultipleSelection = false;
+      } else {
+        imagePickerOptions.aspect = [4, 3]; // Para portfólio, formato mais livre
+      }
 
       const result = await ImagePicker.launchImageLibraryAsync(imagePickerOptions);
       if (!result.canceled) {
         const selectedImage = result.assets[0];
         const imageUri = selectedImage.uri;
         const imageBase64 = `data:image/jpeg;base64,${selectedImage.base64}`;
-        
         if (imageType === 'portfolio') {
           setProfessionalFormData(prev => ({
             ...prev,
@@ -360,10 +398,20 @@ const useProfessionalData = (userData) => {
               }
             ]
           }));
+        } else if (imageType === 'profile') {
+          setProfessionalFormData(prev => ({
+            ...prev,
+            profileImage: {
+              uri: imageUri,
+              base64: imageBase64,
+              type: 'image/jpeg',
+              name: 'profile.jpg'
+            }
+          }));
         }
       }
     } catch (error) {
-      toastHelper.showError(editProfileMessages.validations.imageSelectionFailed);
+              toastHelper.showError(editProfileMessages.validations.imageSelectionFailed);
     }
   };
   
@@ -408,6 +456,19 @@ const useProfessionalData = (userData) => {
   useEffect(() => {
     if (userData?.role === 'ROLE_PROF') {
       loadProfessionalData();
+    }
+    
+    // Atualizar imagem de perfil quando userData mudar
+    if (userData?.imagemPerfil) {
+      setProfessionalFormData(prev => ({
+        ...prev,
+        profileImage: {
+          uri: userData.imagemPerfil,
+          base64: userData.imagemPerfil,
+          type: 'image/jpeg',
+          name: 'profile.jpg'
+        }
+      }));
     }
   }, [userData]);
 

@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, Modal, TextInput, Tou
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import * as ImagePicker from 'expo-image-picker';
 import * as formatters from '../utils/formatters';
 import toastHelper from '../utils/toastHelper';
 import { useAuth } from '../context/AuthContext';
@@ -51,7 +50,6 @@ const RegisterScreen = () => {
   const [cidadeError, setCidadeError] = useState('');
   const [enderecoValidationError, setEnderecoValidationError] = useState('');
   const [dadosCep, setDadosCep] = useState(null);
-  const [profileImage, setProfileImage] = useState(null);
 
   const emailTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.DEFAULT_TIMEOUT);
   const resendTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.RESEND_TIMEOUT);
@@ -90,37 +88,6 @@ const RegisterScreen = () => {
     confirmarSenha: '',
     termsAccepted: false
   });
-
-  // Função para selecionar imagem
-  const pickImage = async (imageType) => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-        base64: true
-      });
-
-      if (!result.canceled) {
-        const selectedImage = result.assets[0];
-        const imageUri = selectedImage.uri;
-        const imageBase64 = `data:image/jpeg;base64,${selectedImage.base64}`;
-        
-        if (imageType === 'profile') {
-          setProfileImage({
-            uri: imageUri,
-            base64: imageBase64,
-            type: 'image/jpeg',
-            name: 'profile.jpg'
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao selecionar imagem:', error);
-      toastHelper.showError('Erro ao selecionar imagem');
-    }
-  };
 
   // Effect para validar consistência de endereço automaticamente
   useEffect(() => {
@@ -709,8 +676,7 @@ const RegisterScreen = () => {
       telefone: formData.telefone,
       senha: formData.senha,
       endereco: endereco,
-      role: 'user',
-      imagemPerfil: profileImage ? profileImage.base64 : null
+      role: 'user'
     };
 
     try {
@@ -834,8 +800,6 @@ const RegisterScreen = () => {
                       nomeError={nomeError}
                       sobrenomeError={sobrenomeError}
                       fullNameError={fullNameError}
-                      profileImage={profileImage}
-                      pickImage={pickImage}
                     />
                     <FormNavigation
                       onNext={handleNextTab}

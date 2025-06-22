@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import axios from 'axios';
-import * as ImagePicker from 'expo-image-picker';
 import * as formatters from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import toastHelper from '../utils/toastHelper';
@@ -29,7 +28,6 @@ const EditProfileScreen = () => {
   const { userData } = useAuth();
   const [isArtist, setIsArtist] = useState(false);
   const [experienceDropdownOpen, setExperienceDropdownOpen] = useState(false);
-  const [profileImage, setProfileImage] = useState(null);
   
   // Form validation states
   const [nomeError, setNomeError] = useState('');
@@ -71,37 +69,6 @@ const EditProfileScreen = () => {
       website: ''
     }
   });
-
-  // Função para selecionar imagem
-  const pickImage = async (imageType) => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-        base64: true
-      });
-
-      if (!result.canceled) {
-        const selectedImage = result.assets[0];
-        const imageUri = selectedImage.uri;
-        const imageBase64 = `data:image/jpeg;base64,${selectedImage.base64}`;
-        
-        if (imageType === 'profile') {
-          setProfileImage({
-            uri: imageUri,
-            base64: imageBase64,
-            type: 'image/jpeg',
-            name: 'profile.jpg'
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao selecionar imagem:', error);
-      toastHelper.showError('Erro ao selecionar imagem');
-    }
-  };
   
   // Hooks customizados
   const validation = useFormValidation();
@@ -146,15 +113,6 @@ const EditProfileScreen = () => {
           website: userData.redesSociais?.website || ''
         }
       });
-
-      // Carregar foto de perfil se existir
-      if (userData.imagemPerfil) {
-        setProfileImage({
-          uri: userData.imagemPerfil,
-          type: 'image/jpeg',
-          name: 'profile.jpg'
-        });
-      }
     }
   }, [userData]);
 
@@ -387,8 +345,6 @@ const EditProfileScreen = () => {
                       sobrenomeError={sobrenomeError}
                       fullNameError={fullNameError}
                       isEditMode={true}
-                      profileImage={profileImage}
-                      pickImage={pickImage}
                     />
                     <FormNavigation
                   onNext={tabNavigation.handleNextTab}
@@ -465,6 +421,7 @@ const EditProfileScreen = () => {
                   biographyError={biographyError}
                   handleBiographyChange={handleBiographyChange}
                   portfolioImages={professionalData.professionalFormData.portfolioImages}
+                  profileImage={professionalData.professionalFormData.profileImage}
                   handleAddPortfolioImage={professionalData.handleAddPortfolioImage}
                   handleRemovePortfolioImage={professionalData.handleRemovePortfolioImage}
                   pickImage={professionalData.pickImage}
@@ -504,7 +461,7 @@ const EditProfileScreen = () => {
 
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
-                  onNext={() => profileUpdate.handleUpdateProfile(formData, tabNavigation.validateCurrentTab, professionalData.professionalFormData, profileImage)}
+                  onNext={() => profileUpdate.handleUpdateProfile(formData, tabNavigation.validateCurrentTab, professionalData.professionalFormData)}
                       showNext={true}
                       nextText="Salvar Alterações"
                   isLoading={profileUpdate.isLoading}
