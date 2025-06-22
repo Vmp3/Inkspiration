@@ -100,7 +100,7 @@ const AdminUsersScreen = () => {
         setTotalElements(response.length);
       }
     } catch (error) {
-      console.error('Erro ao carregar usuários:', error);
+      // console.error('Erro ao carregar usuários:', error);
       toastHelper.showError(adminMessages.errors.loadUsers);
       setUsers([]);
       setTotalPages(1);
@@ -159,7 +159,7 @@ const AdminUsersScreen = () => {
       
       await loadUsers();
     } catch (error) {
-      console.error('Erro na ação:', error);
+      // console.error('Erro na ação:', error);
       toastHelper.showError(adminMessages.errors.userAction);
     } finally {
       setIsConfirmModalVisible(false);

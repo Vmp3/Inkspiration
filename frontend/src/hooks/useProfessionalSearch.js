@@ -109,7 +109,7 @@ const useProfessionalSearch = ({
       setHasPrevious(response.hasPrevious);
       updateActiveFilters();
     } catch (error) {
-      console.error('Erro ao carregar profissionais:', error);
+      // console.error('Erro ao carregar profissionais:', error);
       toastHelper.showError('Erro ao carregar profissionais');
       setDisplayedArtists([]);
       setTotalPages(0);

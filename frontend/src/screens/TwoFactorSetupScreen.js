@@ -67,7 +67,7 @@ const TwoFactorSetupScreen = () => {
       setOtpAuthUrl(response.otpAuthUrl);
       setQrCode(response.qrCode);
     } catch (error) {
-      console.error('Error generating QR code:', error);
+      // console.error('Error generating QR code:', error);
       setError(error.message || professionalMessages.twoFactorErrors.generateQR);
       safeGoBackToProfile();
     } finally {

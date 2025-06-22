@@ -58,7 +58,7 @@ class ApiService {
       
       return response.data;
     } catch (error) {
-      console.error(`Erro na requisição GET para ${endpoint}:`, error);
+      // console.error(`Erro na requisição GET para ${endpoint}:`, error);
       throw error;
     }
   }
@@ -68,7 +68,7 @@ class ApiService {
       const response = await this.api.post(endpoint, data, options);
       return response.data;
     } catch (error) {
-      console.error(`Erro na requisição POST para ${endpoint}:`, error);
+      // console.error(`Erro na requisição POST para ${endpoint}:`, error);
       throw error;
     }
   }
@@ -78,7 +78,7 @@ class ApiService {
       const response = await this.api.put(endpoint, data, options);
       return response.data;
     } catch (error) {
-      console.error(`Erro na requisição PUT para ${endpoint}:`, error);
+      // console.error(`Erro na requisição PUT para ${endpoint}:`, error);
       throw error;
     }
   }
@@ -88,7 +88,7 @@ class ApiService {
       const response = await this.api.delete(endpoint, options);
       return response.data;
     } catch (error) {
-      console.error(`Erro na requisição DELETE para ${endpoint}:`, error);
+      // console.error(`Erro na requisição DELETE para ${endpoint}:`, error);
       throw error;
     }
   }

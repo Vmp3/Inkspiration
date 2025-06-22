@@ -303,7 +303,7 @@ const useProfessionalData = (userData) => {
               toastHelper.showSuccess(editProfileMessages.success.profileUpdated);
       return true;
     } catch (error) {
-      console.error('Erro ao atualizar dados profissionais:', error);
+      // console.error('Erro ao atualizar dados profissionais:', error);
               toastHelper.showError(editProfileMessages.errors.saveProfile);
       return false;
     }

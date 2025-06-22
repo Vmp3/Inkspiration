@@ -25,7 +25,7 @@ const SecuritySection = ({
       console.log('Status do 2FA recebido:', status);
       setTwoFactorEnabled(status.enabled || false);
     } catch (error) {
-      console.error('Erro ao carregar status do 2FA:', error);
+      // console.error('Erro ao carregar status do 2FA:', error);
       toastHelper.showError(editProfileMessages.errors.twoFactorStatus);
     }
   };
@@ -56,7 +56,7 @@ const SecuritySection = ({
       });
       
     } catch (error) {
-      console.error('Erro ao alterar status do 2FA:', error);
+      // console.error('Erro ao alterar status do 2FA:', error);
       toastHelper.showError(editProfileMessages.errors.twoFactorToggle);
     } finally {
       setIsLoading(false);

@@ -298,7 +298,7 @@ const RegisterScreen = () => {
         setDadosCep(null);
       }
     } catch (error) {
-      console.error('Erro ao buscar CEP:', error);
+      // console.error('Erro ao buscar CEP:', error);
       setCepError('Erro ao consultar CEP. Verifique sua conexão.');
       setDadosCep(null);
     }

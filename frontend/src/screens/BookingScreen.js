@@ -122,7 +122,7 @@ const BookingScreen = () => {
       setSelectedMonth(tomorrow.getMonth());
       
     } catch (error) {
-      console.error('Erro ao carregar dados iniciais:', error);
+      // console.error('Erro ao carregar dados iniciais:', error);
       toastHelper.showError(bookingMessages.errors.loadProfessional);
     } finally {
       setIsLoading(false);
@@ -147,7 +147,7 @@ const BookingScreen = () => {
       
     } catch (error) {
       if (!error.message || !error.message.includes('204')) {
-        console.error('Erro ao carregar horários disponíveis:', error);
+        // console.error('Erro ao carregar horários disponíveis:', error);
         toastHelper.showError(bookingMessages.errors.loadSchedules);
       }
       setAvailableTimeSlots([]);
@@ -217,7 +217,7 @@ const BookingScreen = () => {
       toastHelper.showSuccess(bookingMessages.success.bookingCreated);
       
     } catch (error) {
-      console.error('Erro ao criar agendamento:', error);
+      // console.error('Erro ao criar agendamento:', error);
       let errorMessage = 'Erro ao criar agendamento';
       
       if (error.response?.data) {

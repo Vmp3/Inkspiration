@@ -384,7 +384,7 @@ const ProfessionalRegisterScreen = () => {
         try {
           await ApiService.put(`/usuario/${userData.idUsuario}/foto-perfil`, { imagemBase64: profileImage.base64 });
         } catch (error) {
-          console.error('Falha ao enviar imagem de perfil:', error);
+          // console.error('Falha ao enviar imagem de perfil:', error);
         }
       }
       
@@ -405,7 +405,7 @@ const ProfessionalRegisterScreen = () => {
             try {
               await ApiService.post('/imagens', imagemDTO);
             } catch (error) {
-              console.error('Falha ao enviar imagem do portfólio:', error);
+              // console.error('Falha ao enviar imagem do portfólio:', error);
               throw error; // Re-throw para que o erro seja capturado no nível superior
             }
           }
@@ -414,7 +414,7 @@ const ProfessionalRegisterScreen = () => {
       
       return true;
     } catch (error) {
-      console.error('Erro ao fazer upload das imagens:', error);
+      // console.error('Erro ao fazer upload das imagens:', error);
       return false;
     }
   };
@@ -728,7 +728,7 @@ const ProfessionalRegisterScreen = () => {
               toastHelper.showWarning('Não foi possível salvar as imagens do portfólio');
             }
           } catch (imageError) {
-            console.error('Erro ao enviar imagens:', imageError);
+            // console.error('Erro ao enviar imagens:', imageError);
             toastHelper.showWarning(professionalRegisterMessages.warnings.imageUploadPartialFailure);
           }
         }
@@ -746,7 +746,7 @@ const ProfessionalRegisterScreen = () => {
               navigation.navigate('Home');
             }, 1000);
           } else {
-            console.error('Falha ao atualizar token - redirecionando para login');
+            // console.error('Falha ao atualizar token - redirecionando para login');
             toastHelper.showWarning(professionalRegisterMessages.warnings.loginAgainForPermissions);
             await AuthService.logout();
             setTimeout(() => {
@@ -754,7 +754,7 @@ const ProfessionalRegisterScreen = () => {
             }, 2000);
           }
         } catch (tokenError) {
-          console.error('Erro ao atualizar token:', tokenError);
+          // console.error('Erro ao atualizar token:', tokenError);
           
           toastHelper.showWarning(professionalRegisterMessages.warnings.loginAgainForPermissions);
           await AuthService.logout();
@@ -763,12 +763,12 @@ const ProfessionalRegisterScreen = () => {
           }, 2000);
         }
       } catch (userError) {
-        console.error('Erro ao obter dados do usuário ou cadastrar profissional:', userError);
+        // console.error('Erro ao obter dados do usuário ou cadastrar profissional:', userError);
         toastHelper.showError(professionalRegisterMessages.errors.genericError);
       }
       
     } catch (error) {
-      console.error('Erro ao cadastrar profissional:', error);
+      // console.error('Erro ao cadastrar profissional:', error);
       toastHelper.showError(error.message || professionalRegisterMessages.errors.registrationFailed);
     } finally {
       setIsLoading(false);

@@ -78,7 +78,7 @@ const useProfileUpdate = (isArtist, updateProfessionalData) => {
       // Redirecionar para a tela inicial
       navigation.navigate('Home');
     } catch (error) {
-      console.error('Erro ao atualizar perfil:', error);
+      // console.error('Erro ao atualizar perfil:', error);
       // Novo tratamento para mensagem do backend
       if (error.response && error.response.data && typeof error.response.data.error === 'string') {
         const msg = error.response.data.error;

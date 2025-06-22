@@ -6,7 +6,7 @@ class PortfolioService {
       const response = await ApiService.delete(`/portfolio/deletar/${id}`);
       return response;
     } catch (error) {
-      console.error('Erro ao deletar portfólio:', error);
+      // console.error('Erro ao deletar portfólio:', error);
       throw error;
     }
   }
@@ -16,7 +16,7 @@ class PortfolioService {
       const response = await ApiService.get(`/portfolio/${id}`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar portfólio:', error);
+      // console.error('Erro ao buscar portfólio:', error);
       throw error;
     }
   }
@@ -26,7 +26,7 @@ class PortfolioService {
       const response = await ApiService.get(`/portfolio?page=${page}`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar portfólios:', error);
+      // console.error('Erro ao buscar portfólios:', error);
       throw error;
     }
   }

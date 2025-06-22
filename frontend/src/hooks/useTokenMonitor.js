@@ -53,7 +53,7 @@ const useTokenMonitor = (isAuthenticated, onTokenInvalid) => {
           }
         }
       } catch (error) {
-        console.error('Erro ao monitorar token:', error);
+        // console.error('Erro ao monitorar token:', error);
         // Em caso de erro crítico, fazer logout por segurança
         onTokenInvalid();
       }
