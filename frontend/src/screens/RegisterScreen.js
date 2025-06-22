@@ -296,15 +296,56 @@ const RegisterScreen = () => {
 
       if (!result.canceled) {
         const selectedImage = result.assets[0];
+        
+        const validMimeTypes = ['image/jpeg', 'image/png'];
+        const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
+        
+        // Verificar MIME type
+        if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
+          toastHelper.showError(authMessages.imageUploadErrors.invalidFormat);
+          return;
+        }
+        
+        // Verificar extensão do arquivo
+        if (selectedImage.fileName) {
+          const fileExtension = selectedImage.fileName.toLowerCase().slice(selectedImage.fileName.lastIndexOf('.'));
+          if (!validExtensions.includes(fileExtension)) {
+            toastHelper.showError(authMessages.imageUploadErrors.invalidFormat);
+            return;
+          }
+        }
+        
+        // Validação de tamanho - limite de 5MB
+        const maxSizeInMB = 5;
+        const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+        
+        if (selectedImage.fileSize && selectedImage.fileSize > maxSizeInBytes) {
+          toastHelper.showError(authMessages.imageUploadErrors.fileTooLarge);
+          return;
+        }
+        
+        // Validação adicional do base64 (que é ~33% maior que o arquivo original)
+        const base64String = selectedImage.base64;
+        const base64SizeInBytes = (base64String.length * 3) / 4;
+        
+        if (base64SizeInBytes > maxSizeInBytes) {
+          toastHelper.showError(authMessages.imageUploadErrors.processedImageTooLarge);
+          return;
+        }
+        
+        // Determinar formato correto baseado na extensão do arquivo
+        const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
+        const mimeType = selectedImage.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
+        
         setProfileImage({
           uri: selectedImage.uri,
-          base64: `data:image/jpeg;base64,${selectedImage.base64}`,
-          type: 'image/jpeg',
-          name: 'profile.jpg'
+          base64: `data:${mimeType};base64,${selectedImage.base64}`,
+          type: mimeType,
+          name: `profile.${imageFormat === 'png' ? 'png' : 'jpg'}`
         });
       }
     } catch (error) {
-      toastHelper.showError('Erro ao selecionar imagem');
+      toastHelper.showError(authMessages.imageUploadErrors.selectionFailed);
     }
   };
 

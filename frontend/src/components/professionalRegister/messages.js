@@ -40,5 +40,19 @@ export const professionalRegisterMessages = {
   // Mensagens informativas
   info: {
     uploadingImages: 'Enviando imagens...'
+  },
+
+  // Mensagens de erro - Image Upload
+  imageUploadErrors: {
+    fileTooLarge: 'Imagem muito grande. Tamanho máximo permitido: 5MB',
+    processedImageTooLarge: 'Imagem muito grande após processamento. Tamanho máximo permitido: 5MB',
+    invalidFormat: 'Formato de imagem inválido. Apenas PNG, JPG, JPEG e JFIF são permitidos',
+    selectionFailed: 'Erro ao selecionar imagem',
+    uploadFailed: 'Erro ao enviar imagem'
+  },
+
+  // Mensagens de erro - Preço dos Serviços
+  priceErrors: {
+    maxValueExceeded: 'Valor máximo permitido é R$ 100.000,00'
   }
 }; 

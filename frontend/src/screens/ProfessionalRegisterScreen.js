@@ -350,29 +350,65 @@ const ProfessionalRegisterScreen = () => {
       });
       if (!result.canceled) {
         const selectedImage = result.assets[0];
+        
+        const validMimeTypes = ['image/jpeg', 'image/png'];
+        const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
+        
+        if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
+          toastHelper.showError(professionalRegisterMessages.imageUploadErrors.invalidFormat);
+          return;
+        }
+        
+        if (selectedImage.fileName) {
+          const fileExtension = selectedImage.fileName.toLowerCase().slice(selectedImage.fileName.lastIndexOf('.'));
+          if (!validExtensions.includes(fileExtension)) {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.invalidFormat);
+            return;
+          }
+        }
+        
+        const maxSizeInMB = 5;
+        const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+        
+        if (selectedImage.fileSize && selectedImage.fileSize > maxSizeInBytes) {
+          toastHelper.showError(professionalRegisterMessages.imageUploadErrors.fileTooLarge);
+          return;
+        }
+        
+        const base64String = selectedImage.base64;
+        const base64SizeInBytes = (base64String.length * 3) / 4;
+        
+        if (base64SizeInBytes > maxSizeInBytes) {
+          toastHelper.showError(professionalRegisterMessages.imageUploadErrors.processedImageTooLarge);
+          return;
+        }
+        
+        const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
+        const mimeType = selectedImage.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
+        
         const imageUri = selectedImage.uri;
-        const imageBase64 = `data:image/jpeg;base64,${selectedImage.base64}`;
+        const imageBase64 = `data:${mimeType};base64,${selectedImage.base64}`;
         if (imageType === 'portfolio') {
           setPortfolioImages(prev => [
             ...prev,
             {
               uri: imageUri,
               base64: imageBase64,
-              type: 'image/jpeg',
-              name: `portfolio_${prev.length}.jpg`
+              type: mimeType,
+              name: `portfolio_${prev.length}.${imageFormat === 'png' ? 'png' : 'jpg'}`
             }
           ]);
         } else if (imageType === 'profile') {
           setProfileImage({
             uri: imageUri,
             base64: imageBase64,
-            type: 'image/jpeg',
-            name: 'profile.jpg'
+            type: mimeType,
+            name: `profile.${imageFormat === 'png' ? 'png' : 'jpg'}`
           });
         }
       }
     } catch (error) {
-              toastHelper.showError(professionalRegisterMessages.errors.imageSelectionFailed);
+              toastHelper.showError(professionalRegisterMessages.imageUploadErrors.selectionFailed);
     }
   };
   
