@@ -121,7 +121,7 @@ const ForgotPasswordScreen = () => {
                 </View>
 
                 <Button
-                  label={emailTimeout.isLoading ? authMessages.loading.forgotPassword : "Enviar link de recuperação"}
+                  label={emailTimeout.isLoading ? authMessages.loading.forgotPassword : "Enviar email de recuperação"}
                   onPress={handleSubmit}
                   loading={emailTimeout.isLoading}
                   disabled={emailTimeout.isLoading}

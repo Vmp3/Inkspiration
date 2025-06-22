@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import inkspiration.backend.entities.PasswordResetCode;
 
@@ -17,10 +18,12 @@ public interface PasswordResetCodeRepository extends JpaRepository<PasswordReset
     Optional<PasswordResetCode> findByCpfAndCodeAndUsedFalse(String cpf, String code);
     
     @Modifying
+    @Transactional
     @Query("UPDATE PasswordResetCode p SET p.used = true WHERE p.cpf = :cpf")
     void markAllAsUsedByCpf(@Param("cpf") String cpf);
     
     @Modifying
+    @Transactional
     @Query("DELETE FROM PasswordResetCode p WHERE p.expiresAt < :now")
     void deleteExpiredCodes(@Param("now") LocalDateTime now);
     

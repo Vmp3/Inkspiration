@@ -25,74 +25,42 @@ public class EmailVerificationController {
     private EmailVerificationService emailVerificationService;
 
     @PostMapping("/request-verification")
-    public ResponseEntity<?> requestEmailVerification(@RequestBody @Valid UsuarioDTO usuarioDTO) {
-        try {
-            emailVerificationService.requestEmailVerification(usuarioDTO);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Email de verificação enviado com sucesso");
-            response.put("email", usuarioDTO.getEmail());
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
+    public ResponseEntity<Map<String, Object>> requestEmailVerification(@RequestBody @Valid UsuarioDTO usuarioDTO) {
+        emailVerificationService.requestEmailVerificationComValidacao(usuarioDTO);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Email de verificação enviado com sucesso");
+        response.put("email", usuarioDTO.getEmail());
+        
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<?> verifyEmail(@RequestBody @Valid EmailVerificationRequest request) {
-        try {
-            Usuario usuario = emailVerificationService.verifyEmailAndCreateUser(
-                request.getEmail(), 
-                request.getCode()
-            );
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Conta criada com sucesso!");
-            response.put("usuario", usuario);
-            
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
+    public ResponseEntity<Map<String, Object>> verifyEmail(@RequestBody @Valid EmailVerificationRequest request) {
+        Usuario usuario = emailVerificationService.verifyEmailAndCreateUserComValidacao(
+            request.getEmail(), 
+            request.getCode()
+        );
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Conta criada com sucesso!");
+        response.put("usuario", usuario);
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-
-
     @PostMapping("/resend-verification")
-    public ResponseEntity<?> resendVerificationCode(@RequestBody Map<String, String> request) {
-        try {
-            String email = request.get("email");
-            if (email == null || email.trim().isEmpty()) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "Email é obrigatório");
-                return ResponseEntity.badRequest().body(response);
-            }
-            
-            emailVerificationService.resendVerificationCode(email);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Código de verificação reenviado com sucesso");
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
+    public ResponseEntity<Map<String, Object>> resendVerificationCode(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        
+        emailVerificationService.resendVerificationCodeComValidacao(email);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Código de verificação reenviado com sucesso");
+        
+        return ResponseEntity.ok(response);
     }
 } 

@@ -20,12 +20,12 @@ const SecuritySection = ({
 
   const loadTwoFactorStatus = async () => {
     try {
-      console.log('Carregando status do 2FA...');
+      // console.log('Carregando status do 2FA...');
       const status = await TwoFactorService.getStatus();
-      console.log('Status do 2FA recebido:', status);
+      // console.log('Status do 2FA recebido:', status);
       setTwoFactorEnabled(status.enabled || false);
     } catch (error) {
-      console.error('Erro ao carregar status do 2FA:', error);
+      // console.error('Erro ao carregar status do 2FA:', error);
       toastHelper.showError(editProfileMessages.errors.twoFactorStatus);
     }
   };
@@ -33,7 +33,7 @@ const SecuritySection = ({
   // Atualiza o status sempre que a tela recebe foco
   useFocusEffect(
     React.useCallback(() => {
-      console.log('SecuritySection recebeu foco, atualizando status 2FA');
+      // console.log('SecuritySection recebeu foco, atualizando status 2FA');
       loadTwoFactorStatus();
     }, [])
   );
@@ -43,20 +43,15 @@ const SecuritySection = ({
       setIsLoading(true);
       
       const action = newValue ? 'enable' : 'disable';
-      console.log('Navegando para TwoFactorSetup com action:', action);
+      // console.log('Navegando para TwoFactorSetup com action:', action);
       
       // Navegar para a tela de configuração 2FA
       navigation.navigate('TwoFactorSetup', {
-        action: action,
-        onSuccess: () => {
-          console.log('Callback onSuccess executado, recarregando status');
-          // Callback chamado quando a configuração é bem-sucedida
-          loadTwoFactorStatus();
-        }
+        action: action
       });
       
     } catch (error) {
-      console.error('Erro ao alterar status do 2FA:', error);
+      // console.error('Erro ao alterar status do 2FA:', error);
       toastHelper.showError(editProfileMessages.errors.twoFactorToggle);
     } finally {
       setIsLoading(false);

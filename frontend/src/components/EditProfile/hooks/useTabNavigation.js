@@ -3,9 +3,12 @@ import useFormValidation from '../utils/formValidation';
 import toastHelper from '../../../utils/toastHelper';
 import { editProfileMessages } from '../messages';
 
-const useTabNavigation = (isArtist, formData, professionalFormData) => {
+const useTabNavigation = (isArtist, formData, professionalFormData, addressValidationErrors = {}) => {
   const [activeTab, setActiveTab] = useState('personal');
   const validation = useFormValidation();
+  
+  // Destructure address validation errors
+  const { cepError, estadoError, cidadeError, bairroError, enderecoValidationError } = addressValidationErrors;
 
   const getAvailableTabs = () => {
     const availableTabs = ['personal'];
@@ -14,7 +17,7 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
       availableTabs.push('address');
     }
     
-    if (validation.isPersonalTabValid(formData) && validation.isAddressTabValid(formData)) {
+    if (validation.isPersonalTabValid(formData) && validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError)) {
       if (isArtist) {
         availableTabs.push('basic-info');
         
@@ -45,16 +48,16 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
     } else {
       if (tabId === 'address' && !validation.isPersonalTabValid(formData)) {
         toastHelper.showWarning(editProfileMessages.warnings.completePersonalDataFirst);
-      } else if (tabId === 'basic-info' && (!validation.isPersonalTabValid(formData) || !validation.isAddressTabValid(formData))) {
+      } else if (tabId === 'basic-info' && (!validation.isPersonalTabValid(formData) || !validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError))) {
         if (!validation.isPersonalTabValid(formData)) {
           toastHelper.showWarning(editProfileMessages.warnings.completePersonalDataFirst);
         } else {
           toastHelper.showWarning(editProfileMessages.warnings.completeAddressDataFirst);
         }
-      } else if (tabId === 'hours' && (!validation.isPersonalTabValid(formData) || !validation.isAddressTabValid(formData) || !validation.isBasicInfoTabValid(professionalFormData))) {
+      } else if (tabId === 'hours' && (!validation.isPersonalTabValid(formData) || !validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError) || !validation.isBasicInfoTabValid(professionalFormData))) {
         if (!validation.isPersonalTabValid(formData)) {
           toastHelper.showWarning(editProfileMessages.warnings.completePersonalDataFirst);
-        } else if (!validation.isAddressTabValid(formData)) {
+        } else if (!validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError)) {
           toastHelper.showWarning(editProfileMessages.warnings.completeAddressDataFirst);
         } else {
           toastHelper.showWarning(editProfileMessages.warnings.completeBasicInfoFirst);
@@ -67,7 +70,7 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
             toastHelper.showWarning(editProfileMessages.warnings.completePortfolioFirst);
           }
         } else {
-          if (!validation.isAddressTabValid(formData)) {
+          if (!validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError)) {
             toastHelper.showWarning(editProfileMessages.warnings.completeAddressDataFirst);
           }
         }
@@ -128,6 +131,11 @@ const useTabNavigation = (isArtist, formData, professionalFormData) => {
             setActiveTab('basic-info');
           } else {
             setActiveTab('security');
+          }
+        } else {
+          // Forçar validação de endereço quando há erro, similar ao RegisterScreen
+          if (addressValidationErrors.forceAddressValidation) {
+            addressValidationErrors.forceAddressValidation();
           }
         }
         break;

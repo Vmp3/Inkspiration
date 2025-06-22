@@ -11,13 +11,13 @@ export const AuthProvider = ({ children }) => {
 
   // Callback para quando o token for inválido
   const handleTokenInvalid = useCallback(async () => {
-    console.log('Token inválido detectado, fazendo logout automático');
+    // console.log('Token inválido detectado, fazendo logout automático');
     setIsAuthenticated(false);
     setUserData(null);
     try {
       await AuthService.logout();
     } catch (error) {
-      console.error('Erro ao fazer logout automático:', error);
+      // console.error('Erro ao fazer logout automático:', error);
     }
   }, []);
 
@@ -43,11 +43,11 @@ export const AuthProvider = ({ children }) => {
         if (userInfo) {
           setUserData(userInfo);
         } else {
-          console.error('Usuário autenticado, mas não foi possível obter os dados');
+          // console.error('Usuário autenticado, mas não foi possível obter os dados');
         }
       }
     } catch (error) {
-      console.error('Erro ao verificar autenticação:', error);
+      // console.error('Erro ao verificar autenticação:', error);
       setIsAuthenticated(false);
     } finally {
       setLoading(false);
@@ -69,12 +69,12 @@ export const AuthProvider = ({ children }) => {
           // Usar o método isAuthenticated que já faz todas as verificações
           const isStillAuth = await AuthService.isAuthenticated();
           if (!isStillAuth) {
-            console.log('Token inválido detectado na verificação periódica, fazendo logout');
+            // console.log('Token inválido detectado na verificação periódica, fazendo logout');
             setIsAuthenticated(false);
             setUserData(null);
           }
         } catch (error) {
-          console.error('Erro na verificação periódica do token:', error);
+          // console.error('Erro na verificação periódica do token:', error);
           setIsAuthenticated(false);
           setUserData(null);
         }
@@ -111,7 +111,7 @@ export const AuthProvider = ({ children }) => {
       // Verificar se o token está realmente disponível
       const token = await AuthService.getToken();
       if (!token) {
-        console.error('Token não foi armazenado corretamente após login');
+        // console.error('Token não foi armazenado corretamente após login');
         return { 
           success: false, 
           error: 'Falha ao armazenar token. Por favor, tente novamente.'
@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
       if (userInfo) {
         setUserData(userInfo);
       } else {
-        console.error('Não foi possível obter os dados do usuário após o login');
+        // console.error('Não foi possível obter os dados do usuário após o login');
       }
       
       return { 
@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }) => {
         message: result.message || 'Login realizado com sucesso'
       };
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
+      // console.error('Erro ao fazer login:', error);
       return { 
         success: false, 
         error: error.message || 'Falha ao fazer login. Verifique suas credenciais.'
@@ -150,7 +150,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       setUserData(null);
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
+      // console.error('Erro ao fazer logout:', error);
     } finally {
       setLoading(false);
     }
@@ -180,7 +180,7 @@ export const AuthProvider = ({ children }) => {
                 return;
               }
             } catch (tokenError) {
-              console.error('Erro ao atualizar token após mudança de role:', tokenError);
+              // console.error('Erro ao atualizar token após mudança de role:', tokenError);
               await logout();
               return;
             }
@@ -189,7 +189,7 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } catch (error) {
-        console.error('Erro ao atualizar dados do usuário:', error);
+        // console.error('Erro ao atualizar dados do usuário:', error);
       } finally {
         setLoading(false);
       }

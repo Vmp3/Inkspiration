@@ -17,7 +17,7 @@ class PublicApiService {
       const response = await this.api.get(endpoint, options);
       return response.data;
     } catch (error) {
-      console.error(`Erro na requisição GET pública para ${endpoint}:`, error);
+      // console.error(`Erro na requisição GET pública para ${endpoint}:`, error);
       throw error;
     }
   }
@@ -27,7 +27,7 @@ class PublicApiService {
       const response = await this.api.post(endpoint, data, options);
       return response.data;
     } catch (error) {
-      console.error(`Erro na requisição POST pública para ${endpoint}:`, error);
+      // console.error(`Erro na requisição POST pública para ${endpoint}:`, error);
       throw error;
     }
   }

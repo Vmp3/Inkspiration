@@ -13,10 +13,12 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { differenceInDays } from 'date-fns';
+import Toast from 'react-native-toast-message';
 import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import { editAppointmentMessages } from './editAppointment/messages';
 import { formatCurrency } from '../utils/formatters';
+import toastConfig from '../config/toastConfig';
 
 const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
   const [step, setStep] = useState(1);
@@ -138,7 +140,7 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       
       setIsLoading(false);
     } catch (error) {
-      console.error('Erro ao carregar dados para edição:', error);
+      // // console.error('Erro ao carregar dados para edição:', error);
       toastHelper.showError(editAppointmentMessages.errors.loadAppointment);
       onClose();
     }
@@ -174,7 +176,7 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       }
     } catch (error) {
       if (!error.message || !error.message.includes('204')) {
-        console.error('Erro ao carregar horários disponíveis:', error);
+        // console.error('Erro ao carregar horários disponíveis:', error);
         toastHelper.showError(editAppointmentMessages.errors.loadSchedules);
       }
       setAvailableTimeSlots([]);
@@ -240,7 +242,7 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Erro ao atualizar agendamento:', error);
+      // console.error('Erro ao atualizar agendamento:', error);
       
       let errorMessage = editAppointmentMessages.errors.updateFailed;
       if (error.response?.data) {
@@ -622,6 +624,18 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
+      
+      <Toast 
+        config={toastConfig} 
+        style={{ 
+          zIndex: 999999, 
+          elevation: 999999,
+          position: 'absolute',
+          bottom: 50,
+          left: 0,
+          right: 0
+        }} 
+      />
     </Modal>
   );
 };

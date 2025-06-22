@@ -1,7 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { isMobileView } from '../../utils/responsive';
 
 const TabHeader = ({ tabs, activeTab, setActiveTab, onTabPress, availableTabs }) => {
+  const isMobile = isMobileView();
+  
   const handleTabPress = (tabId) => {
     if (availableTabs && !availableTabs.includes(tabId)) {
       return;
@@ -18,7 +21,10 @@ const TabHeader = ({ tabs, activeTab, setActiveTab, onTabPress, availableTabs })
     <ScrollView 
       horizontal 
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.tabsScrollContainer}
+      contentContainerStyle={[
+        styles.tabsScrollContainer,
+        isMobile && styles.tabsScrollContainerMobile
+      ]}
     >
       <View style={styles.tabsContainer}>
         {tabs.map((tab) => {
@@ -30,6 +36,7 @@ const TabHeader = ({ tabs, activeTab, setActiveTab, onTabPress, availableTabs })
               key={tab.id}
               style={[
                 styles.tabItem,
+                isMobile && styles.tabItemMobile,
                 isActive && styles.activeTabItem,
                 !isAvailable && styles.disabledTabItem,
               ]}
@@ -39,10 +46,11 @@ const TabHeader = ({ tabs, activeTab, setActiveTab, onTabPress, availableTabs })
               <Text
                 style={[
                   styles.tabText,
+                  isMobile && styles.tabTextMobile,
                   isActive && styles.activeTabText,
                   !isAvailable && styles.disabledTabText
                 ]}
-                numberOfLines={1}
+                numberOfLines={isMobile ? 2 : 1}
                 ellipsizeMode="tail"
               >
                 {tab.label}
@@ -60,6 +68,9 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     width: '100%',
   },
+  tabsScrollContainerMobile: {
+    minWidth: '100%',
+  },
   tabsContainer: {
     flexDirection: 'row',
     backgroundColor: '#f8f8f8',
@@ -72,6 +83,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 80,
+    flex: 1,
+  },
+  tabItemMobile: {
+    paddingHorizontal: 6,
+    paddingVertical: 12,
+    minWidth: 0,
     flex: 1,
   },
   activeTabItem: {
@@ -88,6 +105,10 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     fontWeight: '400',
+  },
+  tabTextMobile: {
+    fontSize: 12,
+    lineHeight: 14,
   },
   activeTabText: {
     fontWeight: '600',

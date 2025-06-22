@@ -30,7 +30,7 @@ import RecoverySection from '../components/TwoFactorSetup/RecoverySection';
 const TwoFactorSetupScreen = () => {
   const { safeGoBackToProfile } = useNavigationHelper();
   const route = useRoute();
-  const { action, onSuccess } = route.params; // 'enable' ou 'disable'
+  const { action } = route.params;
   
   const [step, setStep] = useState(1); // 1: instrucoes, 2: qrcode/codigo, 3: verificacao
   const [qrCode, setQrCode] = useState(null);
@@ -67,13 +67,13 @@ const TwoFactorSetupScreen = () => {
       setOtpAuthUrl(response.otpAuthUrl);
       setQrCode(response.qrCode);
     } catch (error) {
-      console.error('Error generating QR code:', error);
+      // console.error('Error generating QR code:', error);
       setError(error.message || professionalMessages.twoFactorErrors.generateQR);
       safeGoBackToProfile();
     } finally {
       setIsGeneratingQR(false);
     }
-  }, [navigation]);
+  }, [safeGoBackToProfile]);
 
   const handleNextStep = () => {
     if (step < 3) {
@@ -197,9 +197,6 @@ const TwoFactorSetupScreen = () => {
 
       if (response && response.success) {
         toastHelper.showSuccess(response.message);
-        if (onSuccess) {
-          onSuccess();
-        }
         safeGoBackToProfile();
       } else {
         toastHelper.showError(response.message || professionalMessages.twoFactorErrors.verifyRecovery);

@@ -34,8 +34,8 @@ public class Profissional {
     private Endereco endereco;
     
     @OneToOne
-    @JoinColumn(name = "portifolio_idPortifolio")
-    private Portifolio portifolio;
+    @JoinColumn(name = "portfolio_idPortfolio")
+    private Portfolio portfolio;
     
     @Column(precision = 3, scale = 1)
     private BigDecimal nota;
@@ -73,12 +73,12 @@ public class Profissional {
         this.endereco = endereco;
     }
     
-    public Portifolio getPortifolio() {
-        return portifolio;
+    public Portfolio getPortfolio() {
+        return portfolio;
     }
     
-    public void setPortifolio(Portifolio portifolio) {
-        this.portifolio = portifolio;
+    public void setPortfolio(Portfolio portfolio) {
+        this.portfolio = portfolio;
     }
     
     public BigDecimal getNota() {

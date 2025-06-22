@@ -22,27 +22,13 @@ public class PasswordResetController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestBody @Valid ForgotPasswordDTO dto) {
-        try {
-            String message = passwordResetService.generatePasswordResetCode(dto.getCpf());
-            return ResponseEntity.ok(message);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Erro interno do servidor. Tente novamente mais tarde.");
-        }
+        String message = passwordResetService.gerarCodigoRecuperacaoComValidacao(dto.getCpf());
+        return ResponseEntity.ok(message);
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@RequestBody @Valid ResetPasswordDTO dto) {
-        try {
-            passwordResetService.resetPassword(dto.getCpf(), dto.getCode(), dto.getNewPassword());
-            return ResponseEntity.ok("Senha redefinida com sucesso");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Erro interno do servidor. Tente novamente mais tarde.");
-        }
+        String message = passwordResetService.redefinirSenhaComValidacao(dto.getCpf(), dto.getCode(), dto.getNewPassword());
+        return ResponseEntity.ok(message);
     }
 } 

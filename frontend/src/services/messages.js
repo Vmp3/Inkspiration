@@ -1,8 +1,8 @@
 export const pdfExportMessages = {
   success: {
     pdfGenerated: 'PDF gerado com sucesso!',
-    pdfSaved: 'PDF salvo com sucesso na pasta selecionada!',
-    pdfGeneratedUseShare: 'PDF gerado com sucesso! Use o menu de compartilhamento para salvar.',
+    pdfSaved: 'PDF salvo com sucesso!',
+    pdfGeneratedUseShare: 'PDF gerado com sucesso!',
     pdfSavedToDevice: 'PDF salvo no dispositivo!'
   },
 

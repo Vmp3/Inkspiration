@@ -1,8 +1,6 @@
 package inkspiration.backend.controller;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -14,8 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +28,6 @@ import inkspiration.backend.dto.AgendamentoDTO;
 import inkspiration.backend.dto.AgendamentoCompletoDTO;
 import inkspiration.backend.dto.AgendamentoRequestDTO;
 import inkspiration.backend.dto.AgendamentoUpdateDTO;
-import inkspiration.backend.entities.Agendamento;
 import inkspiration.backend.service.AgendamentoService;
 
 @RestController
@@ -47,309 +42,104 @@ public class AgendamentoController {
     }
     
     @PostMapping
-    public ResponseEntity<?> criarAgendamento(@Valid @RequestBody AgendamentoRequestDTO request) {
-        try {
-            Agendamento agendamento = agendamentoService.criarAgendamento(
-                    request.getIdUsuario(),
-                    request.getIdProfissional(),
-                    request.getTipoServico(),
-                    request.getDescricao(),
-                    request.getDtInicio(),
-                    request.getValor());
-            return ResponseEntity.status(HttpStatus.CREATED).body(new AgendamentoDTO(agendamento));
-        } catch (Exception e) {
-            String errorMessage = e.getMessage();
-            
-            if (errorMessage.contains("não está trabalhando nesse horário")) {
-                return ResponseEntity.badRequest().body(
-                        "O profissional não está disponível para atendimento nesse horário. " +
-                        "Por favor, consulte os horários de atendimento do profissional.");
-            } else if (errorMessage.contains("Você já possui outro agendamento nesse horário")) {
-                return ResponseEntity.badRequest().body(errorMessage);
-            } else if (errorMessage.contains("já possui outro agendamento")) {
-                return ResponseEntity.badRequest().body(
-                        "O profissional já possui outro agendamento nesse horário. " +
-                        "Por favor, selecione outro horário disponível.");
-            } else if (errorMessage.contains("Tipo de serviço inválido")) {
-                return ResponseEntity.badRequest().body(errorMessage);
-            } else if (errorMessage.contains("Não é possível agendar consigo mesmo")) {
-                return ResponseEntity.badRequest().body(
-                        "Não é possível agendar um serviço consigo mesmo como profissional.");
-            } else if (errorMessage.contains("Só é possível fazer agendamentos a partir do dia seguinte")) {
-                return ResponseEntity.badRequest().body(
-                        "Só é possível fazer agendamentos a partir do dia seguinte. Por favor, selecione uma data a partir do próximo dia.");
-            }
-            
-            return ResponseEntity.badRequest().body(errorMessage);
-        }
+    public ResponseEntity<AgendamentoDTO> criarAgendamento(@Valid @RequestBody AgendamentoRequestDTO request) {
+        AgendamentoDTO agendamento = agendamentoService.criarAgendamentoComValidacao(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(agendamento);
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
-        try {
-            AgendamentoDTO agendamentoDTO = agendamentoService.buscarPorIdDTO(id);
+    public ResponseEntity<AgendamentoDTO> buscarPorId(@PathVariable Long id) {
+        AgendamentoDTO agendamentoDTO = agendamentoService.buscarPorIdComValidacao(id);
             return ResponseEntity.ok(agendamentoDTO);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
     }
     
     @GetMapping("/usuario/{idUsuario}")
-    public ResponseEntity<?> listarPorUsuario(
+    public ResponseEntity<List<AgendamentoDTO>> listarPorUsuario(
             @PathVariable Long idUsuario,
-            @RequestParam(defaultValue = "0") int page) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         
-        try {
-            Pageable pageable = PageRequest.of(page, 10);
-            Page<AgendamentoDTO> agendamentosPage = agendamentoService.listarPorUsuarioDTO(idUsuario, pageable);
-            return ResponseEntity.ok(agendamentosPage.getContent());
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Pageable pageable = PageRequest.of(page, size);
+        List<AgendamentoDTO> agendamentos = agendamentoService.listarPorUsuarioComValidacao(idUsuario, pageable);
+        return ResponseEntity.ok(agendamentos);
     }
     
     @GetMapping("/profissional/{idProfissional}")
-    public ResponseEntity<?> listarPorProfissional(
+    public ResponseEntity<List<AgendamentoDTO>> listarPorProfissional(
             @PathVariable Long idProfissional,
-            @RequestParam(defaultValue = "0") int page) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         
-        try {
-            Pageable pageable = PageRequest.of(page, 10);
-            Page<AgendamentoDTO> agendamentosPage = agendamentoService.listarPorProfissionalDTO(idProfissional, pageable);
-            return ResponseEntity.ok(agendamentosPage.getContent());
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-    
-    @GetMapping("/profissional/{idProfissional}/periodo")
-    public ResponseEntity<?> listarPorProfissionalEPeriodo(
-            @PathVariable Long idProfissional,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim) {
-        
-        try {
-            List<AgendamentoDTO> agendamentoDTOs = agendamentoService.listarPorProfissionalEPeriodoDTO(
-                    idProfissional, inicio, fim);
-            return ResponseEntity.ok(agendamentoDTOs);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Pageable pageable = PageRequest.of(page, size);
+        List<AgendamentoDTO> agendamentos = agendamentoService.listarPorProfissionalComValidacao(idProfissional, pageable);
+        return ResponseEntity.ok(agendamentos);
     }
     
     @PutMapping("/{id}")
-    public ResponseEntity<?> atualizarAgendamento(
+    public ResponseEntity<AgendamentoDTO> atualizarAgendamento(
             @PathVariable Long id,
             @Valid @RequestBody AgendamentoUpdateDTO request,
             Authentication authentication) {
         
-        try {
-            if (!(authentication instanceof JwtAuthenticationToken)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Autenticação inválida");
-            }
-            
-            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
-            Jwt jwt = jwtAuth.getToken();
-            Long userId = jwt.getClaim("userId");
-            
-            if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Token não contém informações do usuário");
-            }
-            
-            Agendamento agendamento = agendamentoService.atualizarAgendamento(
-                    id, userId, request.getTipoServico(), request.getDescricao(), 
-                    request.getDtInicio());
-            return ResponseEntity.ok(new AgendamentoDTO(agendamento));
-        } catch (Exception e) {
-            String errorMessage = e.getMessage();
-            
-            if (errorMessage.contains("não está trabalhando nesse horário")) {
-                return ResponseEntity.badRequest().body(
-                        "O profissional não está disponível para atendimento nesse horário. " +
-                        "Por favor, consulte os horários de atendimento do profissional.");
-            } else if (errorMessage.contains("Você já possui outro agendamento nesse horário")) {
-                return ResponseEntity.badRequest().body(errorMessage);
-            } else if (errorMessage.contains("já possui outro agendamento")) {
-                return ResponseEntity.badRequest().body(
-                        "O profissional já possui outro agendamento nesse horário. " +
-                        "Por favor, selecione outro horário disponível.");
-            } else if (errorMessage.contains("Tipo de serviço inválido")) {
-                return ResponseEntity.badRequest().body(errorMessage);
-            } else if (errorMessage.contains("Só é possível fazer agendamentos a partir de amanhã")) {
-                return ResponseEntity.badRequest().body(
-                        "Só é possível fazer agendamentos a partir de amanhã. Por favor, selecione uma data a partir do próximo dia.");
-            } else if (errorMessage.contains("Não autorizado")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                        "Você não tem permissão para editar este agendamento.");
-            }
-            
-            return ResponseEntity.badRequest().body(errorMessage);
-        }
+        AgendamentoDTO agendamento = agendamentoService.atualizarAgendamentoComAutenticacao(id, request, authentication);
+        return ResponseEntity.ok(agendamento);
     }
     
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> excluirAgendamento(@PathVariable Long id) {
-        try {
-            agendamentoService.excluirAgendamento(id);
+    public ResponseEntity<String> excluirAgendamento(@PathVariable Long id) {
+        agendamentoService.excluirAgendamentoComValidacao(id);
             return ResponseEntity.ok("Agendamento excluído com sucesso");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
     }
 
     @GetMapping("/meus-agendamentos")
-    public ResponseEntity<?> listarMeusAgendamentos(
+    public ResponseEntity<Page<AgendamentoDTO>> listarMeusAgendamentos(
             Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        try {
-            if (authentication instanceof JwtAuthenticationToken) {
-                JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
-                Jwt jwt = jwtAuth.getToken();
-                Long userId = jwt.getClaim("userId");
-                
-                if (userId == null) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body("Token não contém informações do usuário");
-                }
-                
-                Pageable pageable = PageRequest.of(page, size);
-                Page<AgendamentoDTO> agendamentosPage = agendamentoService.listarPorUsuarioDTO(userId, pageable);
-                
-                return ResponseEntity.ok(agendamentosPage);
-            }
-            
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Autenticação inválida");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AgendamentoDTO> agendamentosPage = agendamentoService.listarMeusAgendamentosComAutenticacao(authentication, pageable);
+        return ResponseEntity.ok(agendamentosPage);
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<?> atualizarStatusAgendamento(
+    public ResponseEntity<AgendamentoDTO> atualizarStatusAgendamento(
             @PathVariable Long id,
             @RequestParam String status,
             Authentication authentication) {
-        try {
-            if (!(authentication instanceof JwtAuthenticationToken)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Autenticação inválida");
-            }
-            
-            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
-            Jwt jwt = jwtAuth.getToken();
-            Long userId = jwt.getClaim("userId");
-            
-            if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Token não contém informações do usuário");
-            }
-            
-            String scope = jwt.getClaimAsString("scope");
-            List<String> roles = new ArrayList<>();
-            if (scope != null) {
-                roles.add(scope);
-            }
-            Agendamento agendamento = agendamentoService.atualizarStatusAgendamento(id, userId, status, roles);
-            return ResponseEntity.ok(new AgendamentoDTO(agendamento));
-        } catch (Exception e) {
-            String errorMessage = e.getMessage();
-            
-            if (errorMessage.contains("Não autorizado")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                        "Você não tem permissão para atualizar este agendamento.");
-            } else if (errorMessage.contains("3 dias de antecedência")) {
-                return ResponseEntity.badRequest().body(
-                        "O cancelamento só é permitido com no mínimo 3 dias de antecedência.");
-            } else if (errorMessage.contains("Somente agendamentos com status")) {
-                return ResponseEntity.badRequest().body(errorMessage);
-            }
-            
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        
+        AgendamentoDTO agendamento = agendamentoService.atualizarStatusAgendamentoComAutenticacao(id, status, authentication);
+        return ResponseEntity.ok(agendamento);
     }
 
     @GetMapping("/meus-agendamentos/futuros")
-    public ResponseEntity<?> listarMeusAgendamentosFuturos(
+    public ResponseEntity<Page<AgendamentoCompletoDTO>> listarMeusAgendamentosFuturos(
             Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        try {
-            if (authentication instanceof JwtAuthenticationToken) {
-                JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
-                Jwt jwt = jwtAuth.getToken();
-                Long userId = jwt.getClaim("userId");
-                
-                if (userId == null) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body("Token não contém informações do usuário");
-                }
-                
-                Pageable pageable = PageRequest.of(page, size);
-                Page<AgendamentoCompletoDTO> agendamentosPage = agendamentoService.listarAgendamentosFuturos(userId, pageable);
-                
-                return ResponseEntity.ok(agendamentosPage);
-            }
-            
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Autenticação inválida");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AgendamentoCompletoDTO> agendamentosPage = agendamentoService.listarMeusAgendamentosFuturosComAutenticacao(authentication, pageable);
+        return ResponseEntity.ok(agendamentosPage);
     }
 
     @GetMapping("/meus-agendamentos/passados")
-    public ResponseEntity<?> listarMeusAgendamentosPassados(
+    public ResponseEntity<Page<AgendamentoCompletoDTO>> listarMeusAgendamentosPassados(
             Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        try {
-            if (authentication instanceof JwtAuthenticationToken) {
-                JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
-                Jwt jwt = jwtAuth.getToken();
-                Long userId = jwt.getClaim("userId");
-                
-                if (userId == null) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body("Token não contém informações do usuário");
-                }
-                
-                Pageable pageable = PageRequest.of(page, size);
-                Page<AgendamentoCompletoDTO> agendamentosPage = agendamentoService.listarAgendamentosPassados(userId, pageable);
-                
-                return ResponseEntity.ok(agendamentosPage);
-            }
-            
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Autenticação inválida");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AgendamentoCompletoDTO> agendamentosPage = agendamentoService.listarMeusAgendamentosPassadosComAutenticacao(authentication, pageable);
+        return ResponseEntity.ok(agendamentosPage);
     }
 
     @GetMapping("/relatorios/exportar-pdf")
     public ResponseEntity<byte[]> exportarAgendamentosPDF(
             @RequestParam(required = true) Integer ano,
             Authentication authentication) {
-        try {
-            if (!(authentication instanceof JwtAuthenticationToken)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Autenticação inválida".getBytes());
-            }
-            
-            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
-            Jwt jwt = jwtAuth.getToken();
-            Long userId = jwt.getClaim("userId");
-            
-            if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Token não contém informações do usuário".getBytes());
-            }
-            
-            byte[] pdfBytes = agendamentoService.gerarPDFAgendamentos(userId, ano);
+        
+        byte[] pdfBytes = agendamentoService.exportarAgendamentosPDFComAutenticacao(ano, authentication);
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
@@ -357,75 +147,28 @@ public class AgendamentoController {
             headers.add("Content-Length", String.valueOf(pdfBytes.length));
             
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
-        } catch (Exception e) {
-            String errorMessage = e.getMessage();
-            
-            if (errorMessage.contains("Nenhum agendamento concluído encontrado")) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(errorMessage.getBytes());
-            }
-            
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(("Erro ao gerar PDF: " + errorMessage).getBytes());
-        }
     }
 
     @GetMapping("/profissional/meus-atendimentos/futuros")
-    public ResponseEntity<?> listarMeusAtendimentosFuturos(
+    public ResponseEntity<Page<AgendamentoCompletoDTO>> listarMeusAtendimentosFuturos(
             Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        try {
-            if (authentication instanceof JwtAuthenticationToken) {
-                JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
-                Jwt jwt = jwtAuth.getToken();
-                Long userId = jwt.getClaim("userId");
-                
-                if (userId == null) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body("Token não contém informações do usuário");
-                }
-                
-                Pageable pageable = PageRequest.of(page, size);
-                Page<AgendamentoCompletoDTO> atendimentosPage = agendamentoService.listarAtendimentosFuturos(userId, pageable);
-                
-                return ResponseEntity.ok(atendimentosPage);
-            }
-            
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Autenticação inválida");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AgendamentoCompletoDTO> atendimentosPage = agendamentoService.listarMeusAtendimentosFuturosComAutenticacao(authentication, pageable);
+        return ResponseEntity.ok(atendimentosPage);
     }
 
     @GetMapping("/profissional/meus-atendimentos/passados")
-    public ResponseEntity<?> listarMeusAtendimentosPassados(
+    public ResponseEntity<Page<AgendamentoCompletoDTO>> listarMeusAtendimentosPassados(
             Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        try {
-            if (authentication instanceof JwtAuthenticationToken) {
-                JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
-                Jwt jwt = jwtAuth.getToken();
-                Long userId = jwt.getClaim("userId");
-                
-                if (userId == null) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body("Token não contém informações do usuário");
-                }
-                
-                Pageable pageable = PageRequest.of(page, size);
-                Page<AgendamentoCompletoDTO> atendimentosPage = agendamentoService.listarAtendimentosPassados(userId, pageable);
-                
-                return ResponseEntity.ok(atendimentosPage);
-            }
-            
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Autenticação inválida");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AgendamentoCompletoDTO> atendimentosPage = agendamentoService.listarMeusAtendimentosPassadosComAutenticacao(authentication, pageable);
+        return ResponseEntity.ok(atendimentosPage);
     }
 
     @GetMapping("/profissional/relatorios/exportar-pdf")
@@ -433,22 +176,8 @@ public class AgendamentoController {
             @RequestParam(required = true) Integer ano,
             @RequestParam(required = true) Integer mes,
             Authentication authentication) {
-        try {
-            if (!(authentication instanceof JwtAuthenticationToken)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Autenticação inválida".getBytes());
-            }
-            
-            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
-            Jwt jwt = jwtAuth.getToken();
-            Long userId = jwt.getClaim("userId");
-            
-            if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Token não contém informações do usuário".getBytes());
-            }
-            
-            byte[] pdfBytes = agendamentoService.gerarPDFAtendimentos(userId, ano, mes);
+        
+        byte[] pdfBytes = agendamentoService.exportarAtendimentosPDFComAutenticacao(ano, mes, authentication);
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
@@ -456,16 +185,5 @@ public class AgendamentoController {
             headers.add("Content-Length", String.valueOf(pdfBytes.length));
             
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
-        } catch (Exception e) {
-            String errorMessage = e.getMessage();
-            
-            if (errorMessage.contains("Nenhum atendimento concluído encontrado")) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(errorMessage.getBytes());
-            }
-            
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(("Erro ao gerar PDF: " + errorMessage).getBytes());
-        }
     }
 } 
