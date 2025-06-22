@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,9 +43,7 @@ import java.time.format.DateTimeFormatter;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.ArrayList;
-import inkspiration.backend.exception.agendamento.AgendamentoNaoAutorizadoException;
 import inkspiration.backend.exception.agendamento.AutoAgendamentoException;
-import inkspiration.backend.exception.agendamento.CancelamentoNaoPermitidoException;
 import inkspiration.backend.exception.agendamento.DataInvalidaAgendamentoException;
 import inkspiration.backend.exception.agendamento.HorarioConflitanteException;
 import inkspiration.backend.exception.agendamento.ProfissionalIndisponivelException;

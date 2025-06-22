@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,20 +29,17 @@ import inkspiration.backend.exception.UsuarioException;
 import inkspiration.backend.exception.profissional.DadosCompletosProfissionalException;
 import inkspiration.backend.exception.profissional.EnderecoNaoEncontradoException;
 import inkspiration.backend.exception.profissional.DisponibilidadeProcessamentoException;
-import inkspiration.backend.exception.profissional.ProfissionalAcessoNegadoException;
 import inkspiration.backend.exception.profissional.ProfissionalJaExisteException;
 import inkspiration.backend.exception.profissional.ProfissionalNaoEncontradoException;
 import inkspiration.backend.exception.profissional.TipoServicoInvalidoProfissionalException;
 import inkspiration.backend.security.AuthorizationService;
 import inkspiration.backend.dto.ImagemDTO;
-import inkspiration.backend.service.ImagemService;
 import java.util.Arrays;
 import java.util.Collections;
 import inkspiration.backend.repository.EnderecoRepository;
 import inkspiration.backend.repository.ProfissionalRepository;
 import inkspiration.backend.repository.UsuarioRepository;
 import inkspiration.backend.dto.DisponibilidadeDTO;
-import inkspiration.backend.service.EnderecoService;
 
 @Service
 public class ProfissionalService {
@@ -863,9 +859,5 @@ public class ProfissionalService {
         profissionalCompleto.put("disponibilidades", disponibilidades);
         
         return profissionalCompleto;
-    }
-
-    private void validarCamposObrigatorios(ProfissionalDTO dto) {
-        // ... existing code ...
     }
 } 

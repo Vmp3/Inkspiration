@@ -10,9 +10,7 @@ import inkspiration.backend.dto.PortfolioDTO;
 import inkspiration.backend.entities.Portfolio;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.exception.profissional.ProfissionalNaoEncontradoException;
-import inkspiration.backend.exception.portfolio.PortfolioAcessoNegadoException;
 import inkspiration.backend.exception.portfolio.PortfolioAtualizacaoException;
-import inkspiration.backend.exception.portfolio.PortfolioCriacaoException;
 import inkspiration.backend.exception.portfolio.PortfolioNaoEncontradoException;
 import inkspiration.backend.exception.portfolio.PortfolioRemocaoException;
 import inkspiration.backend.repository.PortfolioRepository;
@@ -20,7 +18,6 @@ import inkspiration.backend.repository.ProfissionalRepository;
 import inkspiration.backend.security.AuthorizationService;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.springframework.data.domain.PageRequest;
 
 @Service
 public class PortfolioService {

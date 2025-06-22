@@ -17,7 +17,6 @@ import inkspiration.backend.exception.passwordreset.PasswordResetProcessamentoEx
 import inkspiration.backend.exception.passwordreset.PasswordResetValidacaoException;
 import inkspiration.backend.repository.PasswordResetCodeRepository;
 import inkspiration.backend.repository.UsuarioRepository;
-import inkspiration.backend.util.Hashing;
 import inkspiration.backend.util.PasswordValidator;
 
 @Service
