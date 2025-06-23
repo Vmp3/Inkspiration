@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableWithoutFeedback,
   Image,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { format } from 'date-fns';
@@ -18,7 +19,26 @@ import AvaliacaoService from '../services/AvaliacaoService';
 import toastHelper from '../utils/toastHelper';
 
 const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isProfessional = false, onOpenReview }) => {
-  if (!appointment) return null;
+  const [avaliacao, setAvaliacao] = useState(null);
+  const [isLoadingAvaliacao, setIsLoadingAvaliacao] = useState(false);
+
+  useEffect(() => {
+    if (visible && appointment && isProfessional) {
+      loadAvaliacao();
+    }
+  }, [visible, appointment]);
+
+  const loadAvaliacao = async () => {
+    try {
+      setIsLoadingAvaliacao(true);
+      const avaliacaoData = await AvaliacaoService.buscarPorAgendamento(appointment.idAgendamento);
+      setAvaliacao(avaliacaoData);
+    } catch (error) {
+      console.error('Erro ao carregar avaliação:', error);
+    } finally {
+      setIsLoadingAvaliacao(false);
+    }
+  };
 
   const formatDate = (date) => {
     return format(new Date(date), "d 'de' MMMM 'de' yyyy", { locale: ptBR });
@@ -86,6 +106,21 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isPro
       case 'CONCLUIDO': return 'Concluído';
       default: return status || 'Agendado';
     }
+  };
+
+  const renderStars = (rating) => {
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <MaterialIcons
+            key={star}
+            name="star"
+            size={20}
+            color={star <= rating ? '#FFD700' : '#E5E7EB'}
+          />
+        ))}
+      </View>
+    );
   };
 
   return (
@@ -199,12 +234,32 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isPro
                   </View>
                 </View>
 
-                {/* TODO: Implementar avaliação para agendamentos concluídos no contexto de profissional */}
-                {isProfessional && appointment.status?.toUpperCase() === 'CONCLUIDO' && (
-                  <View style={styles.todoSection}>
-                    <Text style={styles.todoText}>
-                      TODO: Implementar visualização da avaliação do cliente
-                    </Text>
+                {isProfessional && (
+                  <View style={styles.avaliacaoSection}>
+                    <Text style={styles.avaliacaoTitle}>Avaliação do Cliente</Text>
+                    {isLoadingAvaliacao ? (
+                      <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="small" color="#111" />
+                        <Text style={styles.loadingText}>Carregando avaliação...</Text>
+                      </View>
+                    ) : avaliacao ? (
+                      <>
+                        <View style={styles.avaliacaoRating}>
+                          {renderStars(avaliacao.rating)}
+                          <Text style={styles.ratingText}>{avaliacao.rating}/5</Text>
+                        </View>
+                        {avaliacao.descricao && (
+                          <View style={styles.avaliacaoComentario}>
+                            <Text style={styles.comentarioLabel}>Comentário:</Text>
+                            <Text style={styles.comentarioText}>{avaliacao.descricao}</Text>
+                          </View>
+                        )}
+                      </>
+                    ) : (
+                      <Text style={styles.semAvaliacaoText}>
+                        Este agendamento ainda não foi avaliado pelo cliente.
+                      </Text>
+                    )}
                   </View>
                 )}
               </ScrollView>
@@ -390,16 +445,56 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#64748B',
   },
-  todoSection: {
+  avaliacaoSection: {
+    marginTop: 24,
     padding: 16,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#F8FAFC',
     borderRadius: 8,
-    marginTop: 16,
   },
-  todoText: {
+  avaliacaoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111',
+    marginBottom: 12,
+  },
+  avaliacaoRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  ratingText: {
+    marginLeft: 8,
     fontSize: 14,
-    color: '#92400E',
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  avaliacaoComentario: {
+    marginTop: 8,
+  },
+  comentarioLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111',
+    marginBottom: 4,
+  },
+  comentarioText: {
+    fontSize: 14,
+    color: '#64748B',
+    lineHeight: 20,
+  },
+  semAvaliacaoText: {
+    fontSize: 14,
+    color: '#64748B',
     fontStyle: 'italic',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  loadingText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#64748B',
   },
 });
 
