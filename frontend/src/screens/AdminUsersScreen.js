@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import UserService from '../services/UserService';
-import PortifolioService from '../services/PortifolioService';
+import PortfolioService from '../services/PortfolioService';
 import toastHelper from '../utils/toastHelper';
 import textUtils from '../utils/textUtils';
 import { adminMessages } from '../components/admin/messages';
@@ -22,6 +22,7 @@ import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Avatar from '../components/ui/Avatar';
 import Modal from '../components/ui/Modal';
+import Pagination from '../components/common/Pagination';
 
 const AdminUsersScreen = () => {
   const navigation = useNavigation();
@@ -31,10 +32,15 @@ const AdminUsersScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
   const [modalAction, setModalAction] = useState(null);
+  
+  // Estados para paginação
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const [pageSize] = useState(10);
 
   const isMobile = screenWidth < 768;
 
@@ -46,6 +52,23 @@ const AdminUsersScreen = () => {
 
     loadUsers();
   }, [userData, navigation]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [currentPage]);
+
+  // Debounce para busca
+  useEffect(() => {
+    const delayedSearch = setTimeout(() => {
+      if (currentPage === 0) {
+        loadUsers();
+      } else {
+        setCurrentPage(0); // Resetar para primeira página ao buscar
+      }
+    }, 500);
+
+    return () => clearTimeout(delayedSearch);
+  }, [searchTerm]);
 
   useEffect(() => {
     const updateLayout = () => {
@@ -64,12 +87,24 @@ const AdminUsersScreen = () => {
   const loadUsers = async () => {
     try {
       setIsLoading(true);
-      const usersData = await UserService.getAllUsers();
-      setUsers(usersData);
-      setFilteredUsers(usersData);
+      const response = await UserService.getAllUsers(currentPage, pageSize, searchTerm);
+      
+      if (response.usuarios) {
+        setUsers(response.usuarios);
+        setTotalPages(response.totalPages || 1);
+        setTotalElements(response.totalElements || 0);
+      } else {
+        // Fallback para resposta no formato antigo
+        setUsers(response);
+        setTotalPages(1);
+        setTotalElements(response.length);
+      }
     } catch (error) {
-      console.error('Erro ao carregar usuários:', error);
+      // console.error('Erro ao carregar usuários:', error);
       toastHelper.showError(adminMessages.errors.loadUsers);
+      setUsers([]);
+      setTotalPages(1);
+      setTotalElements(0);
     } finally {
       setIsLoading(false);
     }
@@ -81,23 +116,9 @@ const AdminUsersScreen = () => {
     setRefreshing(false);
   };
 
-  const handleSearch = () => {
-    if (!searchTerm.trim()) {
-      setFilteredUsers(users);
-      return;
-    }
-
-    const filtered = users.filter((user) =>
-      user.nome.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredUsers(filtered);
-  };
-
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredUsers(users);
-    }
-  }, [searchTerm, users]);
+  const handlePageChange = useCallback((newPage) => {
+    setCurrentPage(newPage);
+  }, []);
 
   const toggleUserStatus = (user) => {
     setSelectedUser(user);
@@ -125,7 +146,7 @@ const AdminUsersScreen = () => {
         }
       } else if (modalAction === 'deletePortfolio') {
         try {
-          await PortifolioService.deletePortifolio(selectedUser.idUsuario);
+          await PortfolioService.deletePortfolio(selectedUser.idUsuario);
           toastHelper.showSuccess(adminMessages.success.portfolioDeleted(selectedUser.nome));
         } catch (error) {
           if (error.message.includes('404')) {
@@ -138,7 +159,7 @@ const AdminUsersScreen = () => {
       
       await loadUsers();
     } catch (error) {
-      console.error('Erro na ação:', error);
+      // console.error('Erro na ação:', error);
       toastHelper.showError(adminMessages.errors.userAction);
     } finally {
       setIsConfirmModalVisible(false);
@@ -256,40 +277,59 @@ const AdminUsersScreen = () => {
 
           {/* Barra de busca */}
           <View style={styles.searchContainer}>
-            <Input
-              placeholder="Buscar usuários por nome"
-              value={searchTerm}
-              onChangeText={setSearchTerm}
-              icon="search"
-              style={styles.searchInput}
-              onSubmitEditing={handleSearch}
-              returnKeyType="search"
-            />
-            <Button
-              variant="primary"
-              size="search"
-              label="Buscar"
-              onPress={handleSearch}
-              style={styles.searchButton}
-            />
+            <View style={styles.searchInputContainer}>
+              <Input
+                placeholder="Buscar usuários por nome"
+                value={searchTerm}
+                onChangeText={setSearchTerm}
+                icon="search"
+                returnKeyType="search"
+              />
+            </View>
           </View>
+
+          {/* Informações da busca */}
+          {totalElements > 0 && (
+            <View style={styles.searchInfo}>
+              <Text style={styles.searchInfoText}>
+                {searchTerm ? 
+                  `${totalElements} usuário${totalElements !== 1 ? 's' : ''} encontrado${totalElements !== 1 ? 's' : ''} para "${searchTerm}"` :
+                  `${totalElements} usuário${totalElements !== 1 ? 's' : ''} total${totalElements !== 1 ? 'is' : ''}`
+                }
+              </Text>
+            </View>
+          )}
 
           {/* Lista de usuários */}
           {isLoading ? (
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingText}>Carregando usuários...</Text>
             </View>
-          ) : filteredUsers.length === 0 ? (
+          ) : users.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>Nenhum usuário encontrado</Text>
+              <Text style={styles.emptyTitle}>
+                {searchTerm ? 'Nenhum usuário encontrado' : 'Nenhum usuário cadastrado'}
+              </Text>
               <Text style={styles.emptyDescription}>
-                Tente ajustar os termos de busca ou verifique se há usuários cadastrados.
+                {searchTerm ? 
+                  'Tente usar outros termos de busca ou verifique a ortografia.' :
+                  'Ainda não há usuários cadastrados no sistema.'
+                }
               </Text>
             </View>
           ) : (
             <View style={styles.usersList}>
-              {filteredUsers.map(renderUserItem)}
+              {users.map(renderUserItem)}
             </View>
+          )}
+
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              setCurrentPage={handlePageChange}
+              totalPages={totalPages}
+            />
           )}
         </View>
       </ScrollView>
@@ -355,15 +395,18 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   searchContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 24,
+    marginBottom: 16,
   },
-  searchInput: {
+  searchInputContainer: {
     flex: 1,
   },
-  searchButton: {
-    minWidth: 80,
+  searchInfo: {
+    marginBottom: 24,
+  },
+  searchInfoText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontStyle: 'italic',
   },
   loadingContainer: {
     padding: 32,
@@ -442,14 +485,17 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: 8,
+    alignItems: 'center',
   },
   mobileActions: {
     flexDirection: 'column',
     alignItems: 'stretch',
     minWidth: 100,
+    gap: 8,
   },
   actionButton: {
     minWidth: 80,
+    height: 32,
   },
   deactivateButton: {
     borderColor: '#EF4444',

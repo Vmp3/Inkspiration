@@ -1,5 +1,6 @@
 package inkspiration.backend.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import inkspiration.backend.entities.Agendamento;
@@ -12,6 +13,7 @@ public class AgendamentoCompletoDTO {
     private String descricao;
     private LocalDateTime dtInicio;
     private LocalDateTime dtFim;
+    private BigDecimal valor;
     private StatusAgendamento status;
     
     // Informações do profissional
@@ -36,6 +38,7 @@ public class AgendamentoCompletoDTO {
         this.descricao = agendamento.getDescricao();
         this.dtInicio = agendamento.getDtInicio();
         this.dtFim = agendamento.getDtFim();
+        this.valor = agendamento.getValor();
         this.status = agendamento.getStatus();
         
         if (agendamento.getProfissional() != null) {
@@ -99,6 +102,14 @@ public class AgendamentoCompletoDTO {
 
     public void setDtFim(LocalDateTime dtFim) {
         this.dtFim = dtFim;
+    }
+
+    public BigDecimal getValor() {
+        return valor;
+    }
+
+    public void setValor(BigDecimal valor) {
+        this.valor = valor;
     }
 
     public StatusAgendamento getStatus() {

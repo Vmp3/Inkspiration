@@ -62,4 +62,37 @@ public class DateValidator {
         }
         return LocalDate.parse(dateStr, FORMATTER);
     }
+
+    /**
+     * Calcula a idade em anos a partir de uma data de nascimento
+     * @param birthDate Data de nascimento
+     * @return Idade em anos
+     */
+    public static int calculateAge(LocalDate birthDate) {
+        if (birthDate == null) {
+            throw new IllegalArgumentException("Data de nascimento não pode ser nula");
+        }
+        return LocalDate.now().getYear() - birthDate.getYear() - 
+               (LocalDate.now().getDayOfYear() < birthDate.getDayOfYear() ? 1 : 0);
+    }
+
+    /**
+     * Calcula a idade em anos a partir de uma string de data de nascimento
+     * @param birthDateStr Data de nascimento em formato dd/MM/yyyy
+     * @return Idade em anos
+     */
+    public static int calculateAge(String birthDateStr) {
+        LocalDate birthDate = parseDate(birthDateStr);
+        return calculateAge(birthDate);
+    }
+
+    /**
+     * Verifica se a pessoa tem pelo menos a idade mínima especificada
+     * @param birthDateStr Data de nascimento em formato dd/MM/yyyy
+     * @param minimumAge Idade mínima
+     * @return true se tem a idade mínima, false caso contrário
+     */
+    public static boolean hasMinimumAge(String birthDateStr, int minimumAge) {
+        return calculateAge(birthDateStr) >= minimumAge;
+    }
 } 

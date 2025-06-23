@@ -13,8 +13,12 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { differenceInDays } from 'date-fns';
+import Toast from 'react-native-toast-message';
 import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
+import { editAppointmentMessages } from './editAppointment/messages';
+import { formatCurrency } from '../utils/formatters';
+import toastConfig from '../config/toastConfig';
 
 const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
   const [step, setStep] = useState(1);
@@ -136,8 +140,8 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       
       setIsLoading(false);
     } catch (error) {
-      console.error('Erro ao carregar dados para edição:', error);
-      toastHelper.showError('Erro ao carregar dados do agendamento');
+      // // console.error('Erro ao carregar dados para edição:', error);
+      toastHelper.showError(editAppointmentMessages.errors.loadAppointment);
       onClose();
     }
   };
@@ -172,8 +176,8 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       }
     } catch (error) {
       if (!error.message || !error.message.includes('204')) {
-        console.error('Erro ao carregar horários disponíveis:', error);
-        toastHelper.showError('Erro ao carregar horários disponíveis');
+        // console.error('Erro ao carregar horários disponíveis:', error);
+        toastHelper.showError(editAppointmentMessages.errors.loadSchedules);
       }
       setAvailableTimeSlots([]);
     } finally {
@@ -215,12 +219,12 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
   const handleUpdateAppointment = async () => {
     try {
       if (!canEdit()) {
-        toastHelper.showError('O agendamento só pode ser editado com no mínimo 3 dias de antecedência');
+        toastHelper.showError(editAppointmentMessages.errors.editTimeLimit);
         return;
       }
       
       if (!selectedService || !selectedDate || !selectedTime) {
-        toastHelper.showError('Por favor, preencha todos os campos obrigatórios');
+        toastHelper.showError(editAppointmentMessages.errors.requiredFields);
         return;
       }
       
@@ -234,13 +238,13 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       
       await AgendamentoService.atualizarAgendamento(appointment.idAgendamento, updatedData);
       
-      toastHelper.showSuccess('Agendamento atualizado com sucesso!');
+      toastHelper.showSuccess(editAppointmentMessages.success.appointmentUpdated);
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Erro ao atualizar agendamento:', error);
+      // console.error('Erro ao atualizar agendamento:', error);
       
-      let errorMessage = 'Erro ao atualizar agendamento';
+      let errorMessage = editAppointmentMessages.errors.updateFailed;
       if (error.response?.data) {
         if (typeof error.response.data === 'object' && !Array.isArray(error.response.data)) {
           const firstError = Object.values(error.response.data)[0];
@@ -469,6 +473,14 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
     return (
       <View style={styles.stepContent}>
         <Text style={styles.stepTitle}>Detalhes do Agendamento</Text>
+        {appointment.valor && (
+          <View style={styles.valorContainer}>
+            <Text style={styles.valorLabel}>Valor do Serviço:</Text>
+            <Text style={styles.valorValue}>
+              {formatCurrency(appointment.valor)}
+            </Text>
+          </View>
+        )}
         <View style={styles.formGroup}>
           <Text style={styles.label}>Descrição da Tatuagem *</Text>
           <TextInput
@@ -612,6 +624,18 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
+      
+      <Toast 
+        config={toastConfig} 
+        style={{ 
+          zIndex: 999999, 
+          elevation: 999999,
+          position: 'absolute',
+          bottom: 50,
+          left: 0,
+          right: 0
+        }} 
+      />
     </Modal>
   );
 };
@@ -976,6 +1000,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#FFFFFF',
+  },
+  valorContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  valorLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111',
+  },
+  valorValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#059669',
   },
 });
 

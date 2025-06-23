@@ -21,6 +21,11 @@ import inkspiration.backend.entities.Disponibilidade;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.enums.TipoServico;
 import inkspiration.backend.exception.DisponibilidadeException.HorarioInvalidoException;
+import inkspiration.backend.exception.disponibilidade.DisponibilidadeAcessoException;
+import inkspiration.backend.exception.disponibilidade.DisponibilidadeCadastroException;
+import inkspiration.backend.exception.disponibilidade.DisponibilidadeConsultaException;
+import inkspiration.backend.exception.disponibilidade.TipoServicoInvalidoDisponibilidadeException;
+import inkspiration.backend.security.AuthorizationService;
 import inkspiration.backend.repository.AgendamentoRepository;
 import inkspiration.backend.repository.DisponibilidadeRepository;
 import inkspiration.backend.repository.ProfissionalRepository;
@@ -53,15 +58,18 @@ public class DisponibilidadeService {
     private final ProfissionalRepository profissionalRepository;
     private final AgendamentoRepository agendamentoRepository;
     private final ObjectMapper objectMapper;
+    private final AuthorizationService authorizationService;
     
     public DisponibilidadeService(
             DisponibilidadeRepository disponibilidadeRepository,
             ProfissionalRepository profissionalRepository,
-            AgendamentoRepository agendamentoRepository) {
+            AgendamentoRepository agendamentoRepository,
+            AuthorizationService authorizationService) {
         this.disponibilidadeRepository = disponibilidadeRepository;
         this.profissionalRepository = profissionalRepository;
         this.agendamentoRepository = agendamentoRepository;
         this.objectMapper = new ObjectMapper();
+        this.authorizationService = authorizationService;
     }
     
     /**
@@ -258,19 +266,6 @@ public class DisponibilidadeService {
     }
     
     /**
-     * Busca uma disponibilidade por ID e retorna como DTO.
-     * 
-     * @param id ID da disponibilidade
-     * @return DTO com os dados da disponibilidade
-     */
-    public DisponibilidadeDTO buscarPorIdDTO(Long id) {
-        Disponibilidade disponibilidade = disponibilidadeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Disponibilidade não encontrada"));
-        
-        return new DisponibilidadeDTO(disponibilidade);
-    }
-    
-    /**
      * Busca a disponibilidade de um profissional e retorna como DTO.
      * 
      * @param idProfissional ID do profissional
@@ -403,5 +398,68 @@ public class DisponibilidadeService {
         }
         
         return horariosDisponiveis;
+    }
+
+    // Métodos com validação para uso pelos controllers
+    public DisponibilidadeDTO cadastrarDisponibilidadeDTOComValidacao(Long idProfissional, Map<String, List<Map<String, String>>> horarios, Long idUsuario) {
+        try {
+            // Verificar acesso
+            authorizationService.requireUserAccessOrAdmin(idUsuario);
+            
+            return cadastrarDisponibilidadeDTO(idProfissional, horarios);
+        } catch (HorarioInvalidoException e) {
+            throw new DisponibilidadeCadastroException(e.getMessage());
+        } catch (JsonProcessingException e) {
+            throw new DisponibilidadeCadastroException("Erro ao processar JSON: " + e.getMessage());
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("acesso")) {
+                throw new DisponibilidadeAcessoException("Acesso negado para cadastrar disponibilidade");
+            }
+            throw new DisponibilidadeCadastroException("Erro ao cadastrar disponibilidade: " + e.getMessage());
+        }
+    }
+
+    public Map<String, List<Map<String, String>>> obterDisponibilidadeComValidacao(Long idProfissional) {
+        try {
+            return obterDisponibilidade(idProfissional);
+        } catch (JsonProcessingException e) {
+            throw new DisponibilidadeConsultaException("Erro ao processar JSON: " + e.getMessage());
+        } catch (RuntimeException e) {
+            throw new DisponibilidadeConsultaException("Erro ao consultar disponibilidade: " + e.getMessage());
+        }
+    }
+
+    public DisponibilidadeDTO buscarPorProfissionalDTOComValidacao(Long idProfissional, Long idUsuario) {
+        try {
+            // Verificar acesso
+            authorizationService.requireUserAccessOrAdmin(idUsuario);
+            
+            return buscarPorProfissionalDTO(idProfissional);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("acesso")) {
+                throw new DisponibilidadeAcessoException("Acesso negado para consultar disponibilidade");
+            }
+            throw new DisponibilidadeConsultaException("Erro ao consultar disponibilidade: " + e.getMessage());
+        }
+    }
+
+    public List<String> obterHorariosDisponiveisComValidacao(Long idProfissional, LocalDate data, String tipoServicoStr) {
+        try {
+            TipoServico tipoServicoEnum;
+            try {
+                tipoServicoEnum = TipoServico.fromDescricao(tipoServicoStr);
+            } catch (IllegalArgumentException e) {
+                throw new TipoServicoInvalidoDisponibilidadeException("Tipos válidos: pequena, media, grande, sessao");
+            }
+            
+            return obterHorariosDisponiveis(idProfissional, data, tipoServicoEnum);
+        } catch (JsonProcessingException e) {
+            throw new DisponibilidadeConsultaException("Erro ao processar JSON: " + e.getMessage());
+        } catch (RuntimeException e) {
+            if (e instanceof TipoServicoInvalidoDisponibilidadeException) {
+                throw e;
+            }
+            throw new DisponibilidadeConsultaException("Erro ao consultar horários disponíveis: " + e.getMessage());
+        }
     }
 } 

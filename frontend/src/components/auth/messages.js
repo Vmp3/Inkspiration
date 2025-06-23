@@ -17,7 +17,9 @@ export const authMessages = {
     loginFailed: 'Falha ao fazer login. Verifique suas credenciais.',
     serverError: 'Falha ao realizar login. Tente novamente mais tarde.',
     tokenError: 'Erro ao processar autenticação',
-    networkError: 'Falha ao realizar login. Verifique sua conexão com a internet e tente novamente.'
+    networkError: 'Falha ao realizar login. Verifique sua conexão com a internet e tente novamente.',
+    twoFactorRequired: 'Código de autenticação de dois fatores é obrigatório',
+    twoFactorPrompt: 'Digite o código de autenticação de dois fatores'
   },
 
   // Mensagens de erro - Register
@@ -66,7 +68,8 @@ export const authMessages = {
     registerSuccess: 'Cadastro realizado com sucesso!',
     forgotPasswordSuccess: 'Código de recuperação enviado para seu email!',
     resetPasswordSuccess: 'Senha redefinida com sucesso!',
-    codeResent: 'Novo código enviado para seu email!'
+    codeResent: 'Novo código enviado para seu email!',
+    accountCreated: 'Conta criada com sucesso!'
   },
 
   // Mensagens informativas
@@ -75,6 +78,30 @@ export const authMessages = {
     checkSpam: 'Verifique também a pasta de spam',
     codeExpires: 'O código expira em 15 minutos',
     passwordRequirements: 'A senha deve ter pelo menos 6 caracteres',
-    termsRequired: 'É necessário aceitar os termos de uso'
+    termsRequired: 'É necessário aceitar os termos de uso',
+    sendingEmailConfirmation: 'Enviando email de confirmação...',
+    enterVerificationCode: 'Por favor, insira o código de verificação.',
+    waitToResend: (seconds) => `Aguarde ${seconds} segundos para reenviar novamente.`
+  },
+
+  // Mensagens de aviso para navegação
+  warnings: {
+    completePersonalDataFirst: 'Complete todos os dados pessoais primeiro',
+    completeAddressDataFirst: 'Complete todos os dados de endereço primeiro'
+  },
+
+  // Mensagens de erro - Email Verification
+  emailVerificationErrors: {
+    verificationCodeRequired: 'Por favor, insira o código de verificação.',
+    invalidOrExpiredCode: 'Código de verificação inválido ou expirado.'
+  },
+
+  // Mensagens de erro - Image Upload
+  imageUploadErrors: {
+    fileTooLarge: 'Imagem muito grande. Tamanho máximo permitido: 5MB',
+    processedImageTooLarge: 'Imagem muito grande após processamento. Tamanho máximo permitido: 5MB',
+    invalidFormat: 'Formato de imagem inválido. Apenas PNG, JPG, JPEG e JFIF são permitidos',
+    selectionFailed: 'Erro ao selecionar imagem',
+    uploadFailed: 'Erro ao enviar imagem'
   }
 }; 

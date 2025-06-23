@@ -1,8 +1,11 @@
 package inkspiration.backend.dto;
 
 import java.util.List;
+import java.util.Map;
+import java.math.BigDecimal;
 
 import inkspiration.backend.enums.TipoServico;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
@@ -14,16 +17,29 @@ public class ProfissionalCriacaoDTO {
     @NotEmpty(message = "Pelo menos um tipo de serviço é obrigatório")
     private List<TipoServico> tiposServico;
     
-    // Portifolio
+    // Preços dos serviços
+    private Map<String, @DecimalMax(value = "100000.00", message = "Preço do serviço não pode ser maior que R$ 100.000,00") BigDecimal> precosServicos;
+    
+    // Portfolio
     @NotBlank(message = "Biografia é obrigatória")
     @Size(min = 20, max = 500, message = "Biografia deve ter entre 20 e 500 caracteres")
     private String descricao;
     private String experiencia;
     private String especialidade;
+    
+    @Size(max = 255, message = "Website deve ter no máximo 255 caracteres")
     private String website;
+    
+    @Size(max = 50, message = "TikTok deve ter no máximo 50 caracteres")
     private String tiktok;
+    
+    @Size(max = 50, message = "Instagram deve ter no máximo 50 caracteres")
     private String instagram;
+    
+    @Size(max = 50, message = "Facebook deve ter no máximo 50 caracteres")
     private String facebook;
+    
+    @Size(max = 50, message = "Twitter deve ter no máximo 50 caracteres")
     private String twitter;
     
     // Disponibilidade
@@ -35,7 +51,8 @@ public class ProfissionalCriacaoDTO {
     public ProfissionalCriacaoDTO(Long idUsuario, Long idEndereco, List<TipoServico> tiposServico, String descricao, 
                                 String experiencia, String especialidade,
                                 List<String> estilosTatuagem, List<DisponibilidadeDTO> disponibilidades,
-                                String website, String tiktok, String instagram, String facebook, String twitter) {
+                                String website, String tiktok, String instagram, String facebook, String twitter,
+                                Map<String, BigDecimal> precosServicos) {
         this.idUsuario = idUsuario;
         this.idEndereco = idEndereco;
         this.tiposServico = tiposServico;
@@ -48,6 +65,7 @@ public class ProfissionalCriacaoDTO {
         this.instagram = instagram;
         this.facebook = facebook;
         this.twitter = twitter;
+        this.precosServicos = precosServicos;
     }
 
     public Long getIdUsuario() {
@@ -144,5 +162,13 @@ public class ProfissionalCriacaoDTO {
 
     public void setTwitter(String twitter) {
         this.twitter = twitter;
+    }
+
+    public Map<String, BigDecimal> getPrecosServicos() {
+        return precosServicos;
+    }
+    
+    public void setPrecosServicos(Map<String, BigDecimal> precosServicos) {
+        this.precosServicos = precosServicos;
     }
 } 

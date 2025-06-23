@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import ApiService from '../../services/ApiService';
+import toastHelper from '../../utils/toastHelper';
 
 const BasicInfoForm = ({ 
   experience, 
@@ -16,7 +17,9 @@ const BasicInfoForm = ({
   tiposServico,
   setTiposServico,
   tipoServicoSelecionados,
-  handleTipoServicoChange
+  handleTipoServicoChange,
+  precosServicos,
+  handlePrecoServicoChange
 }) => {
   const dropdownRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +42,7 @@ const BasicInfoForm = ({
             setTiposServico(response);
           }
         } catch (error) {
-          console.error('Erro ao carregar tipos de serviço:', error);
+          // console.error('Erro ao carregar tipos de serviço:', error);
         } finally {
           setIsLoading(false);
         }
@@ -101,6 +104,52 @@ const BasicInfoForm = ({
     return nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
   };
 
+  const formatarPreco = (valor) => {
+    // Remove tudo que não é número
+    const apenasNumeros = valor.replace(/\D/g, '');
+    
+    if (!apenasNumeros) return '';
+    
+    // Converte para número e divide por 100 para ter centavos
+    const numero = parseInt(apenasNumeros) / 100;
+    
+    // Valor máximo de R$ 100.000,00
+    const VALOR_MAXIMO = 100000;
+    
+    // Limitar valor máximo
+    if (numero > VALOR_MAXIMO) {
+      return VALOR_MAXIMO.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+    
+    // Formata com separadores brasileiros
+    return numero.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  const handlePrecoChange = (tipoNome, valor) => {
+    // Remove tudo que não é número
+    const apenasNumeros = valor.replace(/\D/g, '');
+    
+    if (apenasNumeros) {
+      const numero = parseInt(apenasNumeros) / 100;
+      const VALOR_MAXIMO = 100000;
+      
+      // Verificar se excede o valor máximo e mostrar toast
+      if (numero > VALOR_MAXIMO) {
+        toastHelper.showError('Valor máximo permitido é R$ 100.000,00');
+        return;
+      }
+    }
+    
+    const valorFormatado = formatarPreco(valor);
+    handlePrecoServicoChange(tipoNome, valorFormatado);
+  };
+
   return (
     <View style={styles.tabContent}>
       <View style={styles.formGroup}>
@@ -150,21 +199,37 @@ const BasicInfoForm = ({
         ) : (
           <View style={styles.checkboxGrid}>
             {tiposServico && tiposServico.map((tipo, index) => (
-              <View key={index} style={styles.checkboxTipoServico}>
-                <TouchableOpacity 
-                  style={[
-                    styles.checkbox, 
-                    tipoServicoSelecionados[tipo.nome] && styles.checkboxChecked
-                  ]}
-                  onPress={() => handleTipoServicoChange(tipo.nome)}
-                >
-                  {tipoServicoSelecionados[tipo.nome] && <Feather name="check" size={16} color="#fff" />}
-                </TouchableOpacity>
-                <View style={styles.tipoServicoTextContainer}>
-                  <Text style={styles.checkboxLabel}>
-                    {formatarNomeTipo(tipo.nome)} | Duração: {tipo.duracaoHoras} {tipo.duracaoHoras === 1 ? 'hora' : 'horas'}
-                  </Text>
+              <View key={index} style={styles.checkboxTipoServicoContainer}>
+                <View style={styles.checkboxTipoServico}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.checkbox, 
+                      tipoServicoSelecionados[tipo.nome] && styles.checkboxChecked
+                    ]}
+                    onPress={() => handleTipoServicoChange(tipo.nome)}
+                  >
+                    {tipoServicoSelecionados[tipo.nome] && <Feather name="check" size={16} color="#fff" />}
+                  </TouchableOpacity>
+                  <View style={styles.tipoServicoTextContainer}>
+                    <Text style={styles.checkboxLabel}>
+                      {formatarNomeTipo(tipo.nome)} | Duração: {tipo.duracaoHoras} {tipo.duracaoHoras === 1 ? 'hora' : 'horas'}
+                    </Text>
+                  </View>
                 </View>
+                
+                {/* Input de preço aparece quando o serviço é selecionado */}
+                {tipoServicoSelecionados[tipo.nome] && (
+                  <View style={styles.precoInputContainer}>
+                    <Text style={styles.precoLabel}>Preço (R$):</Text>
+                    <TextInput
+                      style={styles.precoInput}
+                      placeholder="0,00"
+                      value={precosServicos[tipo.nome] || ''}
+                      onChangeText={(text) => handlePrecoChange(tipo.nome, text)}
+                      keyboardType="numeric"
+                    />
+                  </View>
+                )}
               </View>
             ))}
           </View>
@@ -198,6 +263,7 @@ const BasicInfoForm = ({
             placeholder="@seu_instagram"
             value={socialMedia.instagram}
             onChangeText={(text) => handleSocialMediaChange('instagram', text)}
+            maxLength={50}
           />
         </View>
         
@@ -208,6 +274,7 @@ const BasicInfoForm = ({
             placeholder="@seu_tiktok"
             value={socialMedia.tiktok}
             onChangeText={(text) => handleSocialMediaChange('tiktok', text)}
+            maxLength={50}
           />
         </View>
         
@@ -218,6 +285,7 @@ const BasicInfoForm = ({
             placeholder="facebook.com/seuperfil"
             value={socialMedia.facebook}
             onChangeText={(text) => handleSocialMediaChange('facebook', text)}
+            maxLength={50}
           />
         </View>
         
@@ -228,6 +296,7 @@ const BasicInfoForm = ({
             placeholder="@seu_twitter"
             value={socialMedia.twitter}
             onChangeText={(text) => handleSocialMediaChange('twitter', text)}
+            maxLength={50}
           />
         </View>
         
@@ -238,6 +307,7 @@ const BasicInfoForm = ({
             placeholder="seusite.com"
             value={socialMedia.website}
             onChangeText={(text) => handleSocialMediaChange('website', text)}
+            maxLength={255}
           />
         </View>
       </View>
@@ -325,12 +395,36 @@ const styles = StyleSheet.create({
     width: '33.33%',
     marginBottom: 12,
   },
+  checkboxTipoServicoContainer: {
+    width: '100%',
+    marginBottom: 16,
+    paddingRight: 8,
+  },
   checkboxTipoServico: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     width: '100%',
-    marginBottom: 16,
-    paddingRight: 8,
+    marginBottom: 8,
+  },
+  precoInputContainer: {
+    marginTop: 8,
+    marginLeft: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  precoLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginRight: 8,
+    minWidth: 70,
+  },
+  precoInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 4,
+    padding: 8,
+    width: 120,
+    textAlign: 'left',
   },
   checkbox: {
     width: 20,

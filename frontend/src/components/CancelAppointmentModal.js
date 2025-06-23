@@ -8,8 +8,10 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
+import toastConfig from '../config/toastConfig';
 
-const CancelAppointmentModal = ({ visible, onClose, onConfirm }) => {
+const CancelAppointmentModal = ({ visible, onClose, onConfirm, isProfessional = false }) => {
   return (
     <Modal
       visible={visible}
@@ -31,10 +33,12 @@ const CancelAppointmentModal = ({ visible, onClose, onConfirm }) => {
                 </Text>
               </View>
               
-              <Text style={styles.infoText}>
-                Se precisar reagendar, recomendamos editar o agendamento em vez
-                de cancelá-lo.
-              </Text>
+              {!isProfessional && (
+                <Text style={styles.infoText}>
+                  Se precisar reagendar, recomendamos editar o agendamento em vez
+                  de cancelá-lo.
+                </Text>
+              )}
               
               <View style={styles.buttonRow}>
                 <TouchableOpacity 
@@ -55,6 +59,18 @@ const CancelAppointmentModal = ({ visible, onClose, onConfirm }) => {
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
+      
+      <Toast 
+        config={toastConfig} 
+        style={{ 
+          zIndex: 999999, 
+          elevation: 999999,
+          position: 'absolute',
+          bottom: 50,
+          left: 0,
+          right: 0
+        }} 
+      />
     </Modal>
   );
 };

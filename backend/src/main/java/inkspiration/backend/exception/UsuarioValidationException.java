@@ -60,4 +60,25 @@ public class UsuarioValidationException {
             super("Senha é obrigatória");
         }
     }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public static class SenhaInvalidaException extends RuntimeException {
+        public SenhaInvalidaException(String message) {
+            super(message);
+        }
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public static class IdadeMinimaException extends RuntimeException {
+        public IdadeMinimaException(int idadeMinima) {
+            super("Você deve ter pelo menos " + idadeMinima + " anos para se cadastrar");
+        }
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public static class EnderecoObrigatorioException extends RuntimeException {
+        public EnderecoObrigatorioException() {
+            super("Endereço é obrigatório");
+        }
+    }
 } 

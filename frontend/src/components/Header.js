@@ -16,6 +16,7 @@ import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import toastHelper from '../utils/toastHelper';
 import textUtils from '../utils/textUtils';
+import { headerMessages } from './header/messages';
 
 const Header = () => {
   const navigation = useNavigation();
@@ -115,11 +116,11 @@ const Header = () => {
     try {
       await logout();
       setUserDropdownOpen(false);
-      toastHelper.showSuccess('Logout realizado com sucesso!');
+      toastHelper.showSuccess(headerMessages.success.logoutSuccess);
       navigation.navigate('Home');
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-      toastHelper.showError('Erro ao fazer logout. Tente novamente.');
+      // console.error('Erro ao fazer logout:', error);
+      toastHelper.showError(headerMessages.errors.logoutError);
     }
   };
 
@@ -429,6 +430,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   container: {
+    position: 'relative',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -455,9 +457,12 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   navContainer: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    transform: [{ translateX: '-50%' }, { translateY: '-50%' }],
     flexDirection: 'row',
     justifyContent: 'center',
-    flex: 1,
   },
   navItem: {
     marginHorizontal: 16,

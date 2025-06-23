@@ -1,7 +1,9 @@
 package inkspiration.backend.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,6 +17,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import inkspiration.backend.dto.AgendamentoDTO;
 import inkspiration.backend.dto.AgendamentoCompletoDTO;
+import inkspiration.backend.dto.AgendamentoRequestDTO;
+import inkspiration.backend.dto.AgendamentoUpdateDTO;
 import inkspiration.backend.entities.Agendamento;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
@@ -36,6 +40,18 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import java.awt.Color;
 import java.time.format.DateTimeFormatter;
+import java.text.NumberFormat;
+import java.util.Locale;
+import java.util.ArrayList;
+import inkspiration.backend.exception.agendamento.AutoAgendamentoException;
+import inkspiration.backend.exception.agendamento.DataInvalidaAgendamentoException;
+import inkspiration.backend.exception.agendamento.HorarioConflitanteException;
+import inkspiration.backend.exception.agendamento.ProfissionalIndisponivelException;
+import inkspiration.backend.exception.agendamento.TipoServicoInvalidoException;
+import inkspiration.backend.exception.agendamento.TokenInvalidoException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 @Service
 public class AgendamentoService {
@@ -44,6 +60,7 @@ public class AgendamentoService {
     private final ProfissionalRepository profissionalRepository;
     private final UsuarioRepository usuarioRepository;
     private final DisponibilidadeService disponibilidadeService;
+    private final NumberFormat formatoBrasileiro = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
     
     public AgendamentoService(
             AgendamentoRepository agendamentoRepository,
@@ -69,7 +86,7 @@ public class AgendamentoService {
     
     @Transactional
     public Agendamento criarAgendamento(Long idUsuario, Long idProfissional, String tipoServicoStr, 
-            String descricao, LocalDateTime dtInicio) throws Exception {
+            String descricao, LocalDateTime dtInicio, BigDecimal valor) throws Exception {
         
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
@@ -78,19 +95,19 @@ public class AgendamentoService {
                 .orElseThrow(() -> new RuntimeException("Profissional não encontrado"));
         
         if (usuario.getIdUsuario().equals(profissional.getUsuario().getIdUsuario())) {
-            throw new RuntimeException("Não é possível agendar consigo mesmo");
+            throw new AutoAgendamentoException("Não é possível agendar consigo mesmo");
         }
         
         LocalDateTime amanha = LocalDate.now().plusDays(1).atStartOfDay();
         if (dtInicio.isBefore(amanha)) {
-            throw new RuntimeException("Só é possível fazer agendamentos a partir do dia seguinte");
+            throw new DataInvalidaAgendamentoException("Só é possível fazer agendamentos a partir do dia seguinte");
         }
         
         TipoServico tipoServico;
         try {
             tipoServico = TipoServico.fromDescricao(tipoServicoStr);
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Tipo de serviço inválido. Opções válidas: " +
+            throw new TipoServicoInvalidoException("Tipo de serviço inválido. Opções válidas: " +
                     "pequena, media, grande, sessao");
         }
         
@@ -105,7 +122,7 @@ public class AgendamentoService {
                 .collect(Collectors.toList());
         
         if (!agendamentosUsuario.isEmpty()) {
-            throw new RuntimeException("Você já possui outro agendamento nesse horário. Por favor, selecione um horário diferente.");
+            throw new HorarioConflitanteException("Você já possui outro agendamento nesse horário. Por favor, selecione um horário diferente.");
         }
         
         try {
@@ -113,7 +130,7 @@ public class AgendamentoService {
                     idProfissional, dtInicioAjustado, dtFim);
             
             if (!estaNoHorarioDeTrabalho) {
-                throw new RuntimeException("O profissional não está trabalhando nesse horário. " +
+                throw new ProfissionalIndisponivelException("O profissional não está trabalhando nesse horário. " +
                         "Horário necessário: " + dtInicioAjustado.toLocalTime() + " às " + dtFim.toLocalTime() +
                         " (" + tipoServico.getDuracaoHoras() + " horas)");
             }
@@ -122,7 +139,7 @@ public class AgendamentoService {
                     idProfissional, dtInicioAjustado, dtFim);
             
             if (existeConflito) {
-                throw new RuntimeException("O profissional já possui outro agendamento nesse horário. " +
+                throw new HorarioConflitanteException("O profissional já possui outro agendamento nesse horário. " +
                         "Horário necessário: " + dtInicioAjustado.toLocalTime() + " às " + dtFim.toLocalTime() +
                         " (" + tipoServico.getDuracaoHoras() + " horas)");
             }
@@ -134,6 +151,7 @@ public class AgendamentoService {
             agendamento.setDescricao(descricao);
             agendamento.setDtInicio(dtInicioAjustado);
             agendamento.setDtFim(dtFim);
+            agendamento.setValor(valor);
             
             return agendamentoRepository.save(agendamento);
             
@@ -173,12 +191,6 @@ public class AgendamentoService {
                 .orElseThrow(() -> new RuntimeException("Profissional não encontrado"));
         
         return agendamentoRepository.findByProfissional(profissional, pageable);
-    }
-    
-    public List<Agendamento> listarPorProfissionalEPeriodo(Long idProfissional, 
-            LocalDateTime inicio, LocalDateTime fim) {
-        
-        return agendamentoRepository.findByProfissionalAndPeriod(idProfissional, inicio, fim);
     }
     
     @Transactional
@@ -253,6 +265,7 @@ public class AgendamentoService {
         agendamento.setDescricao(descricao);
         agendamento.setDtInicio(dtInicioAjustado);
         agendamento.setDtFim(dtFim);
+        // Valor é preservado - não alterado durante edições
         
         return agendamentoRepository.save(agendamento);
     }
@@ -296,13 +309,6 @@ public class AgendamentoService {
                 .collect(Collectors.toList());
         
         return new PageImpl<>(agendamentosDTO, pageable, agendamentosPage.getTotalElements());
-    }
-    
-    public List<AgendamentoDTO> listarPorProfissionalEPeriodoDTO(Long idProfissional, 
-            LocalDateTime inicio, LocalDateTime fim) {
-        return listarPorProfissionalEPeriodo(idProfissional, inicio, fim).stream()
-                .map(AgendamentoDTO::new)
-                .collect(Collectors.toList());
     }
     
     @Transactional
@@ -482,8 +488,20 @@ public class AgendamentoService {
             Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK);
             Paragraph info = new Paragraph("Total de agendamentos concluídos: " + agendamentosDTO.size(), normalFont);
             info.setAlignment(Element.ALIGN_LEFT);
-            info.setSpacingAfter(20);
+            info.setSpacingAfter(10);
             document.add(info);
+            
+            // Calcular valor total dos agendamentos
+            double valorTotal = agendamentosDTO.stream()
+                .filter(agendamento -> agendamento.getValor() != null)
+                .mapToDouble(agendamento -> agendamento.getValor().doubleValue())
+                .sum();
+            
+            Font valorFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK);
+            Paragraph valorInfo = new Paragraph("Valor total dos agendamentos: " + formatoBrasileiro.format(valorTotal), valorFont);
+            valorInfo.setAlignment(Element.ALIGN_LEFT);
+            valorInfo.setSpacingAfter(20);
+            document.add(valorInfo);
             
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
@@ -584,6 +602,11 @@ public class AgendamentoService {
                         addTableRow(table, "Descrição", agendamento.getDescricao(), headerFont, cellFont);
                     }
                     
+                    if (agendamento.getValor() != null) {
+                        String valorFormatado = formatoBrasileiro.format(agendamento.getValor());
+                        addTableRow(table, "Valor", valorFormatado, headerFont, cellFont);
+                    }
+                    
                     document.add(table);
                     
                     Paragraph separator = new Paragraph("------------------------------------------------------");
@@ -595,7 +618,7 @@ public class AgendamentoService {
             }
             
             Paragraph footer = new Paragraph("Relatório gerado em: " + 
-                java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
+                java.time.LocalDateTime.now(ZoneId.of("America/Sao_Paulo")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
                 FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10, Color.GRAY));
             footer.setAlignment(Element.ALIGN_CENTER);
             document.add(footer);
@@ -682,8 +705,20 @@ public class AgendamentoService {
             Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK);
             Paragraph info = new Paragraph("Total de atendimentos concluídos: " + atendimentosDTO.size(), normalFont);
             info.setAlignment(Element.ALIGN_LEFT);
-            info.setSpacingAfter(20);
+            info.setSpacingAfter(10);
             document.add(info);
+            
+            // Calcular valor total dos atendimentos
+            double valorTotal = atendimentosDTO.stream()
+                .filter(atendimento -> atendimento.getValor() != null)
+                .mapToDouble(atendimento -> atendimento.getValor().doubleValue())
+                .sum();
+            
+            Font valorFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK);
+            Paragraph valorInfo = new Paragraph("Valor total dos atendimentos: " + formatoBrasileiro.format(valorTotal), valorFont);
+            valorInfo.setAlignment(Element.ALIGN_LEFT);
+            valorInfo.setSpacingAfter(20);
+            document.add(valorInfo);
             
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
@@ -754,6 +789,11 @@ public class AgendamentoService {
                         addTableRow(table, "Descrição", atendimento.getDescricao(), headerFont, cellFont);
                     }
                     
+                    if (atendimento.getValor() != null) {
+                        String valorFormatado = formatoBrasileiro.format(atendimento.getValor());
+                        addTableRow(table, "Valor", valorFormatado, headerFont, cellFont);
+                    }
+                    
                     document.add(table);
                     
                     Paragraph separator = new Paragraph("------------------------------------------------------");
@@ -765,7 +805,7 @@ public class AgendamentoService {
             }
             
             Paragraph footer = new Paragraph("Relatório gerado em: " + 
-                java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
+                java.time.LocalDateTime.now(ZoneId.of("America/Sao_Paulo")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
                 FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10, Color.GRAY));
             footer.setAlignment(Element.ALIGN_CENTER);
             document.add(footer);
@@ -792,5 +832,175 @@ public class AgendamentoService {
                 System.err.println("Erro ao fechar recursos PDF: " + e.getMessage());
             }
         }
+    }
+
+    public AgendamentoDTO criarAgendamentoComValidacao(AgendamentoRequestDTO request) {
+        try {
+            Agendamento agendamento = criarAgendamento(
+                request.getIdUsuario(),
+                request.getIdProfissional(),
+                request.getTipoServico(),
+                request.getDescricao(),
+                request.getDtInicio(),
+                request.getValor()
+            );
+            return new AgendamentoDTO(agendamento);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    public AgendamentoDTO buscarPorIdComValidacao(Long id) {
+        try {
+            return buscarPorIdDTO(id);
+        } catch (Exception e) {
+            throw new RuntimeException("Agendamento não encontrado");
+        }
+    }
+
+    public List<AgendamentoDTO> listarPorUsuarioComValidacao(Long idUsuario, Pageable pageable) {
+        try {
+            Page<AgendamentoDTO> agendamentosPage = listarPorUsuarioDTO(idUsuario, pageable);
+            return agendamentosPage.getContent();
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public List<AgendamentoDTO> listarPorProfissionalComValidacao(Long idProfissional, Pageable pageable) {
+        try {
+            Page<AgendamentoDTO> agendamentosPage = listarPorProfissionalDTO(idProfissional, pageable);
+            return agendamentosPage.getContent();
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public AgendamentoDTO atualizarAgendamentoComAutenticacao(Long id, AgendamentoUpdateDTO request, Authentication authentication) {
+        Long userId = extrairUserIdDoToken(authentication);
+        
+        try {
+            Agendamento agendamento = atualizarAgendamento(id, userId, request.getTipoServico(), request.getDescricao(), request.getDtInicio());
+            return new AgendamentoDTO(agendamento);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    public void excluirAgendamentoComValidacao(Long id) {
+        try {
+            excluirAgendamento(id);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public Page<AgendamentoDTO> listarMeusAgendamentosComAutenticacao(Authentication authentication, Pageable pageable) {
+        Long userId = extrairUserIdDoToken(authentication);
+        
+        try {
+            return listarPorUsuarioDTO(userId, pageable);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public AgendamentoDTO atualizarStatusAgendamentoComAutenticacao(Long id, String status, Authentication authentication) {
+        Long userId = extrairUserIdDoToken(authentication);
+        
+        try {
+            String scope = ((JwtAuthenticationToken) authentication).getToken().getClaimAsString("scope");
+            List<String> roles = new ArrayList<>();
+            if (scope != null) {
+                roles.add(scope);
+            }
+            
+            Agendamento agendamento = atualizarStatusAgendamento(id, userId, status, roles);
+            return new AgendamentoDTO(agendamento);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    public Page<AgendamentoCompletoDTO> listarMeusAgendamentosFuturosComAutenticacao(Authentication authentication, Pageable pageable) {
+        Long userId = extrairUserIdDoToken(authentication);
+        
+        try {
+            return listarAgendamentosFuturos(userId, pageable);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public Page<AgendamentoCompletoDTO> listarMeusAgendamentosPassadosComAutenticacao(Authentication authentication, Pageable pageable) {
+        Long userId = extrairUserIdDoToken(authentication);
+        
+        try {
+            return listarAgendamentosPassados(userId, pageable);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public byte[] exportarAgendamentosPDFComAutenticacao(Integer ano, Authentication authentication) {
+        Long userId = extrairUserIdDoToken(authentication);
+        
+        try {
+            return gerarPDFAgendamentos(userId, ano);
+        } catch (Exception e) {
+            if (e.getMessage().contains("Nenhum agendamento concluído encontrado")) {
+                throw new RuntimeException(e.getMessage());
+            }
+            throw new RuntimeException("Erro ao gerar PDF: " + e.getMessage());
+        }
+    }
+
+    public Page<AgendamentoCompletoDTO> listarMeusAtendimentosFuturosComAutenticacao(Authentication authentication, Pageable pageable) {
+        Long userId = extrairUserIdDoToken(authentication);
+        
+        try {
+            return listarAtendimentosFuturos(userId, pageable);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public Page<AgendamentoCompletoDTO> listarMeusAtendimentosPassadosComAutenticacao(Authentication authentication, Pageable pageable) {
+        Long userId = extrairUserIdDoToken(authentication);
+        
+        try {
+            return listarAtendimentosPassados(userId, pageable);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public byte[] exportarAtendimentosPDFComAutenticacao(Integer ano, Integer mes, Authentication authentication) {
+        Long userId = extrairUserIdDoToken(authentication);
+        
+        try {
+            return gerarPDFAtendimentos(userId, ano, mes);
+        } catch (Exception e) {
+            if (e.getMessage().contains("Nenhum atendimento concluído encontrado")) {
+                throw new RuntimeException(e.getMessage());
+            }
+            throw new RuntimeException("Erro ao gerar PDF: " + e.getMessage());
+        }
+    }
+
+    private Long extrairUserIdDoToken(Authentication authentication) {
+        if (!(authentication instanceof JwtAuthenticationToken)) {
+            throw new TokenInvalidoException("Autenticação inválida");
+        }
+        
+        JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+        Jwt jwt = jwtAuth.getToken();
+        Long userId = jwt.getClaim("userId");
+        
+        if (userId == null) {
+            throw new TokenInvalidoException("Token não contém informações do usuário");
+        }
+        
+        return userId;
     }
 } 

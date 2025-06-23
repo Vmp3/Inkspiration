@@ -4,15 +4,20 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import inkspiration.backend.entities.PasswordResetCode;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.entities.UsuarioAutenticar;
+import inkspiration.backend.exception.UsuarioValidationException;
+import inkspiration.backend.exception.passwordreset.PasswordResetGeracaoException;
+import inkspiration.backend.exception.passwordreset.PasswordResetProcessamentoException;
+import inkspiration.backend.exception.passwordreset.PasswordResetValidacaoException;
 import inkspiration.backend.repository.PasswordResetCodeRepository;
 import inkspiration.backend.repository.UsuarioRepository;
-import inkspiration.backend.util.Hashing;
+import inkspiration.backend.util.PasswordValidator;
 
 @Service
 public class PasswordResetService {
@@ -26,6 +31,9 @@ public class PasswordResetService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private final SecureRandom random = new SecureRandom();
 
     @Transactional
@@ -33,14 +41,14 @@ public class PasswordResetService {
         String cleanCpf = cpf.replaceAll("[^0-9]", "");
         
         Usuario usuario = usuarioRepository.findByCpf(cleanCpf)
-            .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o CPF informado"));
+            .orElseThrow(() -> new PasswordResetGeracaoException("Usuário não encontrado com o CPF informado"));
 
         // Verificar limite de tentativas (máximo 3 códigos a cada 15 minutos)
         LocalDateTime fifteenMinutesAgo = LocalDateTime.now().minusMinutes(15);
         int recentCodes = passwordResetCodeRepository.countRecentCodesByCpf(cleanCpf, fifteenMinutesAgo);
         
         if (recentCodes >= 3) {
-            throw new RuntimeException("Muitas tentativas. Tente novamente em 15 minutos");
+            throw new PasswordResetGeracaoException("Muitas tentativas. Tente novamente em 15 minutos");
         }
 
         // Marcar todos os códigos anteriores como usados
@@ -70,7 +78,7 @@ public class PasswordResetService {
             emailService.sendPasswordResetCode(usuario.getEmail(), usuario.getNome(), code);
         } catch (Exception e) {
             System.err.println("Erro ao enviar email: " + e.getMessage());
-            throw new RuntimeException("Falha ao enviar email de recuperação. Tente novamente.");
+            throw new PasswordResetProcessamentoException("Falha ao enviar email de recuperação. Tente novamente.");
         }
 
         return "Código de recuperação enviado para " + maskEmail(usuario.getEmail());
@@ -80,23 +88,28 @@ public class PasswordResetService {
     public void resetPassword(String cpf, String code, String newPassword) {
         String cleanCpf = cpf.replaceAll("[^0-9]", "");
         
+        // Validar nova senha
+        if (!PasswordValidator.isValid(newPassword)) {
+            throw new UsuarioValidationException.SenhaInvalidaException(PasswordValidator.getPasswordRequirements());
+        }
+        
         // Verificar se o código é válido
         PasswordResetCode resetCode = passwordResetCodeRepository
             .findByCpfAndCodeAndUsedFalse(cleanCpf, code)
-            .orElseThrow(() -> new RuntimeException("Código inválido ou expirado"));
+            .orElseThrow(() -> new PasswordResetValidacaoException("Código inválido ou expirado"));
 
         if (!resetCode.isValid()) {
-            throw new RuntimeException("Código expirado");
+            throw new PasswordResetValidacaoException("Código expirado");
         }
 
         // Buscar usuário
         Usuario usuario = usuarioRepository.findByCpf(cleanCpf)
-            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+            .orElseThrow(() -> new PasswordResetValidacaoException("Usuário não encontrado"));
 
         // Atualizar senha
         UsuarioAutenticar usuarioAuth = usuario.getUsuarioAutenticar();
         if (usuarioAuth != null) {
-            usuarioAuth.setSenha(Hashing.hash(newPassword));
+            usuarioAuth.setSenha(passwordEncoder.encode(newPassword));
             usuario.setUsuarioAutenticar(usuarioAuth);
         }
 
@@ -137,6 +150,27 @@ public class PasswordResetService {
             return "**" + localPart.charAt(localPart.length() - 1) + domainPart;
         } else {
             return localPart.substring(0, 2) + "***" + localPart.charAt(localPart.length() - 1) + domainPart;
+        }
+    }
+
+    public String gerarCodigoRecuperacaoComValidacao(String cpf) {
+        try {
+            return generatePasswordResetCode(cpf);
+        } catch (PasswordResetGeracaoException | PasswordResetProcessamentoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PasswordResetProcessamentoException("Erro interno do servidor. Tente novamente mais tarde.");
+        }
+    }
+
+    public String redefinirSenhaComValidacao(String cpf, String code, String newPassword) {
+        try {
+            resetPassword(cpf, code, newPassword);
+            return "Senha redefinida com sucesso";
+        } catch (PasswordResetValidacaoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PasswordResetProcessamentoException("Erro interno do servidor. Tente novamente mais tarde.");
         }
     }
 } 

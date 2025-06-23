@@ -5,28 +5,18 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-  TextInput,
-  TouchableOpacity,
-  Image,
   Platform,
-  Modal,
-  TouchableWithoutFeedback,
-  ActivityIndicator,
-  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import TabHeader from '../components/ui/TabHeader';
-import Button from '../components/ui/Button';
 import FormNavigation from '../components/ui/FormNavigation';
 import toastHelper from '../utils/toastHelper';
-import { TimeInput } from '../components/TimeInput';
+import * as formatters from '../utils/formatters';
+import { professionalRegisterMessages } from '../components/professionalRegister/messages';
 import AuthService from '../services/AuthService';
 import ApiService from '../services/ApiService';
-import ProfessionalService from '../services/ProfessionalService';
-import { professionalMessages } from '../components/professional/messages';
 
 // Componentes modulares para as diferentes seções do formulário
 import BasicInfoForm from '../components/forms/BasicInfoForm';
@@ -43,6 +33,7 @@ const ProfessionalRegisterScreen = () => {
   
   const [tiposServico, setTiposServico] = useState([]);
   const [tipoServicoSelecionados, setTipoServicoSelecionados] = useState({});
+  const [precosServicos, setPrecosServicos] = useState({});
   
   // Estados para as informações básicas
   const [experience, setExperience] = useState('1-3 anos');
@@ -268,9 +259,30 @@ const ProfessionalRegisterScreen = () => {
   };
   
   const handleTipoServicoChange = (tipoNome) => {
+    const isSelected = !tipoServicoSelecionados[tipoNome];
+    
     setTipoServicoSelecionados(prev => ({
       ...prev,
-      [tipoNome]: !prev[tipoNome]
+      [tipoNome]: isSelected
+    }));
+    
+    // Se o serviço foi desmarcado, remove o preço
+    if (!isSelected) {
+      setPrecosServicos(prev => {
+        const newPrecos = { ...prev };
+        delete newPrecos[tipoNome];
+        return newPrecos;
+      });
+    }
+  };
+  
+  const handlePrecoServicoChange = (tipoNome, valor) => {
+    // Limpar caracteres não numéricos exceto vírgula e ponto
+    const valorLimpo = valor.replace(/[^\d,.]/, '');
+    
+    setPrecosServicos(prev => ({
+      ...prev,
+      [tipoNome]: valorLimpo
     }));
   };
   
@@ -338,66 +350,116 @@ const ProfessionalRegisterScreen = () => {
       });
       if (!result.canceled) {
         const selectedImage = result.assets[0];
+        
+        const validMimeTypes = ['image/jpeg', 'image/png'];
+        const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
+        
+        if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
+          toastHelper.showError(professionalRegisterMessages.imageUploadErrors.invalidFormat);
+          return;
+        }
+        
+        if (selectedImage.fileName) {
+          const fileExtension = selectedImage.fileName.toLowerCase().slice(selectedImage.fileName.lastIndexOf('.'));
+          if (!validExtensions.includes(fileExtension)) {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.invalidFormat);
+            return;
+          }
+        }
+        
+        // Validação de tamanho - limite diferente para perfil vs portfólio
+        const maxSizeInMB = imageType === 'portfolio' ? 10 : 5;
+        const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+        
+        if (selectedImage.fileSize && selectedImage.fileSize > maxSizeInBytes) {
+          if (imageType === 'portfolio') {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.portfolioFileTooLarge);
+          } else {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.fileTooLarge);
+          }
+          return;
+        }
+        
+        const base64String = selectedImage.base64;
+        const base64SizeInBytes = (base64String.length * 3) / 4;
+        
+        if (base64SizeInBytes > maxSizeInBytes) {
+          if (imageType === 'portfolio') {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.portfolioProcessedImageTooLarge);
+          } else {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.processedImageTooLarge);
+          }
+          return;
+        }
+        
+        const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
+        const mimeType = selectedImage.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
+        
         const imageUri = selectedImage.uri;
-        const imageBase64 = `data:image/jpeg;base64,${selectedImage.base64}`;
+        const imageBase64 = `data:${mimeType};base64,${selectedImage.base64}`;
         if (imageType === 'portfolio') {
           setPortfolioImages(prev => [
             ...prev,
             {
               uri: imageUri,
               base64: imageBase64,
-              type: 'image/jpeg',
-              name: `portfolio_${prev.length}.jpg`
+              type: mimeType,
+              name: `portfolio_${prev.length}.${imageFormat === 'png' ? 'png' : 'jpg'}`
             }
           ]);
         } else if (imageType === 'profile') {
           setProfileImage({
             uri: imageUri,
             base64: imageBase64,
-            type: 'image/jpeg',
-            name: 'profile.jpg'
+            type: mimeType,
+            name: `profile.${imageFormat === 'png' ? 'png' : 'jpg'}`
           });
         }
       }
     } catch (error) {
-      toastHelper.showError('Falha ao selecionar imagem. Tente novamente.');
+              toastHelper.showError(professionalRegisterMessages.imageUploadErrors.selectionFailed);
     }
   };
   
   // Upload de imagens para o servidor
-  const uploadImages = async (profissionalId) => {
+  const uploadImages = async (portfolioId) => {
     try {
       // Upload da imagem de perfil
       if (profileImage && profileImage.base64) {
         try {
           await ApiService.put(`/usuario/${userData.idUsuario}/foto-perfil`, { imagemBase64: profileImage.base64 });
         } catch (error) {
-          console.error('Falha ao enviar imagem de perfil:', error);
+          // console.error('Falha ao enviar imagem de perfil:', error);
         }
       }
       
       // Upload das imagens do portfólio em base64
-      for (const image of portfolioImages) {
-        if (image && image.base64) {
-          const base64Data = image.base64;
-          const imagemBase64 = base64Data.startsWith('data:') ? base64Data : `data:image/jpeg;base64,${base64Data}`;
-          
-          const imagemDTO = {
-            imagemBase64,
-            idPortifolio: profissionalId
-          };
-          
-          try {
-            await ApiService.post('/imagens', imagemDTO);
-          } catch (error) {
-            console.error('Falha ao enviar imagem do portfólio:', error);
+      if (portfolioId && portfolioImages.length > 0) {
+        for (const image of portfolioImages) {
+          if (image && image.base64) {
+            const base64Data = image.base64;
+            const imagemBase64 = base64Data.startsWith('data:') ? base64Data : `data:image/jpeg;base64,${base64Data}`;
+            
+            const imagemDTO = {
+              imagemBase64,
+              idPortfolio: portfolioId
+            };
+            
+            // console.log('Enviando imagem para portfólio ID:', portfolioId);
+            
+            try {
+              await ApiService.post('/imagens', imagemDTO);
+            } catch (error) {
+              // console.error('Falha ao enviar imagem do portfólio:', error);
+              throw error; // Re-throw para que o erro seja capturado no nível superior
+            }
           }
         }
       }
       
       return true;
     } catch (error) {
-      console.error('Erro ao fazer upload das imagens:', error);
+      // console.error('Erro ao fazer upload das imagens:', error);
       return false;
     }
   };
@@ -416,15 +478,36 @@ const ProfessionalRegisterScreen = () => {
       if (selectedServices.length === 0) {
         return false;
       }
+      
+      // Validar se todos os serviços selecionados possuem preço
+      for (const service of selectedServices) {
+        if (!precosServicos[service] || precosServicos[service].trim() === '') {
+          return false;
+        }
+      }
+    }
+    
+    if (!formatters.validateSocialMedia(socialMedia.instagram) ||
+        !formatters.validateSocialMedia(socialMedia.tiktok) ||
+        !formatters.validateSocialMedia(socialMedia.facebook) ||
+        !formatters.validateSocialMedia(socialMedia.twitter) ||
+        !formatters.validateWebsite(socialMedia.website)) {
+      return false;
     }
     
     return true;
   };
   
-  const validateWorkHours = () => {
-    const hasWorkHours = workHours.some(day => 
+  const hasWorkSchedule = () => {
+    return workHours.some(day => 
       day.available && (day.morning.enabled || day.afternoon.enabled)
     );
+  };
+
+  const validateWorkHours = () => {
+    if (!hasWorkSchedule()) {
+      return false;
+    }
     
     for (const day of workHours) {
       if (!day.available) continue;
@@ -464,17 +547,84 @@ const ProfessionalRegisterScreen = () => {
            biography.trim().length <= 500 && 
            biographyError === '';
   };
+
+  const getAvailableTabs = () => {
+    const availableTabs = ['basic'];
+    
+    if (validateBasicTab()) {
+      availableTabs.push('hours');
+    }
+    
+    if (validateBasicTab() && validateWorkHours()) {
+      availableTabs.push('portfolio');
+    }
+    
+    return availableTabs;
+  };
+
+  const handleTabPress = (tabId) => {
+    const availableTabs = getAvailableTabs();
+    
+    if (availableTabs.includes(tabId)) {
+      setActiveTab(tabId);
+    } else {
+      if (tabId === 'hours' && !validateBasicTab()) {
+        toastHelper.showWarning(professionalRegisterMessages.warnings.completeBasicInfoFirst);
+      } else if (tabId === 'portfolio' && (!validateBasicTab() || !validateWorkHours())) {
+        if (!validateBasicTab()) {
+          toastHelper.showWarning(professionalRegisterMessages.warnings.completeBasicInfoFirst);
+        } else {
+          toastHelper.showWarning(professionalRegisterMessages.warnings.selectWorkScheduleFirst);
+        }
+      }
+    }
+  };
   
   const handleNextTab = () => {
     if (activeTab === 'basic') {
-      if (!validateBasicTab()) return;
+      const selectedSpecialties = Object.keys(specialties).filter(key => specialties[key]);
+      if (selectedSpecialties.length === 0) {
+        toastHelper.showError(professionalRegisterMessages.errors.basicInfoRequired);
+        return;
+      }
+      
+      if (tipoServicoSelecionados) {
+        const selectedServices = Object.keys(tipoServicoSelecionados).filter(
+          key => tipoServicoSelecionados[key]
+        );
+        
+        if (selectedServices.length === 0) {
+          toastHelper.showError(professionalRegisterMessages.errors.basicInfoRequired);
+          return;
+        }
+      }
+      
+      if (!formatters.validateSocialMedia(socialMedia.instagram) ||
+          !formatters.validateSocialMedia(socialMedia.tiktok) ||
+          !formatters.validateSocialMedia(socialMedia.facebook) ||
+          !formatters.validateSocialMedia(socialMedia.twitter)) {
+        toastHelper.showError(professionalRegisterMessages.errors.socialMediaTooLong);
+        return;
+      }
+      
+      if (!formatters.validateWebsite(socialMedia.website)) {
+        toastHelper.showError(professionalRegisterMessages.errors.websiteTooLong);
+        return;
+      }
+      
       setActiveTab('hours');
     } else if (activeTab === 'hours') {
-      if (!validateWorkHours()) return;
+      if (!hasWorkSchedule()) {
+        toastHelper.showError(professionalRegisterMessages.errors.workScheduleRequired);
+        return;
+      }
+      if (!validateWorkHours()) {
+        return;
+      }
       setActiveTab('portfolio');
     } else if (activeTab === 'portfolio') {
       if (!validatePortfolioTab()) {
-        toastHelper.showError('Preencha todos os campos obrigatórios do portfólio');
+        toastHelper.showError(professionalRegisterMessages.errors.portfolioFieldsRequired);
         return;
       }
     }
@@ -500,14 +650,30 @@ const ProfessionalRegisterScreen = () => {
       
       const selectedTiposServico = Object.keys(tipoServicoSelecionados).filter(key => tipoServicoSelecionados[key]);
       if (selectedTiposServico.length === 0) {
-        toastHelper.showError('Selecione pelo menos um tipo de serviço');
+        toastHelper.showError(professionalRegisterMessages.errors.serviceTypeRequired);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Validar redes sciais
+      if (!formatters.validateSocialMedia(socialMedia.instagram) ||
+          !formatters.validateSocialMedia(socialMedia.tiktok) ||
+          !formatters.validateSocialMedia(socialMedia.facebook) ||
+          !formatters.validateSocialMedia(socialMedia.twitter)) {
+        toastHelper.showError(professionalRegisterMessages.errors.socialMediaTooLong);
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!formatters.validateWebsite(socialMedia.website)) {
+        toastHelper.showError(professionalRegisterMessages.errors.websiteTooLong);
         setIsLoading(false);
         return;
       }
       
       // Validar biografia
       if (!biography || biography.trim().length < 20) {
-        toastHelper.showError('A biografia deve conter pelo menos 20 caracteres');
+        toastHelper.showError(professionalRegisterMessages.errors.biographyMinLength);
         setIsLoading(false);
         return;
       }
@@ -531,14 +697,14 @@ const ProfessionalRegisterScreen = () => {
       
       // Validar se pelo menos um horário foi selecionado
       if (disponibilidades.length === 0) {
-        toastHelper.showError('Defina pelo menos um horário de disponibilidade');
+        toastHelper.showError(professionalRegisterMessages.errors.scheduleRequired);
         setIsLoading(false);
         return;
       }
       
       // Verificar se o usuário está logado e tem os dados necessários
       if (!userData?.idUsuario) {
-        toastHelper.showError('Não foi possível identificar seu usuário. Faça login novamente.');
+        toastHelper.showError(professionalRegisterMessages.errors.userNotIdentified);
         setIsLoading(false);
         return;
       }
@@ -548,16 +714,27 @@ const ProfessionalRegisterScreen = () => {
         const userDetails = await ApiService.get(`/usuario/${userData.idUsuario}`);
         
         if (!userDetails.idEndereco) {
-          toastHelper.showError('Seu cadastro não possui um endereço. Atualize seu perfil antes de continuar.');
+          toastHelper.showError(professionalRegisterMessages.errors.addressRequired);
           setIsLoading(false);
           return;
         }
+        
+        // Preparar preços formatados para o backend
+        const precosFormatados = {};
+        Object.entries(precosServicos).forEach(([tipo, preco]) => {
+          // Converter vírgula para ponto e garantir formato decimal
+          const precoLimpo = preco.replace(',', '.');
+          precosFormatados[tipo] = parseFloat(precoLimpo) || 0;
+        });
+        
+        // console.log('LOG Frontend: Preços formatados:', precosFormatados);
         
         // Preparar objeto com formato esperado pelo backend (ProfissionalCriacaoDTO)
         const professionalData = {
           idUsuario: userData.idUsuario,
           idEndereco: userDetails.idEndereco,
           tiposServico: selectedTiposServico,
+          precosServicos: precosFormatados,
           experiencia: experience,
           especialidade: selectedSpecialties.join(', '),
           descricao: biography,
@@ -572,21 +749,36 @@ const ProfessionalRegisterScreen = () => {
         
         // Enviar dados para o backend
         const profissionalCadastrado = await ApiService.post('/auth/register/profissional-completo', professionalData);
+        // console.log('Resposta do cadastro:', profissionalCadastrado);
         
         // Se houver imagens, fazer o upload
         if ((profileImage && profileImage.uri) || portfolioImages.some(img => img && img.uri)) {
-          toastHelper.showInfo('Enviando imagens...');
+          toastHelper.showInfo(professionalRegisterMessages.info.uploadingImages);
           
           try {
-            // Tentativa de envio das imagens
-            await uploadImages(profissionalCadastrado.idProfissional);
+            // Obter o ID do portfólio dos dados retornados
+            let portfolioId = null;
+            
+            if (profissionalCadastrado.portfolio && profissionalCadastrado.portfolio.idPortfolio) {
+              portfolioId = profissionalCadastrado.portfolio.idPortfolio;
+            }
+            
+            // console.log('ID do portfólio para upload:', portfolioId);
+            
+            if (portfolioId) {
+              // Tentativa de envio das imagens
+              await uploadImages(portfolioId);
+            } else {
+              console.warn('ID do portfólio não encontrado nos dados retornados');
+              toastHelper.showWarning('Não foi possível salvar as imagens do portfólio');
+            }
           } catch (imageError) {
-            console.error('Erro ao enviar imagens:', imageError);
-            toastHelper.showWarning('Profissional cadastrado, mas houve um problema ao enviar as imagens.');
+            // console.error('Erro ao enviar imagens:', imageError);
+            toastHelper.showWarning(professionalRegisterMessages.warnings.imageUploadPartialFailure);
           }
         }
         
-        toastHelper.showSuccess('Cadastro de profissional realizado com sucesso!');
+                  toastHelper.showSuccess(professionalRegisterMessages.success.professionalRegistered);
         
         // Atualizar o token para refletir a nova role (ROLE_PROF)
         try {
@@ -599,30 +791,30 @@ const ProfessionalRegisterScreen = () => {
               navigation.navigate('Home');
             }, 1000);
           } else {
-            console.error('Falha ao atualizar token - redirecionando para login');
-            toastHelper.showWarning('Por favor, faça login novamente para atualizar suas permissões');
+            // console.error('Falha ao atualizar token - redirecionando para login');
+            toastHelper.showWarning(professionalRegisterMessages.warnings.loginAgainForPermissions);
             await AuthService.logout();
             setTimeout(() => {
               navigation.navigate('Login');
             }, 2000);
           }
         } catch (tokenError) {
-          console.error('Erro ao atualizar token:', tokenError);
+          // console.error('Erro ao atualizar token:', tokenError);
           
-          toastHelper.showWarning('Por favor, faça login novamente para atualizar suas permissões');
+          toastHelper.showWarning(professionalRegisterMessages.warnings.loginAgainForPermissions);
           await AuthService.logout();
           setTimeout(() => {
             navigation.navigate('Login');
           }, 2000);
         }
       } catch (userError) {
-        console.error('Erro ao obter dados do usuário ou cadastrar profissional:', userError);
-        toastHelper.showError('Ocorreu um erro ao processar sua solicitação. Tente novamente.');
+        // console.error('Erro ao obter dados do usuário ou cadastrar profissional:', userError);
+        toastHelper.showError(professionalRegisterMessages.errors.genericError);
       }
       
     } catch (error) {
-      console.error('Erro ao cadastrar profissional:', error);
-      toastHelper.showError(error.message || 'Ocorreu um erro ao tentar cadastrar. Tente novamente.');
+      // console.error('Erro ao cadastrar profissional:', error);
+      toastHelper.showError(error.message || professionalRegisterMessages.errors.registrationFailed);
     } finally {
       setIsLoading(false);
     }
@@ -647,17 +839,9 @@ const ProfessionalRegisterScreen = () => {
               <TabHeader 
                 tabs={tabs} 
                 activeTab={activeTab} 
-                setActiveTab={(tabId) => {
-                  if (activeTab === 'basic' && tabId !== 'basic') {
-                    if (!validateBasicTab()) return;
-                  }
-                  
-                  if (activeTab === 'hours' && tabId !== 'hours' && tabId !== 'basic') {
-                    if (!validateWorkHours()) return;
-                  }
-                  
-                  setActiveTab(tabId);
-                }} 
+                setActiveTab={setActiveTab}
+                onTabPress={handleTabPress}
+                availableTabs={getAvailableTabs()}
               />
               
               {activeTab === 'basic' && (
@@ -675,6 +859,8 @@ const ProfessionalRegisterScreen = () => {
                     setTiposServico={setTiposServico}
                     tipoServicoSelecionados={tipoServicoSelecionados}
                     handleTipoServicoChange={handleTipoServicoChange}
+                    precosServicos={precosServicos}
+                    handlePrecoServicoChange={handlePrecoServicoChange}
                   />
                   <View style={styles.formNavigationWrapper}>
                     <FormNavigation
@@ -723,6 +909,7 @@ const ProfessionalRegisterScreen = () => {
                       onNext={handleSubmit}
                       nextText={isLoading ? "Finalizando..." : "Finalizar Cadastro"}
                       isLoading={isLoading}
+                      nextDisabled={!validatePortfolioTab() || isLoading}
                     />
                   </View>
                 </View>

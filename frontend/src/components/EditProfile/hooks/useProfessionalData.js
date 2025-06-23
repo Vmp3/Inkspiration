@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import ApiService from '../../../services/ApiService';
 import toastHelper from '../../../utils/toastHelper';
+import { editProfileMessages } from '../messages';
 
 const useProfessionalData = (userData) => {
   const [professionalFormData, setProfessionalFormData] = useState({
@@ -78,7 +79,8 @@ const useProfessionalData = (userData) => {
       name: 'profile.jpg'
     } : null,
     tiposServico: [],
-    tipoServicoSelecionados: {}
+    tipoServicoSelecionados: {},
+    precosServicos: {}
   });
 
   // Carregar dados profissionais
@@ -91,7 +93,7 @@ const useProfessionalData = (userData) => {
       const response = await ApiService.get(`/profissional/usuario/${userData.idUsuario}/completo`);
       
       if (response && response.profissional) {
-        const { profissional, portfolio, imagens, disponibilidades, tiposServico } = response;
+        const { profissional, portfolio, imagens, disponibilidades, tiposServico, precosServicos } = response;
         
         const allTiposServico = await ApiService.get('/tipos-servico');
         
@@ -99,6 +101,20 @@ const useProfessionalData = (userData) => {
         allTiposServico.forEach(tipo => {
           tipoServicoSelecionados[tipo.nome] = tiposServico.includes(tipo.nome);
         });
+        
+        // Carregar preços dos serviços
+        const precosCarregados = {};
+        if (precosServicos && typeof precosServicos === 'object') {
+          Object.entries(precosServicos).forEach(([tipo, preco]) => {
+            // Converter números para string formatada para exibição
+            if (typeof preco === 'number') {
+              precosCarregados[tipo] = preco.toString().replace('.', ',');
+            } else {
+              precosCarregados[tipo] = preco?.toString() || '';
+            }
+          });
+        }
+        // console.log('LOG: Preços carregados do backend:', precosCarregados);
 
         // Transformar especialidades
         const specialties = portfolio?.especialidade ? 
@@ -203,11 +219,12 @@ const useProfessionalData = (userData) => {
             name: 'profile.jpg'
           } : null,
           tiposServico: allTiposServico,
-          tipoServicoSelecionados: tipoServicoSelecionados
+          tipoServicoSelecionados,
+          precosServicos: precosCarregados
         }));
       }
     } catch (error) {
-      toastHelper.showError('Erro ao obter informações profissionais');
+              toastHelper.showError(editProfileMessages.validations.professionalDataError);
     }
   };
 
@@ -256,6 +273,21 @@ const useProfessionalData = (userData) => {
         website: professionalFormData.socialMedia.website || null
       };
 
+      // Preparar preços formatados para o backend
+      const precosFormatados = {};
+      Object.entries(professionalFormData.precosServicos || {}).forEach(([tipo, preco]) => {
+        if (preco) {
+          // Converter vírgula para ponto e garantir formato decimal
+          const precoLimpo = typeof preco === 'string' ? preco.replace(',', '.') : preco.toString();
+          const precoNumerico = parseFloat(precoLimpo);
+          if (!isNaN(precoNumerico) && precoNumerico > 0) {
+            precosFormatados[tipo] = precoNumerico;
+          }
+        }
+      });
+      
+      // console.log('LOG: Preços formatados para envio:', precosFormatados);
+
       const requestData = {
         profissional: {},
         portfolio: portfolioData,
@@ -263,15 +295,16 @@ const useProfessionalData = (userData) => {
           imagemBase64: img.base64
         })),
         disponibilidades,
-        tiposServico: tiposServicoSelecionados
+        tiposServico: tiposServicoSelecionados,
+        precosServicos: precosFormatados
       };
 
       await ApiService.put(`/profissional/usuario/${userData.idUsuario}/atualizar-completo-com-imagens`, requestData);
-      toastHelper.showSuccess('Perfil atualizado com sucesso!');
+              toastHelper.showSuccess(editProfileMessages.success.profileUpdated);
       return true;
     } catch (error) {
-      console.error('Erro ao atualizar dados profissionais:', error);
-      toastHelper.showError('Erro ao atualizar perfil');
+      // console.error('Erro ao atualizar dados profissionais:', error);
+              toastHelper.showError(editProfileMessages.errors.saveProfile);
       return false;
     }
   };
@@ -350,8 +383,55 @@ const useProfessionalData = (userData) => {
       const result = await ImagePicker.launchImageLibraryAsync(imagePickerOptions);
       if (!result.canceled) {
         const selectedImage = result.assets[0];
+        
+        const validMimeTypes = ['image/jpeg', 'image/png'];
+        const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
+        
+        // Verificar MIME type
+        if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
+          toastHelper.showError(editProfileMessages.imageUploadErrors.invalidFormat);
+          return;
+        }
+        
+        // Verificar extensão do arquivo
+        if (selectedImage.fileName) {
+          const fileExtension = selectedImage.fileName.toLowerCase().slice(selectedImage.fileName.lastIndexOf('.'));
+          if (!validExtensions.includes(fileExtension)) {
+            toastHelper.showError(editProfileMessages.imageUploadErrors.invalidFormat);
+            return;
+          }
+        }
+        
+        const maxSizeInMB = imageType === 'portfolio' ? 10 : 5;
+        const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+        
+        if (selectedImage.fileSize && selectedImage.fileSize > maxSizeInBytes) {
+          if (imageType === 'portfolio') {
+            toastHelper.showError(editProfileMessages.imageUploadErrors.portfolioFileTooLarge);
+          } else {
+            toastHelper.showError(editProfileMessages.imageUploadErrors.fileTooLarge);
+          }
+          return;
+        }
+        
+        const base64String = selectedImage.base64;
+        const base64SizeInBytes = (base64String.length * 3) / 4;
+        
+        if (base64SizeInBytes > maxSizeInBytes) {
+          if (imageType === 'portfolio') {
+            toastHelper.showError(editProfileMessages.imageUploadErrors.portfolioProcessedImageTooLarge);
+          } else {
+            toastHelper.showError(editProfileMessages.imageUploadErrors.processedImageTooLarge);
+          }
+          return;
+        }
+        
+        const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
+        const mimeType = selectedImage.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
+        
         const imageUri = selectedImage.uri;
-        const imageBase64 = `data:image/jpeg;base64,${selectedImage.base64}`;
+        const imageBase64 = `data:${mimeType};base64,${selectedImage.base64}`;
+        
         if (imageType === 'portfolio') {
           setProfessionalFormData(prev => ({
             ...prev,
@@ -360,8 +440,8 @@ const useProfessionalData = (userData) => {
               {
                 uri: imageUri,
                 base64: imageBase64,
-                type: 'image/jpeg',
-                name: `portfolio_${prev.portfolioImages.length}.jpg`
+                type: mimeType,
+                name: `portfolio_${prev.portfolioImages.length}.${imageFormat === 'png' ? 'png' : 'jpg'}`
               }
             ]
           }));
@@ -371,14 +451,14 @@ const useProfessionalData = (userData) => {
             profileImage: {
               uri: imageUri,
               base64: imageBase64,
-              type: 'image/jpeg',
-              name: 'profile.jpg'
+              type: mimeType,
+              name: `profile.${imageFormat === 'png' ? 'png' : 'jpg'}`
             }
           }));
         }
       }
     } catch (error) {
-      toastHelper.showError('Falha ao selecionar imagem. Tente novamente.');
+              toastHelper.showError(editProfileMessages.imageUploadErrors.selectionFailed);
     }
   };
   
@@ -390,11 +470,31 @@ const useProfessionalData = (userData) => {
   };
 
   const handleTipoServicoChange = (tipoNome) => {
+    const isSelected = !professionalFormData.tipoServicoSelecionados[tipoNome];
+    
     setProfessionalFormData(prev => ({
       ...prev,
       tipoServicoSelecionados: {
         ...prev.tipoServicoSelecionados,
-        [tipoNome]: !prev.tipoServicoSelecionados[tipoNome]
+        [tipoNome]: isSelected
+      },
+      // Se o serviço foi desmarcado, remove o preço
+      precosServicos: isSelected ? prev.precosServicos : {
+        ...prev.precosServicos,
+        [tipoNome]: undefined
+      }
+    }));
+  };
+  
+  const handlePrecoServicoChange = (tipoNome, valor) => {
+    // Limpar caracteres não numéricos exceto vírgula e ponto
+    const valorLimpo = valor.replace(/[^\d,.]/, '');
+    
+    setProfessionalFormData(prev => ({
+      ...prev,
+      precosServicos: {
+        ...prev.precosServicos,
+        [tipoNome]: valorLimpo
       }
     }));
   };
@@ -431,7 +531,8 @@ const useProfessionalData = (userData) => {
     handleRemovePortfolioImage,
     pickImage,
     setBiography,
-    handleTipoServicoChange
+    handleTipoServicoChange,
+    handlePrecoServicoChange
   };
 };
 

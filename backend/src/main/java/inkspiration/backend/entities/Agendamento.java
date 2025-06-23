@@ -1,5 +1,6 @@
 package inkspiration.backend.entities;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -39,6 +40,9 @@ public class Agendamento {
     
     @Column(nullable = false)
     private LocalDateTime dtFim;
+    
+    @Column(precision = 10, scale = 2)
+    private BigDecimal valor;
     
     @ManyToOne
     @JoinColumn(name = "profissional_id", nullable = false)
@@ -93,6 +97,14 @@ public class Agendamento {
     
     public void setDtFim(LocalDateTime dtFim) {
         this.dtFim = dtFim;
+    }
+    
+    public BigDecimal getValor() {
+        return valor;
+    }
+    
+    public void setValor(BigDecimal valor) {
+        this.valor = valor;
     }
     
     public Profissional getProfissional() {

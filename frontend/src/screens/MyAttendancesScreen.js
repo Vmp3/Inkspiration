@@ -17,6 +17,7 @@ import { differenceInDays } from 'date-fns';
 import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import Footer from '../components/Footer';
+import { attendancesMessages } from '../components/attendances/messages';
 import AppointmentCard from '../components/AppointmentCard';
 import AppointmentDetailsModal from '../components/AppointmentDetailsModal';
 import CompletedAppointmentDetailsModal from '../components/CompletedAppointmentDetailsModal';
@@ -114,8 +115,8 @@ const MyAttendancesScreen = () => {
         setCurrentFuturePage(0);
       }
     } catch (error) {
-      console.error('Erro ao carregar atendimentos futuros:', error);
-      toastHelper.showError('Erro ao carregar atendimentos futuros');
+      // console.error('Erro ao carregar atendimentos futuros:', error);
+      toastHelper.showError(attendancesMessages.errors.loadFutureAttendances);
     } finally {
       setIsLoadingFuture(false);
     }
@@ -141,8 +142,8 @@ const MyAttendancesScreen = () => {
         setCurrentPastPage(0);
       }
     } catch (error) {
-      console.error('Erro ao carregar atendimentos passados:', error);
-      toastHelper.showError('Erro ao carregar atendimentos passados');
+      // console.error('Erro ao carregar atendimentos passados:', error);
+      toastHelper.showError(attendancesMessages.errors.loadPastAttendances);
     } finally {
       setIsLoadingPast(false);
     }
@@ -218,12 +219,12 @@ const MyAttendancesScreen = () => {
 
   const handleCancelAppointment = () => {
     if (!selectedAttendance) {
-      toastHelper.showError('Erro ao identificar o agendamento');
+      toastHelper.showError(attendancesMessages.errors.identifyAppointment);
       return;
     }
 
     if (selectedAttendance.status?.toUpperCase() !== 'AGENDADO') {
-      toastHelper.showError('Apenas agendamentos com status "Agendado" podem ser cancelados');
+      toastHelper.showError(attendancesMessages.errors.onlyScheduledCanCancel);
       return;
     }
 
@@ -235,13 +236,13 @@ const MyAttendancesScreen = () => {
     try {
       await AgendamentoService.atualizarStatusAgendamento(selectedAttendance.idAgendamento, 'CANCELADO');
       
-      toastHelper.showSuccess('Agendamento cancelado com sucesso');
+      toastHelper.showSuccess(attendancesMessages.success.appointmentCanceled);
       
       await loadAttendances(true);
       
     } catch (error) {
-      console.error('Erro ao cancelar agendamento:', error);
-      let errorMessage = 'Erro ao cancelar agendamento. Tente novamente.';
+      // console.error('Erro ao cancelar agendamento:', error);
+      let errorMessage = attendancesMessages.errors.cancelAppointmentGeneric;
       
       if (error.response?.status === 400) {
         errorMessage = error.response.data || 'Não foi possível cancelar o agendamento';
@@ -408,6 +409,7 @@ const MyAttendancesScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView 
         style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -453,8 +455,8 @@ const MyAttendancesScreen = () => {
             </>
           )}
         </View>
+        <Footer />
       </ScrollView>
-      <Footer />
 
       {selectedAttendance && (
         <>
@@ -479,6 +481,7 @@ const MyAttendancesScreen = () => {
             visible={isCancelModalVisible}
             onClose={handleCloseCancelModal}
             onConfirm={handleConfirmCancel}
+            isProfessional={true}
             appointmentDetails={{
               date: selectedAttendance?.dtInicio,
               service: selectedAttendance?.tipoServico,
@@ -504,6 +507,9 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   header: {
     flexDirection: 'row',
@@ -542,6 +548,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+    paddingBottom: 24,
   },
   section: {
     marginBottom: 24,

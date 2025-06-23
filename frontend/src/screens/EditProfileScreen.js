@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import axios from 'axios';
+import * as ImagePicker from 'expo-image-picker';
 import * as formatters from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import toastHelper from '../utils/toastHelper';
@@ -22,6 +23,8 @@ import PortfolioForm from '../components/forms/PortfolioForm';
 import useProfessionalData from '../components/EditProfile/hooks/useProfessionalData';
 import useTabNavigation from '../components/EditProfile/hooks/useTabNavigation';
 import useProfileUpdate from '../components/EditProfile/hooks/useProfileUpdate';
+import useFormValidation from '../components/EditProfile/utils/formValidation';
+import { editProfileMessages } from '../components/EditProfile/messages';
 
 const EditProfileScreen = () => {
   const { userData } = useAuth();
@@ -38,6 +41,15 @@ const EditProfileScreen = () => {
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [bioError, setBioError] = useState('');
   const [biographyError, setBiographyError] = useState('');
+  const [profileImage, setProfileImage] = useState(null);
+  
+  // Estados de validação de endereço
+  const [cepError, setCepError] = useState('');
+  const [estadoError, setEstadoError] = useState('');
+  const [cidadeError, setCidadeError] = useState('');
+  const [bairroError, setBairroError] = useState('');
+  const [enderecoValidationError, setEnderecoValidationError] = useState('');
+  const [dadosCep, setDadosCep] = useState(null);
   
   // Form data state
   const [formData, setFormData] = useState({
@@ -70,8 +82,46 @@ const EditProfileScreen = () => {
   });
   
   // Hooks customizados
+  const validation = useFormValidation();
   const professionalData = useProfessionalData(userData);
-  const tabNavigation = useTabNavigation(isArtist, formData, professionalData.professionalFormData);
+  const tabNavigation = useTabNavigation(isArtist, formData, professionalData.professionalFormData, {
+    cepError,
+    estadoError,
+    cidadeError,
+    bairroError,
+    enderecoValidationError,
+    forceAddressValidation: () => {
+      if (dadosCep) {
+        // Forçar validação igual ao RegisterScreen
+        if (formData.estado && dadosCep.uf) {
+          const estadoForm = formData.estado.toUpperCase().trim();
+          const estadoCep = dadosCep.uf.toUpperCase().trim();
+          
+          if (estadoForm !== estadoCep) {
+            setEstadoError(`Estado deve ser ${dadosCep.uf} para este CEP`);
+          }
+        }
+        
+        if (formData.cidade && dadosCep.localidade) {
+          const cidadeForm = formData.cidade.toLowerCase().trim();
+          const cidadeCep = dadosCep.localidade.toLowerCase().trim();
+          
+          if (cidadeForm !== cidadeCep) {
+            setCidadeError(`Cidade deve ser ${dadosCep.localidade} para este CEP`);
+          }
+        }
+        
+        if (formData.bairro && dadosCep.bairro) {
+          const bairroForm = formData.bairro.toLowerCase().trim();
+          const bairroCep = dadosCep.bairro.toLowerCase().trim();
+          
+          if (bairroForm !== bairroCep) {
+            setBairroError(`Bairro deve ser ${dadosCep.bairro} para este CEP`);
+          }
+        }
+      }
+    }
+  });
   const profileUpdate = useProfileUpdate(isArtist, professionalData.updateProfessionalData);
 
   // Load user data when component mounts
@@ -111,8 +161,54 @@ const EditProfileScreen = () => {
           website: userData.redesSociais?.website || ''
         }
       });
+
+      // Carregar foto de perfil se disponível
+      if (userData.imagemPerfil) {
+        setProfileImage({
+          uri: userData.imagemPerfil,
+          base64: userData.imagemPerfil,
+          type: 'image/jpeg',
+          name: 'profile.jpg'
+        });
+      }
+
+      // Validar CEP se já houver dados de endereço carregados
+      if (userData.endereco?.cep) {
+        setTimeout(() => {
+          buscarCep(userData.endereco.cep);
+        }, 500); // Pequeno delay para garantir que o estado foi atualizado
+      }
     }
   }, [userData]);
+
+  // Effect para validar consistência de endereço automaticamente
+  useEffect(() => {
+    if (dadosCep && formData.estado && formData.cidade) {
+      // Validar estado
+      if (formData.estado.toUpperCase().trim() !== dadosCep.uf?.toUpperCase().trim()) {
+        const errorMsg = `Estado deve ser ${dadosCep.uf} para este CEP`;
+        setEstadoError(errorMsg);
+      } else {
+        setEstadoError('');
+      }
+      
+      // Validar cidade
+      if (formData.cidade.toLowerCase().trim() !== dadosCep.localidade?.toLowerCase().trim()) {
+        const errorMsg = `Cidade deve ser ${dadosCep.localidade} para este CEP`;
+        setCidadeError(errorMsg);
+      } else {
+        setCidadeError('');
+      }
+      
+      // Validar bairro
+      if (formData.bairro.toLowerCase().trim() !== dadosCep.bairro?.toLowerCase().trim()) {
+        const errorMsg = `Bairro deve ser ${dadosCep.bairro} para este CEP`;
+        setBairroError(errorMsg);
+      } else {
+        setBairroError('');
+      }
+    }
+  }, [dadosCep, formData.estado, formData.cidade, formData.bairro]);
 
   const validateBio = (text) => {
     if (!text || text.trim().length === 0) {
@@ -125,6 +221,71 @@ const EditProfileScreen = () => {
       return 'Biografia deve ter no máximo 500 caracteres';
     }
     return '';
+  };
+
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled) {
+        const selectedImage = result.assets[0];
+        
+        // Validação DUPLA de formato - MIME type e extensão
+        const validMimeTypes = ['image/jpeg', 'image/png'];
+        const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
+        
+        // Verificar MIME type
+        if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
+          toastHelper.showError(editProfileMessages.imageUploadErrors.invalidFormat);
+          return;
+        }
+        
+        // Verificar extensão do arquivo
+        if (selectedImage.fileName) {
+          const fileExtension = selectedImage.fileName.toLowerCase().slice(selectedImage.fileName.lastIndexOf('.'));
+          if (!validExtensions.includes(fileExtension)) {
+            toastHelper.showError(editProfileMessages.imageUploadErrors.invalidFormat);
+            return;
+          }
+        }
+        
+        // Validação de tamanho - limite de 5MB
+        const maxSizeInMB = 5;
+        const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+        
+        if (selectedImage.fileSize && selectedImage.fileSize > maxSizeInBytes) {
+          toastHelper.showError(editProfileMessages.imageUploadErrors.fileTooLarge);
+          return;
+        }
+        
+        // Validação adicional do base64 (que é ~33% maior que o arquivo original)
+        const base64String = selectedImage.base64;
+        const base64SizeInBytes = (base64String.length * 3) / 4;
+        
+        if (base64SizeInBytes > maxSizeInBytes) {
+          toastHelper.showError(editProfileMessages.imageUploadErrors.processedImageTooLarge);
+          return;
+        }
+        
+                  const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
+          const mimeType = selectedImage.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
+        
+        setProfileImage({
+          uri: selectedImage.uri,
+          base64: `data:${mimeType};base64,${selectedImage.base64}`,
+          type: mimeType,
+          name: `profile.${imageFormat === 'png' ? 'png' : 'jpg'}`
+        });
+      }
+    } catch (error) {
+      toastHelper.showError(editProfileMessages.imageUploadErrors.selectionFailed);
+    }
   };
 
   const handleBiographyChange = (text) => {
@@ -161,6 +322,8 @@ const EditProfileScreen = () => {
         return; // CPF is read-only in edit mode
       case 'cep':
         formattedValue = formatters.formatCEP(value);
+        setCepError('');
+        setEnderecoValidationError('');
         break;
       case 'telefone':
         formattedValue = formatters.formatPhone(value);
@@ -191,7 +354,24 @@ const EditProfileScreen = () => {
           setConfirmPasswordError('');
         } else if (value) {
           setConfirmPasswordError('As senhas não coincidem');
-        }
+                  }
+          break;
+      case 'estado':
+        setEstadoError('');
+        setEnderecoValidationError('');
+        break;
+      case 'cidade':
+        setCidadeError('');
+        setEnderecoValidationError('');
+        break;
+      case 'bairro':
+        setBairroError('');
+        setEnderecoValidationError('');
+        break;
+      case 'rua':
+      case 'numero':
+      case 'complemento':
+        setEnderecoValidationError('');
         break;
       case 'redesSociais':
         return setFormData(prev => ({
@@ -272,10 +452,12 @@ const EditProfileScreen = () => {
     }
 
     if (field === 'novaSenha') {
-      if (formData.novaSenha && formData.novaSenha.length < 6) {
-        setPasswordError('A senha deve ter pelo menos 6 caracteres');
-      } else {
-        setPasswordError('');
+      if (formData.novaSenha) {
+        if (!formatters.validatePassword(formData.novaSenha)) {
+          setPasswordError('A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, um número e um caractere especial');
+        } else {
+          setPasswordError('');
+        }
       }
     }
 
@@ -288,16 +470,54 @@ const EditProfileScreen = () => {
         setConfirmPasswordError('');
       }
     }
+
+    // Validação de consistência de endereço quando sai do campo estado ou cidade
+    if (field === 'estado' && formData.estado && dadosCep) {
+      if (formData.estado.toUpperCase().trim() !== dadosCep.uf?.toUpperCase().trim()) {
+        const errorMsg = `Estado deve ser ${dadosCep.uf} para este CEP`;
+        setEstadoError(errorMsg);
+      } else {
+        setEstadoError('');
+      }
+    }
+
+    if (field === 'cidade' && formData.cidade && dadosCep) {
+      if (formData.cidade.toLowerCase().trim() !== dadosCep.localidade?.toLowerCase().trim()) {
+        const errorMsg = `Cidade deve ser ${dadosCep.localidade} para este CEP`;
+        setCidadeError(errorMsg);
+      } else {
+        setCidadeError('');
+      }
+    }
+
+    if (field === 'bairro' && formData.bairro && dadosCep) {
+      if (formData.bairro.toLowerCase().trim() !== dadosCep.bairro?.toLowerCase().trim()) {
+        const errorMsg = `Bairro deve ser ${dadosCep.bairro} para este CEP`;
+        setBairroError(errorMsg);
+      } else {
+        setBairroError('');
+      }
+    }
   };
 
   const buscarCep = async (cep) => {
     try {
+      // Remove caracteres não numéricos
       const cepLimpo = cep.replace(/\D/g, '');
+      
+      if (cepLimpo.length !== 8) {
+        setCepError('CEP deve conter exatamente 8 dígitos');
+        setDadosCep(null);
+        return;
+      }
+      
+      // URL da API ViaCEP
       const response = await axios.get(`https://viacep.com.br/ws/${cepLimpo}/json/`);
       
       if (response.data && !response.data.erro) {
         const endereco = response.data;
         
+        // Atualiza os campos do formulário com os dados retornados
         setFormData(prev => ({
           ...prev,
           rua: endereco.logradouro || '',
@@ -305,9 +525,21 @@ const EditProfileScreen = () => {
           cidade: endereco.localidade || '',
           estado: endereco.uf || '',
         }));
+        setDadosCep(endereco);
+        setCepError('');
+        
+        // Limpar erros de validação quando busca novo CEP
+        setEstadoError('');
+        setCidadeError('');
+        setBairroError('');
+        setEnderecoValidationError('');
+      } else {
+        setCepError('CEP não encontrado');
+        setDadosCep(null);
       }
     } catch (error) {
-      console.error('Erro ao buscar CEP:', error);
+      setCepError('Erro ao consultar CEP. Verifique sua conexão.');
+      setDadosCep(null);
     }
   };
 
@@ -324,46 +556,31 @@ const EditProfileScreen = () => {
             tabs={tabNavigation.getTabs()}
             activeTab={tabNavigation.activeTab}
             setActiveTab={tabNavigation.setActiveTab}
-            onTabPress={(tabId) => {
-              if (tabNavigation.activeTab === 'hours') {
-                const isValid = professionalData.professionalFormData.workHours ? 
-                  tabNavigation.validateCurrentTab() : true;
-                
-                if (!isValid) {
-                  toastHelper.showError('Corrija os horários inválidos antes de continuar.');
-                  return;
-                }
-              }
-              
-              if (tabNavigation.activeTab === 'basic-info') {
-                const isValid = tabNavigation.validateCurrentTab();
-                if (!isValid) {
-                  return;
-                }
-              }
-              
-              tabNavigation.setActiveTab(tabId);
-            }}
+            onTabPress={tabNavigation.handleTabPress}
+            availableTabs={tabNavigation.getAvailableTabs()}
           >
             {tabNavigation.activeTab === 'personal' && (
                   <>
-                    <PersonalForm
-                      formData={formData}
-                      handleChange={handleChange}
-                      handleBlur={handleBlur}
-                      emailError={emailError}
-                      phoneError={phoneError}
-                      isArtist={isArtist}
-                      setIsArtist={setIsArtist}
-                      nomeError={nomeError}
-                      sobrenomeError={sobrenomeError}
-                      fullNameError={fullNameError}
-                      isEditMode={true}
-                    />
+                                    <PersonalForm
+                  formData={formData}
+                  handleChange={handleChange}
+                  handleBlur={handleBlur}
+                  emailError={emailError}
+                  phoneError={phoneError}
+                  isArtist={isArtist}
+                  setIsArtist={setIsArtist}
+                  nomeError={nomeError}
+                  sobrenomeError={sobrenomeError}
+                  fullNameError={fullNameError}
+                  isEditMode={true}
+                  profileImage={profileImage}
+                  pickImage={pickImage}
+                />
                     <FormNavigation
                   onNext={tabNavigation.handleNextTab}
                       showPrev={false}
                       nextText="Próximo"
+                      nextDisabled={!validation.isPersonalTabValid(formData)}
                     />
                   </>
                 )}
@@ -373,11 +590,18 @@ const EditProfileScreen = () => {
                     <AddressForm
                       formData={formData}
                       handleChange={handleChange}
+                      handleBlur={handleBlur}
                       buscarCep={buscarCep}
+                      cepError={cepError}
+                      estadoError={estadoError}
+                      cidadeError={cidadeError}
+                      bairroError={bairroError}
+                      enderecoValidationError={enderecoValidationError}
                     />
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
+                      nextDisabled={!validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError)}
                     />
                   </>
                 )}
@@ -398,11 +622,13 @@ const EditProfileScreen = () => {
                   setTiposServico={(value) => professionalData.setProfessionalFormData(prev => ({ ...prev, tiposServico: value }))}
                   tipoServicoSelecionados={professionalData.professionalFormData.tipoServicoSelecionados}
                   handleTipoServicoChange={professionalData.handleTipoServicoChange}
+                  precosServicos={professionalData.professionalFormData.precosServicos}
+                  handlePrecoServicoChange={professionalData.handlePrecoServicoChange}
                     />
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
-                  nextDisabled={!tabNavigation.validateCurrentTab()}
+                      nextDisabled={!validation.isBasicInfoTabValid(professionalData.professionalFormData)}
                     />
                   </>
                 )}
@@ -418,27 +644,27 @@ const EditProfileScreen = () => {
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
-                  nextDisabled={!tabNavigation.isHoursValid}
+                      nextDisabled={!validation.isWorkHoursTabValid(professionalData.professionalFormData)}
                     />
                   </>
                 )}
                 
             {isArtist && tabNavigation.activeTab === 'portfolio' && (
                   <>
-                    <PortfolioForm 
+                                    <PortfolioForm 
                   biography={professionalData.professionalFormData.biography}
                   setBiography={professionalData.setBiography}
                   biographyError={biographyError}
                   handleBiographyChange={handleBiographyChange}
                   portfolioImages={professionalData.professionalFormData.portfolioImages}
-                  profileImage={professionalData.professionalFormData.profileImage}
                   handleAddPortfolioImage={professionalData.handleAddPortfolioImage}
                   handleRemovePortfolioImage={professionalData.handleRemovePortfolioImage}
                   pickImage={professionalData.pickImage}
-                    />
+                />
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
+                      nextDisabled={!validation.isPortfolioTabValid(professionalData.professionalFormData)}
                     />
                   </>
                 )}
@@ -453,6 +679,7 @@ const EditProfileScreen = () => {
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={tabNavigation.handleNextTab}
+                      nextDisabled={false}
                     />
                   </>
                 )}
@@ -469,7 +696,7 @@ const EditProfileScreen = () => {
 
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
-                  onNext={() => profileUpdate.handleUpdateProfile(formData, tabNavigation.validateCurrentTab, professionalData.professionalFormData)}
+                  onNext={() => profileUpdate.handleUpdateProfile(formData, tabNavigation.validateCurrentTab, professionalData.professionalFormData, profileImage)}
                       showNext={true}
                       nextText="Salvar Alterações"
                   isLoading={profileUpdate.isLoading}

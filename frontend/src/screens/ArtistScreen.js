@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -16,8 +16,10 @@ import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons, Feather, FontAwesome, Entypo, AntDesign } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import ProfessionalService from '../services/ProfessionalService';
+import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import textUtils from '../utils/textUtils';
+import { formatCurrency } from '../utils/formatters';
 import { artistMessages } from '../components/common/messages';
 import { mockReviews } from '../data/reviews';
 import DefaultUser from '../../assets/default_user.png'
@@ -191,7 +193,7 @@ const ArtistScreen = ({ route }) => {
 
     if (!artistId) {
       toastHelper.showError(artistMessages.errors.noArtistId);
-      navigation.goBack();
+      navigation.navigate('Home');
       return;
     }
 
@@ -199,14 +201,25 @@ const ArtistScreen = ({ route }) => {
     loadArtistData();
   }, [artistId, userData, navigation]);
 
+  // useEffect para redirecionamento quando não encontra artista
+  useEffect(() => {
+    if (!artist && !isLoading) {
+      const timeoutId = setTimeout(() => {
+        navigation.navigate('Home');
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [artist, isLoading, navigation]);
+
   const loadArtistData = async () => {
     try {
       setIsLoading(true);
       
       // Verificar se artistId está definido
       if (!artistId) {
-        toastHelper.showError('ID do profissional não encontrado');
-        navigation.goBack();
+        toastHelper.showError(artistMessages.errors.professionalIdNotFound);
+        navigation.navigate('Home');
         return;
       }
       
@@ -228,15 +241,24 @@ const ArtistScreen = ({ route }) => {
           id: index.toString(),
           imagemBase64: img.imagemBase64,
           idImagem: img.idImagem,
-          idPortifolio: img.idPortifolio
+          idPortfolio: img.idPortfolio
         };
       });
       
-      const mappedServices = professionalData.profissional.tiposServico 
-        ? professionalData.profissional.tiposServico.map(serviceType => ({
-            name: mapServiceType(serviceType)
+      // Buscar preços dos serviços
+      const servicesWithPrices = await AgendamentoService.buscarTiposServicoPorProfissional(artistId);
+      
+      const mappedServices = servicesWithPrices.length > 0 
+        ? servicesWithPrices.map(service => ({
+            name: mapServiceType(service.tipo),
+            price: service.preco || 0
           }))
-        : [];
+        : professionalData.profissional.tiposServico 
+          ? professionalData.profissional.tiposServico.map(serviceType => ({
+              name: mapServiceType(serviceType),
+              price: 0
+            }))
+          : [];
 
       setArtist({
         ...transformedData,
@@ -261,7 +283,7 @@ const ArtistScreen = ({ route }) => {
       setPortfolioImages(processedImages);
     } catch (error) {
       toastHelper.showError(artistMessages.errors.loadProfile);
-      navigation.goBack();
+      navigation.navigate('Home');
     } finally {
       setIsLoading(false);
     }
@@ -424,23 +446,25 @@ const ArtistScreen = ({ route }) => {
     setSelectedImage(null);
   };
 
+  // Renderizar o componente de carregamento
+  const renderLoading = useMemo(() => (
+    <View style={styles.loadingContainer}>
+      <MaterialIcons name="hourglass-top" size={32} color="#6B7280" />
+      <Text style={styles.loadingText}>Carregando perfil do profissional...</Text>
+      <Text style={styles.loadingSubtext}>Aguarde enquanto buscamos as informações do artista</Text>
+    </View>
+  ), []);
+
   // Mostrar loading enquanto carrega os dados
   if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>{artistMessages.loading.profile}</Text>
-      </View>
-    );
+    return renderLoading;
   }
 
   // Se não encontrou o artista
   if (!artist) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{artistMessages.errors.notFound}</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>Voltar</Text>
-        </TouchableOpacity>
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Redirecionando...</Text>
       </View>
     );
   }
@@ -686,7 +710,7 @@ const ArtistScreen = ({ route }) => {
               style={styles.scheduleButton}
               onPress={() => {
                 if (!userData) {
-                  toastHelper.showError(artistMessages.errors.loginRequired || 'Faça login para agendar');
+                  toastHelper.showError(artistMessages.errors.loginRequired);
                   navigation.navigate('Login');
                 } else {
                   navigation.navigate('Booking', { professionalId: artist.idProfissional });
@@ -705,7 +729,12 @@ const ArtistScreen = ({ route }) => {
               <Text style={styles.noServicesText}>Nenhum serviço cadastrado</Text>
             ) : (
               artist.services.map((service, index) => (
-                <Text key={index} style={styles.serviceItem}>{service.name}</Text>
+                <View key={index} style={styles.serviceItemContainer}>
+                  <Text style={styles.serviceItem}>{service.name}</Text>
+                  <Text style={styles.servicePrice}>
+                    {formatCurrency(service.price || 0)}
+                  </Text>
+                </View>
               ))
             )}
           </Card>
@@ -899,10 +928,21 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 16,
   },
+  serviceItemContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   serviceItem: {
     fontSize: 14,
     color: '#6B7280',
-    marginBottom: 8,
+    flex: 1,
+  },
+  servicePrice: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
   },
   socialLinks: {
     marginTop: 4,
@@ -1125,32 +1165,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#EF4444',
-    marginBottom: 20,
-  },
-  backButton: {
-    backgroundColor: '#111827',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-  },
-  backButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    color: '#6B7280',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  loadingSubtext: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    opacity: 0.8,
   },
   noImagesContainer: {
     flex: 1,

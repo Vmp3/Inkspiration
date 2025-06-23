@@ -22,7 +22,7 @@ class AgendamentoService {
       return result;
     } catch (error) {
       if (!error.message || !error.message.includes('204')) {
-        console.error('Erro ao buscar horários disponíveis:', error);
+        // console.error('Erro ao buscar horários disponíveis:', error);
       }
       throw error;
     }
@@ -41,13 +41,16 @@ class AgendamentoService {
 
   async criarAgendamento(dadosAgendamento) {
     try {
+      const tipoServicoFormatado = this.formatarTipoServico(dadosAgendamento.tipoServico);
+      
       const dadosComStatus = {
         ...dadosAgendamento,
+        tipoServico: tipoServicoFormatado,
         status: "AGENDADO"
       };
       return await ApiService.post('/agendamentos', dadosComStatus);
     } catch (error) {
-      console.error('Erro ao criar agendamento:', error);
+      // console.error('Erro ao criar agendamento:', error);
       throw error;
     }
   }
@@ -56,7 +59,7 @@ class AgendamentoService {
     try {
       return await ApiService.get(`/tipos-servico/${idProfissional}`);
     } catch (error) {
-      console.error('Erro ao buscar tipos de serviço do profissional:', error);
+      // console.error('Erro ao buscar tipos de serviço do profissional:', error);
       throw error;
     }
   }
@@ -65,7 +68,7 @@ class AgendamentoService {
     try {
       return await ApiService.get(`/agendamentos/usuario/${idUsuario}?page=${page}`);
     } catch (error) {
-      console.error('Erro ao buscar agendamentos do usuário:', error);
+      // console.error('Erro ao buscar agendamentos do usuário:', error);
       throw error;
     }
   }
@@ -74,7 +77,7 @@ class AgendamentoService {
     try {
       return await ApiService.get(`/agendamentos/profissional/${idProfissional}?page=${page}`);
     } catch (error) {
-      console.error('Erro ao buscar agendamentos do profissional:', error);
+      // console.error('Erro ao buscar agendamentos do profissional:', error);
       throw error;
     }
   }
@@ -91,7 +94,7 @@ class AgendamentoService {
       
       return await ApiService.put(`/agendamentos/${id}`, dadosParaEnvio);
     } catch (error) {
-      console.error('Erro ao atualizar agendamento:', error);
+      // console.error('Erro ao atualizar agendamento:', error);
       throw error;
     }
   }
@@ -100,7 +103,7 @@ class AgendamentoService {
     try {
       return await ApiService.delete(`/agendamentos/${id}`);
     } catch (error) {
-      console.error('Erro ao excluir agendamento:', error);
+      // console.error('Erro ao excluir agendamento:', error);
       throw error;
     }
   }
@@ -110,7 +113,7 @@ class AgendamentoService {
       const response = await ApiService.get(`/agendamentos/meus-agendamentos?page=${page}&size=${size}`);
       return response;
     } catch (error) {
-      console.error('Erro ao buscar meus agendamentos:', error);
+      // console.error('Erro ao buscar meus agendamentos:', error);
       throw error;
     }
   }
@@ -127,7 +130,7 @@ class AgendamentoService {
       const statusFormatado = statusMap[novoStatus] || novoStatus.toUpperCase();
       return await ApiService.put(`/agendamentos/${id}/status?status=${statusFormatado}`);
     } catch (error) {
-      console.error('Erro ao atualizar status do agendamento:', error);
+      // console.error('Erro ao atualizar status do agendamento:', error);
       throw error;
     }
   }
@@ -137,7 +140,7 @@ class AgendamentoService {
       const response = await ApiService.get(`/agendamentos/meus-agendamentos/futuros?page=${page}&size=${size}&sort=dtInicio,asc`);
       return response;
     } catch (error) {
-      console.error('Erro ao listar agendamentos futuros:', error);
+      // console.error('Erro ao listar agendamentos futuros:', error);
       throw error;
     }
   }
@@ -147,7 +150,7 @@ class AgendamentoService {
       const response = await ApiService.get(`/agendamentos/meus-agendamentos/passados?page=${page}&size=${size}&sort=dtInicio,desc`);
       return response;
     } catch (error) {
-      console.error('Erro ao listar agendamentos passados:', error);
+      // console.error('Erro ao listar agendamentos passados:', error);
       throw error;
     }
   }
@@ -171,7 +174,7 @@ class AgendamentoService {
       
       return response;
     } catch (error) {
-      console.error('Erro ao exportar agendamentos para PDF:', error);
+      // console.error('Erro ao exportar agendamentos para PDF:', error);
       throw error;
     }
   }
@@ -193,7 +196,7 @@ class AgendamentoService {
       const response = await ApiService.get(`/agendamentos/profissional/meus-atendimentos/futuros?page=${page}&size=${size}&sort=dtInicio,asc`);
       return response;
     } catch (error) {
-      console.error('Erro ao listar atendimentos futuros:', error);
+      // console.error('Erro ao listar atendimentos futuros:', error);
       throw error;
     }
   }
@@ -203,7 +206,7 @@ class AgendamentoService {
       const response = await ApiService.get(`/agendamentos/profissional/meus-atendimentos/passados?page=${page}&size=${size}&sort=dtInicio,desc`);
       return response;
     } catch (error) {
-      console.error('Erro ao listar atendimentos passados:', error);
+      // console.error('Erro ao listar atendimentos passados:', error);
       throw error;
     }
   }
@@ -227,7 +230,7 @@ class AgendamentoService {
       
       return response;
     } catch (error) {
-      console.error('Erro ao exportar atendimentos para PDF:', error);
+      // console.error('Erro ao exportar atendimentos para PDF:', error);
       throw error;
     }
   }

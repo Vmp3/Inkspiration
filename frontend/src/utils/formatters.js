@@ -160,6 +160,51 @@ const validateFullNameLength = (firstName, surname) => {
   return fullName.length <= 255;
 };
 
+const validateSocialMedia = (value) => {
+  if (!value || value.trim() === '') return true;
+  
+  return value.trim().length <= 50;
+};
+
+const validateWebsite = (value) => {
+  if (!value || value.trim() === '') return true;
+  
+  return value.trim().length <= 255;
+};
+
+const validatePassword = (password) => {
+  if (!password) return false;
+  
+  // Mínimo 8 caracteres
+  if (password.length < 8) return false;
+  
+  // Pelo menos uma letra maiúscula
+  if (!/[A-Z]/.test(password)) return false;
+  
+  // Pelo menos um número
+  if (!/[0-9]/.test(password)) return false;
+  
+  // Pelo menos um caractere especial
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return false;
+  
+  return true;
+};
+
+const formatCurrency = (value) => {
+  if (!value && value !== 0) return '';
+  
+  const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+  
+  if (isNaN(numericValue)) return '';
+  
+  return numericValue.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 export {
   formatCPF,
   formatCEP,
@@ -172,5 +217,9 @@ export {
   validateBirthDate,
   validateFirstName,
   validateSurname,
-  validateFullNameLength
+  validateFullNameLength,
+  validateSocialMedia,
+  validateWebsite,
+  validatePassword,
+  formatCurrency
 }; 

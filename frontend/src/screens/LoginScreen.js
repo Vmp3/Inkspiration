@@ -73,7 +73,7 @@ const LoginScreen = () => {
     }
 
     if (showTwoFactor && (!formData.twoFactorCode || formData.twoFactorCode.length !== 6)) {
-      toastHelper.showError('Código de autenticação de dois fatores é obrigatório');
+      toastHelper.showError(authMessages.loginErrors.twoFactorRequired);
       return;
     }
 
@@ -89,7 +89,7 @@ const LoginScreen = () => {
       if (!result.success) {
         if (result.requiresTwoFactor) {
           setShowTwoFactor(true);
-          toastHelper.showError(result.message || 'Digite o código de autenticação de dois fatores');
+          toastHelper.showError(result.message || authMessages.loginErrors.twoFactorPrompt);
           return;
         }
         const errorMessage = result.error || result.message || authMessages.loginErrors.loginFailed;
@@ -105,7 +105,7 @@ const LoginScreen = () => {
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
-      console.error('Erro no login:', error);
+      // console.error('Erro no login:', error);
       
       // Verificar se é erro de rede
       if (error.code === 'NETWORK_ERROR' || 
@@ -113,7 +113,7 @@ const LoginScreen = () => {
           error.message?.toLowerCase().includes('timeout') ||
           error.message?.toLowerCase().includes('connection') ||
           !navigator.onLine) {
-        toastHelper.showError('Falha ao realizar login. Verifique sua conexão com a internet e tente novamente.');
+        toastHelper.showError(authMessages.loginErrors.networkError);
         return;
       }
       

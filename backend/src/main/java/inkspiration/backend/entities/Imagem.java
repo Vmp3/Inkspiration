@@ -15,14 +15,14 @@ public class Imagem {
     private String imagemBase64;
     
     @ManyToOne
-    @JoinColumn(name = "portifolio_id_portifolio")
-    private Portifolio portifolio;
+    @JoinColumn(name = "portfolio_id_portfolio")
+    private Portfolio portfolio;
     
     public Imagem() {}
     
-    public Imagem(String imagemBase64, Portifolio portifolio) {
+    public Imagem(String imagemBase64, Portfolio portfolio) {
         this.imagemBase64 = imagemBase64;
-        this.portifolio = portifolio;
+        this.portfolio = portfolio;
     }
     
     // Getters e Setters
@@ -42,11 +42,11 @@ public class Imagem {
         this.imagemBase64 = imagemBase64;
     }
     
-    public Portifolio getPortifolio() {
-        return portifolio;
+    public Portfolio getPortfolio() {
+        return portfolio;
     }
     
-    public void setPortifolio(Portifolio portifolio) {
-        this.portifolio = portifolio;
+    public void setPortfolio(Portfolio portfolio) {
+        this.portfolio = portfolio;
     }
 } 

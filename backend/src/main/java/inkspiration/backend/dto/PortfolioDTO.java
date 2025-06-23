@@ -3,9 +3,9 @@ package inkspiration.backend.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public class PortifolioDTO {
+public class PortfolioDTO {
     
-    private Long idPortifolio;
+    private Long idPortfolio;
     
     private Long idProfissional;
     
@@ -19,17 +19,26 @@ public class PortifolioDTO {
     @Size(max = 500)
     private String especialidade;
     
+    @Size(max = 255, message = "Website deve ter no máximo 255 caracteres")
     private String website;
+    
+    @Size(max = 50, message = "TikTok deve ter no máximo 50 caracteres")
     private String tiktok;
+    
+    @Size(max = 50, message = "Instagram deve ter no máximo 50 caracteres")
     private String instagram;
+    
+    @Size(max = 50, message = "Facebook deve ter no máximo 50 caracteres")
     private String facebook;
+    
+    @Size(max = 50, message = "Twitter deve ter no máximo 50 caracteres")
     private String twitter;
     
-    public PortifolioDTO() {}
+    public PortfolioDTO() {}
     
-    public PortifolioDTO(Long idPortifolio, Long idProfissional, String descricao, String experiencia, String especialidade,
+    public PortfolioDTO(Long idPortfolio, Long idProfissional, String descricao, String experiencia, String especialidade,
                          String website, String tiktok, String instagram, String facebook, String twitter) {
-        this.idPortifolio = idPortifolio;
+        this.idPortfolio = idPortfolio;
         this.idProfissional = idProfissional;
         this.descricao = descricao;
         this.experiencia = experiencia;
@@ -42,12 +51,12 @@ public class PortifolioDTO {
     }
     
     // Getters e Setters
-    public Long getIdPortifolio() {
-        return idPortifolio;
+    public Long getIdPortfolio() {
+        return idPortfolio;
     }
     
-    public void setIdPortifolio(Long idPortifolio) {
-        this.idPortifolio = idPortifolio;
+    public void setIdPortfolio(Long idPortfolio) {
+        this.idPortfolio = idPortfolio;
     }
     
     public Long getIdProfissional() {
