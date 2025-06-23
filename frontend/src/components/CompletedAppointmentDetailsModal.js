@@ -17,6 +17,7 @@ import DefaultUser from '../../assets/default_user.png';
 import Input from './ui/Input';
 import AvaliacaoService from '../services/AvaliacaoService';
 import toastHelper from '../utils/toastHelper';
+import StarRating from './ui/StarRating';
 
 const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isProfessional = false, onOpenReview }) => {
   const [avaliacao, setAvaliacao] = useState(null);
@@ -106,21 +107,6 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isPro
       case 'CONCLUIDO': return 'Concluído';
       default: return status || 'Agendado';
     }
-  };
-
-  const renderStars = (rating) => {
-    return (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <MaterialIcons
-            key={star}
-            name="star"
-            size={20}
-            color={star <= rating ? '#FFD700' : '#E5E7EB'}
-          />
-        ))}
-      </View>
-    );
   };
 
   return (
@@ -245,7 +231,7 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isPro
                     ) : avaliacao ? (
                       <>
                         <View style={styles.avaliacaoRating}>
-                          {renderStars(avaliacao.rating)}
+                          <StarRating value={avaliacao.rating} size={28} editable={false} />
                           <Text style={styles.ratingText}>{avaliacao.rating}/5</Text>
                         </View>
                         {avaliacao.descricao && (
