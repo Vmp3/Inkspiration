@@ -604,6 +604,7 @@ const MyAppointmentsScreen = () => {
             color="#FFD700"
             emptyColor="#E5E7EB"
             style={{ marginBottom: 20, alignSelf: 'center' }}
+            disabled={isSubmittingReview}
           />
           <Text style={{ fontWeight: '500', fontSize: 16, alignSelf: 'flex-start', marginBottom: 8 }}>
             Seu comentário (opcional)

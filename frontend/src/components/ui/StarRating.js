@@ -13,6 +13,7 @@ import { MaterialIcons } from '@expo/vector-icons';
  * - color: cor das estrelas preenchidas
  * - emptyColor: cor das estrelas vazias
  * - halfColor: cor das meias estrelas (opcional)
+ * - disabled: boolean (impede interação)
  */
 const StarRating = ({
   value = 0,
@@ -24,6 +25,7 @@ const StarRating = ({
   halfColor = '#FFD700',
   style = {},
   highlightColor = '#FFB300', // cor de destaque ao passar o mouse/tocar
+  disabled = false,
 }) => {
   const [hovered, setHovered] = useState(null); // null ou índice da estrela
 
@@ -50,12 +52,14 @@ const StarRating = ({
           return (
             <TouchableOpacity
               key={index}
-              onPress={() => onChange(index + 1)}
-              activeOpacity={0.7}
-              onPressIn={() => setHovered(index)}
-              onPressOut={() => setHovered(null)}
-              onMouseEnter={() => setHovered(index)}
-              onMouseLeave={() => setHovered(null)}
+              onPress={() => !disabled && onChange(index + 1)}
+              activeOpacity={disabled ? 1 : 0.7}
+              onPressIn={() => !disabled && setHovered(index)}
+              onPressOut={() => !disabled && setHovered(null)}
+              onMouseEnter={() => !disabled && setHovered(index)}
+              onMouseLeave={() => !disabled && setHovered(null)}
+              style={{ cursor: editable && !disabled ? 'pointer' : 'default', opacity: disabled ? 0.5 : 1 }}
+              disabled={disabled}
             >
               <Animated.View style={{
                 transform: [{ scale: isHighlighted ? 1.15 : 1 }],
