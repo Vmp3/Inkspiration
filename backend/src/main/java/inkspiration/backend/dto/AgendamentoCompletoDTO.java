@@ -32,6 +32,12 @@ public class AgendamentoCompletoDTO {
     private String cep;
     private String complemento;
     
+    // Informações da avaliação
+    private Long idAvaliacao;
+    private String descricaoAvaliacao;
+    private Integer ratingAvaliacao;
+    private Boolean podeAvaliar;
+    
     public AgendamentoCompletoDTO(Agendamento agendamento) {
         this.idAgendamento = agendamento.getIdAgendamento();
         this.tipoServico = agendamento.getTipoServico();
@@ -206,5 +212,37 @@ public class AgendamentoCompletoDTO {
 
     public void setComplemento(String complemento) {
         this.complemento = complemento;
+    }
+
+    public Long getIdAvaliacao() {
+        return idAvaliacao;
+    }
+
+    public void setIdAvaliacao(Long idAvaliacao) {
+        this.idAvaliacao = idAvaliacao;
+    }
+
+    public String getDescricaoAvaliacao() {
+        return descricaoAvaliacao;
+    }
+
+    public void setDescricaoAvaliacao(String descricaoAvaliacao) {
+        this.descricaoAvaliacao = descricaoAvaliacao;
+    }
+
+    public Integer getRatingAvaliacao() {
+        return ratingAvaliacao;
+    }
+
+    public void setRatingAvaliacao(Integer ratingAvaliacao) {
+        this.ratingAvaliacao = ratingAvaliacao;
+    }
+
+    public Boolean getPodeAvaliar() {
+        return podeAvaliar;
+    }
+
+    public void setPodeAvaliar(Boolean podeAvaliar) {
+        this.podeAvaliar = podeAvaliar;
     }
 } 
