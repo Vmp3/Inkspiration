@@ -26,6 +26,7 @@ import CancelAppointmentModal from '../components/CancelAppointmentModal';
 import EditAppointmentModal from '../components/EditAppointmentModal';
 import CompletedAppointmentDetailsModal from '../components/CompletedAppointmentDetailsModal';
 import ExportAppointmentsModal from '../components/ExportAppointmentsModal';
+import StarRating from '../components/ui/StarRating';
 
 const MyAppointmentsScreen = () => {
   const navigation = useNavigation();
@@ -595,26 +596,15 @@ const MyAppointmentsScreen = () => {
           description={`Compartilhe sua experiência com ${reviewAppointment?.nomeProfissional || ''}`}
         >
           <Text style={{ fontWeight: '500', fontSize: 16, alignSelf: 'flex-start', marginBottom: 8 }}>Sua Nota</Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 20 }}>
-            {[1,2,3,4,5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => setReviewStars(star)}>
-                <View style={{ position: 'relative', marginHorizontal: 4, width: 38, height: 38, alignItems: 'center', justifyContent: 'center' }}>
-                  <MaterialIcons
-                    name="star"
-                    size={38}
-                    color="#6B7280"
-                    style={{ position: 'absolute', top: 0, left: 0 }}
-                  />
-                  <MaterialIcons
-                    name="star"
-                    size={32}
-                    color={star <= reviewStars ? '#FFD700' : '#E5E7EB'}
-                    style={{ position: 'absolute', top: 3, left: 3 }}
-                  />
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <StarRating
+            value={reviewStars}
+            editable={true}
+            onChange={setReviewStars}
+            size={38}
+            color="#FFD700"
+            emptyColor="#E5E7EB"
+            style={{ marginBottom: 20, alignSelf: 'center' }}
+          />
           <Text style={{ fontWeight: '500', fontSize: 16, alignSelf: 'flex-start', marginBottom: 8 }}>
             Seu comentário (opcional)
             <Text style={{ fontWeight: '400', fontSize: 14, color: reviewComment.length > 1000 ? '#EF4444' : '#6B7280' }}>  {reviewComment.length}/1000</Text>
