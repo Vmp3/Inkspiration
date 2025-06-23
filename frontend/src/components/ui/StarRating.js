@@ -59,6 +59,9 @@ const StarRating = ({
             >
               <Animated.View style={{
                 transform: [{ scale: isHighlighted ? 1.15 : 1 }],
+                transitionProperty: 'color, transform',
+                transitionDuration: '200ms',
+                transitionTimingFunction: 'ease',
               }}>
                 <MaterialIcons
                   name={isHighlighted ? 'star' : 'star-border'}
