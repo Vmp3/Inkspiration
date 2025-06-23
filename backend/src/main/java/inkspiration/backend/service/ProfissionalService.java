@@ -276,7 +276,9 @@ public class ProfissionalService {
         
         // Atualizar endereço se fornecido
         if (dto.getIdEndereco() != null) {
-            profissional.getUsuario().getEndereco().setIdEndereco(dto.getIdEndereco());
+            Endereco endereco = enderecoRepository.findById(dto.getIdEndereco())
+                .orElseThrow(() -> new EnderecoNaoEncontradoException("Endereço não encontrado com ID: " + dto.getIdEndereco()));
+            profissional.setEndereco(endereco);
         }
         
         profissional = profissionalRepository.save(profissional);
