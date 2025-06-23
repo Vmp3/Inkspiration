@@ -306,6 +306,12 @@ const MyAppointmentsScreen = () => {
       toastHelper.showError('Por favor, selecione uma nota para o artista');
       return;
     }
+
+    if (reviewComment.length > 1000) {
+      toastHelper.showError('O comentário não pode ter mais de 1000 caracteres');
+      return;
+    }
+
     setIsSubmittingReview(true);
     try {
       if (existingReviewId) {
@@ -328,7 +334,13 @@ const MyAppointmentsScreen = () => {
       handleCloseReviewModal();
       loadAppointments(true);
     } catch (error) {
-      toastHelper.showError('Erro ao salvar avaliação. Tente novamente.');
+      let errorMessage = 'Erro ao salvar avaliação. Tente novamente.';
+      
+      if (error.response?.data) {
+        errorMessage = error.response.data;
+      }
+      
+      toastHelper.showError(errorMessage);
     } finally {
       setIsSubmittingReview(false);
     }
@@ -606,13 +618,13 @@ const MyAppointmentsScreen = () => {
           </View>
           <Text style={{ fontWeight: '500', fontSize: 16, alignSelf: 'flex-start', marginBottom: 8 }}>
             Seu comentário (opcional)
-            <Text style={{ fontWeight: '400', fontSize: 14, color: reviewComment.length > 500 ? '#EF4444' : '#6B7280' }}>  {reviewComment.length}/500</Text>
+            <Text style={{ fontWeight: '400', fontSize: 14, color: reviewComment.length > 1000 ? '#EF4444' : '#6B7280' }}>  {reviewComment.length}/1000</Text>
           </Text>
           <Input
             placeholder="Conte como foi sua experiência..."
             value={reviewComment}
             onChangeText={text => {
-              if (text.length <= 500) setReviewComment(text);
+              if (text.length <= 1000) setReviewComment(text);
             }}
             multiline
             numberOfLines={4}
@@ -627,9 +639,9 @@ const MyAppointmentsScreen = () => {
               <Text style={{ color: '#111', fontWeight: '600', fontSize: 16 }}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={{ backgroundColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24, opacity: isSubmittingReview || reviewComment.length > 500 ? 0.7 : 1 }}
+              style={{ backgroundColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24, opacity: isSubmittingReview || reviewComment.length > 1000 ? 0.7 : 1 }}
               onPress={handleSendReview}
-              disabled={isSubmittingReview || reviewComment.length > 500}
+              disabled={isSubmittingReview || reviewComment.length > 1000}
             >
               <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
                 {isSubmittingReview ? 'Salvando...' : (existingReviewId ? 'Atualizar' : 'Enviar avaliação')}
