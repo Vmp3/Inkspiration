@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import FilterSection from './FilterSection';
+import StarRating from '../ui/StarRating';
 
 const RatingFilter = ({ minRating, setMinRating }) => {
   return (
@@ -22,14 +23,7 @@ const RatingFilter = ({ minRating, setMinRating }) => {
           </View>
           
           <View style={styles.starsContainer}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <MaterialIcons 
-                key={star}
-                name="star" 
-                size={16} 
-                color={star <= rating ? "#FFD700" : "#E5E7EB"} 
-              />
-            ))}
+            <StarRating value={rating} size={16} editable={false} />
             <Text style={styles.ratingText}> e acima</Text>
           </View>
         </TouchableOpacity>
