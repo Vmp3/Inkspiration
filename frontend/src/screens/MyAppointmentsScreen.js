@@ -488,7 +488,6 @@ const MyAppointmentsScreen = () => {
           <ActivityIndicator size="large" color="#111" />
           <Text style={styles.loadingText}>Carregando agendamentos...</Text>
         </View>
-        <Footer />
       </SafeAreaView>
     );
   }
@@ -497,7 +496,7 @@ const MyAppointmentsScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={{ flexGrow: 1, flexDirection: 'column' }}
+        contentContainerStyle={styles.scrollViewContent}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
         }
@@ -657,11 +656,13 @@ const MyAppointmentsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    minHeight: '100vh',
     backgroundColor: '#fff',
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
   },
   header: {
     flexDirection: 'row',
@@ -698,7 +699,9 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   content: {
+    flex: 1,
     padding: 16,
+    minHeight: '100%',
   },
   section: {
     marginBottom: 24,
