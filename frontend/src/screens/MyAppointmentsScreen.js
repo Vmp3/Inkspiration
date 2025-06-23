@@ -277,18 +277,20 @@ const MyAppointmentsScreen = () => {
 
     try {
       const avaliacao = await AvaliacaoService.buscarPorAgendamento(appointment.idAgendamento);
-      if (avaliacao) {
+      if (avaliacao && avaliacao.idAvaliacao) {
         setReviewStars(avaliacao.rating || 0);
         setReviewComment(avaliacao.descricao || '');
-        setExistingReviewId(avaliacao.idAvaliacao); // Guarda o ID da avaliação existente
+        setExistingReviewId(avaliacao.idAvaliacao);
       }
     } catch (error) {
-      console.error('Erro ao buscar avaliação:', error);
-    } finally {
-      setTimeout(() => {
-        setShowReviewModal(true);
-      }, 0);
+      // Se der erro 404 (não encontrado) ou qualquer outro erro, 
+      // simplesmente iniciamos uma nova avaliação
+      console.error('Avaliação não encontrada ou erro ao buscar:', error);
     }
+
+    setTimeout(() => {
+      setShowReviewModal(true);
+    }, 0);
   };
 
   const handleCloseReviewModal = () => {
