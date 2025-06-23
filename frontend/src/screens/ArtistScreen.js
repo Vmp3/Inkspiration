@@ -24,6 +24,7 @@ import DefaultUser from '../../assets/default_user.png'
 import AvaliacaoService from '../services/AvaliacaoService';
 import { formatDate } from '../utils/formatters';
 import Avatar from '../components/ui/Avatar';
+import StarRating from '../components/ui/StarRating';
 
 const Tabs = ({ tabs, activeTab, onTabChange }) => {
   return (
@@ -445,32 +446,6 @@ const ArtistScreen = ({ route }) => {
     );
   }
 
-  const renderStars = (rating) => {
-    // Arredondar para a meia estrela mais próxima
-    const rounded = Math.round(rating * 2) / 2;
-    const fullStars = Math.floor(rounded);
-    const hasHalfStar = rounded - fullStars === 0.5;
-    return (
-      <View style={styles.starContainer}>
-        {[...Array(5)].map((_, i) => {
-          if (i < fullStars) {
-            return (
-              <MaterialIcons key={i} name="star" size={16} color="#FACC15" style={styles.filledStar} />
-            );
-          } else if (i === fullStars && hasHalfStar) {
-            return (
-              <MaterialIcons key={i} name="star-half" size={16} color="#FACC15" style={styles.filledStar} />
-            );
-          } else {
-            return (
-              <MaterialIcons key={i} name="star-border" size={16} color="#FACC15" />
-            );
-          }
-        })}
-      </View>
-    );
-  };
-
   const renderPortfolio = () => {
     return (
       <View style={styles.tabContent}>
@@ -506,7 +481,7 @@ const ArtistScreen = ({ route }) => {
             <Text style={styles.reviewsTitle}>Avaliações dos Clientes</Text>
             <View style={styles.ratingContainer}>
               <View style={styles.starsWrapper}>
-                {renderStars(artist.rating)}
+                <StarRating value={artist.rating} size={16} editable={false} />
               </View>
               <Text style={styles.ratingValue}>{artist.rating} ({reviewCount} avaliações)</Text>
             </View>
@@ -568,7 +543,7 @@ const ArtistScreen = ({ route }) => {
                       </View>
                     </View>
                     <View style={styles.reviewActions}>
-                      {renderStars(item.rating)}
+                      <StarRating value={item.rating} size={16} editable={false} />
                       {isAdmin && (
                         <TouchableOpacity
                           style={styles.deleteButton}
@@ -660,7 +635,7 @@ const ArtistScreen = ({ route }) => {
               </Text>
               <Text style={styles.artistTitle}>{artist.title}</Text>
               <View style={styles.ratingRow}>
-                {renderStars(artist.rating)}
+                <StarRating value={artist.rating} size={16} editable={false} />
                 <Text style={styles.ratingText}>{artist.rating} ({reviewCount} avaliações)</Text>
               </View>
               <View style={styles.locationRow}>
