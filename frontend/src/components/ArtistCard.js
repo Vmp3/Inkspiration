@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Platform } from 'react-native';
 import DefaultUser from '../../assets/default_user.png'
+import StarRating from './ui/StarRating';
 
 const ArtistCard = ({ artist }) => {
   const { id, name, rating, specialties, location, coverImage } = artist;
@@ -28,7 +29,7 @@ const ArtistCard = ({ artist }) => {
             <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">{name}</Text>
           </View>
           <View style={styles.ratingContainer}>
-            <MaterialIcons name="star" size={16} color="#FFD700" style={styles.starIcon} />
+            <StarRating value={rating} size={16} editable={false} />
             <Text style={styles.rating}>{rating}</Text>
           </View>
         </View>
