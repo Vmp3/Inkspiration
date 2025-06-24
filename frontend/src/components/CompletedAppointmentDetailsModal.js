@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,8 +14,23 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DefaultUser from '../../assets/default_user.png';
 import { formatCurrency } from '../utils/formatters';
+import AvaliacaoService from '../services/AvaliacaoService';
+import RatingModal from './RatingModal';
 
-const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isProfessional = false }) => {
+const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, onRefresh, isProfessional = false }) => {
+  const [isRatingModalVisible, setIsRatingModalVisible] = useState(false);
+
+  // Usar as informações que já vêm do backend
+  const canRate = appointment?.podeAvaliar === true;
+  const hasRated = appointment?.podeAvaliar === false;
+  const existingRating = hasRated ? {
+    idAvaliacao: appointment?.idAvaliacao,
+    rating: appointment?.ratingAvaliacao,
+    descricao: appointment?.descricaoAvaliacao
+  } : null;
+
+
+
   if (!appointment) return null;
 
   const formatDate = (date) => {
@@ -87,7 +102,16 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isPro
   };
 
   const handleRateAppointment = () => {
-    // TODO: implementar avaliação
+    setIsRatingModalVisible(true);
+  };
+
+  const handleRatingSuccess = () => {
+    // Fechar modal e atualizar a lista
+    setIsRatingModalVisible(false);
+    onClose();
+    if (onRefresh) {
+      onRefresh();
+    }
   };
 
   return (
@@ -206,6 +230,28 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isPro
                   </View>
                 )}
 
+                {existingRating && (
+                  <View style={styles.avaliacaoSection}>
+                    <Text style={styles.avaliacaoTitle}>Avaliação</Text>
+                    <View style={styles.starsContainer}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <MaterialIcons
+                          key={star}
+                          name={star <= existingRating.rating ? "star" : "star-border"}
+                          size={20}
+                          color={star <= existingRating.rating ? "#FFD700" : "#E2E8F0"}
+                          style={styles.starIcon}
+                        />
+                      ))}
+                    </View>
+                    {existingRating.descricao && (
+                      <Text style={styles.avaliacaoComment}>
+                        "{existingRating.descricao}"
+                      </Text>
+                    )}
+                  </View>
+                )}
+
                 <View style={styles.statusSection}>
                   <Text style={styles.statusLabel}>Status</Text>
                   <View style={styles.statusBadge}>
@@ -223,14 +269,20 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isPro
                 )}
               </ScrollView>
 
-              {!isProfessional && (
+                              {!isProfessional && canRate && (
                 <View style={styles.buttonRow}>
                   <TouchableOpacity 
                     style={styles.rateButton} 
                     onPress={handleRateAppointment}
                   >
-                    <MaterialIcons name="star" size={20} color="#000" />
-                    <Text style={styles.rateButtonText}>Avaliação</Text>
+                    <MaterialIcons 
+                                              name="star" 
+                        size={20} 
+                        color="#FFD700" 
+                      />
+                      <Text style={styles.rateButtonText}>
+                        Avaliar
+                      </Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -245,6 +297,13 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, isPro
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
+      
+      <RatingModal
+        visible={isRatingModalVisible}
+        appointment={appointment}
+        onClose={() => setIsRatingModalVisible(false)}
+        onSuccess={handleRatingSuccess}
+      />
     </Modal>
   );
 };
@@ -380,7 +439,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#FFF8DC',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -389,8 +448,33 @@ const styles = StyleSheet.create({
   rateButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#000',
+    color: '#B8860B',
     marginLeft: 6,
+  },
+  avaliacaoSection: {
+    marginBottom: 20,
+    marginTop: 8,
+  },
+  avaliacaoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111',
+    marginBottom: 8,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  starIcon: {
+    marginRight: 2,
+  },
+  avaliacaoComment: {
+    fontSize: 14,
+    color: '#64748B',
+    fontStyle: 'italic',
+    lineHeight: 20,
+    marginTop: 4,
   },
   closeButton: {
     alignItems: 'center',

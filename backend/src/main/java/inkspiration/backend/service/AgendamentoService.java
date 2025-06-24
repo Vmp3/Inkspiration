@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.annotation.Lazy;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -19,6 +21,7 @@ import inkspiration.backend.dto.AgendamentoDTO;
 import inkspiration.backend.dto.AgendamentoCompletoDTO;
 import inkspiration.backend.dto.AgendamentoRequestDTO;
 import inkspiration.backend.dto.AgendamentoUpdateDTO;
+import inkspiration.backend.dto.AvaliacaoDTO;
 import inkspiration.backend.entities.Agendamento;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
@@ -60,17 +63,20 @@ public class AgendamentoService {
     private final ProfissionalRepository profissionalRepository;
     private final UsuarioRepository usuarioRepository;
     private final DisponibilidadeService disponibilidadeService;
+    private final AvaliacaoService avaliacaoService;
     private final NumberFormat formatoBrasileiro = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
     
     public AgendamentoService(
             AgendamentoRepository agendamentoRepository,
             ProfissionalRepository profissionalRepository,
             UsuarioRepository usuarioRepository,
-            DisponibilidadeService disponibilidadeService) {
+            DisponibilidadeService disponibilidadeService,
+            @Lazy AvaliacaoService avaliacaoService) {
         this.agendamentoRepository = agendamentoRepository;
         this.profissionalRepository = profissionalRepository;
         this.usuarioRepository = usuarioRepository;
         this.disponibilidadeService = disponibilidadeService;
+        this.avaliacaoService = avaliacaoService;
     }
     
     private LocalDateTime ajustarHorarioInicio(LocalDateTime dtInicio) {
@@ -377,7 +383,7 @@ public class AgendamentoService {
                 usuario, agora, pageable);
         
         List<AgendamentoCompletoDTO> agendamentosDTO = agendamentosPage.getContent().stream()
-                .map(AgendamentoCompletoDTO::new)
+                .map(this::enriquecerComAvaliacao)
                 .collect(Collectors.toList());
         
         return new PageImpl<>(agendamentosDTO, pageable, agendamentosPage.getTotalElements());
@@ -396,7 +402,7 @@ public class AgendamentoService {
                 .collect(Collectors.toList());
         
         List<AgendamentoCompletoDTO> agendamentosDTO = agendamentosAtualizados.stream()
-                .map(AgendamentoCompletoDTO::new)
+                .map(this::enriquecerComAvaliacao)
                 .collect(Collectors.toList());
         
         return new PageImpl<>(agendamentosDTO, pageable, agendamentosPage.getTotalElements());
@@ -412,6 +418,32 @@ public class AgendamentoService {
         return agendamento;
     }
     
+    private AgendamentoCompletoDTO enriquecerComAvaliacao(Agendamento agendamento) {
+        AgendamentoCompletoDTO dto = new AgendamentoCompletoDTO(agendamento);
+        
+        try {
+            // Verificar se pode avaliar
+            boolean podeAvaliar = avaliacaoService.podeAvaliar(agendamento.getIdAgendamento());
+            dto.setPodeAvaliar(podeAvaliar);
+            
+            // Se não pode avaliar, significa que já avaliou - buscar a avaliação
+            if (!podeAvaliar) {
+                Optional<AvaliacaoDTO> avaliacao = avaliacaoService.buscarAvaliacaoPorAgendamento(agendamento.getIdAgendamento());
+                if (avaliacao.isPresent()) {
+                    AvaliacaoDTO avaliacaoDTO = avaliacao.get();
+                    dto.setIdAvaliacao(avaliacaoDTO.getIdAvaliacao());
+                    dto.setDescricaoAvaliacao(avaliacaoDTO.getDescricao());
+                    dto.setRatingAvaliacao(avaliacaoDTO.getRating());
+                }
+            }
+        } catch (Exception e) {
+            // Em caso de erro, assumir que não pode avaliar
+            dto.setPodeAvaliar(false);
+        }
+        
+        return dto;
+    }
+    
     public Page<AgendamentoCompletoDTO> listarAtendimentosFuturos(Long idUsuario, Pageable pageable) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
@@ -424,7 +456,7 @@ public class AgendamentoService {
                 profissional, agora, pageable);
         
         List<AgendamentoCompletoDTO> atendimentosDTO = atendimentosPage.getContent().stream()
-                .map(AgendamentoCompletoDTO::new)
+                .map(this::enriquecerComAvaliacao)
                 .collect(Collectors.toList());
         
         return new PageImpl<>(atendimentosDTO, pageable, atendimentosPage.getTotalElements());
@@ -446,7 +478,7 @@ public class AgendamentoService {
                 .collect(Collectors.toList());
         
         List<AgendamentoCompletoDTO> atendimentosDTO = atendimentosAtualizados.stream()
-                .map(AgendamentoCompletoDTO::new)
+                .map(this::enriquecerComAvaliacao)
                 .collect(Collectors.toList());
         
         return new PageImpl<>(atendimentosDTO, pageable, atendimentosPage.getTotalElements());

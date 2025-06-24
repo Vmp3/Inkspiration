@@ -69,6 +69,10 @@ import inkspiration.backend.exception.endereco.EnderecoValidacaoException;
 import inkspiration.backend.exception.endereco.CepInvalidoException;
 import inkspiration.backend.exception.endereco.EstadoInvalidoException;
 import inkspiration.backend.exception.endereco.CidadeInvalidaException;
+import inkspiration.backend.exception.avaliacao.AvaliacaoJaExisteException;
+import inkspiration.backend.exception.avaliacao.AvaliacaoNaoEncontradaException;
+import inkspiration.backend.exception.avaliacao.AvaliacaoNaoPermitidaException;
+import inkspiration.backend.exception.agendamento.AgendamentoNaoEncontradoException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -578,5 +582,34 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
         errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+    // Exceções de Avaliação
+    @ExceptionHandler(AvaliacaoJaExisteException.class)
+    public ResponseEntity<Map<String, String>> handleAvaliacaoJaExisteException(AvaliacaoJaExisteException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(AvaliacaoNaoEncontradaException.class)
+    public ResponseEntity<Map<String, String>> handleAvaliacaoNaoEncontradaException(AvaliacaoNaoEncontradaException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(AvaliacaoNaoPermitidaException.class)
+    public ResponseEntity<Map<String, String>> handleAvaliacaoNaoPermitidaException(AvaliacaoNaoPermitidaException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(AgendamentoNaoEncontradoException.class)
+    public ResponseEntity<Map<String, String>> handleAgendamentoNaoEncontradoException(AgendamentoNaoEncontradoException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.NOT_FOUND);
     }
 }

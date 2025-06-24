@@ -9,7 +9,8 @@ import {
   FlatList, 
   Dimensions,
   Linking,
-  Modal
+  Modal,
+  ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons, Feather, FontAwesome, Entypo, AntDesign } from '@expo/vector-icons';
@@ -20,7 +21,7 @@ import toastHelper from '../utils/toastHelper';
 import textUtils from '../utils/textUtils';
 import { formatCurrency } from '../utils/formatters';
 import { artistMessages } from '../components/common/messages';
-import { mockReviews } from '../data/reviews';
+import Pagination from '../components/common/Pagination';
 import DefaultUser from '../../assets/default_user.png'
 
 const Tabs = ({ tabs, activeTab, onTabChange }) => {
@@ -139,7 +140,7 @@ const ArtistScreen = ({ route }) => {
   const [activeTab, setActiveTab] = useState('portfolio');
   const [isAdmin, setIsAdmin] = useState(false);
   const [deleteReviewId, setDeleteReviewId] = useState(null);
-  const [reviews, setReviews] = useState(mockReviews);
+  const [reviews, setReviews] = useState([]);
   const [artist, setArtist] = useState(null);
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -147,6 +148,12 @@ const ArtistScreen = ({ route }) => {
   const [isSamePerson, setIsSamePerson] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
+  
+  // Estados para paginação das avaliações
+  const [reviewsCurrentPage, setReviewsCurrentPage] = useState(0);
+  const [reviewsTotalPages, setReviewsTotalPages] = useState(0);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [totalReviews, setTotalReviews] = useState(0);
   
   const isMobile = screenData.width < 768;
 
@@ -198,9 +205,12 @@ const ArtistScreen = ({ route }) => {
     }
   }, [artist, isLoading, navigation]);
 
-  const loadArtistData = async () => {
+  const loadArtistData = async (reviewsPage = 0) => {
     try {
       setIsLoading(true);
+      if (reviewsPage > 0) {
+        setReviewsLoading(true);
+      }
       
       // Verificar se artistId está definido
       if (!artistId) {
@@ -209,8 +219,8 @@ const ArtistScreen = ({ route }) => {
         return;
       }
       
-      // Buscar dados completos do profissional
-      const professionalData = await ProfessionalService.getProfessionalCompleteById(artistId);
+      // Buscar dados completos do profissional com avaliações paginadas
+      const professionalData = await ProfessionalService.getProfessionalCompleteById(artistId, reviewsPage);
       
       if (userData?.idUsuario === professionalData.profissional.idUsuario) {
         setIsSamePerson(true);
@@ -218,18 +228,15 @@ const ArtistScreen = ({ route }) => {
       
       const transformedData = ProfessionalService.transformCompleteProfessionalData(professionalData);
       
-      // Buscar imagens do portfólio
-      const images = await ProfessionalService.getProfessionalImages(artistId);
-      
-      // Processar imagens base64
-      const processedImages = images.map((img, index) => {
+      // Processar imagens do portfólio
+      const processedImages = professionalData.imagens ? professionalData.imagens.map((img, index) => {
         return {
           id: index.toString(),
           imagemBase64: img.imagemBase64,
           idImagem: img.idImagem,
           idPortfolio: img.idPortfolio
         };
-      });
+      }) : [];
       
       // Buscar preços dos serviços
       const servicesWithPrices = await AgendamentoService.buscarTiposServicoPorProfissional(artistId);
@@ -246,12 +253,32 @@ const ArtistScreen = ({ route }) => {
             }))
           : [];
 
+      // Processar avaliações do backend
+      const avaliacoes = professionalData.avaliacoes || { content: [], totalElements: 0, totalPages: 0 };
+      const processedReviews = avaliacoes.content.map(avaliacao => ({
+        id: avaliacao.idAvaliacao?.toString() || Math.random().toString(),
+        userName: avaliacao.nomeCliente || 'Cliente',
+        userImage: avaliacao.imagemCliente || 'https://via.placeholder.com/40',
+        rating: avaliacao.rating || 5,
+        comment: avaliacao.descricao || '',
+        date: new Date().toLocaleDateString('pt-BR'), // Você pode melhorar isso adicionando data real
+        tattooType: avaliacao.tipoServico || 'TATUAGEM_PEQUENA'
+      }));
+
+      // Para paginação, sempre substituir as avaliações
+      setReviews(processedReviews);
+      
+      // Atualizar informações de paginação das avaliações
+      setReviewsCurrentPage(avaliacoes.currentPage || 0);
+      setReviewsTotalPages(avaliacoes.totalPages || 0);
+      setTotalReviews(professionalData.totalAvaliacoes || avaliacoes.totalElements || 0);
+
       setArtist({
         ...transformedData,
         idProfissional: artistId,
         title: "Tatuador",
         bio: transformedData.description,
-        reviewCount: reviews.length,
+        reviewCount: professionalData.totalAvaliacoes || 0,
         profileImage: transformedData.coverImage,
         coverImage: transformedData.coverImage,
         portfolio: processedImages,
@@ -271,6 +298,7 @@ const ArtistScreen = ({ route }) => {
       navigation.navigate('Home');
     } finally {
       setIsLoading(false);
+      setReviewsLoading(false);
     }
   };
 
@@ -278,6 +306,45 @@ const ArtistScreen = ({ route }) => {
     const updatedReviews = reviews.filter((review) => review.id !== reviewId);
     setReviews(updatedReviews);
     toastHelper.showSuccess(artistMessages.success.reviewDeleted);
+  };
+
+  const loadReviewsPage = async (page) => {
+    try {
+      setReviewsLoading(true);
+      
+      // Buscar dados do profissional com a página específica de avaliações
+      const professionalData = await ProfessionalService.getProfessionalCompleteById(artistId, page);
+      
+      // Processar avaliações do backend
+      const avaliacoes = professionalData.avaliacoes || { content: [], totalElements: 0, totalPages: 0 };
+      const processedReviews = avaliacoes.content.map(avaliacao => ({
+        id: avaliacao.idAvaliacao?.toString() || Math.random().toString(),
+        userName: avaliacao.nomeCliente || 'Cliente',
+        userImage: avaliacao.imagemCliente || 'https://via.placeholder.com/40',
+        rating: avaliacao.rating || 5,
+        comment: avaliacao.descricao || '',
+        date: new Date().toLocaleDateString('pt-BR'), // Você pode melhorar isso adicionando data real
+        tattooType: avaliacao.tipoServico || 'TATUAGEM_PEQUENA'
+      }));
+
+      // Sempre substituir as avaliações para paginação
+      setReviews(processedReviews);
+      
+      // Atualizar informações de paginação das avaliações
+      setReviewsCurrentPage(avaliacoes.currentPage || 0);
+      setReviewsTotalPages(avaliacoes.totalPages || 0);
+      setTotalReviews(professionalData.totalAvaliacoes || avaliacoes.totalElements || 0);
+      
+    } catch (error) {
+      toastHelper.showError('Erro ao carregar avaliações');
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  const handleReviewsPageChange = (newPage) => {
+    setReviewsCurrentPage(newPage);
+    loadReviewsPage(newPage);
   };
 
   const openSocialLink = async (url) => {
@@ -389,49 +456,72 @@ const ArtistScreen = ({ route }) => {
                 ))}
               </View>
               <Text style={styles.ratingValue}>{artist.rating}</Text>
-              <Text style={styles.reviewCount}>({artist.reviewCount})</Text>
+              <Text style={styles.reviewCount}>({totalReviews})</Text>
             </View>
           </View>
 
-          <FlatList
-            data={reviews}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.reviewCard}>
-                <View style={styles.reviewHeader}>
-                  <View style={styles.reviewerInfo}>
-                    <Image
-                      source={{ uri: item.userImage }}
-                      style={styles.reviewerImage}
-                    />
-                    <View>
-                      <Text style={styles.reviewerName}>{item.userName}</Text>
-                      <Text style={styles.reviewDate}>{item.date}</Text>
+          {reviewsLoading ? (
+            <View style={styles.reviewsLoadingContainer}>
+              <ActivityIndicator size="large" color="#111827" />
+              <Text style={styles.reviewsLoadingText}>Carregando avaliações...</Text>
+            </View>
+          ) : reviews.length === 0 ? (
+            <View style={styles.noReviewsContainer}>
+              <Text style={styles.noReviewsText}>Nenhuma avaliação encontrada</Text>
+              <Text style={styles.noReviewsSubtext}>Este profissional ainda não possui avaliações.</Text>
+            </View>
+          ) : (
+            <>
+              <FlatList
+                data={reviews}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <View style={styles.reviewCard}>
+                    <View style={styles.reviewHeader}>
+                      <View style={styles.reviewerInfo}>
+                        <Image
+                          source={{ uri: item.userImage }}
+                          style={styles.reviewerImage}
+                        />
+                        <View>
+                          <Text style={styles.reviewerName}>{item.userName}</Text>
+                          <Text style={styles.reviewDate}>{item.date}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.reviewActions}>
+                        {renderStars(item.rating)}
+                        {isAdmin && (
+                          <TouchableOpacity
+                            style={styles.deleteButton}
+                            onPress={() => handleDeleteReview(item.id)}
+                          >
+                            <Feather name="trash-2" size={16} color="#EF4444" />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+
+                    <Text style={styles.reviewComment}>{item.comment}</Text>
+
+                    <View style={styles.reviewFooter}>
+                      <Text style={styles.serviceLabel}>Serviço:</Text>
+                      <Text style={styles.serviceType}>{mapServiceType(item.tattooType)}</Text>
                     </View>
                   </View>
-                  <View style={styles.reviewActions}>
-                    {renderStars(item.rating)}
-                    {isAdmin && (
-                      <TouchableOpacity
-                        style={styles.deleteButton}
-                        onPress={() => handleDeleteReview(item.id)}
-                      >
-                        <Feather name="trash-2" size={16} color="#EF4444" />
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
-
-                <Text style={styles.reviewComment}>{item.comment}</Text>
-
-                <View style={styles.reviewFooter}>
-                  <Text style={styles.serviceLabel}>Serviço:</Text>
-                  <Text style={styles.serviceType}>{mapServiceType(item.tattooType)}</Text>
-                </View>
-              </View>
-            )}
-            style={styles.reviewsList}
-          />
+                )}
+                style={styles.reviewsList}
+              />
+              
+              {/* Paginação das avaliações */}
+              {reviewsTotalPages > 1 && (
+                <Pagination 
+                  currentPage={reviewsCurrentPage} 
+                  setCurrentPage={handleReviewsPageChange} 
+                  totalPages={reviewsTotalPages} 
+                />
+              )}
+            </>
+          )}
         </View>
       </View>
     );
@@ -1051,6 +1141,35 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 8,
+  },
+  reviewsLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reviewsLoadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  noReviewsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  noReviewsText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  noReviewsSubtext: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    opacity: 0.8,
   },
 });
 
