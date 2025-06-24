@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,9 +16,35 @@ import Toast from 'react-native-toast-message';
 import DefaultUser from '../../assets/default_user.png';
 import { formatCurrency } from '../utils/formatters';
 import toastConfig from '../config/toastConfig';
+import AvaliacaoService from '../services/AvaliacaoService';
+import RatingModal from './RatingModal';
 
 
-const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCancel, isProfessional = false, showEditButton = true, showCancelButton = true }) => {
+const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCancel, onRefresh, isProfessional = false, showEditButton = true, showCancelButton = true }) => {
+  const [isRatingModalVisible, setIsRatingModalVisible] = useState(false);
+
+  // Usar as informações que já vêm do backend
+  const canRate = appointment?.podeAvaliar === true;
+  const hasRated = appointment?.podeAvaliar === false;
+  const existingRating = hasRated ? {
+    idAvaliacao: appointment?.idAvaliacao,
+    rating: appointment?.ratingAvaliacao,
+    descricao: appointment?.descricaoAvaliacao
+  } : null;
+
+  const handleRatePress = () => {
+    setIsRatingModalVisible(true);
+  };
+
+  const handleRatingSuccess = () => {
+    // Fechar modal e atualizar a lista
+    setIsRatingModalVisible(false);
+    onClose();
+    if (onRefresh) {
+      onRefresh();
+    }
+  };
+
   if (!appointment) return null;
 
   const formatDate = (date) => {
@@ -222,6 +248,35 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
                   </View>
                 )}
 
+                {existingRating && (
+                  <View style={styles.ratingSection}>
+                    <View style={styles.detailRow}>
+                      <MaterialIcons name="star" size={18} color="#FFD700" />
+                      <Text style={styles.detailLabel}>Sua Avaliação</Text>
+                    </View>
+                    <View style={styles.ratingDisplay}>
+                      <View style={styles.starsRow}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <MaterialIcons
+                            key={star}
+                            name={star <= existingRating.rating ? 'star' : 'star-border'}
+                            size={16}
+                            color={star <= existingRating.rating ? '#FFD700' : '#CBD5E1'}
+                          />
+                        ))}
+                        <Text style={styles.ratingValue}>
+                          {existingRating.rating}/5
+                        </Text>
+                      </View>
+                      {existingRating.descricao && (
+                        <Text style={styles.ratingComment}>
+                          "{existingRating.descricao}"
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                )}
+
                 <View style={styles.statusSection}>
                   <Text style={styles.statusLabel}>Status</Text>
                   <View style={[styles.statusBadge, { backgroundColor: statusStyle.backgroundColor }]}>
@@ -232,28 +287,43 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
                 </View>
               </ScrollView>
 
-              {!isCanceled && (showEditButton || showCancelButton) && (
+              {(!isCanceled && (showEditButton || showCancelButton)) || (canRate && !isProfessional) ? (
                 <View style={styles.buttonRow}>
-                  {showEditButton && (
+                  {!isCanceled && showEditButton && (
                     <TouchableOpacity 
-                      style={[styles.editButton, !showCancelButton && { marginRight: 0 }]} 
+                                              style={[styles.editButton, (!showCancelButton && !canRate) && { marginRight: 0 }]} 
                       onPress={onEdit}
                     >
                       <MaterialIcons name="edit" size={20} color="#000" />
                       <Text style={styles.editButtonText}>Editar</Text>
                     </TouchableOpacity>
                   )}
-                  {showCancelButton && (
+                  {!isCanceled && showCancelButton && (
                     <TouchableOpacity 
-                      style={[styles.cancelButton, !showEditButton && { marginLeft: 0 }]} 
+                                              style={[styles.cancelButton, (!showEditButton && !canRate) && { marginLeft: 0 }]} 
                       onPress={onCancel}
                     >
                       <MaterialIcons name="cancel" size={20} color="#E11D48" />
                       <Text style={styles.cancelButtonText}>Cancelar</Text>
                     </TouchableOpacity>
                   )}
+                  {!isProfessional && canRate && (
+                    <TouchableOpacity 
+                      style={[styles.rateButton, (!showEditButton && !showCancelButton) && { marginLeft: 0, marginRight: 0 }]} 
+                      onPress={handleRatePress}
+                    >
+                      <MaterialIcons 
+                        name="star" 
+                        size={20} 
+                        color="#FFD700" 
+                      />
+                      <Text style={styles.rateButtonText}>
+                        Avaliar
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
-              )}
+              ) : null}
 
               <TouchableOpacity 
                 style={styles.closeButton} 
@@ -265,6 +335,13 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
+      
+      <RatingModal
+        visible={isRatingModalVisible}
+        appointment={appointment}
+        onClose={() => setIsRatingModalVisible(false)}
+        onSuccess={handleRatingSuccess}
+      />
       
       <Toast 
         config={toastConfig} 
@@ -451,6 +528,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#64748B',
+  },
+  ratingSection: {
+    marginBottom: 16,
+  },
+  ratingDisplay: {
+    paddingLeft: 26,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  ratingValue: {
+    fontSize: 14,
+    color: '#64748B',
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  ratingComment: {
+    fontSize: 14,
+    color: '#64748B',
+    fontStyle: 'italic',
+  },
+  rateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF8DC',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    flex: 1,
+    marginLeft: 8,
+  },
+  rateButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#B8860B',
+    marginLeft: 6,
   },
 });
 

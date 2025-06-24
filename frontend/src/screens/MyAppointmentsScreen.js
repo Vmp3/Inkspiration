@@ -471,12 +471,14 @@ const MyAppointmentsScreen = () => {
         onClose={handleCloseModal}
         onEdit={handleEditAppointment}
         onCancel={handleCancelAppointment}
+        onRefresh={loadAppointments}
       />
       
       <CompletedAppointmentDetailsModal
         visible={isCompletedModalVisible}
         appointment={selectedAppointment}
         onClose={handleCloseCompletedModal}
+        onRefresh={loadAppointments}
       />
 
       <CancelAppointmentModal

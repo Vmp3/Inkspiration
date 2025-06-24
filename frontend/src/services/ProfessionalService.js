@@ -88,12 +88,24 @@ class ProfessionalService {
     }
   }
 
-  async getProfessionalCompleteById(id) {
+  async getProfessionalCompleteById(id, avaliacoesPage = 0, avaliacoesSize = 5) {
+    try {
+      const params = new URLSearchParams();
+      params.append('avaliacoesPage', avaliacoesPage);
+      params.append('avaliacoesSize', avaliacoesSize);
+      
+      const response = await PublicApiService.get(`/profissional/completo/${id}/com-avaliacoes?${params.toString()}`);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getProfessionalCompleteByIdWithoutReviews(id) {
     try {
       const response = await PublicApiService.get(`/profissional/completo/${id}`);
       return response;
     } catch (error) {
-      // console.error('Erro ao buscar profissional completo:', error);
       throw error;
     }
   }

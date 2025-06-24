@@ -58,6 +58,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/profissional/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/profissional/completo").permitAll()
                 .requestMatchers(HttpMethod.GET, "/profissional/completo/{id}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/profissional/completo/{id}/com-avaliacoes").permitAll()
                 .requestMatchers(HttpMethod.GET, "/profissional/{id}/imagens").permitAll()
                 .requestMatchers(HttpMethod.GET, "/portfolio/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/disponibilidades/profissional/{idProfissional}").permitAll()

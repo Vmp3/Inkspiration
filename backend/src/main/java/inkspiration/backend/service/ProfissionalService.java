@@ -24,6 +24,7 @@ import inkspiration.backend.dto.ProfissionalDTO;
 import inkspiration.backend.entities.Endereco;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
+import inkspiration.backend.entities.Avaliacao;
 import inkspiration.backend.enums.TipoServico;
 import inkspiration.backend.enums.UserRole;
 import inkspiration.backend.exception.UsuarioException;
@@ -41,6 +42,8 @@ import inkspiration.backend.repository.EnderecoRepository;
 import inkspiration.backend.repository.ProfissionalRepository;
 import inkspiration.backend.repository.UsuarioRepository;
 import inkspiration.backend.dto.DisponibilidadeDTO;
+import inkspiration.backend.repository.AvaliacaoRepository;
+import inkspiration.backend.dto.AvaliacaoDTO;
 
 @Service
 public class ProfissionalService {
@@ -54,6 +57,7 @@ public class ProfissionalService {
     private final ImagemService imagemService;
     private final EnderecoService enderecoService;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final AvaliacaoRepository avaliacaoRepository;
 
     @Autowired
     public ProfissionalService(ProfissionalRepository profissionalRepository, 
@@ -64,7 +68,8 @@ public class ProfissionalService {
                               DisponibilidadeService disponibilidadeService,
                               AuthorizationService authorizationService,
                               ImagemService imagemService,
-                              EnderecoService enderecoService) {
+                              EnderecoService enderecoService,
+                              AvaliacaoRepository avaliacaoRepository) {
         this.profissionalRepository = profissionalRepository;
         this.usuarioRepository = usuarioRepository;
         this.enderecoRepository = enderecoRepository;
@@ -73,6 +78,7 @@ public class ProfissionalService {
         this.authorizationService = authorizationService;
         this.imagemService = imagemService;
         this.enderecoService = enderecoService;
+        this.avaliacaoRepository = avaliacaoRepository;
     }
 
     /**
@@ -862,5 +868,62 @@ public class ProfissionalService {
         profissionalCompleto.put("disponibilidades", disponibilidades);
         
         return profissionalCompleto;
+    }
+
+    public Map<String, Object> buscarCompletoComAvaliacoes(Long id, Pageable avaliacoesPageable) {
+        Profissional profissional = buscarPorId(id);
+        return montarProfissionalCompletoComAvaliacoes(profissional, avaliacoesPageable);
+    }
+
+    private Map<String, Object> montarProfissionalCompletoComAvaliacoes(Profissional profissional, Pageable avaliacoesPageable) {
+        Map<String, Object> profissionalCompleto = montarProfissionalCompleto(profissional);
+        
+        // Buscar avaliações com paginação
+        Page<Avaliacao> avaliacoesPage = avaliacaoRepository.findByProfissionalId(profissional.getIdProfissional(), avaliacoesPageable);
+        
+        // Converter avaliações para DTO público
+        List<AvaliacaoDTO> avaliacoesDTO = avaliacoesPage.getContent().stream()
+                .map(this::convertAvaliacaoToPublicDTO)
+                .collect(Collectors.toList());
+        
+        // Informações das avaliações
+        Map<String, Object> avaliacoesInfo = new HashMap<>();
+        avaliacoesInfo.put("content", avaliacoesDTO);
+        avaliacoesInfo.put("totalElements", avaliacoesPage.getTotalElements());
+        avaliacoesInfo.put("totalPages", avaliacoesPage.getTotalPages());
+        avaliacoesInfo.put("currentPage", avaliacoesPage.getNumber());
+        avaliacoesInfo.put("size", avaliacoesPage.getSize());
+        avaliacoesInfo.put("hasNext", avaliacoesPage.hasNext());
+        avaliacoesInfo.put("hasPrevious", avaliacoesPage.hasPrevious());
+        
+        profissionalCompleto.put("avaliacoes", avaliacoesInfo);
+        
+        // Contar total de avaliações para exibir no frontend
+        Long totalAvaliacoes = avaliacaoRepository.countByProfissionalId(profissional.getIdProfissional());
+        profissionalCompleto.put("totalAvaliacoes", totalAvaliacoes);
+        
+        return profissionalCompleto;
+    }
+    
+    private AvaliacaoDTO convertAvaliacaoToPublicDTO(Avaliacao avaliacao) {
+        AvaliacaoDTO dto = new AvaliacaoDTO(
+                avaliacao.getIdAvaliacao(),
+                avaliacao.getDescricao(),
+                avaliacao.getRating(),
+                avaliacao.getAgendamento().getIdAgendamento()
+        );
+        
+        // Adicionar informações do cliente que fez a avaliação (apenas nome)
+        if (avaliacao.getAgendamento() != null && avaliacao.getAgendamento().getUsuario() != null) {
+            dto.setNomeCliente(avaliacao.getAgendamento().getUsuario().getNome());
+            dto.setImagemCliente(avaliacao.getAgendamento().getUsuario().getImagemPerfil());
+        }
+        
+        // Adicionar tipo de serviço
+        if (avaliacao.getAgendamento() != null) {
+            dto.setTipoServico(avaliacao.getAgendamento().getTipoServico().name());
+        }
+        
+        return dto;
     }
 } 

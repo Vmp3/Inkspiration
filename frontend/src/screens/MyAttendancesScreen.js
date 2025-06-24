@@ -465,6 +465,7 @@ const MyAttendancesScreen = () => {
             appointment={selectedAttendance}
             onClose={handleCloseModal}
             onCancel={selectedAttendance?.status?.toUpperCase() === 'AGENDADO' ? handleCancelAppointment : undefined}
+            onRefresh={loadAttendances}
             showEditButton={false}
             showCancelButton={selectedAttendance?.status?.toUpperCase() === 'AGENDADO'}
             isProfessional={true}
@@ -474,6 +475,7 @@ const MyAttendancesScreen = () => {
             visible={isCompletedModalVisible}
             appointment={selectedAttendance}
             onClose={handleCloseCompletedModal}
+            onRefresh={loadAttendances}
             isProfessional={true}
           />
 
