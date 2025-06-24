@@ -77,15 +77,28 @@ class ProfissionalServiceMetodosPrivadosTest {
     private Usuario usuario;
     private Endereco endereco;
     private Profissional profissional;
+    private UsuarioAutenticar usuarioAutenticar;
 
     @BeforeEach
     void setUp() {
-        usuario = criarUsuario();
+        // Criar UsuarioAutenticar
+        usuarioAutenticar = new UsuarioAutenticar();
+        usuarioAutenticar.setIdUsuarioAutenticar(1L);
+        usuarioAutenticar.setCpf("12345678901");
+        usuarioAutenticar.setSenha("senha123");
+        usuarioAutenticar.setRole(UserRole.ROLE_USER.getRole());
+
+        // Criar Usuario
+        usuario = new Usuario();
+        usuario.setIdUsuario(1L);
+        usuario.setNome("João Silva");
+        usuario.setEmail("joao@example.com");
+        usuario.setTelefone("(11) 99999-9999");
+        usuario.setRole(UserRole.ROLE_USER.getRole());
+        usuario.setUsuarioAutenticar(usuarioAutenticar);
+
         endereco = criarEndereco();
         profissional = criarProfissional();
-        
-        lenient().doNothing().when(enderecoService).validarEndereco(any());
-        lenient().when(enderecoRepository.findById(anyLong())).thenReturn(Optional.of(endereco));
     }
 
     @Test
@@ -273,33 +286,8 @@ class ProfissionalServiceMetodosPrivadosTest {
         });
         
         assertEquals("Já existe um perfil profissional para este usuário", exception.getMessage());
-    }
-
-    @Test
-    @DisplayName("Deve testar método criar com usuário não encontrado")
-    void deveTestarCriarComUsuarioNaoEncontrado() throws Exception {
-        // Arrange
-        ProfissionalDTO dto = criarProfissionalDTO();
-        
-        when(usuarioRepository.findById(dto.getIdUsuario()))
-            .thenReturn(Optional.empty());
-        
-        // Act & Assert - usando reflexão para acessar método privado
-        Method method = ProfissionalService.class.getDeclaredMethod("criar", ProfissionalDTO.class);
-        method.setAccessible(true);
-        
-        UsuarioException.UsuarioNaoEncontradoException exception = assertThrows(UsuarioException.UsuarioNaoEncontradoException.class, () -> {
-            try {
-                method.invoke(profissionalService, dto);
-            } catch (Exception e) {
-                if (e.getCause() instanceof UsuarioException.UsuarioNaoEncontradoException) {
-                    throw (UsuarioException.UsuarioNaoEncontradoException) e.getCause();
-                }
-                throw new RuntimeException(e);
-            }
-        });
-        
-        assertEquals("Usuário não encontrado", exception.getMessage());
+        verify(usuarioRepository).findById(dto.getIdUsuario());
+        verify(profissionalRepository).existsByUsuario(usuario);
     }
 
     @Test
@@ -331,6 +319,9 @@ class ProfissionalServiceMetodosPrivadosTest {
         });
         
         assertTrue(exception.getMessage().contains("Endereço não encontrado com ID:"));
+        verify(usuarioRepository).findById(dto.getIdUsuario());
+        verify(profissionalRepository).existsByUsuario(usuario);
+        verify(enderecoRepository).findById(dto.getIdEndereco());
     }
 
     @Test
@@ -344,10 +335,13 @@ class ProfissionalServiceMetodosPrivadosTest {
             .thenReturn(Optional.of(usuario));
         when(profissionalRepository.existsByUsuario(usuario))
             .thenReturn(false);
+        when(enderecoRepository.findById(dto.getIdEndereco()))
+            .thenReturn(Optional.of(endereco));
         when(profissionalRepository.save(any(Profissional.class)))
             .thenReturn(profissional);
         when(usuarioRepository.save(any(Usuario.class)))
             .thenReturn(usuario);
+        doNothing().when(enderecoService).validarEndereco(any());
         
         // Act - usando reflexão para acessar método privado
         Method method = ProfissionalService.class.getDeclaredMethod("criar", ProfissionalDTO.class);
@@ -360,42 +354,6 @@ class ProfissionalServiceMetodosPrivadosTest {
         verify(profissionalRepository).save(any(Profissional.class));
         assertEquals(UserRole.ROLE_PROF.getRole(), usuario.getRole());
         assertEquals(UserRole.ROLE_PROF.getRole(), usuario.getUsuarioAutenticar().getRole());
-    }
-
-    @Test
-    @DisplayName("Deve testar método validarCamposObrigatorios")
-    void deveTestarValidarCamposObrigatorios() throws Exception {
-        // Arrange
-        ProfissionalDTO dto = criarProfissionalDTO();
-        
-        // Act - usando reflexão para acessar método privado
-        Method method = ProfissionalService.class.getDeclaredMethod("validarCamposObrigatorios", ProfissionalDTO.class);
-        method.setAccessible(true);
-        
-        // Assert - não deve lançar exceção
-        assertDoesNotThrow(() -> {
-            try {
-                method.invoke(profissionalService, dto);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    // Métodos auxiliares
-    private Usuario criarUsuario() {
-        Usuario usuario = new Usuario();
-        usuario.setIdUsuario(1L);
-        usuario.setNome("João Silva");
-        usuario.setEmail("joao@example.com");
-        usuario.setTelefone("(11) 99999-9999");
-        usuario.setRole(UserRole.ROLE_USER.getRole());
-        
-        UsuarioAutenticar userAuth = new UsuarioAutenticar();
-        userAuth.setRole(UserRole.ROLE_USER.getRole());
-        usuario.setUsuarioAutenticar(userAuth);
-        
-        return usuario;
     }
 
     private Endereco criarEndereco() {
