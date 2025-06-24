@@ -610,16 +610,32 @@ const MyAppointmentsScreen = () => {
             Seu comentário (opcional)
             <Text style={{ fontWeight: '400', fontSize: 14, color: reviewComment.length > 1000 ? '#EF4444' : '#6B7280' }}>  {reviewComment.length}/1000</Text>
           </Text>
-          <Input
-            placeholder="Conte como foi sua experiência..."
-            value={reviewComment}
-            onChangeText={text => {
-              if (text.length <= 1000) setReviewComment(text);
-            }}
-            multiline
-            numberOfLines={4}
-            style={{ minHeight: 80, width: '100%', marginBottom: 24 }}
-          />
+          <View style={{
+            borderWidth: 1,
+            borderColor: '#E5E7EB',
+            borderRadius: 4,
+            backgroundColor: '#fff',
+            minHeight: 120,
+            marginBottom: 24,
+          }}>
+            <Input
+              placeholder="Conte como foi sua experiência..."
+              value={reviewComment}
+              onChangeText={text => {
+                if (text.length <= 1000) setReviewComment(text);
+              }}
+              multiline
+              numberOfLines={4}
+              style={{
+                backgroundColor: 'transparent',
+                borderWidth: 0,
+                minHeight: 120,
+                width: '100%',
+                boxShadow: 'none',
+                outlineStyle: 'none',
+              }}
+            />
+          </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 8 }}>
             <TouchableOpacity
               style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#111', borderRadius: 6, paddingVertical: 10, paddingHorizontal: 24 }}
