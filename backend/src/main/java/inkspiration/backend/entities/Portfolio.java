@@ -21,8 +21,8 @@ public class Portfolio {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idPortfolio;
     
-    @Size(max = 2000, message = "A descrição não pode exceder 2000 caracteres")
-    @Column(length = 2000)
+    @Size(min = 20, max = 500, message = "A descrição deve ter entre 20 e 500 caracteres")
+    @Column(length = 500)
     private String descricao;
     
     @Size(max = 1000, message = "A experiência não pode exceder 1000 caracteres")
@@ -88,8 +88,8 @@ public class Portfolio {
     }
     
     public void setDescricao(String descricao) {
-        if (descricao != null && descricao.length() > 2000) {
-            throw new IllegalArgumentException("A descrição não pode exceder 2000 caracteres");
+        if (descricao != null && descricao.length() > 500) {
+            throw new IllegalArgumentException("A descrição não pode exceder 500 caracteres");
         }
         this.descricao = descricao;
     }

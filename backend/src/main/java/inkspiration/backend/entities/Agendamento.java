@@ -35,7 +35,7 @@ public class Agendamento {
     
     @Column(nullable = false, length = 500)
     @NotBlank(message = "Descrição é obrigatória")
-    @Size(min = 10, max = 500, message = "Descrição deve ter entre 10 e 500 caracteres")
+    @Size(min = 20, max = 500, message = "Descrição deve ter entre 20 e 500 caracteres")
     private String descricao;
     
     @Column(nullable = false)
@@ -97,8 +97,8 @@ public class Agendamento {
             throw new IllegalArgumentException("Descrição não pode ser nula ou vazia");
         }
         String cleanDescricao = descricao.trim();
-        if (cleanDescricao.length() < 10 || cleanDescricao.length() > 500) {
-            throw new IllegalArgumentException("Descrição deve ter entre 10 e 500 caracteres");
+        if (cleanDescricao.length() < 20 || cleanDescricao.length() > 500) {
+            throw new IllegalArgumentException("Descrição deve ter entre 20 e 500 caracteres");
         }
         this.descricao = cleanDescricao;
     }
