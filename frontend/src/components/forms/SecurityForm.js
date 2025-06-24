@@ -165,23 +165,23 @@ const SecurityForm = ({
             </View>
           </SafeAreaView>
         ) : (
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Termos de Uso</Text>
+          <View style={[styles.modalOverlay, !isMobile && styles.modalOverlayDesktop]}>
+            <View style={[styles.modalContainer, !isMobile && styles.modalContainerDesktop]}>
+              <View style={[styles.modalHeader, !isMobile && styles.modalHeaderDesktop]}>
+                <Text style={[styles.modalTitle, !isMobile && styles.modalTitleDesktop]}>Termos de Uso</Text>
                 <TouchableOpacity onPress={() => setShowTermsModal(false)} style={styles.closeButton}>
                   <Feather name="x" size={24} color="#111" />
                 </TouchableOpacity>
               </View>
-              <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={true}>
+              <ScrollView style={[styles.modalContent, !isMobile && styles.modalContentDesktop]} showsVerticalScrollIndicator={true}>
                 <TermsAndPolicies type="terms" />
               </ScrollView>
-              <View style={styles.modalFooter}>
+              <View style={[styles.modalFooter, !isMobile && styles.modalFooterDesktop]}>
                 <TouchableOpacity 
-                  style={styles.modalButton} 
+                  style={[styles.modalButton, !isMobile && styles.modalButtonDesktop]} 
                   onPress={() => setShowTermsModal(false)}
                 >
-                  <Text style={styles.modalButtonText}>Fechar</Text>
+                  <Text style={[styles.modalButtonText, !isMobile && styles.modalButtonTextDesktop]}>Fechar</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -222,23 +222,23 @@ const SecurityForm = ({
             </View>
           </SafeAreaView>
         ) : (
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Política de Privacidade</Text>
+          <View style={[styles.modalOverlay, !isMobile && styles.modalOverlayDesktop]}>
+            <View style={[styles.modalContainer, !isMobile && styles.modalContainerDesktop]}>
+              <View style={[styles.modalHeader, !isMobile && styles.modalHeaderDesktop]}>
+                <Text style={[styles.modalTitle, !isMobile && styles.modalTitleDesktop]}>Política de Privacidade</Text>
                 <TouchableOpacity onPress={() => setShowPrivacyModal(false)} style={styles.closeButton}>
                   <Feather name="x" size={24} color="#111" />
                 </TouchableOpacity>
               </View>
-              <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={true}>
+              <ScrollView style={[styles.modalContent, !isMobile && styles.modalContentDesktop]} showsVerticalScrollIndicator={true}>
                 <TermsAndPolicies type="privacy" />
               </ScrollView>
-              <View style={styles.modalFooter}>
+              <View style={[styles.modalFooter, !isMobile && styles.modalFooterDesktop]}>
                 <TouchableOpacity 
-                  style={styles.modalButton} 
+                  style={[styles.modalButton, !isMobile && styles.modalButtonDesktop]} 
                   onPress={() => setShowPrivacyModal(false)}
                 >
-                  <Text style={styles.modalButtonText}>Fechar</Text>
+                  <Text style={[styles.modalButtonText, !isMobile && styles.modalButtonTextDesktop]}>Fechar</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -309,45 +309,74 @@ const styles = StyleSheet.create({
     color: '#1976d2',
     textDecorationLine: 'underline',
   },
+  // Estilos base do modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: isMobileView() ? '#fff' : 'rgba(0, 0, 0, 0.5)',
-    justifyContent: isMobileView() ? 'flex-start' : 'center',
-    alignItems: isMobileView() ? 'stretch' : 'center',
-    padding: isMobileView() ? 0 : 20,
+    backgroundColor: '#fff',
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
+    padding: 0,
+  },
+  modalOverlayDesktop: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   modalContainer: {
     backgroundColor: '#fff',
-    borderRadius: isMobileView() ? 0 : 12,
+    borderRadius: 0,
     width: '100%',
-    maxWidth: isMobileView() ? '100%' : 600,
-    height: isMobileView() ? '100%' : 'auto',
-    maxHeight: isMobileView() ? '100%' : '80%',
-    flex: isMobileView() ? 1 : 0,
+    height: '100%',
+    flex: 1,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+  },
+  modalContainerDesktop: {
+    borderRadius: 12,
+    maxWidth: 700,
+    width: '90%',
+    height: 'auto',
+    maxHeight: '85%',
+    minHeight: 500,
+    flex: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: isMobileView() ? 0 : 0.25,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
-    elevation: isMobileView() ? 0 : 8,
+    elevation: 8,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: isMobileView() ? 16 : 20,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     backgroundColor: '#f8f9fa',
   },
+  modalHeaderDesktop: {
+    padding: 20,
+  },
   modalTitle: {
-    fontSize: isMobileView() ? 18 : 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#111',
     flex: 1,
   },
+  modalTitleDesktop: {
+    fontSize: 20,
+  },
   modalContent: {
     flex: 1,
-    padding: isMobileView() ? 16 : 20,
+    padding: 16,
+  },
+  modalContentDesktop: {
+    padding: 20,
+    paddingBottom: 10,
   },
   modalText: {
     fontSize: 14,
@@ -356,24 +385,37 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   modalFooter: {
-    padding: isMobileView() ? 16 : 20,
+    padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#eee',
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
+    flexShrink: 0,
+  },
+  modalFooterDesktop: {
+    padding: 20,
   },
   modalButton: {
     backgroundColor: '#111',
-    paddingHorizontal: isMobileView() ? 32 : 24,
-    paddingVertical: isMobileView() ? 14 : 12,
-    borderRadius: isMobileView() ? 8 : 6,
-    minWidth: isMobileView() ? 120 : 100,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 8,
+    minWidth: 120,
     alignItems: 'center',
+  },
+  modalButtonDesktop: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 6,
+    minWidth: 100,
   },
   modalButtonText: {
     color: '#fff',
-    fontSize: isMobileView() ? 16 : 16,
+    fontSize: 16,
     fontWeight: '600',
+  },
+  modalButtonTextDesktop: {
+    fontSize: 16,
   },
   closeButton: {
     padding: 4,
@@ -439,10 +481,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 17,
     fontWeight: '600',
-  },
-  formFullWidth: {
-    flex: 1,
-    marginHorizontal: 10,
   },
 });
 
