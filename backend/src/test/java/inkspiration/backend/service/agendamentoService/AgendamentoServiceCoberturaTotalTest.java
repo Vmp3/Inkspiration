@@ -3,6 +3,7 @@ package inkspiration.backend.service.agendamentoService;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -967,6 +968,243 @@ class AgendamentoServiceCoberturaTotalTest {
         assertTrue(resultado.length > 0);
     }
 
+    @Test
+    @DisplayName("Deve gerar PDF de agendamentos cobrindo TATUAGEM_MEDIA no switch case")
+    void deveGerarPDFAgendamentosComTatuagemMedia() throws Exception {
+        // Arrange
+        Long idUsuario = 1L;
+        Integer ano = 2024;
+        
+        Agendamento agendamento = criarAgendamentoParaPDFComTipo(1L, "Cliente Media", "Tatuagem média", TipoServico.TATUAGEM_MEDIA);
+        List<Agendamento> agendamentos = Arrays.asList(agendamento);
+
+        when(agendamentoRepository.findByUsuarioIdAndStatusAndAno(idUsuario, StatusAgendamento.CONCLUIDO, ano))
+            .thenReturn(agendamentos);
+
+        // Act
+        byte[] resultado = agendamentoService.gerarPDFAgendamentos(idUsuario, ano);
+
+        // Assert
+        assertNotNull(resultado);
+        assertTrue(resultado.length > 0);
+        // Verifica se o PDF foi gerado com sucesso
+        assertTrue(resultado.length > 1000); // PDF básico deve ter pelo menos 1KB
+    }
+
+    @Test
+    @DisplayName("Deve gerar PDF de agendamentos cobrindo TATUAGEM_GRANDE no switch case")
+    void deveGerarPDFAgendamentosComTatuagemGrande() throws Exception {
+        // Arrange
+        Long idUsuario = 1L;
+        Integer ano = 2024;
+        
+        Agendamento agendamento = criarAgendamentoParaPDFComTipo(1L, "Cliente Grande", "Tatuagem grande", TipoServico.TATUAGEM_GRANDE);
+        List<Agendamento> agendamentos = Arrays.asList(agendamento);
+
+        when(agendamentoRepository.findByUsuarioIdAndStatusAndAno(idUsuario, StatusAgendamento.CONCLUIDO, ano))
+            .thenReturn(agendamentos);
+
+        // Act
+        byte[] resultado = agendamentoService.gerarPDFAgendamentos(idUsuario, ano);
+
+        // Assert
+        assertNotNull(resultado);
+        assertTrue(resultado.length > 0);
+        assertTrue(resultado.length > 1000); // PDF básico deve ter pelo menos 1KB
+    }
+
+    @Test
+    @DisplayName("Deve gerar PDF de agendamentos cobrindo SESSAO no switch case")
+    void deveGerarPDFAgendamentosComSessao() throws Exception {
+        // Arrange
+        Long idUsuario = 1L;
+        Integer ano = 2024;
+        
+        Agendamento agendamento = criarAgendamentoParaPDFComTipo(1L, "Cliente Sessao", "Sessão de tatuagem", TipoServico.SESSAO);
+        List<Agendamento> agendamentos = Arrays.asList(agendamento);
+
+        when(agendamentoRepository.findByUsuarioIdAndStatusAndAno(idUsuario, StatusAgendamento.CONCLUIDO, ano))
+            .thenReturn(agendamentos);
+
+        // Act
+        byte[] resultado = agendamentoService.gerarPDFAgendamentos(idUsuario, ano);
+
+        // Assert
+        assertNotNull(resultado);
+        assertTrue(resultado.length > 0);
+        assertTrue(resultado.length > 1000); // PDF básico deve ter pelo menos 1KB
+    }
+
+    @Test
+    @DisplayName("Deve gerar PDF de agendamentos cobrindo caso default do switch case")
+    void deveGerarPDFAgendamentosComCasoDefault() throws Exception {
+        // Arrange
+        Long idUsuario = 1L;
+        Integer ano = 2024;
+        
+        // Criar agendamento com TipoServico mockado para testar o caso default
+        Agendamento agendamento = criarAgendamentoParaPDF(1L, "Cliente Default", "Serviço customizado");
+        // Usar mock para simular um tipo de serviço que cairia no default
+        TipoServico tipoServicoMock = mock(TipoServico.class);
+        lenient().when(tipoServicoMock.getDescricao()).thenReturn("Serviço Especial");
+        agendamento.setTipoServico(tipoServicoMock);
+        
+        List<Agendamento> agendamentos = Arrays.asList(agendamento);
+
+        when(agendamentoRepository.findByUsuarioIdAndStatusAndAno(idUsuario, StatusAgendamento.CONCLUIDO, ano))
+            .thenReturn(agendamentos);
+
+        // Act
+        byte[] resultado = agendamentoService.gerarPDFAgendamentos(idUsuario, ano);
+
+        // Assert
+        assertNotNull(resultado);
+        assertTrue(resultado.length > 0);
+        assertTrue(resultado.length > 1000); // PDF básico deve ter pelo menos 1KB
+    }
+
+    @Test
+    @DisplayName("Deve gerar PDF de atendimentos cobrindo TATUAGEM_MEDIA no switch case")
+    void deveGerarPDFAtendimentosComTatuagemMedia() throws Exception {
+        // Arrange
+        Long idUsuario = 2L;
+        Integer ano = 2024;
+        Integer mes = 6;
+        
+        Usuario usuarioProfissional = criarUsuario();
+        usuarioProfissional.setIdUsuario(2L);
+        
+        Profissional profissionalLogado = criarProfissional();
+        profissionalLogado.setIdProfissional(2L);
+        profissionalLogado.setUsuario(usuarioProfissional);
+        
+        Agendamento atendimento = criarAgendamentoParaPDFComTipo(1L, "Cliente Media", "Tatuagem média", TipoServico.TATUAGEM_MEDIA);
+        atendimento.setProfissional(profissionalLogado);
+        List<Agendamento> atendimentos = Arrays.asList(atendimento);
+
+        when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuarioProfissional));
+        when(profissionalRepository.findByUsuario(usuarioProfissional)).thenReturn(Optional.of(profissionalLogado));
+        when(agendamentoRepository.findByProfissionalIdAndStatusAndAnoMes(
+            profissionalLogado.getIdProfissional(), StatusAgendamento.CONCLUIDO, ano, mes))
+            .thenReturn(atendimentos);
+
+        // Act
+        byte[] resultado = agendamentoService.gerarPDFAtendimentos(idUsuario, ano, mes);
+
+        // Assert
+        assertNotNull(resultado);
+        assertTrue(resultado.length > 0);
+        assertTrue(resultado.length > 1000); // PDF básico deve ter pelo menos 1KB
+    }
+
+    @Test
+    @DisplayName("Deve gerar PDF de atendimentos cobrindo TATUAGEM_GRANDE no switch case")
+    void deveGerarPDFAtendimentosComTatuagemGrande() throws Exception {
+        // Arrange
+        Long idUsuario = 2L;
+        Integer ano = 2024;
+        Integer mes = 6;
+        
+        Usuario usuarioProfissional = criarUsuario();
+        usuarioProfissional.setIdUsuario(2L);
+        
+        Profissional profissionalLogado = criarProfissional();
+        profissionalLogado.setIdProfissional(2L);
+        profissionalLogado.setUsuario(usuarioProfissional);
+        
+        Agendamento atendimento = criarAgendamentoParaPDFComTipo(1L, "Cliente Grande", "Tatuagem grande", TipoServico.TATUAGEM_GRANDE);
+        atendimento.setProfissional(profissionalLogado);
+        List<Agendamento> atendimentos = Arrays.asList(atendimento);
+
+        when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuarioProfissional));
+        when(profissionalRepository.findByUsuario(usuarioProfissional)).thenReturn(Optional.of(profissionalLogado));
+        when(agendamentoRepository.findByProfissionalIdAndStatusAndAnoMes(
+            profissionalLogado.getIdProfissional(), StatusAgendamento.CONCLUIDO, ano, mes))
+            .thenReturn(atendimentos);
+
+        // Act
+        byte[] resultado = agendamentoService.gerarPDFAtendimentos(idUsuario, ano, mes);
+
+        // Assert
+        assertNotNull(resultado);
+        assertTrue(resultado.length > 0);
+        assertTrue(resultado.length > 1000); // PDF básico deve ter pelo menos 1KB
+    }
+
+    @Test
+    @DisplayName("Deve gerar PDF de atendimentos cobrindo SESSAO no switch case")
+    void deveGerarPDFAtendimentosComSessao() throws Exception {
+        // Arrange
+        Long idUsuario = 2L;
+        Integer ano = 2024;
+        Integer mes = 6;
+        
+        Usuario usuarioProfissional = criarUsuario();
+        usuarioProfissional.setIdUsuario(2L);
+        
+        Profissional profissionalLogado = criarProfissional();
+        profissionalLogado.setIdProfissional(2L);
+        profissionalLogado.setUsuario(usuarioProfissional);
+        
+        Agendamento atendimento = criarAgendamentoParaPDFComTipo(1L, "Cliente Sessao", "Sessão de tatuagem", TipoServico.SESSAO);
+        atendimento.setProfissional(profissionalLogado);
+        List<Agendamento> atendimentos = Arrays.asList(atendimento);
+
+        when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuarioProfissional));
+        when(profissionalRepository.findByUsuario(usuarioProfissional)).thenReturn(Optional.of(profissionalLogado));
+        when(agendamentoRepository.findByProfissionalIdAndStatusAndAnoMes(
+            profissionalLogado.getIdProfissional(), StatusAgendamento.CONCLUIDO, ano, mes))
+            .thenReturn(atendimentos);
+
+        // Act
+        byte[] resultado = agendamentoService.gerarPDFAtendimentos(idUsuario, ano, mes);
+
+        // Assert
+        assertNotNull(resultado);
+        assertTrue(resultado.length > 0);
+        assertTrue(resultado.length > 1000); // PDF básico deve ter pelo menos 1KB
+    }
+
+    @Test
+    @DisplayName("Deve gerar PDF de atendimentos cobrindo caso default do switch case")
+    void deveGerarPDFAtendimentosComCasoDefault() throws Exception {
+        // Arrange
+        Long idUsuario = 2L;
+        Integer ano = 2024;
+        Integer mes = 6;
+        
+        Usuario usuarioProfissional = criarUsuario();
+        usuarioProfissional.setIdUsuario(2L);
+        
+        Profissional profissionalLogado = criarProfissional();
+        profissionalLogado.setIdProfissional(2L);
+        profissionalLogado.setUsuario(usuarioProfissional);
+        
+        // Criar atendimento com TipoServico mockado para testar o caso default
+        Agendamento atendimento = criarAgendamentoParaPDF(1L, "Cliente Default", "Serviço customizado");
+        atendimento.setProfissional(profissionalLogado);
+        // Usar mock para simular um tipo de serviço que cairia no default
+        TipoServico tipoServicoMock = mock(TipoServico.class);
+        lenient().when(tipoServicoMock.getDescricao()).thenReturn("Serviço Especial");
+        atendimento.setTipoServico(tipoServicoMock);
+        
+        List<Agendamento> atendimentos = Arrays.asList(atendimento);
+
+        when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuarioProfissional));
+        when(profissionalRepository.findByUsuario(usuarioProfissional)).thenReturn(Optional.of(profissionalLogado));
+        when(agendamentoRepository.findByProfissionalIdAndStatusAndAnoMes(
+            profissionalLogado.getIdProfissional(), StatusAgendamento.CONCLUIDO, ano, mes))
+            .thenReturn(atendimentos);
+
+        // Act
+        byte[] resultado = agendamentoService.gerarPDFAtendimentos(idUsuario, ano, mes);
+
+        // Assert
+        assertNotNull(resultado);
+        assertTrue(resultado.length > 0);
+        assertTrue(resultado.length > 1000); // PDF básico deve ter pelo menos 1KB
+    }
+
     // Método auxiliar para criar agendamentos para testes de PDF
     private Agendamento criarAgendamentoParaPDF(Long id, String nomeCliente, String descricao) {
         Usuario cliente = new Usuario();
@@ -984,6 +1222,27 @@ class AgendamentoServiceCoberturaTotalTest {
         agendamento.setDtInicio(LocalDateTime.now().plusDays(50));
         agendamento.setDtFim(LocalDateTime.now().plusDays(50).plusHours(2));
         agendamento.setValor(new BigDecimal("250.00"));
+        agendamento.setStatus(StatusAgendamento.CONCLUIDO);
+        return agendamento;
+    }
+
+    // Método auxiliar para criar agendamentos com tipo específico para testes de PDF
+    private Agendamento criarAgendamentoParaPDFComTipo(Long id, String nomeCliente, String descricao, TipoServico tipoServico) {
+        Usuario cliente = new Usuario();
+        cliente.setIdUsuario(id);
+        cliente.setNome(nomeCliente);
+        cliente.setEmail(nomeCliente.toLowerCase().replace(" ", "") + "@test.com");
+        cliente.setCpf("12345678901");
+
+        Agendamento agendamento = new Agendamento();
+        agendamento.setIdAgendamento(id);
+        agendamento.setUsuario(cliente);
+        agendamento.setProfissional(profissional);
+        agendamento.setTipoServico(tipoServico);
+        agendamento.setDescricao(descricao);
+        agendamento.setDtInicio(LocalDateTime.now().plusDays(50));
+        agendamento.setDtFim(LocalDateTime.now().plusDays(50).plusHours(tipoServico.getDuracaoHoras()));
+        agendamento.setValor(new BigDecimal("250.00").multiply(new BigDecimal(tipoServico.getDuracaoHoras())));
         agendamento.setStatus(StatusAgendamento.CONCLUIDO);
         return agendamento;
     }

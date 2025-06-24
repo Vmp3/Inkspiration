@@ -17,10 +17,15 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import inkspiration.backend.dto.ProfissionalDTO;
+import inkspiration.backend.dto.PortfolioDTO;
+import inkspiration.backend.dto.ImagemDTO;
 import inkspiration.backend.entities.Endereco;
 import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
+import inkspiration.backend.entities.Portfolio;
 import inkspiration.backend.enums.TipoServico;
 import inkspiration.backend.enums.UserRole;
 import inkspiration.backend.exception.UsuarioException;
@@ -40,6 +45,9 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 @ExtendWith(MockitoExtension.class)
 class ProfissionalServiceCoreTest {
@@ -403,25 +411,199 @@ class ProfissionalServiceCoreTest {
     @Test
     @DisplayName("Deve listar profissionais com autorização de admin")
     void deveListarProfissionaisComAutorizacaoAdmin() {
-        
-        Pageable pageable = PageRequest.of(0, 5);
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
         List<Profissional> profissionais = Arrays.asList(
             criarProfissional(1L),
             criarProfissional(2L)
         );
-        Page<Profissional> pageProfissionais = new PageImpl<>(profissionais, pageable, profissionais.size());
+        Page<Profissional> profissionaisPage = new PageImpl<>(profissionais, pageable, profissionais.size());
         
         when(profissionalRepository.findAll(pageable))
-            .thenReturn(pageProfissionais);
+            .thenReturn(profissionaisPage);
 
-        
+        // Act
         List<ProfissionalDTO> resultado = profissionalService.listarComAutorizacao(pageable);
 
-        
+        // Assert
         assertNotNull(resultado);
         assertEquals(2, resultado.size());
         verify(authorizationService).requireAdmin();
         verify(profissionalRepository).findAll(pageable);
+    }
+
+    @Test
+    @DisplayName("Deve buscar profissional completo com autorização - caso com portfolio")
+    void deveBuscarProfissionalCompletoComAutorizacaoComPortfolio() throws JsonProcessingException {
+        // Arrange
+        Long idUsuario = 1L;
+        Profissional profissional = criarProfissional(1L);
+        profissional.getUsuario().setIdUsuario(idUsuario);
+        
+        // Criar portfolio para o profissional
+        Portfolio portfolio = criarPortfolio(1L);
+        profissional.setPortfolio(portfolio);
+        
+        PortfolioDTO portfolioDTO = criarPortfolioDTO();
+        List<ImagemDTO> imagens = Arrays.asList(criarImagemDTO());
+        Map<String, List<Map<String, String>>> disponibilidades = criarDisponibilidades();
+        
+        when(profissionalRepository.findByUsuario_IdUsuario(idUsuario))
+            .thenReturn(Optional.of(profissional));
+        when(portfolioService.converterParaDto(portfolio)).thenReturn(portfolioDTO);
+        when(imagemService.listarPorPortfolio(1L)).thenReturn(imagens);
+        when(disponibilidadeService.obterDisponibilidade(1L)).thenReturn(disponibilidades);
+
+        // Act
+        ProfissionalService.ProfissionalCompletoData resultado = 
+            profissionalService.buscarProfissionalCompletoComAutorizacao(idUsuario);
+
+        // Assert
+        assertNotNull(resultado);
+        assertNotNull(resultado.getProfissional());
+        assertNotNull(resultado.getPortfolio());
+        assertNotNull(resultado.getImagens());
+        assertEquals(1, resultado.getImagens().size());
+        assertNotNull(resultado.getDisponibilidades());
+        assertNotNull(resultado.getTiposServico());
+        assertNotNull(resultado.getPrecosServicos());
+        assertNotNull(resultado.getTiposServicoPrecos());
+        
+        verify(authorizationService).requireUserAccessOrAdmin(idUsuario);
+        verify(profissionalRepository).findByUsuario_IdUsuario(idUsuario);
+        verify(portfolioService).converterParaDto(portfolio);
+        verify(imagemService).listarPorPortfolio(1L);
+        verify(disponibilidadeService).obterDisponibilidade(1L);
+    }
+
+    @Test
+    @DisplayName("Deve buscar profissional completo com autorização - caso sem portfolio")
+    void deveBuscarProfissionalCompletoComAutorizacaoSemPortfolio() throws JsonProcessingException {
+        // Arrange
+        Long idUsuario = 1L;
+        Profissional profissional = criarProfissional(1L);
+        profissional.getUsuario().setIdUsuario(idUsuario);
+        profissional.setPortfolio(null); // Sem portfolio
+        
+        Map<String, List<Map<String, String>>> disponibilidades = criarDisponibilidades();
+        
+        when(profissionalRepository.findByUsuario_IdUsuario(idUsuario))
+            .thenReturn(Optional.of(profissional));
+        when(disponibilidadeService.obterDisponibilidade(1L)).thenReturn(disponibilidades);
+
+        // Act
+        ProfissionalService.ProfissionalCompletoData resultado = 
+            profissionalService.buscarProfissionalCompletoComAutorizacao(idUsuario);
+
+        // Assert
+        assertNotNull(resultado);
+        assertNotNull(resultado.getProfissional());
+        assertNull(resultado.getPortfolio()); // Portfolio deve ser null
+        assertNotNull(resultado.getImagens());
+        assertTrue(resultado.getImagens().isEmpty()); // Lista vazia pois não há portfolio
+        assertNotNull(resultado.getDisponibilidades());
+        assertNotNull(resultado.getTiposServico());
+        assertNotNull(resultado.getPrecosServicos());
+        assertNotNull(resultado.getTiposServicoPrecos());
+        
+        verify(authorizationService).requireUserAccessOrAdmin(idUsuario);
+        verify(profissionalRepository).findByUsuario_IdUsuario(idUsuario);
+        verify(portfolioService, never()).converterParaDto(any()); // Não deve chamar pois portfolio é null
+        verify(imagemService, never()).listarPorPortfolio(any()); // Não deve chamar pois portfolio é null
+        verify(disponibilidadeService).obterDisponibilidade(1L);
+    }
+
+    @Test
+    @DisplayName("Deve buscar profissional completo com autorização - tratando exceção de disponibilidade")
+    void deveBuscarProfissionalCompletoComAutorizacaoTratandoExcecaoDisponibilidade() throws JsonProcessingException {
+        // Arrange
+        Long idUsuario = 1L;
+        Profissional profissional = criarProfissional(1L);
+        profissional.getUsuario().setIdUsuario(idUsuario);
+        
+        Portfolio portfolio = criarPortfolio(1L);
+        profissional.setPortfolio(portfolio);
+        
+        PortfolioDTO portfolioDTO = criarPortfolioDTO();
+        List<ImagemDTO> imagens = Arrays.asList(criarImagemDTO());
+        
+        when(profissionalRepository.findByUsuario_IdUsuario(idUsuario))
+            .thenReturn(Optional.of(profissional));
+        when(portfolioService.converterParaDto(portfolio)).thenReturn(portfolioDTO);
+        when(imagemService.listarPorPortfolio(1L)).thenReturn(imagens);
+        when(disponibilidadeService.obterDisponibilidade(1L))
+            .thenThrow(new RuntimeException("Erro ao buscar disponibilidades"));
+
+        // Act
+        ProfissionalService.ProfissionalCompletoData resultado = 
+            profissionalService.buscarProfissionalCompletoComAutorizacao(idUsuario);
+
+        // Assert
+        assertNotNull(resultado);
+        assertNotNull(resultado.getProfissional());
+        assertNotNull(resultado.getPortfolio());
+        assertNotNull(resultado.getImagens());
+        assertEquals(1, resultado.getImagens().size());
+        assertNotNull(resultado.getDisponibilidades());
+        assertTrue(resultado.getDisponibilidades().isEmpty()); // Deve ser empty map devido à exceção
+        assertNotNull(resultado.getTiposServico());
+        assertNotNull(resultado.getPrecosServicos());
+        assertNotNull(resultado.getTiposServicoPrecos());
+        
+        verify(authorizationService).requireUserAccessOrAdmin(idUsuario);
+        verify(profissionalRepository).findByUsuario_IdUsuario(idUsuario);
+        verify(portfolioService).converterParaDto(portfolio);
+        verify(imagemService).listarPorPortfolio(1L);
+        verify(disponibilidadeService).obterDisponibilidade(1L);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando profissional não existe para busca completa")
+    void deveLancarExcecaoQuandoProfissionalNaoExisteParaBuscaCompleta() throws JsonProcessingException {
+        // Arrange
+        Long idUsuario = 999L;
+        
+        when(profissionalRepository.findByUsuario_IdUsuario(idUsuario))
+            .thenReturn(Optional.empty());
+
+        // Act & Assert
+        ProfissionalNaoEncontradoException exception = assertThrows(
+            ProfissionalNaoEncontradoException.class,
+            () -> profissionalService.buscarProfissionalCompletoComAutorizacao(idUsuario)
+        );
+
+        assertTrue(exception.getMessage().contains("Perfil profissional não encontrado para o usuário com ID: " + idUsuario));
+        verify(authorizationService).requireUserAccessOrAdmin(idUsuario);
+        verify(profissionalRepository).findByUsuario_IdUsuario(idUsuario);
+        // Não deve chamar outros services quando profissional não é encontrado
+        verify(portfolioService, never()).converterParaDto(any());
+        verify(imagemService, never()).listarPorPortfolio(any());
+        verify(disponibilidadeService, never()).obterDisponibilidade(any());
+    }
+
+    @Test
+    @DisplayName("Deve verificar autorização antes de buscar profissional completo")
+    void deveVerificarAutorizacaoAntesDeBuscarProfissionalCompleto() throws JsonProcessingException {
+        // Arrange
+        Long idUsuario = 1L;
+        
+        // Simula falha na autorização
+        doThrow(new RuntimeException("Acesso negado"))
+            .when(authorizationService).requireUserAccessOrAdmin(idUsuario);
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(
+            RuntimeException.class,
+            () -> profissionalService.buscarProfissionalCompletoComAutorizacao(idUsuario)
+        );
+
+        assertEquals("Acesso negado", exception.getMessage());
+        verify(authorizationService).requireUserAccessOrAdmin(idUsuario);
+        // Não deve chamar buscarPorUsuario nem outros métodos quando autorização falha
+        verify(profissionalRepository, never()).findByUsuario_IdUsuario(any());
+        verify(portfolioService, never()).converterParaDto(any());
+        verify(imagemService, never()).listarPorPortfolio(any());
+        verify(disponibilidadeService, never()).obterDisponibilidade(any());
     }
 
     
@@ -462,5 +644,50 @@ class ProfissionalServiceCoreTest {
         dto.setNota(new BigDecimal("3.0"));
         dto.setTiposServico(Arrays.asList(TipoServico.TATUAGEM_PEQUENA));
         return dto;
+    }
+
+    private Portfolio criarPortfolio(Long id) {
+        Portfolio portfolio = new Portfolio();
+        portfolio.setIdPortfolio(id);
+        portfolio.setDescricao("Descrição do portfolio");
+        portfolio.setEspecialidade("Tatuagem Realista");
+        portfolio.setExperiencia("5 anos");
+        return portfolio;
+    }
+
+    private ImagemDTO criarImagemDTO() {
+        ImagemDTO imagemDTO = new ImagemDTO();
+        imagemDTO.setIdImagem(1L);
+        imagemDTO.setImagemBase64("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD");
+        imagemDTO.setIdPortfolio(1L);
+        return imagemDTO;
+    }
+
+    private PortfolioDTO criarPortfolioDTO() {
+        PortfolioDTO portfolioDTO = new PortfolioDTO();
+        portfolioDTO.setIdPortfolio(1L);
+        portfolioDTO.setDescricao("Descrição do portfolio");
+        portfolioDTO.setEspecialidade("Tatuagem Realista");
+        portfolioDTO.setExperiencia("5 anos");
+        return portfolioDTO;
+    }
+
+    private Map<String, List<Map<String, String>>> criarDisponibilidades() {
+        Map<String, List<Map<String, String>>> disponibilidades = new HashMap<>();
+        
+        List<Map<String, String>> segundaFeira = new ArrayList<>();
+        Map<String, String> horario1 = new HashMap<>();
+        horario1.put("inicio", "09:00");
+        horario1.put("fim", "12:00");
+        segundaFeira.add(horario1);
+        
+        Map<String, String> horario2 = new HashMap<>();
+        horario2.put("inicio", "14:00");
+        horario2.put("fim", "17:00");
+        segundaFeira.add(horario2);
+        
+        disponibilidades.put("SEGUNDA", segundaFeira);
+        
+        return disponibilidades;
     }
 } 
