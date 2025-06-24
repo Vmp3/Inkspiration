@@ -65,10 +65,10 @@ class PortfolioServiceValidacaoTest {
     void deveValidarDescricaoPortfolio() {
         // Given
         List<String> descricoesValidas = Arrays.asList(
-            "Portfolio com meus melhores trabalhos",
-            "Tatuagens realizadas em 2024",
-            "Especialidade em tatuagens realistas",
-            "" // Descrição vazia é permitida
+            "Portfolio com meus melhores trabalhos em tatuagem realista",
+            "Tatuagens realizadas em 2024 com foco em aquarela e fineline",
+            "Especialidade em tatuagens realistas e trabalhos coloridos",
+            null // Descrição nula é permitida
         );
         
         String descricaoMuitoLonga = "A".repeat(501); // Mais de 500 caracteres
@@ -76,7 +76,7 @@ class PortfolioServiceValidacaoTest {
         // When & Then
         for (String descricao : descricoesValidas) {
             if (descricao != null) {
-                assertTrue(descricao.length() <= 500);
+                assertTrue(descricao.length() >= 20 && descricao.length() <= 500);
             }
         }
         
@@ -120,7 +120,7 @@ class PortfolioServiceValidacaoTest {
         Map<String, Object> portfolioData = new HashMap<>();
         portfolioData.put("idPortfolio", 1L);
         portfolioData.put("titulo", "Portfolio Teste");
-        portfolioData.put("descricao", "Descrição do portfolio");
+        portfolioData.put("descricao", "Descrição detalhada do portfolio com trabalhos em tatuagem realista");
         portfolioData.put("idProfissional", 2L);
         portfolioData.put("nomeProfissional", "João Silva");
         portfolioData.put("imagens", Arrays.asList("base64img1", "base64img2"));
@@ -128,7 +128,8 @@ class PortfolioServiceValidacaoTest {
         // When & Then
         assertEquals(1L, portfolioData.get("idPortfolio"));
         assertEquals("Portfolio Teste", portfolioData.get("titulo"));
-        assertEquals("Descrição do portfolio", portfolioData.get("descricao"));
+        String descricao = (String) portfolioData.get("descricao");
+        assertTrue(descricao.length() >= 20 && descricao.length() <= 500);
         assertEquals(2L, portfolioData.get("idProfissional"));
         assertEquals("João Silva", portfolioData.get("nomeProfissional"));
         

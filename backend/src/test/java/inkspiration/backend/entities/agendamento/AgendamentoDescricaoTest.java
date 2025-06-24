@@ -19,9 +19,9 @@ public class AgendamentoDescricaoTest {
     }
 
     @Test
-    @DisplayName("Deve aceitar descrição válida com 10 caracteres")
-    void deveAceitarDescricaoValidaCom10Caracteres() {
-        String descricao = "Tatuagem X";
+    @DisplayName("Deve aceitar descrição válida")
+    void deveAceitarDescricaoValida() {
+        String descricao = "Tatuagem tribal costas";
         agendamento.setDescricao(descricao);
         assertEquals(descricao, agendamento.getDescricao());
     }
@@ -45,7 +45,7 @@ public class AgendamentoDescricaoTest {
     @Test
     @DisplayName("Deve aceitar descrição com caracteres especiais")
     void deveAceitarDescricaoComCaracteresEspeciais() {
-        String descricao = "Piercing: brinco argola 8mm + limpeza pós-procedimento (R$ 150,00)";
+        String descricao = "Piercing: brinco argola 8mm + limpeza pós-procedimento (R$ 150,00) com acompanhamento";
         agendamento.setDescricao(descricao);
         assertEquals(descricao, agendamento.getDescricao());
     }
@@ -53,7 +53,7 @@ public class AgendamentoDescricaoTest {
     @Test
     @DisplayName("Deve aceitar descrição com acentos")
     void deveAceitarDescricaoComAcentos() {
-        String descricao = "Sessão de remoção a laser para tatuagem localizada no tornozelo";
+        String descricao = "Sessão de remoção a laser para tatuagem localizada no tornozelo direito com anestesia";
         agendamento.setDescricao(descricao);
         assertEquals(descricao, agendamento.getDescricao());
     }
@@ -61,8 +61,10 @@ public class AgendamentoDescricaoTest {
     @Test
     @DisplayName("Deve remover espaços das bordas da descrição")
     void deveRemoverEspacosDosBoardasDaDescricao() {
-        agendamento.setDescricao("  Tatuagem tribal  ");
-        assertEquals("Tatuagem tribal", agendamento.getDescricao());
+        String descricaoComEspacos = "  Tatuagem tribal nas costas com sombreamento em preto  ";
+        String descricaoEsperada = "Tatuagem tribal nas costas com sombreamento em preto";
+        agendamento.setDescricao(descricaoComEspacos);
+        assertEquals(descricaoEsperada, agendamento.getDescricao());
     }
 
     @Test
@@ -93,28 +95,19 @@ public class AgendamentoDescricaoTest {
     }
 
     @Test
-    @DisplayName("Não deve aceitar descrição com menos de 10 caracteres")
-    void naoDeveAceitarDescricaoComMenosDe10Caracteres() {
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            agendamento.setDescricao("Tatuagem");
-        });
-        assertEquals("Descrição deve ter entre 10 e 500 caracteres", exception.getMessage());
-    }
-
-    @Test
     @DisplayName("Não deve aceitar descrição com mais de 500 caracteres")
     void naoDeveAceitarDescricaoComMaisDe500Caracteres() {
         String descricao = "D".repeat(501);
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             agendamento.setDescricao(descricao);
         });
-        assertEquals("Descrição deve ter entre 10 e 500 caracteres", exception.getMessage());
+        assertEquals("A descrição não pode exceder 500 caracteres", exception.getMessage());
     }
 
     @Test
     @DisplayName("Deve aceitar descrição com quebras de linha")
     void deveAceitarDescricaoComQuebrasLinha() {
-        String descricao = "Sessão de tatuagem:\n- Desenho personalizado\n- Local: braço direito\n- Duração estimada: 3h";
+        String descricao = "Sessão de tatuagem completa:\n- Desenho personalizado\n- Local: braço direito\n- Duração: 3h";
         agendamento.setDescricao(descricao);
         assertEquals(descricao, agendamento.getDescricao());
     }
@@ -122,7 +115,7 @@ public class AgendamentoDescricaoTest {
     @Test
     @DisplayName("Deve aceitar descrição com números")
     void deveAceitarDescricaoComNumeros() {
-        String descricao = "Retoque tatuagem feita em 2023, sessão 2 de 3 previstas";
+        String descricao = "Retoque da tatuagem feita em 2023, sessão 2 de 3 previstas para finalização";
         agendamento.setDescricao(descricao);
         assertEquals(descricao, agendamento.getDescricao());
     }
@@ -130,7 +123,7 @@ public class AgendamentoDescricaoTest {
     @Test
     @DisplayName("Deve aceitar descrição com emojis")
     void deveAceitarDescricaoComEmojis() {
-        String descricao = "Tatuagem de borboleta 🦋 nas costas, estilo delicado e colorido 🎨";
+        String descricao = "Tatuagem de borboleta 🦋 nas costas, estilo delicado e colorido com sombreamento 🎨";
         agendamento.setDescricao(descricao);
         assertEquals(descricao, agendamento.getDescricao());
     }

@@ -21,15 +21,15 @@ public class PortfolioTextoTest {
     @Test
     @DisplayName("Deve aceitar descrição válida")
     void deveAceitarDescricaoValida() {
-        String descricao = "Descrição do portfolio";
+        String descricao = "Portfólio de tatuagens";
         portfolio.setDescricao(descricao);
         assertEquals(descricao, portfolio.getDescricao());
     }
 
     @Test
-    @DisplayName("Deve aceitar descrição com 2000 caracteres")
-    void deveAceitarDescricaoCom2000Caracteres() {
-        String descricao = "A".repeat(2000);
+    @DisplayName("Deve aceitar descrição com 500 caracteres")
+    void deveAceitarDescricaoCom500Caracteres() {
+        String descricao = "A".repeat(500);
         portfolio.setDescricao(descricao);
         assertEquals(descricao, portfolio.getDescricao());
     }
@@ -42,19 +42,19 @@ public class PortfolioTextoTest {
     }
 
     @Test
-    @DisplayName("Não deve aceitar descrição muito longa")
-    void naoDeveAceitarDescricaoMuitoLonga() {
-        String descricao = "A".repeat(2001);
+    @DisplayName("Não deve aceitar descrição com mais de 500 caracteres")
+    void naoDeveAceitarDescricaoComMaisDe500Caracteres() {
+        String descricao = "A".repeat(501);
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             portfolio.setDescricao(descricao);
         });
-        assertEquals("A descrição não pode exceder 2000 caracteres", exception.getMessage());
+        assertEquals("A descrição não pode exceder 500 caracteres", exception.getMessage());
     }
 
     @Test
     @DisplayName("Deve aceitar experiência válida")
     void deveAceitarExperienciaValida() {
-        String experiencia = "10 anos de experiência";
+        String experiencia = "10 anos de experiência em tatuagens realistas e aquarela";
         portfolio.setExperiencia(experiencia);
         assertEquals(experiencia, portfolio.getExperiencia());
     }

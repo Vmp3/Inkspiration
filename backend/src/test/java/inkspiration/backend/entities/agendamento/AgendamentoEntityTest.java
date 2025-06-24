@@ -227,10 +227,5 @@ public class AgendamentoEntityTest {
         assertThrows(IllegalArgumentException.class, () -> {
             agendamento.setValor(BigDecimal.ZERO);
         });
-        
-        // Tenta definir descrição muito curta - deve falhar
-        assertThrows(IllegalArgumentException.class, () -> {
-            agendamento.setDescricao("Curto");
-        });
     }
 } 

@@ -430,18 +430,18 @@ class ProfissionalServiceExcecaoTest {
         ProfissionalCriacaoDTO dto = new ProfissionalCriacaoDTO();
         dto.setIdUsuario(1L);
         dto.setIdEndereco(1L);
-        dto.setDescricao("Descrição de portfolio para teste com pelo menos 20 caracteres");
+        dto.setDescricao("Descrição detalhada do portfolio com trabalhos em tatuagem realista e aquarela");
         dto.setEspecialidade("Tatuagem Tradicional");
-        dto.setExperiencia("5 anos de experiência");
+        dto.setExperiencia("5 anos de experiência em tatuagens realistas e aquarela");
         return dto;
     }
 
     private Portfolio criarPortfolio(Long id) {
         Portfolio portfolio = new Portfolio();
         portfolio.setIdPortfolio(id);
-        portfolio.setDescricao("Descrição de portfolio para teste com pelo menos 20 caracteres");
+        portfolio.setDescricao("Descrição detalhada do portfolio com trabalhos em tatuagem realista e aquarela");
         portfolio.setEspecialidade("Tatuagem Tradicional");
-        portfolio.setExperiencia("5 anos de experiência");
+        portfolio.setExperiencia("5 anos de experiência em tatuagens realistas e aquarela");
         return portfolio;
     }
 } 

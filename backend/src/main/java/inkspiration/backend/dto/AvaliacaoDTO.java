@@ -6,8 +6,8 @@ public class AvaliacaoDTO {
     
     private Long idAvaliacao;
     
-    @NotBlank(message = "A descrição é obrigatória")
-    @Size(min = 20, max = 500, message = "A descrição deve ter entre 20 e 500 caracteres")
+    @NotBlank(message = "Descrição não pode ser nula ou vazia")
+    @Size(max = 500, message = "A descrição não pode exceder 500 caracteres")
     private String descricao;
     
     @NotNull(message = "A avaliação é obrigatória")

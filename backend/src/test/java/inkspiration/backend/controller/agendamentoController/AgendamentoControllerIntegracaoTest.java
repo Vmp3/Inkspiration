@@ -112,8 +112,8 @@ class AgendamentoControllerIntegracaoTest {
         assertEquals(HttpStatus.CREATED, criacaoResponse.getStatusCode());
         assertEquals(HttpStatus.OK, atualizacaoResponse.getStatusCode());
         assertEquals(HttpStatus.OK, buscaResponse.getStatusCode());
-        assertEquals("Descrição atualizada", atualizacaoResponse.getBody().getDescricao());
-        assertEquals("Descrição atualizada", buscaResponse.getBody().getDescricao());
+        assertEquals("Tatuagem de dragão atualizada com mais detalhes e sombreamento realista", atualizacaoResponse.getBody().getDescricao());
+        assertEquals("Tatuagem de dragão atualizada com mais detalhes e sombreamento realista", buscaResponse.getBody().getDescricao());
 
         verify(agendamentoService).criarAgendamentoComValidacao(agendamentoRequestDTO);
         verify(agendamentoService).atualizarAgendamentoComAutenticacao(idAgendamento, agendamentoUpdateDTO, authentication);
@@ -343,7 +343,7 @@ class AgendamentoControllerIntegracaoTest {
     private AgendamentoRequestDTO criarAgendamentoRequestDTO() {
         AgendamentoRequestDTO dto = new AgendamentoRequestDTO();
         dto.setTipoServico("TATUAGEM");
-        dto.setDescricao("Tatuagem de dragão no braço direito com detalhes em cores");
+        dto.setDescricao("Tatuagem de dragão no braço direito com detalhes em cores e sombreamento");
         dto.setDtInicio(LocalDateTime.now().plusDays(7));
         dto.setValor(new BigDecimal("300.00"));
         dto.setIdProfissional(1L);
@@ -354,7 +354,7 @@ class AgendamentoControllerIntegracaoTest {
     private AgendamentoUpdateDTO criarAgendamentoUpdateDTO() {
         AgendamentoUpdateDTO dto = new AgendamentoUpdateDTO();
         dto.setTipoServico("TATUAGEM");
-        dto.setDescricao("Descrição atualizada");
+        dto.setDescricao("Tatuagem de dragão atualizada com mais detalhes e sombreamento realista");
         dto.setDtInicio(LocalDateTime.now().plusDays(8));
         return dto;
     }
@@ -363,7 +363,7 @@ class AgendamentoControllerIntegracaoTest {
         AgendamentoDTO dto = new AgendamentoDTO();
         dto.setIdAgendamento(1L);
         dto.setTipoServico(TipoServico.TATUAGEM_PEQUENA);
-        dto.setDescricao("Tatuagem de dragão no braço direito");
+        dto.setDescricao("Tatuagem de dragão no braço direito com sombreamento em preto e cinza");
         dto.setDtInicio(LocalDateTime.now().plusDays(7));
         dto.setDtFim(LocalDateTime.now().plusDays(7).plusHours(2));
         dto.setValor(new BigDecimal("300.00"));
@@ -375,7 +375,7 @@ class AgendamentoControllerIntegracaoTest {
 
     private AgendamentoDTO criarAgendamentoDTOAtualizado() {
         AgendamentoDTO dto = criarAgendamentoDTO();
-        dto.setDescricao("Descrição atualizada");
+        dto.setDescricao("Tatuagem de dragão atualizada com mais detalhes e sombreamento realista");
         return dto;
     }
 

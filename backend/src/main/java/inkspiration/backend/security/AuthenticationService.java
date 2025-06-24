@@ -158,11 +158,11 @@ public class AuthenticationService {
     }
 
     public boolean checkTwoFactorRequirement(String cpf) {
+        if (cpf == null || cpf.trim().isEmpty()) {
+            throw new IllegalArgumentException("CPF não pode ser nulo");
+        }
+        
         try {
-            if (cpf == null || cpf.trim().isEmpty()) {
-                throw new IllegalArgumentException("CPF é obrigatório");
-            }
-            
             // Buscar o usuário pelo CPF
             Usuario usuario = usuarioService.buscarPorCpf(cpf);
             if (usuario == null) {

@@ -117,7 +117,7 @@ class AgendamentoServiceCoberturaTotalTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            agendamentoService.atualizarAgendamento(id, idUsuarioLogado, "pequena", "Nova descrição", novoInicio);
+            agendamentoService.atualizarAgendamento(id, idUsuarioLogado, "pequena", "Nova descriçãaaaaaaaaaaaaaaaaaaaaaaaao", novoInicio);
         });
 
         assertTrue(exception.getMessage().contains("Você já possui outro agendamento nesse horário"));
@@ -366,7 +366,7 @@ class AgendamentoServiceCoberturaTotalTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            agendamentoService.atualizarAgendamento(id, idUsuarioLogado, "pequena", "Nova descrição", novoInicio);
+            agendamentoService.atualizarAgendamento(id, idUsuarioLogado, "pequena", "Nova descriçaaaaaaaaaaaaaaaaaaaaaaaão", novoInicio);
         });
 
         assertTrue(exception.getMessage().contains("O profissional já possui outro agendamento nesse horário"));
@@ -388,7 +388,7 @@ class AgendamentoServiceCoberturaTotalTest {
         when(agendamentoRepository.save(any())).thenReturn(agendamento);
 
         // Act
-        Agendamento resultado = agendamentoService.atualizarAgendamento(id, idUsuarioLogado, "pequena", "Nova descrição", novoInicio);
+        Agendamento resultado = agendamentoService.atualizarAgendamento(id, idUsuarioLogado, "pequena", "Nova descraaaaaaaaaaaaaaaaaição", novoInicio);
 
         // Assert
         assertNotNull(resultado);
@@ -412,7 +412,7 @@ class AgendamentoServiceCoberturaTotalTest {
         when(agendamentoRepository.save(any())).thenReturn(agendamento);
 
         // Act
-        Agendamento resultado = agendamentoService.atualizarAgendamento(id, idUsuarioLogado, "pequena", "Nova descrição", mesmoInicio);
+        Agendamento resultado = agendamentoService.atualizarAgendamento(id, idUsuarioLogado, "pequena", "Nova descriçaaaaaaaaaaaaaaaaaaaaaaaão", mesmoInicio);
 
         // Assert
         assertNotNull(resultado);
@@ -1218,7 +1218,7 @@ class AgendamentoServiceCoberturaTotalTest {
         agendamento.setUsuario(cliente);
         agendamento.setProfissional(profissional);
         agendamento.setTipoServico(TipoServico.TATUAGEM_PEQUENA);
-        agendamento.setDescricao(descricao);
+        agendamento.setDescricao(descricao.length() < 20 ? descricao + " com detalhes e sombreamento" : descricao);
         agendamento.setDtInicio(LocalDateTime.now().plusDays(50));
         agendamento.setDtFim(LocalDateTime.now().plusDays(50).plusHours(2));
         agendamento.setValor(new BigDecimal("250.00"));
@@ -1239,7 +1239,7 @@ class AgendamentoServiceCoberturaTotalTest {
         agendamento.setUsuario(cliente);
         agendamento.setProfissional(profissional);
         agendamento.setTipoServico(tipoServico);
-        agendamento.setDescricao(descricao);
+        agendamento.setDescricao(descricao.length() < 20 ? descricao + " com detalhes e sombreamento" : descricao);
         agendamento.setDtInicio(LocalDateTime.now().plusDays(50));
         agendamento.setDtFim(LocalDateTime.now().plusDays(50).plusHours(tipoServico.getDuracaoHoras()));
         agendamento.setValor(new BigDecimal("250.00").multiply(new BigDecimal(tipoServico.getDuracaoHoras())));
@@ -1289,7 +1289,7 @@ class AgendamentoServiceCoberturaTotalTest {
         agendamento.setUsuario(usuario);
         agendamento.setProfissional(profissional);
         agendamento.setTipoServico(TipoServico.TATUAGEM_PEQUENA);
-        agendamento.setDescricao("Tatuagem de dragão");
+        agendamento.setDescricao("Tatuagem de dragão tatuagem de dragao");
         agendamento.setDtInicio(LocalDateTime.now().plusDays(1));
         agendamento.setDtFim(LocalDateTime.now().plusDays(1).plusHours(2));
         agendamento.setValor(new BigDecimal("300.00"));

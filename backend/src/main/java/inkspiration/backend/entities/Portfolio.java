@@ -21,8 +21,8 @@ public class Portfolio {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idPortfolio;
     
-    @Size(min = 20, max = 500, message = "A descrição deve ter entre 20 e 500 caracteres")
     @Column(length = 500)
+    @Size(max = 500, message = "A descrição não pode exceder 500 caracteres")
     private String descricao;
     
     @Size(max = 1000, message = "A experiência não pode exceder 1000 caracteres")

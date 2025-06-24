@@ -10,8 +10,8 @@ public class AgendamentoUpdateDTO {
     @NotBlank(message = "Tipo de serviço é obrigatório")
     private String tipoServico;
     
-    @NotBlank(message = "Descrição é obrigatória")
-    @Size(min = 20, max = 500, message = "Descrição deve ter entre 20 e 500 caracteres")
+    @NotBlank(message = "Descrição não pode ser nula ou vazia")
+    @Size(max = 500, message = "A descrição não pode exceder 500 caracteres")
     private String descricao;
     
     @NotNull(message = "Data de início é obrigatória")

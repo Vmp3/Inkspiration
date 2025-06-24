@@ -359,9 +359,9 @@ class PortfolioServiceIntegracaoTest {
     private Portfolio criarPortfolio(Long id) {
         Portfolio portfolio = new Portfolio();
         portfolio.setIdPortfolio(id);
-        portfolio.setDescricao("Descrição de portfolio para teste com pelo menos 20 caracteres");
-        portfolio.setExperiencia("Experiência de teste");
-        portfolio.setEspecialidade("Especialidade de teste");
+        portfolio.setDescricao("Descrição detalhada do portfolio com trabalhos em tatuagem realista e aquarela");
+        portfolio.setExperiencia("Experiência de 5 anos em tatuagens realistas e aquarela");
+        portfolio.setEspecialidade("Especialidade em tatuagem realista e aquarela");
         portfolio.setWebsite("https://example.com");
         portfolio.setInstagram("@usuario_teste");
         portfolio.setTiktok("@usuario_teste");
@@ -372,9 +372,9 @@ class PortfolioServiceIntegracaoTest {
 
     private PortfolioDTO criarPortfolioDTO() {
         PortfolioDTO dto = new PortfolioDTO();
-        dto.setDescricao("Descrição de portfolio para teste com pelo menos 20 caracteres");
-        dto.setExperiencia("Experiência de teste");
-        dto.setEspecialidade("Especialidade de teste");
+        dto.setDescricao("Descrição detalhada do portfolio com trabalhos em tatuagem realista e aquarela");
+        dto.setExperiencia("Experiência de 5 anos em tatuagens realistas e aquarela");
+        dto.setEspecialidade("Especialidade em tatuagem realista e aquarela");
         dto.setWebsite("https://example.com");
         dto.setInstagram("@usuario_teste");
         dto.setTiktok("@usuario_teste");
