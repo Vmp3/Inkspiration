@@ -39,7 +39,7 @@ class UsuarioServiceCpfTest {
     @Test
     @DisplayName("Deve invalidar CPF nulo ou vazio")
     void deveInvalidarCpfNuloOuVazio() {
-        assertThrows(NullPointerException.class, () -> CpfValidator.isValid(null));
+        assertFalse(CpfValidator.isValid(null));
         assertFalse(CpfValidator.isValid(""));
         assertFalse(CpfValidator.isValid("   "));
     }
@@ -97,5 +97,14 @@ class UsuarioServiceCpfTest {
                 throw new UsuarioValidationException.CpfInvalidoException("CPF inválido");
             }
         });
+    }
+
+    @Test
+    @DisplayName("Deve validar mensagem de validação")
+    void deveValidarMensagemDeValidacao() {
+        assertEquals("CPF é obrigatório", CpfValidator.getValidationMessage(null));
+        assertEquals("CPF é obrigatório", CpfValidator.getValidationMessage(""));
+        assertEquals("CPF inválido", CpfValidator.getValidationMessage("12345678901"));
+        assertNull(CpfValidator.getValidationMessage("111.444.777-35"));
     }
 } 
