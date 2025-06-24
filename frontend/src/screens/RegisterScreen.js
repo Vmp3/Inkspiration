@@ -7,7 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as formatters from '../utils/formatters';
 import toastHelper from '../utils/toastHelper';
 import { useAuth } from '../context/AuthContext';
-import { isMobileView } from '../utils/responsive';
+import { isMobileView, isDesktopView } from '../utils/responsive';
 
 import TabHeader from '../components/ui/TabHeader';
 import PersonalForm from '../components/forms/PersonalForm';
@@ -308,15 +308,56 @@ const RegisterScreen = () => {
 
       if (!result.canceled) {
         const selectedImage = result.assets[0];
+        
+        const validMimeTypes = ['image/jpeg', 'image/png'];
+        const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
+        
+        // Verificar MIME type
+        if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
+          toastHelper.showError(authMessages.imageUploadErrors.invalidFormat);
+          return;
+        }
+        
+        // Verificar extensão do arquivo
+        if (selectedImage.fileName) {
+          const fileExtension = selectedImage.fileName.toLowerCase().slice(selectedImage.fileName.lastIndexOf('.'));
+          if (!validExtensions.includes(fileExtension)) {
+            toastHelper.showError(authMessages.imageUploadErrors.invalidFormat);
+            return;
+          }
+        }
+        
+        // Validação de tamanho - limite de 5MB
+        const maxSizeInMB = 5;
+        const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+        
+        if (selectedImage.fileSize && selectedImage.fileSize > maxSizeInBytes) {
+          toastHelper.showError(authMessages.imageUploadErrors.fileTooLarge);
+          return;
+        }
+        
+        // Validação adicional do base64 (que é ~33% maior que o arquivo original)
+        const base64String = selectedImage.base64;
+        const base64SizeInBytes = (base64String.length * 3) / 4;
+        
+        if (base64SizeInBytes > maxSizeInBytes) {
+          toastHelper.showError(authMessages.imageUploadErrors.processedImageTooLarge);
+          return;
+        }
+        
+        // Determinar formato correto baseado na extensão do arquivo
+        const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
+        const mimeType = selectedImage.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
+        
         setProfileImage({
           uri: selectedImage.uri,
-          base64: `data:image/jpeg;base64,${selectedImage.base64}`,
-          type: 'image/jpeg',
-          name: 'profile.jpg'
+          base64: `data:${mimeType};base64,${selectedImage.base64}`,
+          type: mimeType,
+          name: `profile.${imageFormat === 'png' ? 'png' : 'jpg'}`
         });
       }
     } catch (error) {
-      toastHelper.showError('Erro ao selecionar imagem');
+      toastHelper.showError(authMessages.imageUploadErrors.selectionFailed);
     }
   };
 
@@ -846,17 +887,30 @@ const RegisterScreen = () => {
   ];
 
   const isMobile = isMobileView();
+  const isDesktop = isDesktopView();
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.contentContainer}>
-          <View style={styles.pageHeaderContainer}>
+        <View style={[styles.contentContainer, isDesktop && styles.contentContainerDesktop]}>
+          <View style={[styles.pageHeaderContainer, isDesktop && styles.pageHeaderContainerDesktop]}>
             <Text style={styles.pageTitle}>Criar Conta</Text>
             <Text style={styles.pageSubtitle}>Registre-se para encontrar os melhores tatuadores</Text>
           </View>
           
-          <View style={styles.cardWrapper}>
+          <View style={[styles.loginPrompt, isMobile && styles.loginPromptMobile]}>
+            <Text style={styles.loginPromptText}>
+              Já tem uma conta?{' '}
+              <Text 
+                style={styles.loginLink}
+                onPress={() => navigation.navigate('Login')}
+              >
+                Entrar
+              </Text>
+            </Text>
+          </View>
+          
+          <View style={[styles.cardWrapper, isDesktop && styles.cardWrapperDesktop]}>
             <View style={styles.formCard}>
               <View style={styles.tabHeaderWrapper}>
                 <TabHeader 
@@ -868,7 +922,7 @@ const RegisterScreen = () => {
                 />
               </View>
               
-              <View style={styles.formContainer}>
+              <View style={[styles.formContainer, isDesktop && styles.formContainerDesktop]}>
                 {activeTab === 'personal' && (
                   <>
                                     <PersonalForm
@@ -929,18 +983,6 @@ const RegisterScreen = () => {
                   />
                 )}
               </View>
-            </View>
-            
-            <View style={[styles.loginPrompt, isMobile && styles.loginPromptMobile]}>
-              <Text style={styles.loginPromptText}>
-                Já tem uma conta?{' '}
-                <Text 
-                  style={styles.loginLink}
-                  onPress={() => navigation.navigate('Login')}
-                >
-                  Entrar
-                </Text>
-              </Text>
             </View>
           </View>
         </View>
@@ -1038,11 +1080,18 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 40,
   },
+  contentContainerDesktop: {
+    marginTop: 15,
+  },
   pageHeaderContainer: {
     marginBottom: 20,
     alignItems: 'center',
     zIndex: 2,
     marginTop: 15,
+  },
+  pageHeaderContainerDesktop: {
+    marginBottom: 5,
+    marginTop: 10,
   },
   pageTitle: {
     fontSize: 28,
@@ -1064,6 +1113,10 @@ const styles = StyleSheet.create({
     maxWidth: 1200,
     width: '100%',
     alignSelf: 'center',
+  },
+  cardWrapperDesktop: {
+    marginTop: 5,
+    paddingVertical: 5,
   },
   formCard: {
     backgroundColor: '#fff',
@@ -1090,6 +1143,9 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     padding: 30,
+  },
+  formContainerDesktop: {
+    padding: 5,
   },
   loginPrompt: {
     alignItems: 'center',

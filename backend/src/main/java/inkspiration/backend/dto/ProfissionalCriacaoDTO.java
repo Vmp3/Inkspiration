@@ -5,6 +5,7 @@ import java.util.Map;
 import java.math.BigDecimal;
 
 import inkspiration.backend.enums.TipoServico;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
@@ -17,7 +18,7 @@ public class ProfissionalCriacaoDTO {
     private List<TipoServico> tiposServico;
     
     // Preços dos serviços
-    private Map<String, BigDecimal> precosServicos;
+    private Map<String, @DecimalMax(value = "100000.00", message = "Preço do serviço não pode ser maior que R$ 100.000,00") BigDecimal> precosServicos;
     
     // Portfolio
     @NotBlank(message = "Biografia é obrigatória")

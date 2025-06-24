@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Activity
 import { Feather } from '@expo/vector-icons';
 import * as formatters from '../../utils/formatters';
 import ApiService from '../../services/ApiService';
+import toastHelper from '../../utils/toastHelper';
 
 const BasicInfoForm = ({ 
   experience,
@@ -115,6 +116,17 @@ const BasicInfoForm = ({
     // Converte para número e divide por 100 para ter centavos
     const numero = parseInt(apenasNumeros) / 100;
     
+    // Valor máximo de R$ 100.000,00
+    const VALOR_MAXIMO = 100000;
+    
+    // Limitar valor máximo
+    if (numero > VALOR_MAXIMO) {
+      return VALOR_MAXIMO.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+    
     // Formata com separadores brasileiros
     return numero.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
@@ -123,6 +135,20 @@ const BasicInfoForm = ({
   };
 
   const handlePrecoChange = (tipoNome, valor) => {
+    // Remove tudo que não é número
+    const apenasNumeros = valor.replace(/\D/g, '');
+    
+    if (apenasNumeros) {
+      const numero = parseInt(apenasNumeros) / 100;
+      const VALOR_MAXIMO = 100000;
+      
+      // Verificar se excede o valor máximo e mostrar toast
+      if (numero > VALOR_MAXIMO) {
+        toastHelper.showError('Valor máximo permitido é R$ 100.000,00');
+        return;
+      }
+    }
+    
     const valorFormatado = formatarPreco(valor);
     handlePrecoServicoChange(tipoNome, valorFormatado);
   };

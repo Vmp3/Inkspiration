@@ -119,7 +119,6 @@ public class EnderecoService {
             
             // Extrair dados necessários
             DadosViaCep dados = new DadosViaCep();
-            dados.setCep(jsonNode.get("cep").asText());
             dados.setLogradouro(jsonNode.get("logradouro").asText());
             dados.setBairro(jsonNode.get("bairro").asText());
             dados.setLocalidade(jsonNode.get("localidade").asText());
@@ -138,16 +137,12 @@ public class EnderecoService {
      * Classe interna para representar os dados retornados pela API ViaCEP
      */
     private static class DadosViaCep {
-        private String cep;
         private String logradouro;
         private String bairro;
         private String localidade;
         private String uf;
         
         // Getters e Setters
-        public String getCep() { return cep; }
-        public void setCep(String cep) { this.cep = cep; }
-        
         public String getLogradouro() { return logradouro; }
         public void setLogradouro(String logradouro) { this.logradouro = logradouro; }
         

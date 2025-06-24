@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+
 import inkspiration.backend.exception.authentication.AuthenticationFailedException;
 import inkspiration.backend.exception.authentication.InvalidTwoFactorCodeException;
 import inkspiration.backend.exception.authentication.TwoFactorRequiredException;

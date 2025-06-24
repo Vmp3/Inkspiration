@@ -1,7 +1,5 @@
 package inkspiration.backend.security;
 
-import java.util.HashMap;
-import java.util.Map;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

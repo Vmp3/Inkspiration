@@ -427,6 +427,8 @@ public class UsuarioService {
         
         // Só atualiza a imagem de perfil se ela for fornecida no DTO
         if (dto.getImagemPerfil() != null) {
+            // Validação de tamanho da imagem - limite de 5MB
+            validarTamanhoImagem(dto.getImagemPerfil());
             usuario.setImagemPerfil(dto.getImagemPerfil());
         }
         // Se for null, mantém a imagem existente
@@ -563,7 +565,52 @@ public class UsuarioService {
             throw new InvalidProfileImageException("Imagem não fornecida");
         }
         
+        // Validação de tamanho da imagem - limite de 5MB
+        validarTamanhoImagem(imagemBase64);
+        
         atualizarFotoPerfil(id, imagemBase64);
+    }
+
+    private void validarTamanhoImagem(String imagemBase64) {
+        if (imagemBase64 == null || imagemBase64.isEmpty()) {
+            return;
+        }
+        
+        // Validar formato da imagem
+        validarFormatoImagem(imagemBase64);
+        
+        // Remove o prefixo data:image/...;base64, se existir
+        String base64Data = imagemBase64;
+        if (imagemBase64.contains(",")) {
+            base64Data = imagemBase64.split(",")[1];
+        }
+        
+        // Calcula o tamanho em bytes da imagem base64
+        // Base64 adiciona ~33% ao tamanho original, então dividimos por 1.33 para obter o tamanho aproximado
+        long imagemTamanhoBytes = (long) (base64Data.length() * 0.75);
+        
+        // Limite de 5MB em bytes (definido no código)
+        long limiteTamanhoBytes = 5 * 1024 * 1024;
+        
+        if (imagemTamanhoBytes > limiteTamanhoBytes) {
+            throw new InvalidProfileImageException("Imagem muito grande. Tamanho máximo permitido: 5MB");
+        }
+    }
+    
+    private void validarFormatoImagem(String imagemBase64) {
+        if (imagemBase64 == null || imagemBase64.isEmpty()) {
+            return;
+        }
+        
+        // Verifica se é um formato válido (PNG ou JPG)
+        if (!imagemBase64.startsWith("data:image/")) {
+            throw new InvalidProfileImageException("Formato de imagem inválido. Apenas PNG e JPG são permitidos");
+        }
+        
+        String mimeType = imagemBase64.substring(5, imagemBase64.indexOf(";"));
+        if (!mimeType.equals("image/jpeg") && !mimeType.equals("image/jpg") && !mimeType.equals("image/png")) {
+            throw new InvalidProfileImageException("Formato de imagem inválido. Apenas PNG e JPG são permitidos");
+        }
     }
 
     public boolean validateTokenComplete(Long id, String token) {
