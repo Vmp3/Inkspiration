@@ -17,6 +17,11 @@ public class AvaliacaoDTO {
     
     @NotNull(message = "O ID do agendamento é obrigatório")
     private Long idAgendamento;
+    
+    // Campos adicionais para exibição pública das avaliações
+    private String nomeCliente;
+    private String imagemCliente;
+    private String tipoServico;
 
     // Construtores
     public AvaliacaoDTO() {}
@@ -65,5 +70,29 @@ public class AvaliacaoDTO {
 
     public void setIdAgendamento(Long idAgendamento) {
         this.idAgendamento = idAgendamento;
+    }
+    
+    public String getNomeCliente() {
+        return nomeCliente;
+    }
+
+    public void setNomeCliente(String nomeCliente) {
+        this.nomeCliente = nomeCliente;
+    }
+
+    public String getImagemCliente() {
+        return imagemCliente;
+    }
+
+    public void setImagemCliente(String imagemCliente) {
+        this.imagemCliente = imagemCliente;
+    }
+
+    public String getTipoServico() {
+        return tipoServico;
+    }
+
+    public void setTipoServico(String tipoServico) {
+        this.tipoServico = tipoServico;
     }
 } 

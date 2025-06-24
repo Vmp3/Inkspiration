@@ -84,6 +84,17 @@ public class ProfissionalController {
         return ResponseEntity.ok(profissionalCompleto);
     }
 
+    @GetMapping("/profissional/completo/{id}/com-avaliacoes")
+    public ResponseEntity<Map<String, Object>> buscarCompletoComAvaliacoes(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int avaliacoesPage,
+            @RequestParam(defaultValue = "5") int avaliacoesSize) {
+        
+        Pageable avaliacoesPageable = PageRequest.of(avaliacoesPage, avaliacoesSize);
+        Map<String, Object> profissionalCompleto = profissionalService.buscarCompletoComAvaliacoes(id, avaliacoesPageable);
+        return ResponseEntity.ok(profissionalCompleto);
+    }
+
     @GetMapping("/profissional/{id}")
     public ResponseEntity<ProfissionalDTO> buscarPorId(@PathVariable Long id) {
         ProfissionalDTO profissional = profissionalService.converterParaDto(profissionalService.buscarPorId(id));
