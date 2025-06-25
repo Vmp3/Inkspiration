@@ -41,11 +41,15 @@ import com.nimbusds.jose.proc.SecurityContext;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+
     @Value("${jwt.public.key}")
     RSAPublicKey key;
 
     @Value("${jwt.private.key}")
     private RSAPrivateKey priv;
+
+    @Value("${cors.ip}")
+    private String corsIp;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, TokenOwnershipFilter tokenOwnershipFilter) throws Exception {
@@ -129,22 +133,17 @@ public class SecurityConfig {
     private UrlBasedCorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        
-        // Permite requisições do frontend
-        config.addAllowedOrigin("http://localhost:8081");
-        
-        // Permite todos os métodos HTTP
+
+        config.addAllowedOrigin(corsIp);
+
         config.addAllowedMethod("*");
-        
-        // Permite todos os headers
+
         config.addAllowedHeader("*");
-        
-        // Permite credenciais (cookies, headers de autenticação)
+
         config.setAllowCredentials(true);
-        
-        // Configura os headers expostos
+
         config.addExposedHeader("Authorization");
-        
+
         source.registerCorsConfiguration("/**", config);
         return source;
     }
