@@ -15,9 +15,12 @@
     "ios": {
       "supportsTablet": true,
       "keyboardAppearance": "light",
-      "requireFullScreen": false,
+      "requireFullScreen": true,
       "statusBarHidden": false,
-      "statusBarStyle": "dark"
+      "statusBarStyle": "dark",
+      "userInterfaceStyle": "light",
+      "bundleIdentifier": "com.inkspiration.app",
+      "buildNumber": "1.0.0"
     },
     "android": {
       "softwareKeyboardLayoutMode": "pan",
@@ -28,10 +31,26 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png",
-      "meta": {
-        "viewport": "width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover"
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-screen-orientation"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "inkspiration"
       }
+    },
+    "orientation": "portrait",
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/your-project-id"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "experiments": {
+      "tsconfigPaths": true
     }
   }
 }
