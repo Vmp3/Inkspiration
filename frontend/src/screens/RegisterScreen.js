@@ -219,8 +219,12 @@ const RegisterScreen = () => {
       setSobrenomeError(authMessages.registerErrors.invalidName);
     }
 
-    if (field === 'cpf' && formData.cpf && !formatters.validateCPF(formData.cpf)) {
-      setCpfError(authMessages.registerErrors.invalidCPF);
+    if (field === 'cpf' && formData.cpf) {
+      if (!formatters.validateCPF(formData.cpf)) {
+        setCpfError(authMessages.registerErrors.invalidCpf);
+      } else {
+        setCpfError('');
+      }
     }
 
     if (field === 'email' && formData.email && !formatters.validateEmail(formData.email)) {

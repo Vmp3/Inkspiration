@@ -66,7 +66,7 @@ const Card = ({ children, style }) => {
   );
 };
 
-const PortfolioItem = ({ image, onPress }) => {
+const PortfolioItem = ({ image, onPress, isMobile }) => {
   // Função para processar a imagem base64
   const processBase64Image = (base64String) => {    
     // Se já tem o prefixo data:image, usar diretamente
@@ -81,7 +81,14 @@ const PortfolioItem = ({ image, onPress }) => {
   const imageUri = processBase64Image(image);
 
   return (
-    <TouchableOpacity style={styles.portfolioItem} onPress={() => onPress(imageUri)} activeOpacity={0.8}>
+    <TouchableOpacity 
+      style={[
+        styles.portfolioItem,
+        isMobile && styles.portfolioItemMobile
+      ]} 
+      onPress={() => onPress(imageUri)} 
+      activeOpacity={0.8}
+    >
       <Image
         source={{ uri: imageUri }}
         style={styles.portfolioImage}
@@ -429,6 +436,7 @@ const ArtistScreen = ({ route }) => {
                 key={index} 
                 image={image.imagemBase64 || DefaultUser} 
                 onPress={handleImagePress}
+                isMobile={isMobile}
               />
             ))
           )}
@@ -900,32 +908,42 @@ const styles = StyleSheet.create({
   portfolioGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: 4,
+    padding: 8,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
   },
   portfolioItem: {
     width: '20%',
     aspectRatio: 1,
     position: 'relative',
     backgroundColor: '#F3F4F6',
-    padding: 3,
+    padding: 4,
+  },
+  portfolioItemMobile: {
+    width: '50%',
+    aspectRatio: 1,
+    position: 'relative',
+    backgroundColor: '#F3F4F6',
+    padding: 6,
+    marginBottom: 0,
   },
   portfolioImage: {
     width: '100%',
     height: '100%',
     position: 'absolute',
-    top: 2,
-    left: 2,
-    right: 2,
-    bottom: 2,
+    top: 4,
+    left: 4,
+    right: 4,
+    bottom: 4,
     zIndex: 2,
     borderRadius: 4,
   },
   portfolioPlaceholder: {
     position: 'absolute',
-    top: 2,
-    left: 2,
-    right: 2,
-    bottom: 2,
+    top: 4,
+    left: 4,
+    right: 4,
+    bottom: 4,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F3F4F6',

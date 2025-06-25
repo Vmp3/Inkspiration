@@ -57,18 +57,24 @@ const AdminUsersScreen = () => {
     loadUsers();
   }, [currentPage]);
 
-  // Debounce para busca
-  useEffect(() => {
-    const delayedSearch = setTimeout(() => {
-      if (currentPage === 0) {
-        loadUsers();
-      } else {
-        setCurrentPage(0); // Resetar para primeira página ao buscar
-      }
-    }, 500);
+  // Função para executar busca
+  const handleSearch = () => {
+    if (currentPage === 0) {
+      loadUsers();
+    } else {
+      setCurrentPage(0); // Resetar para primeira página ao buscar
+    }
+  };
 
-    return () => clearTimeout(delayedSearch);
-  }, [searchTerm]);
+  // Função para limpar busca
+  const handleClearSearch = async () => {
+    setSearchTerm('');
+    setCurrentPage(0);
+    // Pequeno delay para garantir que o estado foi atualizado
+    setTimeout(() => {
+      loadUsers();
+    }, 100);
+  };
 
   useEffect(() => {
     const updateLayout = () => {
@@ -205,7 +211,7 @@ const AdminUsersScreen = () => {
 
     return (
       <Card key={user.idUsuario} style={[styles.userCard, isInactive && styles.inactiveCard]}>
-        <View style={styles.userContent}>
+        <View style={isMobile ? styles.userContentMobile : styles.userContent}>
           <View style={styles.userInfo}>
             <Avatar
               source={user.imagemPerfil}
@@ -231,8 +237,8 @@ const AdminUsersScreen = () => {
             </View>
           </View>
 
-          {!isAdmin && (
-            <View style={[styles.actions, isMobile && styles.mobileActions]}>
+          {!isMobile && !isAdmin && (
+            <View style={styles.actions}>
               <Button
                 variant="secondary"
                 size="sm"
@@ -259,6 +265,34 @@ const AdminUsersScreen = () => {
             </View>
           )}
         </View>
+        
+        {isMobile && !isAdmin && (
+          <View style={styles.mobileActions}>
+            <Button
+              variant="secondary"
+              size="sm"
+              label={isInactive ? "Ativar" : "Desativar"}
+              onPress={() => toggleUserStatus(user)}
+              style={[
+                styles.actionButton,
+                isInactive ? styles.activateButton : styles.deactivateButton
+              ]}
+              labelStyle={[
+                isInactive ? styles.activateText : styles.deactivateText
+              ]}
+            />
+            {isProfessional && (
+              <Button
+                variant="secondary"
+                size="sm"
+                label="Excluir Portfólio"
+                onPress={() => deletePortfolio(user)}
+                style={[styles.actionButton, styles.deletePortfolioButton]}
+                labelStyle={styles.deletePortfolioText}
+              />
+            )}
+          </View>
+        )}
       </Card>
     );
   };
@@ -284,8 +318,25 @@ const AdminUsersScreen = () => {
                 onChangeText={setSearchTerm}
                 icon="search"
                 returnKeyType="search"
+                onSubmitEditing={handleSearch}
               />
             </View>
+            <Button
+              variant="primary"
+              size="search"
+              label="Buscar"
+              onPress={handleSearch}
+              style={styles.searchButton}
+            />
+            {searchTerm && (
+              <Button
+                variant="secondary"
+                size="search"
+                label="Limpar"
+                onPress={handleClearSearch}
+                style={styles.clearButton}
+              />
+            )}
           </View>
 
           {/* Informações da busca */}
@@ -395,10 +446,19 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     marginBottom: 16,
   },
   searchInputContainer: {
     flex: 1,
+  },
+  searchButton: {
+    minWidth: 80,
+  },
+  clearButton: {
+    minWidth: 70,
   },
   searchInfo: {
     marginBottom: 24,
@@ -447,6 +507,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  userContentMobile: {
+    flexDirection: 'column',
+  },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -488,14 +551,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   mobileActions: {
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    minWidth: 100,
-    gap: 8,
+    marginTop: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    paddingTop: 16,
   },
   actionButton: {
-    minWidth: 80,
-    height: 32,
+    flex: 1,
+    height: 40,
+    minHeight: 40,
   },
   deactivateButton: {
     borderColor: '#EF4444',
