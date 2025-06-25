@@ -26,6 +26,7 @@ import inkspiration.backend.entities.Profissional;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.entities.Avaliacao;
 import inkspiration.backend.enums.TipoServico;
+import inkspiration.backend.enums.UserRole;
 import inkspiration.backend.exception.UsuarioException;
 import inkspiration.backend.exception.profissional.DadosCompletosProfissionalException;
 import inkspiration.backend.exception.profissional.EnderecoNaoEncontradoException;
@@ -135,9 +136,9 @@ public class ProfissionalService {
         enderecoService.validarEndereco(endereco);
         
         // Atualiza o papel (role) do usuário para ROLE_PROF
-        usuario.setRole("ROLE_PROF");
+        usuario.setRole(UserRole.ROLE_PROF.getRole());
         if (usuario.getUsuarioAutenticar() != null) {
-            usuario.getUsuarioAutenticar().setRole("ROLE_PROF");
+            usuario.getUsuarioAutenticar().setRole(UserRole.ROLE_PROF.getRole());
         }
         usuarioRepository.save(usuario);
         
@@ -277,7 +278,9 @@ public class ProfissionalService {
         
         // Atualizar endereço se fornecido
         if (dto.getIdEndereco() != null) {
-            profissional.getUsuario().getEndereco().setIdEndereco(dto.getIdEndereco());
+            Endereco endereco = enderecoRepository.findById(dto.getIdEndereco())
+                .orElseThrow(() -> new EnderecoNaoEncontradoException("Endereço não encontrado com ID: " + dto.getIdEndereco()));
+            profissional.setEndereco(endereco);
         }
         
         profissional = profissionalRepository.save(profissional);

@@ -47,11 +47,9 @@ public class DateValidator {
             }
 
             // Try to parse the date to ensure it's valid
-            LocalDate date = LocalDate.parse(dateStr, FORMATTER);
-            
-            // Check if the date is in the past
-            return date.isBefore(LocalDate.now());
-        } catch (DateTimeParseException | NumberFormatException | ArrayIndexOutOfBoundsException e) {
+            LocalDate.parse(dateStr, FORMATTER);
+            return true;
+        } catch (Exception e) {
             return false;
         }
     }
@@ -93,6 +91,13 @@ public class DateValidator {
      * @return true se tem a idade mínima, false caso contrário
      */
     public static boolean hasMinimumAge(String birthDateStr, int minimumAge) {
-        return calculateAge(birthDateStr) >= minimumAge;
+        if (birthDateStr == null || birthDateStr.trim().isEmpty() || minimumAge < 0) {
+            return false;
+        }
+        try {
+            return calculateAge(birthDateStr) >= minimumAge;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 } 

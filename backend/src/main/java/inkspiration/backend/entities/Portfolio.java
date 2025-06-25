@@ -10,6 +10,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,27 +21,39 @@ public class Portfolio {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idPortfolio;
     
-    @Column(length = 2000)
+    @Column(length = 500)
+    @Size(max = 500, message = "A descrição não pode exceder 500 caracteres")
     private String descricao;
     
+    @Size(max = 1000, message = "A experiência não pode exceder 1000 caracteres")
     @Column(length = 1000)
     private String experiencia;
     
+    @Size(max = 500, message = "A especialidade não pode exceder 500 caracteres")
     @Column(length = 500)
     private String especialidade;
     
+    @Size(max = 255, message = "O website não pode exceder 255 caracteres")
+    @Pattern(regexp = "^(https?://).*|^$", message = "O website deve começar com http:// ou https://")
     @Column(length = 255)
     private String website;
     
+    @Size(max = 50, message = "O TikTok não pode exceder 50 caracteres")
+    @Pattern(regexp = "^@?[a-zA-Z0-9._]+$|^$", message = "TikTok deve conter apenas letras, números, pontos e underscores")
     @Column(length = 50)
     private String tiktok;
     
+    @Size(max = 50, message = "O Instagram não pode exceder 50 caracteres")
+    @Pattern(regexp = "^@?[a-zA-Z0-9._]+$|^$", message = "Instagram deve conter apenas letras, números, pontos e underscores")
     @Column(length = 50)
     private String instagram;
     
+    @Size(max = 50, message = "O Facebook não pode exceder 50 caracteres")
     @Column(length = 50)
     private String facebook;
     
+    @Size(max = 50, message = "O Twitter não pode exceder 50 caracteres")
+    @Pattern(regexp = "^@?[a-zA-Z0-9._]+$|^$", message = "Twitter deve conter apenas letras, números, pontos e underscores")
     @Column(length = 50)
     private String twitter;
     
@@ -74,6 +88,9 @@ public class Portfolio {
     }
     
     public void setDescricao(String descricao) {
+        if (descricao != null && descricao.length() > 500) {
+            throw new IllegalArgumentException("A descrição não pode exceder 500 caracteres");
+        }
         this.descricao = descricao;
     }
     
@@ -82,6 +99,9 @@ public class Portfolio {
     }
     
     public void setExperiencia(String experiencia) {
+        if (experiencia != null && experiencia.length() > 1000) {
+            throw new IllegalArgumentException("A experiência não pode exceder 1000 caracteres");
+        }
         this.experiencia = experiencia;
     }
     
@@ -90,6 +110,9 @@ public class Portfolio {
     }
     
     public void setEspecialidade(String especialidade) {
+        if (especialidade != null && especialidade.length() > 500) {
+            throw new IllegalArgumentException("A especialidade não pode exceder 500 caracteres");
+        }
         this.especialidade = especialidade;
     }
     
@@ -98,6 +121,14 @@ public class Portfolio {
     }
     
     public void setWebsite(String website) {
+        if (website != null && !website.trim().isEmpty()) {
+            if (website.length() > 255) {
+                throw new IllegalArgumentException("O website não pode exceder 255 caracteres");
+            }
+            if (!website.matches("^(https?://).*")) {
+                throw new IllegalArgumentException("O website deve começar com http:// ou https://");
+            }
+        }
         this.website = website;
     }
     
@@ -106,6 +137,15 @@ public class Portfolio {
     }
     
     public void setTiktok(String tiktok) {
+        if (tiktok != null && !tiktok.trim().isEmpty()) {
+            if (tiktok.length() > 50) {
+                throw new IllegalArgumentException("O TikTok não pode exceder 50 caracteres");
+            }
+            String cleanTiktok = tiktok.startsWith("@") ? tiktok.substring(1) : tiktok;
+            if (!cleanTiktok.matches("^[a-zA-Z0-9._]+$")) {
+                throw new IllegalArgumentException("TikTok deve conter apenas letras, números, pontos e underscores");
+            }
+        }
         this.tiktok = tiktok;
     }
     
@@ -114,6 +154,15 @@ public class Portfolio {
     }
     
     public void setInstagram(String instagram) {
+        if (instagram != null && !instagram.trim().isEmpty()) {
+            if (instagram.length() > 50) {
+                throw new IllegalArgumentException("O Instagram não pode exceder 50 caracteres");
+            }
+            String cleanInstagram = instagram.startsWith("@") ? instagram.substring(1) : instagram;
+            if (!cleanInstagram.matches("^[a-zA-Z0-9._]+$")) {
+                throw new IllegalArgumentException("Instagram deve conter apenas letras, números, pontos e underscores");
+            }
+        }
         this.instagram = instagram;
     }
     
@@ -122,6 +171,9 @@ public class Portfolio {
     }
     
     public void setFacebook(String facebook) {
+        if (facebook != null && facebook.length() > 50) {
+            throw new IllegalArgumentException("O Facebook não pode exceder 50 caracteres");
+        }
         this.facebook = facebook;
     }
     
@@ -130,6 +182,15 @@ public class Portfolio {
     }
     
     public void setTwitter(String twitter) {
+        if (twitter != null && !twitter.trim().isEmpty()) {
+            if (twitter.length() > 50) {
+                throw new IllegalArgumentException("O Twitter não pode exceder 50 caracteres");
+            }
+            String cleanTwitter = twitter.startsWith("@") ? twitter.substring(1) : twitter;
+            if (!cleanTwitter.matches("^[a-zA-Z0-9._]+$")) {
+                throw new IllegalArgumentException("Twitter deve conter apenas letras, números, pontos e underscores");
+            }
+        }
         this.twitter = twitter;
     }
     

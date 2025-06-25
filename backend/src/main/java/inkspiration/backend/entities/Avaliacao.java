@@ -60,4 +60,19 @@ public class Avaliacao {
     public void setAgendamento(Agendamento agendamento) {
         this.agendamento = agendamento;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Avaliacao avaliacao = (Avaliacao) o;
+
+        return idAvaliacao != null && idAvaliacao.equals(avaliacao.idAvaliacao);
+    }
+
+    @Override
+    public int hashCode() {
+        return idAvaliacao != null ? idAvaliacao.hashCode() : 0;
+    }
 } 

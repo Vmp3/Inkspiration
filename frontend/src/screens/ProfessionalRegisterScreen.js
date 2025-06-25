@@ -56,6 +56,7 @@ const ProfessionalRegisterScreen = () => {
     twitter: '',
     website: ''
   });
+  const [websiteError, setWebsiteError] = useState('');
   
   // Estado para horários de trabalho
   const [workHours, setWorkHours] = useState([
@@ -490,8 +491,12 @@ const ProfessionalRegisterScreen = () => {
     if (!formatters.validateSocialMedia(socialMedia.instagram) ||
         !formatters.validateSocialMedia(socialMedia.tiktok) ||
         !formatters.validateSocialMedia(socialMedia.facebook) ||
-        !formatters.validateSocialMedia(socialMedia.twitter) ||
-        !formatters.validateWebsite(socialMedia.website)) {
+        !formatters.validateSocialMedia(socialMedia.twitter)) {
+      return false;
+    }
+    
+    const websiteError = formatters.getWebsiteValidationMessage(socialMedia.website);
+    if (websiteError) {
       return false;
     }
     
@@ -607,8 +612,9 @@ const ProfessionalRegisterScreen = () => {
         return;
       }
       
-      if (!formatters.validateWebsite(socialMedia.website)) {
-        toastHelper.showError(professionalRegisterMessages.errors.websiteTooLong);
+      const websiteError = formatters.getWebsiteValidationMessage(socialMedia.website);
+      if (websiteError) {
+        toastHelper.showError(websiteError);
         return;
       }
       
@@ -665,8 +671,9 @@ const ProfessionalRegisterScreen = () => {
         return;
       }
       
-      if (!formatters.validateWebsite(socialMedia.website)) {
-        toastHelper.showError(professionalRegisterMessages.errors.websiteTooLong);
+      const websiteError = formatters.getWebsiteValidationMessage(socialMedia.website);
+      if (websiteError) {
+        toastHelper.showError(websiteError);
         setIsLoading(false);
         return;
       }
@@ -861,6 +868,8 @@ const ProfessionalRegisterScreen = () => {
                     handleTipoServicoChange={handleTipoServicoChange}
                     precosServicos={precosServicos}
                     handlePrecoServicoChange={handlePrecoServicoChange}
+                    websiteError={websiteError}
+                    setWebsiteError={setWebsiteError}
                   />
                   <View style={styles.formNavigationWrapper}>
                     <FormNavigation

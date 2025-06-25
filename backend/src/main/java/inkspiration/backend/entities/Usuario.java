@@ -4,8 +4,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
+import org.hibernate.validator.constraints.br.CPF;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import inkspiration.backend.enums.UserRole;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,6 +19,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 @Entity
 public class Usuario {
@@ -23,10 +32,26 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idUsuario;
     
+    @NotBlank(message = "O nome é obrigatório")
+    @Size(min = 3, max = 100, message = "O nome deve ter entre 3 e 100 caracteres")
+    @Pattern(regexp = "^[A-Za-zÀ-ÖØ-öø-ÿ\\s]*$", message = "O nome deve conter apenas letras e espaços")
     private String nome;
+
+    @NotBlank(message = "O CPF é obrigatório")
+    @CPF(message = "CPF inválido")
     private String cpf;
+
+    @NotBlank(message = "O email é obrigatório")
+    @Email(message = "Email inválido")
     private String email;
+
+    @NotNull(message = "A data de nascimento é obrigatória")
+    @Past(message = "A data de nascimento deve ser no passado")
     private LocalDate dataNascimento;
+
+    @NotBlank(message = "O telefone é obrigatório")
+    @Pattern(regexp = "^\\(?[1-9]{2}\\)?\\s?(?:[2-8]|9[1-9])[0-9]{3}\\s?\\-?[0-9]{4}$", 
+            message = "Telefone inválido. Use o formato (99) 99999-9999")
     private String telefone;
     
     @Column(length = 1000, columnDefinition = "TEXT")
@@ -55,6 +80,9 @@ public class Usuario {
     @JoinColumn(name = "id_usuario_autenticar")
     private UsuarioAutenticar usuarioAutenticar;
 
+    @NotBlank(message = "O papel do usuário é obrigatório")
+    @Column(nullable = false)
+    @Pattern(regexp = "^ROLE_(ADMIN|USER|PROF|DELETED)$", message = "Role do usuário inválida")
     private String role;
 
     public Usuario() {}
@@ -86,7 +114,11 @@ public class Usuario {
     }
     
     public void setCpf(String cpf) {
-        this.cpf = cpf.replaceAll("[^0-9]", "");
+        if (cpf != null) {
+            this.cpf = cpf.replaceAll("[^0-9]", "");
+        } else {
+            this.cpf = null;
+        }
     }
 
     public String getEmail() {
@@ -142,7 +174,13 @@ public class Usuario {
     }
 
     public void setRole(String role) {
-        this.role = role;
+        // Valida e normaliza a role usando o enum
+        if (role != null) {
+            UserRole validatedRole = UserRole.fromString(role); // Valida se é uma role válida
+            this.role = validatedRole.getRole(); // Usa a versão normalizada
+        } else {
+            throw new IllegalArgumentException("Role não pode ser nula");
+        }
     }
 
     public String getTokenAtual() {

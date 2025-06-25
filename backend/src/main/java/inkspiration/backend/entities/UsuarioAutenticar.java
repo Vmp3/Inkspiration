@@ -1,6 +1,7 @@
 package inkspiration.backend.entities;
 
 import inkspiration.backend.dto.UsuarioAutenticarDTO;
+import inkspiration.backend.enums.UserRole;
 import inkspiration.backend.util.Hashing;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -8,6 +9,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 @Entity
 @Table(name = "usuario_autenticar")
@@ -17,23 +20,30 @@ public class UsuarioAutenticar {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idUsuarioAutenticar;
 
+    @NotBlank(message = "O CPF é obrigatório")
+    @Pattern(regexp = "^[0-9]{11}$", message = "CPF deve ter 11 dígitos")
     @Column(unique = true)
     private String cpf;
+    
+    @NotBlank(message = "A senha é obrigatória")
     private String senha;
+    
+    @NotBlank(message = "O papel do usuário é obrigatório")
+    @Pattern(regexp = "^ROLE_(ADMIN|USER|PROF|DELETED)$", message = "Role do usuário inválida")
     private String role;
 
     public UsuarioAutenticar(Long idUsuarioAutenticar, String cpf, String senha, String role) {
         this.idUsuarioAutenticar = idUsuarioAutenticar;
-        this.cpf = cpf.replaceAll("[^0-9]", "");
-        this.senha = Hashing.hash(senha);
-        this.role = role;
+        this.setCpf(cpf);
+        this.senha = senha;
+        this.setRole(role);
     }
 
     public UsuarioAutenticar(UsuarioAutenticarDTO dto) {
         this.idUsuarioAutenticar = dto.getIdUsuarioAutenticar();
-        this.cpf = dto.getCpf().replaceAll("[^0-9]", "");
-        this.senha = Hashing.hash(dto.getSenha());
-        this.role = dto.getRole();
+        this.setCpf(dto.getCpf());
+        this.senha = dto.getSenha();
+        this.setRole(dto.getRole());
     }
 
     public UsuarioAutenticar() {
@@ -49,7 +59,11 @@ public class UsuarioAutenticar {
         return cpf;
     }
     public void setCpf(String cpf) {
-        this.cpf = cpf.replaceAll("[^0-9]", "");
+        if (cpf != null) {
+            this.cpf = cpf.replaceAll("[^0-9]", "");
+        } else {
+            this.cpf = null;
+        }
     }
     public String getSenha() {
         return senha;
@@ -61,6 +75,11 @@ public class UsuarioAutenticar {
         return role;
     }
     public void setRole(String role) {
-        this.role = role;
+        if (role != null) {
+            UserRole validatedRole = UserRole.fromString(role);
+            this.role = validatedRole.getRole();
+        } else {
+            throw new IllegalArgumentException("Role não pode ser nula");
+        }
     }
 }
