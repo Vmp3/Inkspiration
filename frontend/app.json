@@ -33,24 +33,9 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-screen-orientation"
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "inkspiration"
-      }
-    },
     "orientation": "portrait",
-    "updates": {
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/your-project-id"
-    },
     "assetBundlePatterns": [
       "**/*"
-    ],
-    "experiments": {
-      "tsconfigPaths": true
-    }
+    ]
   }
 }
