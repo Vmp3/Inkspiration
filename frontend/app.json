@@ -6,25 +6,16 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true,
-      "keyboardAppearance": "light",
-      "requireFullScreen": true,
-      "statusBarHidden": false,
-      "statusBarStyle": "dark",
-      "userInterfaceStyle": "light",
-      "bundleIdentifier": "com.inkspiration.app",
-      "buildNumber": "1.0.0"
+      "supportsTablet": true
     },
     "android": {
       "softwareKeyboardLayoutMode": "pan",
-      "windowSoftInputMode": "adjustResize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -32,14 +23,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "inkspiration"
-      }
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ]
+    }
   }
 }

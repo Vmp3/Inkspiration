@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { TextInput, StyleSheet, View, TouchableOpacity, Text, Platform, Keyboard, PixelRatio } from 'react-native';
+import { TextInput, StyleSheet, View, TouchableOpacity, Text, Platform, Keyboard } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { MaterialIcons } from '@expo/vector-icons';
-import { iosKeyboardConfig } from '../../config/iosConfig';
 
 const Input = ({ 
   placeholder, 
@@ -112,15 +111,6 @@ const Input = ({
             Platform.OS === 'ios' && styles.inputIOS,
             style
           ]}
-          {...(Platform.OS === 'ios' ? {
-            ...iosKeyboardConfig,
-            scaleX: 1,
-            scaleY: 1,
-            textAlignVertical: 'center',
-            textAlign: 'left',
-            allowFontScaling: false,
-            fontSize: PixelRatio.roundToNearestPixel(14)
-          } : {})}
           placeholder={placeholder}
           value={value}
           onChangeText={onChangeText}
@@ -133,12 +123,13 @@ const Input = ({
           multiline={multiline}
           numberOfLines={multiline ? (numberOfLines || 4) : 1}
           placeholderTextColor="#9CA3AF"
-          blurOnSubmit={true}
-          returnKeyType="done"
-          autoCapitalize="none"
+          textContentType="none"
+          autoComplete="off"
           autoCorrect={false}
+          autoCapitalize="none"
           spellCheck={false}
-          enablesReturnKeyAutomatically={true}
+          maxFontSizeMultiplier={1}
+          allowFontScaling={false}
           {...props}
         />
         {renderPasswordToggle()}
@@ -198,7 +189,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 40,
     paddingHorizontal: 12,
-    fontSize: 14,
+    fontSize: 16,
     backgroundColor: 'transparent',
     borderWidth: 0,
     color: '#000',
