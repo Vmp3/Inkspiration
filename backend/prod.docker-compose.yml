@@ -10,30 +10,7 @@ services:
       - "8080:8080"
     env_file:
       - .env
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - JAVA_OPTS=-Xmx512m -XX:+UseContainerSupport
     restart: unless-stopped
-
-  db:
-    container_name: db-prod
-    image: postgres:15
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./init-scripts:/docker-entrypoint-initdb.d
-      - postgres_data_prod:/var/lib/postgresql/data
-    env_file:
-      - .env
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-volumes:
-  postgres_data_prod:
