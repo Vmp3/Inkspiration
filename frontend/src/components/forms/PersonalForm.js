@@ -136,8 +136,12 @@ const PersonalForm = ({
           ]}
           editable={!isEditMode}
         />
-        {isEditMode && <Text style={styles.helperText}>O CPF não pode ser alterado</Text>}
-        {cpfError ? <Text style={styles.errorText}>{cpfError}</Text> : null}
+        {isEditMode ? (
+          <Text style={styles.helperText}>O CPF não pode ser alterado</Text>
+        ) : null}
+        {cpfError ? (
+          <Text style={styles.errorText}>{cpfError}</Text>
+        ) : null}
       </View>
       
       {/* Email e Telefone */}

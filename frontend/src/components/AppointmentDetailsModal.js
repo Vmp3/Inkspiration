@@ -26,7 +26,8 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
   // Usar as informações que já vêm do backend
   const canRate = appointment?.podeAvaliar === true;
   const hasRated = appointment?.podeAvaliar === false;
-  const existingRating = hasRated ? {
+  const isCompleted = appointment?.status?.toUpperCase() === 'CONCLUIDO';
+  const existingRating = (hasRated && isCompleted) ? {
     idAvaliacao: appointment?.idAvaliacao,
     rating: appointment?.ratingAvaliacao,
     descricao: appointment?.descricaoAvaliacao
@@ -115,10 +116,10 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
     }
   };
   
-  const isCanceled = appointment.status?.toUpperCase() === 'CANCELADO';
+  const isCanceled = appointment?.status?.toUpperCase() === 'CANCELADO';
   
   const getStatusBadgeStyle = () => {
-    switch(appointment.status?.toUpperCase()) {
+    switch(appointment?.status?.toUpperCase()) {
       case 'AGENDADO': 
         return { backgroundColor: '#E0F2FE', textColor: '#0369A1' };
       case 'CANCELADO': 
@@ -281,7 +282,7 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
                   <Text style={styles.statusLabel}>Status</Text>
                   <View style={[styles.statusBadge, { backgroundColor: statusStyle.backgroundColor }]}>
                     <Text style={[styles.statusText, { color: statusStyle.textColor }]}>
-                      {getStatusLabel(appointment.status)}
+                      {getStatusLabel(appointment?.status)}
                     </Text>
                   </View>
                 </View>

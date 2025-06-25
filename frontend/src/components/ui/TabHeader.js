@@ -18,101 +18,114 @@ const TabHeader = ({ tabs, activeTab, setActiveTab, onTabPress, availableTabs })
   };
 
   return (
-    <ScrollView 
-      horizontal 
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={[
-        styles.tabsScrollContainer,
-        isMobile && styles.tabsScrollContainerMobile
-      ]}
-    >
-      <View style={styles.tabsContainer}>
-        {tabs.map((tab) => {
-          const isAvailable = !availableTabs || availableTabs.includes(tab.id);
-          const isActive = activeTab === tab.id;
-          
-          return (
-            <TouchableOpacity
-              key={tab.id}
-              style={[
-                styles.tabItem,
-                isMobile && styles.tabItemMobile,
-                isActive && styles.activeTabItem,
-                !isAvailable && styles.disabledTabItem,
-              ]}
-              onPress={() => handleTabPress(tab.id)}
-              disabled={!isAvailable}
-            >
-              <Text
+    <View style={styles.container}>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.tabsScrollContainer,
+          isMobile && styles.tabsScrollContainerMobile
+        ]}
+      >
+        <View style={[
+          styles.tabsContainer,
+          isMobile && styles.tabsContainerMobile
+        ]}>
+          {tabs.map((tab) => {
+            const isAvailable = !availableTabs || availableTabs.includes(tab.id);
+            const isActive = activeTab === tab.id;
+            
+            return (
+              <TouchableOpacity
+                key={tab.id}
                 style={[
-                  styles.tabText,
-                  isMobile && styles.tabTextMobile,
-                  isActive && styles.activeTabText,
-                  !isAvailable && styles.disabledTabText
+                  styles.tabItem,
+                  isMobile && styles.tabItemMobile,
+                  isActive && styles.activeTabItem,
+                  !isAvailable && styles.disabledTabItem,
                 ]}
-                numberOfLines={isMobile ? 2 : 1}
-                ellipsizeMode="tail"
+                onPress={() => handleTabPress(tab.id)}
+                disabled={!isAvailable}
               >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </ScrollView>
+                <Text
+                  style={[
+                    styles.tabText,
+                    isMobile && styles.tabTextMobile,
+                    isActive && styles.activeTabText,
+                    !isAvailable && styles.disabledTabText
+                  ]}
+                  numberOfLines={isMobile ? 2 : 1}
+                  ellipsizeMode="tail"
+                >
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#f8f8f8',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e2e2',
+  },
   tabsScrollContainer: {
     flexGrow: 1,
-    width: '100%',
+    paddingHorizontal: 4,
   },
   tabsScrollContainerMobile: {
-    minWidth: '100%',
+    paddingHorizontal: 2,
   },
   tabsContainer: {
     flexDirection: 'row',
     backgroundColor: '#f8f8f8',
-    borderBottomWidth: 0,
-    width: '100%',
+    minWidth: '100%',
+  },
+  tabsContainerMobile: {
+    paddingVertical: 4,
   },
   tabItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 80,
     flex: 1,
+    minHeight: 50,
   },
   tabItemMobile: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 12,
-    minWidth: 0,
-    flex: 1,
+    minHeight: 60,
+    marginHorizontal: 2,
   },
   activeTabItem: {
     backgroundColor: '#fff',
     borderBottomWidth: 3,
-    borderBottomColor: '#eaeaea',
+    borderBottomColor: '#000000',
   },
   disabledTabItem: {
     backgroundColor: '#f8f8f8',
     opacity: 0.5,
   },
   tabText: {
-    fontSize: 13.5,
+    fontSize: 14,
     color: '#666',
     textAlign: 'center',
-    fontWeight: '400',
+    fontWeight: '500',
   },
   tabTextMobile: {
-    fontSize: 12,
-    lineHeight: 14,
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '500',
   },
   activeTabText: {
     fontWeight: '600',
-    color: '#111',
+    color: '#000000',
   },
   disabledTabText: {
     color: '#ccc',
