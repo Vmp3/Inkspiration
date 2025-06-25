@@ -24,13 +24,14 @@ const Input = ({
 
   useEffect(() => {
     if (Platform.OS === 'ios') {
-      const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-        // Force a re-render to prevent white rectangle on iOS
-        setIsFocused(false);
-      });
+      // Previne zoom no iOS
+      const meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0';
+      document.getElementsByTagName('head')[0].appendChild(meta);
 
       return () => {
-        keyboardDidHideListener?.remove();
+        document.getElementsByTagName('head')[0].removeChild(meta);
       };
     }
   }, []);
@@ -47,18 +48,7 @@ const Input = ({
   };
 
   const handleBlur = () => {
-    // Force layout cleanup on iOS
-    if (Platform.OS === 'ios') {
-      // Dismiss keyboard explicitly first
-      Keyboard.dismiss();
-      
-      // Then update state after a brief delay
-      setTimeout(() => {
-        setIsFocused(false);
-      }, 100);
-    } else {
-      setIsFocused(false);
-    }
+    setIsFocused(false);
   };
 
   const handleSubmitEditing = () => {
@@ -94,6 +84,15 @@ const Input = ({
     );
   };
 
+  const inputProps = Platform.OS === 'ios' ? {
+    onFocus: (e) => {
+      // Previne zoom no foco do input
+      const target = e.target;
+      target.setAttribute('style', 'font-size: 16px !important');
+      handleFocus();
+    }
+  } : {};
+
   return (
     <View style={[styles.container, Platform.OS === 'ios' && styles.containerIOS]}>
       <View style={[
@@ -128,8 +127,7 @@ const Input = ({
           autoCorrect={false}
           autoCapitalize="none"
           spellCheck={false}
-          maxFontSizeMultiplier={1}
-          allowFontScaling={false}
+          {...inputProps}
           {...props}
         />
         {renderPasswordToggle()}
@@ -167,14 +165,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#fff',
     overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: 'transparent',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0,
-        shadowRadius: 0,
-      },
-    }),
   },
   inputContainerIOS: {
     backgroundColor: '#fff',
@@ -206,6 +196,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     color: '#000',
     opacity: 1,
+    minHeight: 20, // Ajuda a prevenir zoom
   },
   inputWithIcon: {
     paddingLeft: 36,
