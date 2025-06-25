@@ -1,5 +1,5 @@
-import React from 'react';
-import { StatusBar, View, Platform, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { StatusBar, View, Platform, StyleSheet, KeyboardAvoidingView, Keyboard } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -66,8 +66,58 @@ const publicRoutes = [
 ];
 
 export default function App() {
+  useEffect(() => {
+    // iOS specific keyboard handling
+    if (Platform.OS === 'ios') {
+      const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+        // Force a small delay to let iOS clean up properly
+        setTimeout(() => {
+          // This helps prevent the white rectangle issue
+        }, 50);
+      });
+
+      return () => {
+        keyboardDidHideListener?.remove();
+      };
+    }
+  }, []);
+
+  const AppContent = () => (
+    <View style={styles.appContainer}>
+      <SafeAreaView style={styles.headerContainer}>
+        <Header />
+      </SafeAreaView>
+
+      <ProtectedRoute publicRoutes={publicRoutes}>
+        <Stack.Navigator
+          initialRouteName="Home"
+          screenOptions={{
+            headerShown: false,
+            animation: Platform.OS === 'ios' ? 'default' : 'slide_from_right',
+          }}
+        >
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+          <Stack.Screen name="Explore" component={ExploreScreen} />
+          <Stack.Screen name="About" component={AboutScreen} />
+          <Stack.Screen name="Profile" component={EditProfileScreen} />
+          <Stack.Screen name="Artist" component={ArtistScreen} />
+          <Stack.Screen name="Booking" component={BookingScreen} />
+          <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
+          <Stack.Screen name="ProfessionalRegister" component={ProfessionalRegisterScreen} />
+          <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} />
+          <Stack.Screen name="MyAttendances" component={MyAttendancesScreen} />
+          <Stack.Screen name="TwoFactorSetup" component={TwoFactorSetupScreen} />
+        </Stack.Navigator>
+      </ProtectedRoute>
+    </View>
+  );
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={styles.rootContainer}>
       <SafeAreaProvider>
         <AuthProvider>
           <NavigationContainer linking={linking}>
@@ -77,38 +127,19 @@ export default function App() {
               translucent={Platform.OS === 'android'} 
             />
             
-            <View style={{ flex: 1 }}>
-              <SafeAreaView style={{ zIndex: 1000 }}>
-                <Header />
-              </SafeAreaView>
+            {Platform.OS === 'ios' ? (
+              <KeyboardAvoidingView 
+                style={styles.keyboardContainer}
+                behavior="padding"
+                keyboardVerticalOffset={0}
+              >
+                <AppContent />
+              </KeyboardAvoidingView>
+            ) : (
+              <AppContent />
+            )}
 
-              <ProtectedRoute publicRoutes={publicRoutes}>
-                <Stack.Navigator
-                  initialRouteName="Home"
-                  screenOptions={{
-                    headerShown: false,
-                  }}
-                >
-                  <Stack.Screen name="Home" component={HomeScreen} />
-                  <Stack.Screen name="Login" component={LoginScreen} />
-                  <Stack.Screen name="Register" component={RegisterScreen} />
-                  <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-                  <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-                  <Stack.Screen name="Explore" component={ExploreScreen} />
-                  <Stack.Screen name="About" component={AboutScreen} />
-                  <Stack.Screen name="Profile" component={EditProfileScreen} />
-                  <Stack.Screen name="Artist" component={ArtistScreen} />
-                  <Stack.Screen name="Booking" component={BookingScreen} />
-                  <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
-                  <Stack.Screen name="ProfessionalRegister" component={ProfessionalRegisterScreen} />
-                  <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} />
-                  <Stack.Screen name="MyAttendances" component={MyAttendancesScreen} />
-                  <Stack.Screen name="TwoFactorSetup" component={TwoFactorSetupScreen} />
-                </Stack.Navigator>
-              </ProtectedRoute>
-            </View>
-
-            <Toast config={toastConfig} />
+            <Toast config={toastConfig} style={styles.toastContainer} />
           </NavigationContainer>
         </AuthProvider>
       </SafeAreaProvider>
@@ -117,6 +148,22 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  keyboardContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  appContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  headerContainer: {
+    zIndex: 1000,
+    backgroundColor: '#ffffff',
+  },
   toastContainer: {
     position: 'absolute',
     top: 0,

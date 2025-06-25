@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { TextInput, StyleSheet, View, TouchableOpacity, Text, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { TextInput, StyleSheet, View, TouchableOpacity, Text, Platform, Keyboard } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather'; // Changed to react-native-vector-icons
 import { MaterialIcons } from '@expo/vector-icons';
 
@@ -22,6 +22,19 @@ const Input = ({
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+        // Force a re-render to prevent white rectangle on iOS
+        setIsFocused(false);
+      });
+
+      return () => {
+        keyboardDidHideListener?.remove();
+      };
+    }
+  }, []);
+
   const handleKeyPress = (event) => {
     const key = event.nativeEvent?.key || event.key;
     if (key === 'Enter' && onSubmitEditing) {
@@ -34,12 +47,26 @@ const Input = ({
   };
 
   const handleBlur = () => {
-    setIsFocused(false);
-    // Force layout update on iOS to prevent white rectangle
+    // Force layout cleanup on iOS
     if (Platform.OS === 'ios') {
+      // Dismiss keyboard explicitly first
+      Keyboard.dismiss();
+      
+      // Then update state after a brief delay
       setTimeout(() => {
-        // This timeout helps iOS properly clean up the keyboard area
+        setIsFocused(false);
       }, 100);
+    } else {
+      setIsFocused(false);
+    }
+  };
+
+  const handleSubmitEditing = () => {
+    if (Platform.OS === 'ios') {
+      Keyboard.dismiss();
+    }
+    if (onSubmitEditing) {
+      onSubmitEditing();
     }
   };
 
@@ -68,10 +95,11 @@ const Input = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, Platform.OS === 'ios' && styles.containerIOS]}>
       <View style={[
         styles.inputContainer,
-        isFocused && styles.inputContainerFocused
+        isFocused && styles.inputContainerFocused,
+        Platform.OS === 'ios' && styles.inputContainerIOS
       ]}>
         {renderIcon()}
         <TextInput
@@ -80,6 +108,7 @@ const Input = ({
             icon && styles.inputWithIcon,
             multiline && styles.multilineInput,
             secureTextEntry && styles.inputWithPassword,
+            Platform.OS === 'ios' && styles.inputIOS,
             style
           ]}
           placeholder={placeholder}
@@ -87,7 +116,7 @@ const Input = ({
           onChangeText={onChangeText}
           onFocus={handleFocus}
           onBlur={handleBlur}
-          onSubmitEditing={onSubmitEditing}
+          onSubmitEditing={handleSubmitEditing}
           onKeyPress={handleKeyPress}
           secureTextEntry={secureTextEntry && !passwordVisible}
           keyboardType={keyboardType || 'default'}
@@ -96,6 +125,10 @@ const Input = ({
           placeholderTextColor="#9CA3AF"
           blurOnSubmit={true}
           returnKeyType="done"
+          autoCapitalize="none"
+          autoCorrect={false}
+          spellCheck={false}
+          enablesReturnKeyAutomatically={true}
           {...props}
         />
         {renderPasswordToggle()}
@@ -122,6 +155,9 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: 'transparent',
   },
+  containerIOS: {
+    backgroundColor: 'transparent',
+  },
   inputContainer: {
     position: 'relative',
     flex: 1,
@@ -129,7 +165,7 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     borderRadius: 4,
     backgroundColor: '#fff',
-    overflow: 'hidden', // This helps prevent visual artifacts on iOS
+    overflow: 'hidden',
     ...Platform.select({
       ios: {
         shadowColor: 'transparent',
@@ -138,6 +174,11 @@ const styles = StyleSheet.create({
         shadowRadius: 0,
       },
     }),
+  },
+  inputContainerIOS: {
+    backgroundColor: '#fff',
+    borderColor: '#E5E7EB',
+    opacity: 1,
   },
   inputContainerFocused: {
     borderColor: '#000000',
@@ -159,6 +200,11 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
       },
     }),
+  },
+  inputIOS: {
+    backgroundColor: 'transparent',
+    color: '#000',
+    opacity: 1,
   },
   inputWithIcon: {
     paddingLeft: 36,
