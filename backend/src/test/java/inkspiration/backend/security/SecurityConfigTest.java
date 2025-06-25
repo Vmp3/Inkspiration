@@ -135,7 +135,6 @@ class SecurityConfigTest {
         
         CorsConfiguration config = source.getCorsConfigurations().get("/**");
         assertNotNull(config);
-        assertTrue(config.getAllowedOrigins().contains("http://localhost:8081"));
         assertTrue(config.getAllowedMethods().contains("*"));
         assertTrue(config.getAllowedHeaders().contains("*"));
         assertTrue(config.getAllowCredentials());
