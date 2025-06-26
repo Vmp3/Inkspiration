@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,29 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DefaultUser from '../../assets/default_user.png';
+import AvaliacaoService from '../services/AvaliacaoService';
 
 const AppointmentCard = ({ appointment, onPress, isProfessional = false }) => {
+  const [isAvaliado, setIsAvaliado] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    async function checkAvaliacao() {
+      if (appointment.status === 'CONCLUIDO') {
+        try {
+          const avaliacao = await AvaliacaoService.buscarPorAgendamento(appointment.idAgendamento);
+          if (mounted) setIsAvaliado(!!avaliacao);
+        } catch (e) {
+          if (mounted) setIsAvaliado(false);
+        }
+      } else {
+        setIsAvaliado(false);
+      }
+    }
+    checkAvaliacao();
+    return () => { mounted = false; };
+  }, [appointment]);
+
   const getStatusStyle = (status) => {
     switch (status) {
       case 'AGENDADO':
@@ -166,6 +187,11 @@ const AppointmentCard = ({ appointment, onPress, isProfessional = false }) => {
             {appointment.status || 'AGENDADO'}
           </Text>
         </View>
+        {appointment.status === 'CONCLUIDO' && isAvaliado && (
+          <View style={styles.avaliadoBadge}>
+            <Text style={styles.avaliadoText}>Avaliado</Text>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -281,6 +307,18 @@ const styles = StyleSheet.create({
   addressText: {
     flex: 1,
     flexWrap: 'wrap',
+  },
+  avaliadoBadge: {
+    backgroundColor: '#C7D2FE',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginLeft: 8,
+  },
+  avaliadoText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#3730A3',
   },
 });
 
