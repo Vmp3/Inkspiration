@@ -1,5 +1,6 @@
 package inkspiration.backend.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.NotBlank;
@@ -10,12 +11,14 @@ public class AgendamentoRequestDTO {
     @NotBlank(message = "Tipo de serviço é obrigatório")
     private String tipoServico;
     
-    @NotBlank(message = "Descrição é obrigatória")
-    @Size(min = 20, max = 500, message = "Descrição deve ter entre 20 e 500 caracteres")
+    @NotBlank(message = "Descrição não pode ser nula ou vazia")
+    @Size(max = 500, message = "A descrição não pode exceder 500 caracteres")
     private String descricao;
     
     @NotNull(message = "Data de início é obrigatória")
     private LocalDateTime dtInicio;
+    
+    private BigDecimal valor;
     
     @NotNull(message = "ID do profissional é obrigatório")
     private Long idProfissional;
@@ -26,10 +29,11 @@ public class AgendamentoRequestDTO {
     public AgendamentoRequestDTO() {}
 
     public AgendamentoRequestDTO(String tipoServico, String descricao, LocalDateTime dtInicio, 
-                               Long idProfissional, Long idUsuario) {
+                               BigDecimal valor, Long idProfissional, Long idUsuario) {
         this.tipoServico = tipoServico;
         this.descricao = descricao;
         this.dtInicio = dtInicio;
+        this.valor = valor;
         this.idProfissional = idProfissional;
         this.idUsuario = idUsuario;
     }
@@ -56,6 +60,14 @@ public class AgendamentoRequestDTO {
 
     public void setDtInicio(LocalDateTime dtInicio) {
         this.dtInicio = dtInicio;
+    }
+
+    public BigDecimal getValor() {
+        return valor;
+    }
+
+    public void setValor(BigDecimal valor) {
+        this.valor = valor;
     }
 
     public Long getIdProfissional() {

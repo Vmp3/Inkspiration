@@ -17,6 +17,7 @@ import { differenceInDays } from 'date-fns';
 import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import Footer from '../components/Footer';
+import { appointmentsMessages } from '../components/appointments/messages';
 import AppointmentCard from '../components/AppointmentCard';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
@@ -78,8 +79,8 @@ const MyAppointmentsScreen = () => {
         loadPastAppointments(0, shouldRefresh)
       ]);
     } catch (error) {
-      console.error('Erro ao carregar agendamentos:', error);
-      toastHelper.showError('Erro ao carregar seus agendamentos');
+      // console.error('Erro ao carregar agendamentos:', error);
+      toastHelper.showError(appointmentsMessages.errors.loadAppointments);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -103,7 +104,7 @@ const MyAppointmentsScreen = () => {
       
       setCurrentFuturePage(page);
     } catch (error) {
-      console.error('Erro ao carregar agendamentos futuros:', error);
+      // console.error('Erro ao carregar agendamentos futuros:', error);
       throw error;
     } finally {
       setIsLoadingFuture(false);
@@ -128,7 +129,7 @@ const MyAppointmentsScreen = () => {
       
       setCurrentPastPage(page);
     } catch (error) {
-      console.error('Erro ao carregar agendamentos passados:', error);
+      // console.error('Erro ao carregar agendamentos passados:', error);
       throw error;
     } finally {
       setIsLoadingPast(false);
@@ -203,7 +204,7 @@ const MyAppointmentsScreen = () => {
     const daysDiff = differenceInDays(appointmentDate, today);
     
     if (daysDiff < 3) {
-      toastHelper.showError("A edição só é permitida com no mínimo 3 dias de antecedência.");
+      toastHelper.showError(appointmentsMessages.errors.editTimeLimit);
       return;
     }
     
@@ -226,7 +227,7 @@ const MyAppointmentsScreen = () => {
     const daysDiff = differenceInDays(appointmentDate, today);
     
     if (daysDiff < 3) {
-      toastHelper.showError("O cancelamento só é permitido com no mínimo 3 dias de antecedência.");
+      toastHelper.showError(appointmentsMessages.errors.cancelTimeLimit);
       return;
     }
     
@@ -248,15 +249,15 @@ const MyAppointmentsScreen = () => {
         'CANCELADO'
       );
       
-      toastHelper.showSuccess('Agendamento cancelado com sucesso');
+      toastHelper.showSuccess(appointmentsMessages.success.appointmentCanceled);
       setIsCancelModalVisible(false);
       setSelectedAppointment(null);
       
       loadAppointments(true);
     } catch (error) {
-      console.error('Erro ao cancelar agendamento:', error);
+      // console.error('Erro ao cancelar agendamento:', error);
       
-      let errorMessage = 'Erro ao cancelar o agendamento';
+      let errorMessage = appointmentsMessages.errors.cancelAppointment;
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
@@ -497,7 +498,7 @@ const MyAppointmentsScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollViewContent}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
         }
@@ -556,6 +557,7 @@ const MyAppointmentsScreen = () => {
                 appointment={selectedAppointment}
                 onClose={handleCloseCompletedModal}
                 onOpenReview={() => handleOpenReviewModal(selectedAppointment)}
+                onRefresh={loadAppointments}
               />
             )}
             {selectedAppointment.status?.toUpperCase() === 'CANCELADO' && (
@@ -572,6 +574,7 @@ const MyAppointmentsScreen = () => {
                 onClose={handleCloseModal}
                 onEdit={handleEditAppointment}
                 onCancel={handleCancelAppointment}
+                onRefresh={loadAppointments}
               />
             )}
           </>
@@ -668,7 +671,7 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  scrollViewContent: {
+  scrollContent: {
     flexGrow: 1,
   },
   header: {
@@ -708,7 +711,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 16,
-    minHeight: '100%',
+    paddingBottom: 24,
   },
   section: {
     marginBottom: 24,

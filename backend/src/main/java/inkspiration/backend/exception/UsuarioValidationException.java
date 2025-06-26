@@ -60,4 +60,43 @@ public class UsuarioValidationException {
             super("Senha é obrigatória");
         }
     }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public static class SenhaInvalidaException extends RuntimeException {
+        public SenhaInvalidaException(String message) {
+            super(message);
+        }
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public static class IdadeMinimaException extends RuntimeException {
+        public IdadeMinimaException(int idadeMinima) {
+            super("Você deve ter pelo menos " + idadeMinima + " anos para se cadastrar");
+        }
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public static class EnderecoObrigatorioException extends RuntimeException {
+        public EnderecoObrigatorioException() {
+            super("Endereço é obrigatório");
+        }
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public static class TelefoneObrigatorioException extends RuntimeException {
+        public TelefoneObrigatorioException() {
+            super("Telefone é obrigatório");
+        }
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public static class TelefoneInvalidoException extends RuntimeException {
+        public TelefoneInvalidoException() {
+            super("Telefone inválido. Use o formato (99) 99999-9999.");
+        }
+        
+        public TelefoneInvalidoException(String message) {
+            super(message);
+        }
+    }
 } 

@@ -1,50 +1,24 @@
-import React from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ScrollView, Dimensions, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import ImageWithAlt from '../ui/ImageWithAlt';
 
 const PortfolioForm = ({ 
   biography, 
   setBiography, 
-  biographyError,
+  biographyError, 
   handleBiographyChange,
   portfolioImages, 
-  profileImage, 
   handleAddPortfolioImage,
   handleRemovePortfolioImage,
   pickImage
 }) => {
+  const screenWidth = Dimensions.get('window').width;
+  const isMobile = screenWidth < 768;
+  
   const isValid = biographyError === '' && biography.trim().length >= 20;
   return (
     <View style={styles.tabContent}>
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Foto de Perfil</Text>
-        <View style={styles.profileSection}>
-          <TouchableOpacity 
-            style={styles.profileImageContainer}
-            onPress={() => pickImage('profile')}
-          >
-            {profileImage ? (
-              <Image 
-                source={{ uri: profileImage.uri }}
-                style={styles.profileImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.profileImagePlaceholder}>
-                <Feather name="user-plus" size={32} color="#999" />
-              </View>
-            )}
-          </TouchableOpacity>
-          <View style={styles.profileImageInfo}>
-            <Text style={styles.profileImageText}>
-              {profileImage ? 'Toque para alterar sua foto' : 'Toque para adicionar sua foto'}
-            </Text>
-            <Text style={styles.profileImageSubtext}>
-              Recomendado: imagem quadrada, máximo 5MB
-            </Text>
-          </View>
-        </View>
-      </View>
 
       <View style={styles.formGroup}>
         <Text style={styles.label}>Biografia *</Text>
@@ -75,16 +49,29 @@ const PortfolioForm = ({
       </View>
       
       <View style={styles.formGroup}>
-        <View style={styles.portfolioHeader}>
-          <Text style={styles.label}>Portfólio de Trabalhos</Text>
-          <TouchableOpacity 
-            style={styles.addButton}
-            onPress={handleAddPortfolioImage}
-          >
-            <Feather name="plus" size={16} color="#000" style={styles.addButtonIcon} />
-            <Text style={styles.addButtonText}>Adicionar Trabalho</Text>
-          </TouchableOpacity>
-        </View>
+        {isMobile ? (
+          <View style={styles.portfolioHeaderMobile}>
+            <Text style={styles.label}>Portfólio de Trabalhos</Text>
+            <TouchableOpacity 
+              style={styles.addButtonMobile}
+              onPress={handleAddPortfolioImage}
+            >
+              <Feather name="plus" size={16} color="#000" style={styles.addButtonIcon} />
+              <Text style={styles.addButtonText}>Adicionar Trabalho</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.portfolioHeaderDesktop}>
+            <Text style={styles.label}>Portfólio de Trabalhos</Text>
+            <TouchableOpacity 
+              style={styles.addButton}
+              onPress={handleAddPortfolioImage}
+            >
+              <Feather name="plus" size={16} color="#000" style={styles.addButtonIcon} />
+              <Text style={styles.addButtonText}>Adicionar Trabalho</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         
         <Text style={styles.portfolioHelpText}>
           Adicione fotos dos seus melhores trabalhos. Clique nos quadrados ou no botão acima para selecionar imagens.
@@ -97,10 +84,13 @@ const PortfolioForm = ({
                 style={styles.portfolioImageContainer}
                 onPress={() => pickImage('portfolio', index)}
               >
-                <Image
+                <ImageWithAlt
                   source={{ uri: image.uri }}
+                  alt={`Imagem ${index + 1} do portfólio`}
                   style={styles.portfolioImage}
                   resizeMode="cover"
+                  accessibilityLabel={`Imagem ${index + 1} do portfólio`}
+                  fallbackIconName="image"
                 />
               </TouchableOpacity>
               <TouchableOpacity
@@ -164,7 +154,32 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     marginTop: 4,
   },
-  portfolioHeader: {
+  portfolioHeaderMobile: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  addButtonMobile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 12,
+    alignSelf: 'flex-start',
+  },
+  addButtonIcon: {
+    marginRight: 5,
+  },
+  addButtonText: {
+    color: '#000',
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  portfolioHeaderDesktop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -179,14 +194,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     paddingHorizontal: 10,
     paddingVertical: 6,
-  },
-  addButtonIcon: {
-    marginRight: 5,
-  },
-  addButtonText: {
-    color: '#000',
-    fontWeight: '500',
-    fontSize: 14,
   },
   portfolioGrid: {
     flexDirection: 'row',
@@ -207,47 +214,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  profileImageContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 3,
-    borderColor: '#E5E7EB',
-    borderStyle: 'solid',
-    overflow: 'hidden',
-    backgroundColor: '#F9FAFB',
-    marginRight: 20,
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  profileImagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-  },
-  profileImageInfo: {
-    flex: 1,
-  },
-  profileImageText: {
-    fontSize: 16,
-    color: '#374151',
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  profileImageSubtext: {
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
-  },
+
   removeImageButton: {
     position: 'absolute',
     top: 12,

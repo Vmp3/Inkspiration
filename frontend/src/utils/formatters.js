@@ -104,9 +104,15 @@ const validateCPF = (cpf) => {
 };
 
 const validatePhone = (phone) => {
-  const numbers = phone.replace(/\D/g, '');
+  if (!phone || phone.trim() === '') return false;
   
-  return numbers.length === 11;
+  // Regex que aceita celular (com 9) e telefone fixo - mesmo do backend
+  const phoneRegex = /^\(?[1-9]{2}\)?\s?(?:[2-8]|9[1-9])[0-9]{3}\s?\-?[0-9]{4}$/;
+  
+  // Usar o telefone original para validação (mantém formatação)
+  const cleanPhone = phone.trim();
+  
+  return phoneRegex.test(cleanPhone);
 };
 
 const validateBirthDate = (birthDate) => {
@@ -160,6 +166,89 @@ const validateFullNameLength = (firstName, surname) => {
   return fullName.length <= 255;
 };
 
+const validateSocialMedia = (value) => {
+  if (!value || value.trim() === '') return true;
+  
+  return value.trim().length <= 50;
+};
+
+const validateWebsite = (value) => {
+  if (!value || value.trim() === '') return true;
+  
+  const trimmedValue = value.trim();
+  
+  // Verificar se excede o tamanho máximo
+  if (trimmedValue.length > 255) return false;
+  
+  // Verificar se começa com http:// ou https://
+  if (!trimmedValue.match(/^https?:\/\//)) return false;
+  
+  return true;
+};
+
+const validatePassword = (password) => {
+  if (!password) return false;
+  
+  // Mínimo 8 caracteres
+  if (password.length < 8) return false;
+  
+  // Pelo menos uma letra maiúscula
+  if (!/[A-Z]/.test(password)) return false;
+  
+  // Pelo menos um número
+  if (!/[0-9]/.test(password)) return false;
+  
+  // Pelo menos um caractere especial
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return false;
+  
+  return true;
+};
+
+const formatCurrency = (value) => {
+  if (!value && value !== 0) return '';
+  
+  const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+  
+  if (isNaN(numericValue)) return '';
+  
+  return numericValue.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
+const getPhoneValidationMessage = (phone) => {
+  if (!phone || phone.trim() === '') {
+    return 'Telefone é obrigatório';
+  }
+  
+  if (!validatePhone(phone)) {
+    return 'Telefone inválido. Use o formato (99) 99999-9999';
+  }
+  
+  return null; // Válido
+};
+
+const getWebsiteValidationMessage = (website) => {
+  if (!website || website.trim() === '') {
+    return null; // Website não é obrigatório
+  }
+  
+  const trimmedValue = website.trim();
+  
+  if (trimmedValue.length > 255) {
+    return 'Website deve ter no máximo 255 caracteres';
+  }
+  
+  if (!trimmedValue.match(/^https?:\/\//)) {
+    return 'O website deve começar com http:// ou https://';
+  }
+  
+  return null; // Válido
+};
+
 export {
   formatCPF,
   formatCEP,
@@ -172,5 +261,11 @@ export {
   validateBirthDate,
   validateFirstName,
   validateSurname,
-  validateFullNameLength
+  validateFullNameLength,
+  validateSocialMedia,
+  validateWebsite,
+  validatePassword,
+  formatCurrency,
+  getPhoneValidationMessage,
+  getWebsiteValidationMessage
 }; 

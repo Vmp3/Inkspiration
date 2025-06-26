@@ -1,6 +1,8 @@
 package inkspiration.backend.entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 
 @Entity
 @Table(name = "imagem")
@@ -11,18 +13,21 @@ public class Imagem {
     @Column(name = "id_imagem")
     private Long idImagem;
     
+    @Size(min = 10, message = "A imagem deve ter pelo menos 10 caracteres quando fornecida")
+    @Pattern(regexp = "^data:image\\/(jpeg|jpg|png|gif|bmp|webp);base64,[A-Za-z0-9+/=]+$", 
+             message = "Formato de imagem base64 inválido")
     @Column(name = "imagem_base64", columnDefinition = "TEXT")
     private String imagemBase64;
     
     @ManyToOne
-    @JoinColumn(name = "portifolio_id_portifolio")
-    private Portifolio portifolio;
+    @JoinColumn(name = "portfolio_id_portfolio")
+    private Portfolio portfolio;
     
     public Imagem() {}
     
-    public Imagem(String imagemBase64, Portifolio portifolio) {
-        this.imagemBase64 = imagemBase64;
-        this.portifolio = portifolio;
+    public Imagem(String imagemBase64, Portfolio portfolio) {
+        this.setImagemBase64(imagemBase64);
+        this.portfolio = portfolio;
     }
     
     // Getters e Setters
@@ -39,14 +44,29 @@ public class Imagem {
     }
     
     public void setImagemBase64(String imagemBase64) {
-        this.imagemBase64 = imagemBase64;
+        if (imagemBase64 != null) {
+            String cleanImage = imagemBase64.trim();
+            if (cleanImage.isEmpty()) {
+                this.imagemBase64 = null;
+                return;
+            }
+            if (cleanImage.length() < 10) {
+                throw new IllegalArgumentException("A imagem deve ter pelo menos 10 caracteres quando fornecida");
+            }
+            if (!cleanImage.matches("^data:image\\/(jpeg|jpg|png|gif|bmp|webp);base64,[A-Za-z0-9+/=]+$")) {
+                throw new IllegalArgumentException("Formato de imagem base64 inválido");
+            }
+            this.imagemBase64 = cleanImage;
+        } else {
+            this.imagemBase64 = null;
+        }
     }
     
-    public Portifolio getPortifolio() {
-        return portifolio;
+    public Portfolio getPortfolio() {
+        return portfolio;
     }
     
-    public void setPortifolio(Portifolio portifolio) {
-        this.portifolio = portifolio;
+    public void setPortfolio(Portfolio portfolio) {
+        this.portfolio = portfolio;
     }
 } 

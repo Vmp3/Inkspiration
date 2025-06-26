@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 import inkspiration.backend.dto.UsuarioDTO;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.exception.UsuarioException;
+import inkspiration.backend.exception.emailverification.EmailVerificationCriacaoUsuarioException;
+import inkspiration.backend.exception.emailverification.EmailVerificationEnvioException;
+import inkspiration.backend.exception.emailverification.EmailVerificationReenvioException;
+import inkspiration.backend.exception.emailverification.EmailVerificationValidacaoException;
 
 @Service
 public class EmailVerificationService {
@@ -22,6 +26,18 @@ public class EmailVerificationService {
 
     // Armazenamento em memória para dados temporários de verificação
     private final Map<String, PendingRegistration> pendingRegistrations = new ConcurrentHashMap<>();
+
+    public void requestEmailVerificationComValidacao(UsuarioDTO usuarioDTO) {
+        try {
+            requestEmailVerification(usuarioDTO);
+        } catch (UsuarioException.EmailJaExisteException e) {
+            throw new EmailVerificationValidacaoException("Email já cadastrado");
+        } catch (UsuarioException.CpfJaExisteException e) {
+            throw new EmailVerificationValidacaoException("CPF já cadastrado");
+        } catch (Exception e) {
+            throw new EmailVerificationEnvioException("Erro ao enviar email de verificação: " + e.getMessage());
+        }
+    }
 
     public void requestEmailVerification(UsuarioDTO usuarioDTO) {
         // Verificar se o email ou CPF já existem
@@ -54,6 +70,22 @@ public class EmailVerificationService {
             // Remover da memória se falhar ao enviar email
             pendingRegistrations.remove(usuarioDTO.getEmail());
             throw new RuntimeException("Erro ao enviar email de verificação: " + e.getMessage());
+        }
+    }
+
+    public Usuario verifyEmailAndCreateUserComValidacao(String email, String code) {
+        try {
+            return verifyEmailAndCreateUser(email, code);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("Código de verificação não encontrado") || 
+                e.getMessage().contains("Código de verificação expirado") ||
+                e.getMessage().contains("Código de verificação inválido")) {
+                throw new EmailVerificationValidacaoException(e.getMessage());
+            } else if (e.getMessage().contains("Erro ao criar usuário")) {
+                throw new EmailVerificationCriacaoUsuarioException(e.getMessage());
+            } else {
+                throw new EmailVerificationCriacaoUsuarioException("Erro durante a verificação do email: " + e.getMessage());
+            }
         }
     }
 
@@ -90,6 +122,21 @@ public class EmailVerificationService {
             return usuario;
         } catch (Exception e) {
             throw new RuntimeException("Erro ao criar usuário: " + e.getMessage());
+        }
+    }
+
+    public void resendVerificationCodeComValidacao(String email) {
+        try {
+            if (email == null || email.trim().isEmpty()) {
+                throw new EmailVerificationValidacaoException("Email é obrigatório");
+            }
+            resendVerificationCode(email);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("Nenhuma solicitação de verificação encontrada")) {
+                throw new EmailVerificationValidacaoException(e.getMessage());
+            } else {
+                throw new EmailVerificationReenvioException("Erro ao reenviar código de verificação: " + e.getMessage());
+            }
         }
     }
 

@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Platform } from 'react-native';
+import ImageWithAlt from './ui/ImageWithAlt';
 import DefaultUser from '../../assets/default_user.png'
 import StarRating from './ui/StarRating';
 
@@ -17,10 +18,12 @@ const ArtistCard = ({ artist }) => {
   return (
     <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.9}>
       <View style={styles.imageContainer}>
-        <Image 
-          source={coverImage ? { uri: coverImage } : { uri: DefaultUser }}
+        <ImageWithAlt 
+          source={coverImage ? { uri: coverImage } : DefaultUser}
+          alt={`Foto de perfil do tatuador ${name}`}
           style={styles.image}
           resizeMode="cover"
+          accessibilityLabel={`Foto de perfil do tatuador ${name}`}
         />
       </View>
       <View style={styles.content}>

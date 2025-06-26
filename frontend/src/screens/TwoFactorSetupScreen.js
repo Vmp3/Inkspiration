@@ -6,17 +6,17 @@ import {
   ScrollView, 
   SafeAreaView, 
   TouchableOpacity, 
-  Image,
   Alert,
   ActivityIndicator
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import toastHelper from '../utils/toastHelper';
 import ApiService from '../services/ApiService';
 import TwoFactorService from '../services/TwoFactorService';
 import { professionalMessages } from '../components/professional/messages';
 import { useEmailTimeout, EMAIL_TIMEOUT_CONFIG } from '../components/ui/EmailTimeout';
+import useNavigationHelper from '../hooks/useNavigationHelper';
 
 // Componentes
 import StepIndicator from '../components/TwoFactorSetup/StepIndicator';
@@ -27,9 +27,9 @@ import NavigationButtons from '../components/TwoFactorSetup/NavigationButtons';
 import RecoverySection from '../components/TwoFactorSetup/RecoverySection';
 
 const TwoFactorSetupScreen = () => {
-  const navigation = useNavigation();
+  const { safeGoBackToProfile } = useNavigationHelper();
   const route = useRoute();
-  const { action, onSuccess } = route.params; // 'enable' ou 'disable'
+  const { action } = route.params;
   
   const [step, setStep] = useState(1); // 1: instrucoes, 2: qrcode/codigo, 3: verificacao
   const [qrCode, setQrCode] = useState(null);
@@ -66,13 +66,13 @@ const TwoFactorSetupScreen = () => {
       setOtpAuthUrl(response.otpAuthUrl);
       setQrCode(response.qrCode);
     } catch (error) {
-      console.error('Error generating QR code:', error);
+      // console.error('Error generating QR code:', error);
       setError(error.message || professionalMessages.twoFactorErrors.generateQR);
-      navigation.goBack();
+      safeGoBackToProfile();
     } finally {
       setIsGeneratingQR(false);
     }
-  }, [navigation]);
+  }, [safeGoBackToProfile]);
 
   const handleNextStep = () => {
     if (step < 3) {
@@ -150,7 +150,7 @@ const TwoFactorSetupScreen = () => {
 
       if (response && response.success) {
         toastHelper.showSuccess(response.message);
-        navigation.goBack();
+        safeGoBackToProfile();
       } else {
         toastHelper.showError(response.message || professionalMessages.twoFactorErrors.verifyCode);
       }
@@ -196,10 +196,7 @@ const TwoFactorSetupScreen = () => {
 
       if (response && response.success) {
         toastHelper.showSuccess(response.message);
-        if (onSuccess) {
-          onSuccess();
-        }
-        navigation.goBack();
+        safeGoBackToProfile();
       } else {
         toastHelper.showError(response.message || professionalMessages.twoFactorErrors.verifyRecovery);
       }
@@ -246,7 +243,7 @@ const TwoFactorSetupScreen = () => {
       )}
 
       <NavigationButtons
-        onPrev={() => navigation.goBack()}
+        onPrev={safeGoBackToProfile}
         onNext={handleNextStep}
         prevText="Cancelar"
         nextText={action === 'enable' ? 'Começar Configuração' : 'Continuar'}
@@ -347,7 +344,7 @@ const TwoFactorSetupScreen = () => {
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton} 
-            onPress={() => navigation.goBack()}
+            onPress={safeGoBackToProfile}
           >
             <Text style={styles.backButtonText}>← Voltar</Text>
           </TouchableOpacity>
@@ -356,9 +353,11 @@ const TwoFactorSetupScreen = () => {
         <View style={styles.content}>
           <StepIndicator currentStep={step} totalSteps={3} />
 
-          {step === 1 && renderStep1()}
-          {step === 2 && renderStep2()}
-          {step === 3 && renderStep3()}
+          <View style={styles.stepContent}>
+            {step === 1 && renderStep1()}
+            {step === 2 && renderStep2()}
+            {step === 3 && renderStep3()}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -373,6 +372,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     paddingHorizontal: 16,
+    paddingBottom: 30,
   },
   header: {
     position: 'absolute',
@@ -389,10 +389,18 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   content: {
+    flex: 1,
     width: '100%',
     maxWidth: 450,
     alignSelf: 'center',
     marginTop: 80,
+    justifyContent: 'space-between',
+    minHeight: 400,
+  },
+  stepContent: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 20,
   },
   stepContainer: {
     alignItems: 'center',

@@ -4,13 +4,14 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DefaultUser from '../../assets/default_user.png';
 import AvaliacaoService from '../services/AvaliacaoService';
+import { formatCurrency } from '../utils/formatters';
+import ImageWithAlt from './ui/ImageWithAlt';
 
 const AppointmentCard = ({ appointment, onPress, isProfessional = false }) => {
   const [isAvaliado, setIsAvaliado] = useState(false);
@@ -130,12 +131,13 @@ const AppointmentCard = ({ appointment, onPress, isProfessional = false }) => {
       <View style={styles.cardContent}>
         <View style={styles.leftContent}>
           {!isProfessional && (
-            <Image
-              source={appointment.imagemPerfilProfissional ? 
-                { uri: appointment.imagemPerfilProfissional } : 
-                DefaultUser
-              }
+            <ImageWithAlt
+              source={{ uri: appointment.imagemPerfilProfissional }}
+              alt={`Foto de perfil do tatuador ${appointment.nomeProfissional}`}
               style={styles.artistImage}
+              resizeMode="cover"
+              accessibilityLabel={`Foto de perfil do tatuador ${appointment.nomeProfissional}`}
+              fallbackIconName="person"
             />
           )}
           {isProfessional && (
@@ -179,6 +181,14 @@ const AppointmentCard = ({ appointment, onPress, isProfessional = false }) => {
             {endereco}
           </Text>
         </View>
+        {appointment.valor && (
+          <View style={styles.infoRow}>
+            <MaterialIcons name="attach-money" size={16} color="#94A3B8" />
+            <Text style={styles.infoText}>
+              {formatCurrency(appointment.valor)}
+            </Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.statusContainer}>

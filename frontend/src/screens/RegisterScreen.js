@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import * as ImagePicker from 'expo-image-picker';
 import * as formatters from '../utils/formatters';
 import toastHelper from '../utils/toastHelper';
 import { useAuth } from '../context/AuthContext';
+import { isMobileView, isDesktopView } from '../utils/responsive';
 
 import TabHeader from '../components/ui/TabHeader';
 import PersonalForm from '../components/forms/PersonalForm';
@@ -44,6 +46,13 @@ const RegisterScreen = () => {
   const [verificationEmail, setVerificationEmail] = useState('');
   const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [cepError, setCepError] = useState('');
+  const [estadoError, setEstadoError] = useState('');
+  const [cidadeError, setCidadeError] = useState('');
+  const [bairroError, setBairroError] = useState('');
+  const [enderecoValidationError, setEnderecoValidationError] = useState('');
+  const [dadosCep, setDadosCep] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
 
   const emailTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.DEFAULT_TIMEOUT);
   const resendTimeout = useEmailTimeout(EMAIL_TIMEOUT_CONFIG.RESEND_TIMEOUT);
@@ -58,7 +67,7 @@ const RegisterScreen = () => {
     }
     return () => clearInterval(interval);
   }, [resendCooldown]);
-  
+
   const [formData, setFormData] = useState({
     // Dados pessoais
     nome: '',
@@ -82,6 +91,35 @@ const RegisterScreen = () => {
     confirmarSenha: '',
     termsAccepted: false
   });
+
+  // Effect para validar consistência de endereço automaticamente
+  useEffect(() => {
+    if (dadosCep && formData.estado && formData.cidade) {
+      // Validar estado
+      if (formData.estado.toUpperCase().trim() !== dadosCep.uf?.toUpperCase().trim()) {
+        const errorMsg = `Estado deve ser ${dadosCep.uf} para este CEP`;
+        setEstadoError(errorMsg);
+      } else {
+        setEstadoError('');
+      }
+      
+      // Validar cidade
+      if (formData.cidade.toLowerCase().trim() !== dadosCep.localidade?.toLowerCase().trim()) {
+        const errorMsg = `Cidade deve ser ${dadosCep.localidade} para este CEP`;
+        setCidadeError(errorMsg);
+      } else {
+        setCidadeError('');
+      }
+      
+      // Validar bairro
+      if (formData.bairro.toLowerCase().trim() !== dadosCep.bairro?.toLowerCase().trim()) {
+        const errorMsg = `Bairro deve ser ${dadosCep.bairro} para este CEP`;
+        setBairroError(errorMsg);
+      } else {
+        setBairroError('');
+      }
+    }
+  }, [dadosCep, formData.estado, formData.cidade, formData.bairro]);
 
   const handleChange = (field, value) => {
     let formattedValue = value;
@@ -114,10 +152,19 @@ const RegisterScreen = () => {
         break;
       case 'cep':
         formattedValue = formatters.formatCEP(value);
+        setCepError('');
+        setEnderecoValidationError('');
         break;
       case 'telefone':
         formattedValue = formatters.formatPhone(value);
         setPhoneError('');
+        // Validar telefone quando completo (11 dígitos)
+        if (value.replace(/\D/g, '').length >= 10) {
+          const errorMessage = formatters.getPhoneValidationMessage(formatters.formatPhone(value));
+          if (errorMessage) {
+            setPhoneError(errorMessage);
+          }
+        }
         break;
       case 'dataNascimento':
         formattedValue = formatters.formatBirthDate(value);
@@ -141,6 +188,23 @@ const RegisterScreen = () => {
           setConfirmPasswordError('As senhas não coincidem');
         }
         break;
+      case 'estado':
+        setEstadoError('');
+        setEnderecoValidationError('');
+        break;
+      case 'cidade':
+        setCidadeError('');
+        setEnderecoValidationError('');
+        break;
+      case 'bairro':
+        setBairroError('');
+        setEnderecoValidationError('');
+        break;
+      case 'rua':
+      case 'numero':
+      case 'complemento':
+        setEnderecoValidationError('');
+        break;
     }
 
     setFormData({
@@ -154,80 +218,150 @@ const RegisterScreen = () => {
   };
 
   const handleBlur = (field) => {
-    if (field === 'nome' && formData.nome) {
-      if (!formatters.validateFirstName(formData.nome)) {
-        setNomeError('Nome inválido');
-      } else {
-        setNomeError('');
-      }
+    if (field === 'nome' && formData.nome && !formatters.validateFirstName(formData.nome)) {
+      setNomeError(authMessages.registerErrors.invalidName);
     }
-    
-    if (field === 'sobrenome' && formData.sobrenome) {
-      if (!formatters.validateSurname(formData.sobrenome)) {
-        setSobrenomeError('Sobrenome inválido');
-      } else {
-        setSobrenomeError('');
-      }
+
+    if (field === 'sobrenome' && formData.sobrenome && !formatters.validateSurname(formData.sobrenome)) {
+      setSobrenomeError(authMessages.registerErrors.invalidName);
     }
-    
-    if ((field === 'nome' || field === 'sobrenome') && formData.nome && formData.sobrenome) {
-      if (!formatters.validateFullNameLength(formData.nome, formData.sobrenome)) {
-        setFullNameError('Nome e sobrenome não podem ultrapassar 255 caracteres');
-      } else {
-        setFullNameError('');
-      }
-    }
-    
+
     if (field === 'cpf' && formData.cpf) {
       if (!formatters.validateCPF(formData.cpf)) {
-        setCpfError('CPF inválido');
+        setCpfError(authMessages.registerErrors.invalidCpf);
       } else {
         setCpfError('');
       }
     }
-    
-    if (field === 'email' && formData.email) {
-      if (!formatters.validateEmail(formData.email)) {
-        setEmailError('Email inválido');
-      } else {
-        setEmailError('');
-      }
+
+    if (field === 'email' && formData.email && !formatters.validateEmail(formData.email)) {
+      setEmailError(authMessages.registerErrors.invalidEmail);
     }
 
     if (field === 'telefone' && formData.telefone) {
-      if (!formatters.validatePhone(formData.telefone)) {
-        setPhoneError('Telefone inválido');
+      const errorMessage = formatters.getPhoneValidationMessage(formData.telefone);
+      if (errorMessage) {
+        setPhoneError(errorMessage);
       } else {
         setPhoneError('');
       }
     }
 
-    if (field === 'dataNascimento' && formData.dataNascimento) {
-      if (!formatters.validateBirthDate(formData.dataNascimento)) {
-        setBirthDateError('Você deve ter pelo menos 18 anos para se registrar');
-      } else {
-        setBirthDateError('');
-      }
+    if (field === 'dataNascimento' && formData.dataNascimento && !formatters.validateBirthDate(formData.dataNascimento)) {
+      setBirthDateError(authMessages.registerErrors.invalidBirthDate);
     }
 
     if (field === 'senha') {
-      if (!formData.senha) {
-        setPasswordError('Senha é obrigatória');
-      } else if (formData.senha.length < 6) {
-        setPasswordError('A senha deve ter pelo menos 6 caracteres');
-      } else {
-        setPasswordError('');
+      if (formData.senha) {
+        if (!formatters.validatePassword(formData.senha)) {
+          setPasswordError('A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, um número e um caractere especial');
+        } else {
+          setPasswordError('');
+        }
       }
     }
 
     if (field === 'confirmarSenha') {
-      if (!formData.confirmarSenha) {
-        setConfirmPasswordError('Confirmação de senha é obrigatória');
-      } else if (formData.senha !== formData.confirmarSenha) {
-        setConfirmPasswordError('As senhas não coincidem');
-      } else {
-        setConfirmPasswordError('');
+      if (formData.confirmarSenha) {
+        if (formData.senha !== formData.confirmarSenha) {
+          setConfirmPasswordError('As senhas não coincidem');
+        } else {
+          setConfirmPasswordError('');
+        }
       }
+    }
+
+    // Validação de consistência de endereço quando sai do campo estado ou cidade
+    if (field === 'estado' && formData.estado && dadosCep) {
+      if (formData.estado.toUpperCase().trim() !== dadosCep.uf?.toUpperCase().trim()) {
+        const errorMsg = `Estado deve ser ${dadosCep.uf} para este CEP`;
+        setEstadoError(errorMsg);
+      } else {
+        setEstadoError('');
+      }
+    }
+
+    if (field === 'cidade' && formData.cidade && dadosCep) {
+      if (formData.cidade.toLowerCase().trim() !== dadosCep.localidade?.toLowerCase().trim()) {
+        const errorMsg = `Cidade deve ser ${dadosCep.localidade} para este CEP`;
+        setCidadeError(errorMsg);
+      } else {
+        setCidadeError('');
+      }
+    }
+
+    if (field === 'bairro' && formData.bairro && dadosCep) {
+      if (formData.bairro.toLowerCase().trim() !== dadosCep.bairro?.toLowerCase().trim()) {
+        const errorMsg = `Bairro deve ser ${dadosCep.bairro} para este CEP`;
+        setBairroError(errorMsg);
+      } else {
+        setBairroError('');
+      }
+    }
+  };
+
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled) {
+        const selectedImage = result.assets[0];
+        
+        const validMimeTypes = ['image/jpeg', 'image/png'];
+        const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
+        
+        // Verificar MIME type
+        if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
+          toastHelper.showError(authMessages.imageUploadErrors.invalidFormat);
+          return;
+        }
+        
+        // Verificar extensão do arquivo
+        if (selectedImage.fileName) {
+          const fileExtension = selectedImage.fileName.toLowerCase().slice(selectedImage.fileName.lastIndexOf('.'));
+          if (!validExtensions.includes(fileExtension)) {
+            toastHelper.showError(authMessages.imageUploadErrors.invalidFormat);
+            return;
+          }
+        }
+        
+        // Validação de tamanho - limite de 5MB
+        const maxSizeInMB = 5;
+        const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+        
+        if (selectedImage.fileSize && selectedImage.fileSize > maxSizeInBytes) {
+          toastHelper.showError(authMessages.imageUploadErrors.fileTooLarge);
+          return;
+        }
+        
+        // Validação adicional do base64 (que é ~33% maior que o arquivo original)
+        const base64String = selectedImage.base64;
+        const base64SizeInBytes = (base64String.length * 3) / 4;
+        
+        if (base64SizeInBytes > maxSizeInBytes) {
+          toastHelper.showError(authMessages.imageUploadErrors.processedImageTooLarge);
+          return;
+        }
+        
+        // Determinar formato correto baseado na extensão do arquivo
+        const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
+        const mimeType = selectedImage.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
+        
+        setProfileImage({
+          uri: selectedImage.uri,
+          base64: `data:${mimeType};base64,${selectedImage.base64}`,
+          type: mimeType,
+          name: `profile.${imageFormat === 'png' ? 'png' : 'jpg'}`
+        });
+      }
+    } catch (error) {
+      toastHelper.showError(authMessages.imageUploadErrors.selectionFailed);
     }
   };
 
@@ -235,6 +369,12 @@ const RegisterScreen = () => {
     try {
       // Remove caracteres não numéricos
       const cepLimpo = cep.replace(/\D/g, '');
+      
+      if (cepLimpo.length !== 8) {
+        setCepError('CEP deve conter exatamente 8 dígitos');
+        setDadosCep(null);
+        return;
+      }
       
       // URL da API ViaCEP
       const response = await axios.get(`https://viacep.com.br/ws/${cepLimpo}/json/`);
@@ -250,12 +390,48 @@ const RegisterScreen = () => {
           cidade: endereco.localidade || '',
           estado: endereco.uf || '',
         }));
+        setDadosCep(endereco);
+        setCepError('');
+        
+        // Limpar erros de validação quando busca novo CEP
+        setEstadoError('');
+        setCidadeError('');
+        setBairroError('');
+        setEnderecoValidationError('');
       } else {
-        console.log('CEP não encontrado');
+        setCepError('CEP não encontrado');
+        setDadosCep(null);
       }
     } catch (error) {
-      console.error('Erro ao buscar CEP:', error);
+      // console.error('Erro ao buscar CEP:', error);
+      setCepError('Erro ao consultar CEP. Verifique sua conexão.');
+      setDadosCep(null);
     }
+  };
+
+  const isPersonalTabValid = () => {
+    return (
+      formData.nome &&
+      formatters.validateFirstName(formData.nome) &&
+      formData.sobrenome &&
+      formatters.validateSurname(formData.sobrenome) &&
+      formatters.validateFullNameLength(formData.nome, formData.sobrenome) &&
+      formData.cpf &&
+      formatters.validateCPF(formData.cpf) &&
+      formData.email &&
+      formatters.validateEmail(formData.email) &&
+      formData.telefone &&
+      formatters.validatePhone(formData.telefone) &&
+      formData.dataNascimento &&
+      formatters.validateBirthDate(formData.dataNascimento) &&
+      !nomeError &&
+      !sobrenomeError &&
+      !fullNameError &&
+      !cpfError &&
+      !emailError &&
+      !phoneError &&
+      !birthDateError
+    );
   };
 
   const validatePersonalTab = () => {
@@ -336,9 +512,58 @@ const RegisterScreen = () => {
     return true;
   };
 
+  const isAddressTabValid = () => {
+    const basicFieldsValid = (
+      formData.cep &&
+      formData.rua &&
+      formData.numero &&
+      formData.bairro &&
+      formData.cidade &&
+      formData.estado &&
+      !cepError &&
+      !estadoError &&
+      !cidadeError &&
+      !bairroError &&
+      !enderecoValidationError
+    );
+    
+          // Se os campos básicos não estão válidos, retornar false
+      if (!basicFieldsValid) {
+        return false;
+      }
+      
+      // Verificar se os dados do CEP existem e se há consistência básica
+      if (dadosCep) {
+        // Verificar consistência sem atualizar estados
+        const estadoConsistente = !formData.estado || !dadosCep.uf || 
+          formData.estado.toUpperCase() === dadosCep.uf.toUpperCase();
+        
+        const cidadeConsistente = !formData.cidade || !dadosCep.localidade || 
+          formData.cidade.toLowerCase() === dadosCep.localidade.toLowerCase();
+
+        const bairroConsistente = !formData.bairro || !dadosCep.bairro || 
+          formData.bairro.toLowerCase() === dadosCep.bairro.toLowerCase();
+        
+        return estadoConsistente && cidadeConsistente && bairroConsistente;
+      }
+    
+    // Se não tem dados do CEP, só considerar válido se não há erro de CEP
+    return !cepError;
+  };
+
   const validateAddressTab = () => {
     if (!formData.cep) {
       toastHelper.showError(authMessages.registerErrors.requiredFields);
+      return false;
+    }
+    
+    if (cepError) {
+      toastHelper.showError(cepError);
+      return false;
+    }
+    
+    if (!dadosCep) {
+      toastHelper.showError('Busque um CEP válido primeiro');
       return false;
     }
     
@@ -367,17 +592,47 @@ const RegisterScreen = () => {
       return false;
     }
     
+    // Validar consistência do endereço
+    if (dadosCep) {
+      if (formData.estado && dadosCep.uf && formData.estado.toUpperCase() !== dadosCep.uf.toUpperCase()) {
+        toastHelper.showError(`Estado deve ser ${dadosCep.uf} para este CEP`);
+        return false;
+      }
+      
+      if (formData.cidade && dadosCep.localidade && formData.cidade.toLowerCase() !== dadosCep.localidade.toLowerCase()) {
+        toastHelper.showError(`Cidade deve ser ${dadosCep.localidade} para este CEP`);
+        return false;
+      }
+      
+      if (formData.bairro && dadosCep.bairro && formData.bairro.toLowerCase() !== dadosCep.bairro.toLowerCase()) {
+        toastHelper.showError(`Bairro deve ser ${dadosCep.bairro} para este CEP`);
+        return false;
+      }
+    }
+    
     return true;
+  };
+
+  const isSecurityTabValid = () => {
+    return (
+      formData.senha &&
+      formatters.validatePassword(formData.senha) &&
+      formData.confirmarSenha &&
+      formData.senha === formData.confirmarSenha &&
+      formData.termsAccepted &&
+      !passwordError &&
+      !confirmPasswordError
+    );
   };
 
   const validateSecurityTab = () => {
     if (!formData.senha) {
-      toastHelper.showError(authMessages.registerErrors.invalidPassword);
+      toastHelper.showError('Senha é obrigatória');
       return false;
     }
     
-    if (formData.senha.length < 6) {
-      toastHelper.showError(authMessages.registerErrors.invalidPassword);
+    if (!formatters.validatePassword(formData.senha)) {
+      toastHelper.showError('A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, um número e um caractere especial');
       return false;
     }
 
@@ -399,6 +654,38 @@ const RegisterScreen = () => {
     return true;
   };
 
+  const getAvailableTabs = () => {
+    const availableTabs = ['personal'];
+    
+    if (isPersonalTabValid()) {
+      availableTabs.push('address');
+    }
+    
+    if (isPersonalTabValid() && isAddressTabValid()) {
+      availableTabs.push('security');
+    }
+    
+    return availableTabs;
+  };
+
+  const handleTabPress = (tabId) => {
+    const availableTabs = getAvailableTabs();
+    
+    if (availableTabs.includes(tabId)) {
+      setActiveTab(tabId);
+    } else {
+      if (tabId === 'address' && !isPersonalTabValid()) {
+        toastHelper.showWarning(authMessages.warnings.completePersonalDataFirst);
+      } else if (tabId === 'security' && (!isPersonalTabValid() || !isAddressTabValid())) {
+        if (!isPersonalTabValid()) {
+          toastHelper.showWarning(authMessages.warnings.completePersonalDataFirst);
+        } else {
+          toastHelper.showWarning(authMessages.warnings.completeAddressDataFirst);
+        }
+      }
+    }
+  };
+
   const handleNextTab = () => {
     if (activeTab === 'personal') {
       if (validatePersonalTab()) {
@@ -407,6 +694,42 @@ const RegisterScreen = () => {
     } else if (activeTab === 'address') {
       if (validateAddressTab()) {
         setActiveTab('security');
+      } else {
+        if (dadosCep) {
+          // Limpar erros anteriores
+          setEstadoError('');
+          setCidadeError('');
+          
+          // Validar estado
+          if (formData.estado && dadosCep.uf) {
+            const estadoForm = formData.estado.toUpperCase().trim();
+            const estadoCep = dadosCep.uf.toUpperCase().trim();
+            
+            if (estadoForm !== estadoCep) {
+              setEstadoError(`Estado deve ser ${dadosCep.uf} para este CEP`);
+            }
+          }
+          
+          // Validar cidade
+          if (formData.cidade && dadosCep.localidade) {
+            const cidadeForm = formData.cidade.toLowerCase().trim();
+            const cidadeCep = dadosCep.localidade.toLowerCase().trim();
+            
+            if (cidadeForm !== cidadeCep) {
+              setCidadeError(`Cidade deve ser ${dadosCep.localidade} para este CEP`);
+            }
+          }
+          
+          // Validar bairro
+          if (formData.bairro && dadosCep.bairro) {
+            const bairroForm = formData.bairro.toLowerCase().trim();
+            const bairroCep = dadosCep.bairro.toLowerCase().trim();
+            
+            if (bairroForm !== bairroCep) {
+              setBairroError(`Bairro deve ser ${dadosCep.bairro} para este CEP`);
+            }
+          }
+        }
       }
     }
   };
@@ -480,9 +803,14 @@ const RegisterScreen = () => {
       role: 'user'
     };
 
+    // Adicionar foto de perfil se disponível
+    if (profileImage) {
+      userData.imagemPerfil = profileImage.base64;
+    }
+
     try {
       // Mostrar mensagem de loading específica para envio de email
-      toastHelper.showInfo('Enviando email de confirmação...');
+      toastHelper.showInfo(authMessages.info.sendingEmailConfirmation);
       
       await emailTimeout.executeWithTimeout(
         () => PublicAuthService.requestEmailVerification(userData),
@@ -510,7 +838,7 @@ const RegisterScreen = () => {
 
   const handleVerifyEmail = async () => {
     if (!verificationCode.trim()) {
-      toastHelper.showError('Por favor, insira o código de verificação.');
+      toastHelper.showError(authMessages.emailVerificationErrors.verificationCodeRequired);
       return;
     }
 
@@ -520,7 +848,7 @@ const RegisterScreen = () => {
       await PublicAuthService.verifyEmail(verificationEmail, verificationCode);
 
       // Exibe mensagem de sucesso
-      toastHelper.showSuccess('Conta criada com sucesso!');
+              toastHelper.showSuccess(authMessages.success.accountCreated);
 
       setShowVerificationModal(false);
       setTimeout(() => {
@@ -528,7 +856,7 @@ const RegisterScreen = () => {
       }, 1000);
 
     } catch (error) {
-      toastHelper.showError(error.message || 'Código de verificação inválido ou expirado.');
+              toastHelper.showError(error.message || authMessages.emailVerificationErrors.invalidOrExpiredCode);
     } finally {
       setIsVerifyingEmail(false);
     }
@@ -536,7 +864,7 @@ const RegisterScreen = () => {
 
   const handleResendCode = async () => {
     if (resendCooldown > 0) {
-      toastHelper.showWarning(`Aguarde ${resendCooldown} segundos para reenviar novamente.`);
+      toastHelper.showWarning(authMessages.info.waitToResend(resendCooldown));
       return;
     }
 
@@ -562,45 +890,65 @@ const RegisterScreen = () => {
     { id: 'security', label: 'Segurança' }
   ];
 
+  const isMobile = isMobileView();
+  const isDesktop = isDesktopView();
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.contentContainer}>
-          <View style={styles.pageHeaderContainer}>
+        <View style={[styles.contentContainer, isDesktop && styles.contentContainerDesktop]}>
+          <View style={[styles.pageHeaderContainer, isDesktop && styles.pageHeaderContainerDesktop]}>
             <Text style={styles.pageTitle}>Criar Conta</Text>
             <Text style={styles.pageSubtitle}>Registre-se para encontrar os melhores tatuadores</Text>
           </View>
           
-          <View style={styles.cardWrapper}>
+          <View style={[styles.loginPrompt, isMobile && styles.loginPromptMobile]}>
+            <Text style={styles.loginPromptText}>
+              Já tem uma conta?{' '}
+              <Text 
+                style={styles.loginLink}
+                onPress={() => navigation.navigate('Login')}
+              >
+                Entrar
+              </Text>
+            </Text>
+          </View>
+          
+          <View style={[styles.cardWrapper, isDesktop && styles.cardWrapperDesktop]}>
             <View style={styles.formCard}>
               <View style={styles.tabHeaderWrapper}>
                 <TabHeader 
                   tabs={tabs}
                   activeTab={activeTab}
                   setActiveTab={setActiveTab}
+                  onTabPress={handleTabPress}
+                  availableTabs={getAvailableTabs()}
                 />
               </View>
               
-              <View style={styles.formContainer}>
+              <View style={[styles.formContainer, isDesktop && styles.formContainerDesktop]}>
                 {activeTab === 'personal' && (
                   <>
-                    <PersonalForm
-                      formData={formData}
-                      handleChange={handleChange}
-                      handleBlur={handleBlur}
-                      cpfError={cpfError}
-                      emailError={emailError}
-                      phoneError={phoneError}
-                      birthDateError={birthDateError}
-                      isArtist={isArtist}
-                      setIsArtist={setIsArtist}
-                      nomeError={nomeError}
-                      sobrenomeError={sobrenomeError}
-                      fullNameError={fullNameError}
-                    />
+                                    <PersonalForm
+                  formData={formData}
+                  handleChange={handleChange}
+                  handleBlur={handleBlur}
+                  cpfError={cpfError}
+                  emailError={emailError}
+                  phoneError={phoneError}
+                  birthDateError={birthDateError}
+                  isArtist={isArtist}
+                  setIsArtist={setIsArtist}
+                  nomeError={nomeError}
+                  sobrenomeError={sobrenomeError}
+                  fullNameError={fullNameError}
+                  profileImage={profileImage}
+                  pickImage={pickImage}
+                />
                     <FormNavigation
                       onNext={handleNextTab}
                       showPrev={false}
+                      nextDisabled={!isPersonalTabValid()}
                     />
                   </>
                 )}
@@ -611,10 +959,16 @@ const RegisterScreen = () => {
                       formData={formData}
                       handleChange={handleChange}
                       buscarCep={buscarCep}
+                      cepError={cepError}
+                      estadoError={estadoError}
+                      cidadeError={cidadeError}
+                      bairroError={bairroError}
+                      enderecoValidationError={enderecoValidationError}
                     />
                     <FormNavigation
                       onPrev={handlePrevTab}
                       onNext={handleNextTab}
+                      nextDisabled={!isAddressTabValid()}
                     />
                   </>
                 )}
@@ -629,22 +983,11 @@ const RegisterScreen = () => {
                     isLoading={isLoading}
                     passwordError={passwordError}
                     confirmPasswordError={confirmPasswordError}
+                    isValid={isSecurityTabValid()}
                   />
                 )}
               </View>
             </View>
-          </View>
-          
-          <View style={styles.loginPrompt}>
-            <Text style={styles.loginPromptText}>
-              Já tem uma conta?{' '}
-              <Text 
-                style={styles.loginLink}
-                onPress={() => navigation.navigate('Login')}
-              >
-                Entrar
-              </Text>
-            </Text>
           </View>
         </View>
       </ScrollView>
@@ -741,11 +1084,18 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 40,
   },
+  contentContainerDesktop: {
+    marginTop: 15,
+  },
   pageHeaderContainer: {
     marginBottom: 20,
     alignItems: 'center',
     zIndex: 2,
     marginTop: 15,
+  },
+  pageHeaderContainerDesktop: {
+    marginBottom: 5,
+    marginTop: 10,
   },
   pageTitle: {
     fontSize: 28,
@@ -767,6 +1117,10 @@ const styles = StyleSheet.create({
     maxWidth: 1200,
     width: '100%',
     alignSelf: 'center',
+  },
+  cardWrapperDesktop: {
+    marginTop: 5,
+    paddingVertical: 5,
   },
   formCard: {
     backgroundColor: '#fff',
@@ -794,9 +1148,15 @@ const styles = StyleSheet.create({
   formContainer: {
     padding: 30,
   },
+  formContainerDesktop: {
+    padding: 5,
+  },
   loginPrompt: {
     alignItems: 'center',
     marginTop: 16,
+  },
+  loginPromptMobile: {
+    marginTop: 8,
   },
   loginPromptText: {
     fontSize: 14,

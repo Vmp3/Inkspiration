@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import ImageWithAlt from './ImageWithAlt';
 
-const Avatar = ({ source, fallback, size = 48, style, ...props }) => {
+const Avatar = ({ source, fallback, size = 48, style, alt, ...props }) => {
   const avatarStyles = [
     styles.avatar,
     { width: size, height: size, borderRadius: size / 2 },
@@ -16,11 +17,14 @@ const Avatar = ({ source, fallback, size = 48, style, ...props }) => {
   return (
     <View style={avatarStyles} {...props}>
       {source ? (
-        <Image 
+        <ImageWithAlt 
           source={{ uri: source }} 
+          alt={alt || "Foto de perfil do usuário"}
           style={[styles.image, { width: size, height: size, borderRadius: size / 2 }]}
-          onError={() => {
-          }}
+          accessibilityLabel={alt || "Foto de perfil do usuário"}
+          fallbackIconName="person"
+          fallbackIconSize={size * 0.6}
+          fallbackStyle={[styles.fallback, { fontSize: size * 0.25 }]}
         />
       ) : (
         <Text style={fallbackStyles}>{fallback}</Text>

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import toastHelper from '../utils/toastHelper';
+import { protectedRouteMessages } from './protectedRoute/messages';
 
 const ProtectedRoute = ({ children, publicRoutes = [] }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -28,7 +29,7 @@ const ProtectedRoute = ({ children, publicRoutes = [] }) => {
     }
     
     if (!isAuthenticated && currentRouteName && !publicRoutesSet.has(currentRouteName)) {
-      toastHelper.showError('É necessário fazer login para acessar esta página');
+      toastHelper.showError(protectedRouteMessages.errors.loginRequired);
       navigation.navigate('Login');
     }
   }, [isAuthenticated, loading, currentRouteName, navigation, publicRoutesSet]);

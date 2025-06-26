@@ -31,7 +31,7 @@ const CTASection = ({ onCreateAccountPress, onExplorePress, isMobile }) => {
           <View style={styles.buttonWrapper}>
             <Button
               variant="secondary"
-              label="Explorar Artistas"
+              label="Explorar"
               onPress={onExplorePress}
               size="md"
               style={styles.button}

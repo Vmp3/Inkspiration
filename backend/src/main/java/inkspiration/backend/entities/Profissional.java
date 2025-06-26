@@ -9,14 +9,16 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Column;
 import jakarta.persistence.Transient;
-import jakarta.persistence.PostLoad;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 import inkspiration.backend.enums.TipoServico;
@@ -27,6 +29,7 @@ public class Profissional {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idProfissional;
     
+    @NotNull(message = "O usuário é obrigatório")
     @OneToOne
     @JoinColumn(name = "usuario_idUsuario")
     private Usuario usuario;
@@ -36,39 +39,20 @@ public class Profissional {
     private Endereco endereco;
     
     @OneToOne
-    @JoinColumn(name = "portifolio_idPortifolio")
-    private Portifolio portifolio;
+    @JoinColumn(name = "portfolio_idPortfolio")
+    private Portfolio portfolio;
     
+    @DecimalMin(value = "0.0", message = "A nota deve ser maior ou igual a 0")
+    @DecimalMax(value = "5.0", message = "A nota deve ser menor ou igual a 5")
     @Column(precision = 3, scale = 1)
     private BigDecimal nota;
     
-    @Column(name = "tipos_servico", length = 500)
+    @Size(max = 1000, message = "Os tipos de serviço não podem exceder 1000 caracteres")
+    @Column(name = "tipos_servico", length = 1000)
     private String tiposServicoStr;
     
     @Transient
-    private List<TipoServico> tiposServico = new ArrayList<>();
-    
-    @PostLoad
-    private void onLoad() {
-        tiposServico = new ArrayList<>();
-        if (tiposServicoStr != null && !tiposServicoStr.isEmpty()) {
-            tiposServico = Arrays.stream(tiposServicoStr.split(","))
-                    .map(TipoServico::valueOf)
-                    .collect(Collectors.toList());
-        }
-    }
-    
-    @PrePersist
-    @PreUpdate
-    private void onSave() {
-        if (tiposServico != null && !tiposServico.isEmpty()) {
-            tiposServicoStr = tiposServico.stream()
-                    .map(Enum::name)
-                    .collect(Collectors.joining(","));
-        } else {
-            tiposServicoStr = "";
-        }
-    }
+    private Map<String, BigDecimal> tiposServicoPrecos = new HashMap<>();
     
     public Profissional() {}
     
@@ -86,6 +70,9 @@ public class Profissional {
     }
     
     public void setUsuario(Usuario usuario) {
+        if (usuario == null) {
+            throw new IllegalArgumentException("O usuário não pode ser nulo");
+        }
         this.usuario = usuario;
     }
     
@@ -97,12 +84,12 @@ public class Profissional {
         this.endereco = endereco;
     }
     
-    public Portifolio getPortifolio() {
-        return portifolio;
+    public Portfolio getPortfolio() {
+        return portfolio;
     }
     
-    public void setPortifolio(Portifolio portifolio) {
-        this.portifolio = portifolio;
+    public void setPortfolio(Portfolio portfolio) {
+        this.portfolio = portfolio;
     }
     
     public BigDecimal getNota() {
@@ -110,22 +97,15 @@ public class Profissional {
     }
     
     public void setNota(BigDecimal nota) {
-        this.nota = nota;
-    }
-    
-    public List<TipoServico> getTiposServico() {
-        return tiposServico;
-    }
-    
-    public void setTiposServico(List<TipoServico> tiposServico) {
-        this.tiposServico = tiposServico != null ? tiposServico : new ArrayList<>();
-        if (this.tiposServico != null && !this.tiposServico.isEmpty()) {
-            this.tiposServicoStr = this.tiposServico.stream()
-                    .map(Enum::name)
-                    .collect(Collectors.joining(","));
-        } else {
-            this.tiposServicoStr = "";
+        if (nota != null) {
+            if (nota.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("A nota deve ser maior ou igual a 0");
+            }
+            if (nota.compareTo(new BigDecimal("5.0")) > 0) {
+                throw new IllegalArgumentException("A nota deve ser menor ou igual a 5");
+            }
         }
+        this.nota = nota;
     }
     
     public String getTiposServicoStr() {
@@ -133,6 +113,32 @@ public class Profissional {
     }
     
     public void setTiposServicoStr(String tiposServicoStr) {
+        if (tiposServicoStr != null && tiposServicoStr.length() > 1000) {
+            throw new IllegalArgumentException("Os tipos de serviço não podem exceder 1000 caracteres");
+        }
         this.tiposServicoStr = tiposServicoStr;
+    }
+    
+    public Map<String, BigDecimal> getTiposServicoPrecos() {
+        return tiposServicoPrecos;
+    }
+    
+    public void setTiposServicoPrecos(Map<String, BigDecimal> tiposServicoPrecos) {
+        this.tiposServicoPrecos = tiposServicoPrecos != null ? tiposServicoPrecos : new HashMap<>();
+    }
+    
+    // Métodos de compatibilidade para obter tipos de serviço como lista
+    public List<TipoServico> getTiposServico() {
+        if (tiposServicoPrecos == null || tiposServicoPrecos.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return tiposServicoPrecos.keySet().stream()
+                .map(TipoServico::valueOf)
+                .collect(Collectors.toList());
+    }
+    
+    // Método para obter apenas os preços
+    public Map<String, BigDecimal> getPrecosServicos() {
+        return new HashMap<>(tiposServicoPrecos != null ? tiposServicoPrecos : new HashMap<>());
     }
 } 

@@ -93,7 +93,7 @@ public class TokenOwnershipFilter extends OncePerRequestFilter {
                requestURI.equals("/profissional/publico") ||
                requestURI.matches("/profissional/\\d+") ||
                requestURI.matches("/profissional/\\d+/imagens") ||
-               requestURI.matches("/portifolio/\\d+") ||
+               requestURI.matches("/portfolio/\\d+") ||
                requestURI.matches("/disponibilidades/profissional/\\d+") ||
                requestURI.matches("/disponibilidades/profissional/\\d+/verificar");
     }

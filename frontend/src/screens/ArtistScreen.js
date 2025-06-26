@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -16,15 +16,18 @@ import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons, Feather, FontAwesome, Entypo, AntDesign } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import ProfessionalService from '../services/ProfessionalService';
+import AgendamentoService from '../services/AgendamentoService';
 import toastHelper from '../utils/toastHelper';
 import textUtils from '../utils/textUtils';
+import { formatCurrency } from '../utils/formatters';
 import { artistMessages } from '../components/common/messages';
-import { mockReviews } from '../data/reviews';
+import Pagination from '../components/common/Pagination';
 import DefaultUser from '../../assets/default_user.png'
 import AvaliacaoService from '../services/AvaliacaoService';
 import { formatDate } from '../utils/formatters';
 import Avatar from '../components/ui/Avatar';
 import StarRating from '../components/ui/StarRating';
+import ImageWithAlt from '../components/ui/ImageWithAlt';
 
 const Tabs = ({ tabs, activeTab, onTabChange }) => {
   return (
@@ -68,7 +71,7 @@ const Card = ({ children, style }) => {
   );
 };
 
-const PortfolioItem = ({ image, onPress }) => {
+const PortfolioItem = ({ image, onPress, isMobile }) => {
   // Função para processar a imagem base64
   const processBase64Image = (base64String) => {    
     // Se já tem o prefixo data:image, usar diretamente
@@ -83,11 +86,21 @@ const PortfolioItem = ({ image, onPress }) => {
   const imageUri = processBase64Image(image);
 
   return (
-    <TouchableOpacity style={styles.portfolioItem} onPress={() => onPress(imageUri)} activeOpacity={0.8}>
-      <Image
+    <TouchableOpacity 
+      style={[
+        styles.portfolioItem,
+        isMobile && styles.portfolioItemMobile
+      ]} 
+      onPress={() => onPress(imageUri)} 
+      activeOpacity={0.8}
+    >
+      <ImageWithAlt
         source={{ uri: imageUri }}
+        alt="Imagem do portfólio do tatuador"
         style={styles.portfolioImage}
         resizeMode="cover"
+        accessibilityLabel="Imagem do portfólio do tatuador"
+        fallbackIconName="image"
       />
       <View style={styles.portfolioPlaceholder}>
         <Feather name="image" size={24} color="#D1D5DB" />
@@ -161,6 +174,12 @@ const ArtistScreen = ({ route }) => {
     avaliacoesSemComentario: 0
   });
   
+  // Estados para paginação das avaliações
+  const [reviewsCurrentPage, setReviewsCurrentPage] = useState(0);
+  const [reviewsTotalPages, setReviewsTotalPages] = useState(0);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [totalReviews, setTotalReviews] = useState(0);
+  
   const isMobile = screenData.width < 768;
 
   const mapServiceType = (serviceType) => {
@@ -192,7 +211,7 @@ const ArtistScreen = ({ route }) => {
 
     if (!artistId) {
       toastHelper.showError(artistMessages.errors.noArtistId);
-      navigation.goBack();
+      navigation.navigate('Home');
       return;
     }
 
@@ -200,19 +219,33 @@ const ArtistScreen = ({ route }) => {
     loadArtistData();
   }, [artistId, userData, navigation]);
 
-  const loadArtistData = async () => {
+  // useEffect para redirecionamento quando não encontra artista
+  useEffect(() => {
+    if (!artist && !isLoading) {
+      const timeoutId = setTimeout(() => {
+        navigation.navigate('Home');
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [artist, isLoading, navigation]);
+
+  const loadArtistData = async (reviewsPage = 0) => {
     try {
       setIsLoading(true);
+      if (reviewsPage > 0) {
+        setReviewsLoading(true);
+      }
       
       // Verificar se artistId está definido
       if (!artistId) {
-        toastHelper.showError('ID do profissional não encontrado');
-        navigation.goBack();
+        toastHelper.showError(artistMessages.errors.professionalIdNotFound);
+        navigation.navigate('Home');
         return;
       }
       
-      // Buscar dados completos do profissional
-      const professionalData = await ProfessionalService.getProfessionalCompleteById(artistId);
+      // Buscar dados completos do profissional com avaliações paginadas
+      const professionalData = await ProfessionalService.getProfessionalCompleteById(artistId, reviewsPage);
       
       if (userData?.idUsuario === professionalData.profissional.idUsuario) {
         setIsSamePerson(true);
@@ -220,31 +253,57 @@ const ArtistScreen = ({ route }) => {
       
       const transformedData = ProfessionalService.transformCompleteProfessionalData(professionalData);
       
-      // Buscar imagens do portfólio
-      const images = await ProfessionalService.getProfessionalImages(artistId);
-      
-      // Processar imagens base64
-      const processedImages = images.map((img, index) => {
+      // Processar imagens do portfólio
+      const processedImages = professionalData.imagens ? professionalData.imagens.map((img, index) => {
         return {
           id: index.toString(),
           imagemBase64: img.imagemBase64,
           idImagem: img.idImagem,
-          idPortifolio: img.idPortifolio
+          idPortfolio: img.idPortfolio
         };
-      });
+      }) : [];
       
-      const mappedServices = professionalData.profissional.tiposServico 
-        ? professionalData.profissional.tiposServico.map(serviceType => ({
-            name: mapServiceType(serviceType)
+      // Buscar preços dos serviços
+      const servicesWithPrices = await AgendamentoService.buscarTiposServicoPorProfissional(artistId);
+      
+      const mappedServices = servicesWithPrices.length > 0 
+        ? servicesWithPrices.map(service => ({
+            name: mapServiceType(service.tipo),
+            price: service.preco || 0
           }))
-        : [];
+        : professionalData.profissional.tiposServico 
+          ? professionalData.profissional.tiposServico.map(serviceType => ({
+              name: mapServiceType(serviceType),
+              price: 0
+            }))
+          : [];
+
+      // Processar avaliações do backend
+      const avaliacoes = professionalData.avaliacoes || { content: [], totalElements: 0, totalPages: 0 };
+      const processedReviews = avaliacoes.content.map(avaliacao => ({
+        id: avaliacao.idAvaliacao?.toString() || Math.random().toString(),
+        userName: avaliacao.nomeCliente || 'Cliente',
+        userImage: avaliacao.imagemCliente || 'https://via.placeholder.com/40',
+        rating: avaliacao.rating || 5,
+        comment: avaliacao.descricao || '',
+        date: new Date().toLocaleDateString('pt-BR'), // Você pode melhorar isso adicionando data real
+        tattooType: avaliacao.tipoServico || 'TATUAGEM_PEQUENA'
+      }));
+
+      // Para paginação, sempre substituir as avaliações
+      setReviews(processedReviews);
+      
+      // Atualizar informações de paginação das avaliações
+      setReviewsCurrentPage(avaliacoes.currentPage || 0);
+      setReviewsTotalPages(avaliacoes.totalPages || 0);
+      setTotalReviews(professionalData.totalAvaliacoes || avaliacoes.totalElements || 0);
 
       setArtist({
         ...transformedData,
         idProfissional: artistId,
         title: "Tatuador",
         bio: transformedData.description,
-        reviewCount: reviewCount,
+        reviewCount: professionalData.totalAvaliacoes || 0,
         profileImage: transformedData.coverImage,
         coverImage: transformedData.coverImage,
         portfolio: processedImages,
@@ -262,9 +321,10 @@ const ArtistScreen = ({ route }) => {
       setPortfolioImages(processedImages);
     } catch (error) {
       toastHelper.showError(artistMessages.errors.loadProfile);
-      navigation.goBack();
+      navigation.navigate('Home');
     } finally {
       setIsLoading(false);
+      setReviewsLoading(false);
     }
   };
 
@@ -425,23 +485,25 @@ const ArtistScreen = ({ route }) => {
     setSelectedImage(null);
   };
 
+  // Renderizar o componente de carregamento
+  const renderLoading = useMemo(() => (
+    <View style={styles.loadingContainer}>
+      <MaterialIcons name="hourglass-top" size={32} color="#6B7280" />
+      <Text style={styles.loadingText}>Carregando perfil do profissional...</Text>
+      <Text style={styles.loadingSubtext}>Aguarde enquanto buscamos as informações do artista</Text>
+    </View>
+  ), []);
+
   // Mostrar loading enquanto carrega os dados
   if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>{artistMessages.loading.profile}</Text>
-      </View>
-    );
+    return renderLoading;
   }
 
   // Se não encontrou o artista
   if (!artist) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{artistMessages.errors.notFound}</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>Voltar</Text>
-        </TouchableOpacity>
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Redirecionando...</Text>
       </View>
     );
   }
@@ -460,6 +522,7 @@ const ArtistScreen = ({ route }) => {
                 key={index} 
                 image={image.imagemBase64 || DefaultUser} 
                 onPress={handleImagePress}
+                isMobile={isMobile}
               />
             ))
           )}
@@ -624,9 +687,12 @@ const ArtistScreen = ({ route }) => {
       <View style={[styles.pageWrapper, isMobile && styles.pageWrapperMobile]}>
         <View style={[styles.leftColumn, isMobile && styles.leftColumnMobile]}>
           <View style={styles.profileHeader}>
-            <Image 
+            <ImageWithAlt 
               source={{ uri: artist.profileImage }} 
               style={styles.profileImage}
+              alt={`Foto de perfil de ${artist.name}`}
+              accessibilityLabel={`Foto de perfil de ${artist.name}`}
+              fallbackIconName="person"
             />
             
             <View style={styles.profileInfo}>
@@ -661,7 +727,7 @@ const ArtistScreen = ({ route }) => {
               style={styles.scheduleButton}
               onPress={() => {
                 if (!userData) {
-                  toastHelper.showError(artistMessages.errors.loginRequired || 'Faça login para agendar');
+                  toastHelper.showError(artistMessages.errors.loginRequired);
                   navigation.navigate('Login');
                 } else {
                   navigation.navigate('Booking', { professionalId: artist.idProfissional });
@@ -680,7 +746,12 @@ const ArtistScreen = ({ route }) => {
               <Text style={styles.noServicesText}>Nenhum serviço cadastrado</Text>
             ) : (
               artist.services.map((service, index) => (
-                <Text key={index} style={styles.serviceItem}>{service.name}</Text>
+                <View key={index} style={styles.serviceItemContainer}>
+                  <Text style={styles.serviceItem}>{service.name}</Text>
+                  <Text style={styles.servicePrice}>
+                    {formatCurrency(service.price || 0)}
+                  </Text>
+                </View>
               ))
             )}
           </Card>
@@ -748,10 +819,12 @@ const ArtistScreen = ({ route }) => {
               </TouchableOpacity>
               
               {selectedImage && (
-                <Image
+                <ImageWithAlt
                   source={{ uri: selectedImage }}
+                  alt="Imagem ampliada do portfólio"
                   style={styles.expandedImage}
                   resizeMode="contain"
+                  accessibilityLabel="Imagem ampliada do portfólio"
                 />
               )}
             </View>
@@ -874,10 +947,21 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 16,
   },
+  serviceItemContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   serviceItem: {
     fontSize: 14,
     color: '#6B7280',
-    marginBottom: 8,
+    flex: 1,
+  },
+  servicePrice: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
   },
   socialLinks: {
     marginTop: 4,
@@ -938,32 +1022,42 @@ const styles = StyleSheet.create({
   portfolioGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: 4,
+    padding: 8,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
   },
   portfolioItem: {
     width: '20%',
     aspectRatio: 1,
     position: 'relative',
     backgroundColor: '#F3F4F6',
-    padding: 3,
+    padding: 4,
+  },
+  portfolioItemMobile: {
+    width: '50%',
+    aspectRatio: 1,
+    position: 'relative',
+    backgroundColor: '#F3F4F6',
+    padding: 6,
+    marginBottom: 0,
   },
   portfolioImage: {
     width: '100%',
     height: '100%',
     position: 'absolute',
-    top: 2,
-    left: 2,
-    right: 2,
-    bottom: 2,
+    top: 4,
+    left: 4,
+    right: 4,
+    bottom: 4,
     zIndex: 2,
     borderRadius: 4,
   },
   portfolioPlaceholder: {
     position: 'absolute',
-    top: 2,
-    left: 2,
-    right: 2,
-    bottom: 2,
+    top: 4,
+    left: 4,
+    right: 4,
+    bottom: 4,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F3F4F6',
@@ -1100,32 +1194,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#EF4444',
-    marginBottom: 20,
-  },
-  backButton: {
-    backgroundColor: '#111827',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-  },
-  backButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    color: '#6B7280',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  loadingSubtext: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    opacity: 0.8,
   },
   noImagesContainer: {
     flex: 1,

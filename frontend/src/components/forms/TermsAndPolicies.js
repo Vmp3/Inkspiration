@@ -259,12 +259,7 @@ Ao utilizar a Inkspiration, você declara estar ciente e concorda com os termos 
 
   return (
     <View style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-      >
-        {processText(type === 'terms' ? termsOfUseText : privacyPolicyText)}
-      </ScrollView>
+      {processText(type === 'terms' ? termsOfUseText : privacyPolicyText)}
     </View>
   );
 };
@@ -272,11 +267,7 @@ Ao utilizar a Inkspiration, você declara estar ciente e concorda com os termos 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    backgroundColor: 'transparent',
   },
   paragraph: {
     marginBottom: 14,

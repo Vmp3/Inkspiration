@@ -52,7 +52,7 @@ class AuthService {
           throw new Error('Token inválido retornado pelo servidor');
         }
       } catch (tokenError) {
-        console.error('Erro ao validar token recebido:', tokenError);
+        // console.error('Erro ao validar token recebido:', tokenError);
         throw new Error('Erro ao validar token recebido do servidor');
       }
       
@@ -60,7 +60,7 @@ class AuthService {
       
       const storedToken = await this.getToken();
       if (!storedToken) {
-        console.error('Falha ao armazenar token após login');
+        // console.error('Falha ao armazenar token após login');
         throw new Error('Falha ao armazenar token de autenticação');
       }
       
@@ -70,7 +70,7 @@ class AuthService {
         message: responseData.message || 'Login realizado com sucesso'
       };
     } catch (error) {
-      console.error('Erro no login:', error);
+      // console.error('Erro no login:', error);
       
       if (error.response && error.response.status === 428) {
         const responseData = error.response.data;
@@ -119,7 +119,7 @@ class AuthService {
         document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
       }
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
+      // console.error('Erro ao fazer logout:', error);
     }
   }
 
@@ -135,7 +135,7 @@ class AuthService {
         document.cookie = `${TOKEN_KEY}=${token}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
       }
     } catch (error) {
-      console.error('Erro ao armazenar token:', error);
+      // console.error('Erro ao armazenar token:', error);
       throw error;
     }
   }
@@ -161,7 +161,7 @@ class AuthService {
       
       return null;
     } catch (error) {
-      console.error('Erro ao recuperar token:', error);
+      // console.error('Erro ao recuperar token:', error);
       return null;
     }
   }
@@ -170,19 +170,19 @@ class AuthService {
     try {
       // Verificar se o token existe e tem o formato básico correto
       if (!token || typeof token !== 'string') {
-        console.error('Token inválido: não é uma string válida');
+        // console.error('Token inválido: não é uma string válida');
         return null;
       }
       
       const parts = token.split('.');
       if (parts.length !== 3) {
-        console.error('Token inválido: não possui 3 partes separadas por ponto');
+        // console.error('Token inválido: não possui 3 partes separadas por ponto');
         return null;
       }
       
       const base64Url = parts[1];
       if (!base64Url) {
-        console.error('Token inválido: payload vazio');
+        // console.error('Token inválido: payload vazio');
         return null;
       }
       
@@ -198,13 +198,13 @@ class AuthService {
       
       // Verificar se o payload tem os campos essenciais
       if (!parsedPayload || typeof parsedPayload !== 'object') {
-        console.error('Token inválido: payload não é um objeto válido');
+        // console.error('Token inválido: payload não é um objeto válido');
         return null;
       }
       
       return parsedPayload;
     } catch (error) {
-      console.error('Erro ao decodificar token:', error);
+      // console.error('Erro ao decodificar token:', error);
       return null;
     }
   }
@@ -220,14 +220,14 @@ class AuthService {
       // Verificar se o token tem formato válido
       const tokenData = this.parseJwt(token);
       if (!tokenData) {
-        console.log('Token com formato inválido detectado, fazendo logout automático');
+        // console.log('Token com formato inválido detectado, fazendo logout automático');
         await this.logout();
         return false;
       }
       
       // Verificar se o token está expirado
       if (!tokenData.exp || tokenData.exp * 1000 <= Date.now()) {
-        console.log('Token expirado, fazendo logout automático');
+        // console.log('Token expirado, fazendo logout automático');
         await this.logout();
         return false;
       }
@@ -237,24 +237,24 @@ class AuthService {
         try {
           const validationResult = await this.validateToken(token, tokenData.userId);
           if (!validationResult.valid) {
-            console.log('Token inválido no servidor:', validationResult.reason);
+            // console.log('Token inválido no servidor:', validationResult.reason);
             await this.logout();
             return false;
           }
           
           // Se há um novo token, atualizá-lo
           if (validationResult.newToken) {
-            console.log('Recebido novo token do servidor');
+            // console.log('Recebido novo token do servidor');
             await this.setToken(validationResult.newToken);
           }
         } catch (error) {
-          console.error('Erro ao validar token com servidor:', error);
+          // console.error('Erro ao validar token com servidor:', error);
         }
       }
       
       return true;
     } catch (error) {
-      console.error('Erro ao verificar autenticação:', error);
+      // console.error('Erro ao verificar autenticação:', error);
       // Em caso de erro crítico, fazer logout por segurança
       await this.logout();
       return false;
@@ -273,7 +273,7 @@ class AuthService {
       const tokenData = this.parseJwt(token);
       
       if (!tokenData) {
-        console.error('Token com formato inválido detectado ao buscar dados do usuário, fazendo logout');
+        // console.error('Token com formato inválido detectado ao buscar dados do usuário, fazendo logout');
         await this.logout();
         return null;
       }
@@ -296,7 +296,7 @@ class AuthService {
       const userId = tokenData.userId;
       
       if (!userId) {
-        console.error('ID do usuário não encontrado no token');
+        // console.error('ID do usuário não encontrado no token');
         return { nome: 'Usuário', role: role, idUsuario: null };
       }
       
@@ -337,11 +337,11 @@ class AuthService {
           ...dadosProfissionais
         };
       } catch (error) {
-        console.error('Erro ao buscar dados do usuário da API:', error);
+        // console.error('Erro ao buscar dados do usuário da API:', error);
         throw error;
       }
     } catch (error) {
-      console.error('Erro ao obter dados do usuário:', error);
+      // console.error('Erro ao obter dados do usuário:', error);
       return null;
     }
   }
@@ -365,7 +365,7 @@ class AuthService {
         }
       };
     } catch (error) {
-      console.error('Erro ao buscar dados profissionais:', error);
+      // console.error('Erro ao buscar dados profissionais:', error);
       return {
         especialidades: [],
         bio: '',
@@ -401,7 +401,7 @@ class AuthService {
 
       return true;
     } catch (error) {
-      console.error('Erro ao validar token antes da requisição:', error);
+      // console.error('Erro ao validar token antes da requisição:', error);
       await this.logout();
       return false;
     }
@@ -429,7 +429,7 @@ class AuthService {
     // Verificar se a resposta contém um novo token no header
     const newToken = response.headers.get('New-Auth-Token');
     if (newToken) {
-      console.log('Recebido novo token do servidor na resposta');
+      // console.log('Recebido novo token do servidor na resposta');
       await this.setToken(newToken);
     }
     
@@ -464,7 +464,7 @@ class AuthService {
         newToken: result.newToken || null
       };
     } catch (error) {
-      console.error('Erro ao validar token:', error);
+      // console.error('Erro ao validar token:', error);
       return { valid: false, reason: 'Erro de conexão com servidor' };
     }
   }
@@ -488,7 +488,7 @@ class AuthService {
       
       return tokenData.scope.includes('ROLE_PROF');
     } catch (error) {
-      console.error('Erro na reautenticação:', error);
+      // console.error('Erro na reautenticação:', error);
       return false;
     }
   }
@@ -530,7 +530,7 @@ class AuthService {
 
       return false; // Token está íntegro
     } catch (error) {
-      console.error('Erro ao detectar tampering do token:', error);
+      // console.error('Erro ao detectar tampering do token:', error);
       return true; // Em caso de erro, assumir que há problema
     }
   }

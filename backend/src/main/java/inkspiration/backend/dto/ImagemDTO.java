@@ -3,14 +3,14 @@ package inkspiration.backend.dto;
 public class ImagemDTO {
     private Long idImagem;
     private String imagemBase64;
-    private Long idPortifolio;
+    private Long idPortfolio;
     
     public ImagemDTO() {}
     
-    public ImagemDTO(Long idImagem, String imagemBase64, Long idPortifolio) {
+    public ImagemDTO(Long idImagem, String imagemBase64, Long idPortfolio) {
         this.idImagem = idImagem;
         this.imagemBase64 = imagemBase64;
-        this.idPortifolio = idPortifolio;
+        this.idPortfolio = idPortfolio;
     }
     
     // Getters e Setters
@@ -30,11 +30,11 @@ public class ImagemDTO {
         this.imagemBase64 = imagemBase64;
     }
     
-    public Long getIdPortifolio() {
-        return idPortifolio;
+    public Long getIdPortfolio() {
+        return idPortfolio;
     }
     
-    public void setIdPortifolio(Long idPortifolio) {
-        this.idPortifolio = idPortifolio;
+    public void setIdPortfolio(Long idPortfolio) {
+        this.idPortfolio = idPortfolio;
     }
 } 

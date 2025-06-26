@@ -1,5 +1,6 @@
 package inkspiration.backend.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import inkspiration.backend.entities.Agendamento;
@@ -12,6 +13,7 @@ public class AgendamentoCompletoDTO {
     private String descricao;
     private LocalDateTime dtInicio;
     private LocalDateTime dtFim;
+    private BigDecimal valor;
     private StatusAgendamento status;
     
     // Informações do profissional
@@ -30,12 +32,19 @@ public class AgendamentoCompletoDTO {
     private String cep;
     private String complemento;
     
+    // Informações da avaliação
+    private Long idAvaliacao;
+    private String descricaoAvaliacao;
+    private Integer ratingAvaliacao;
+    private Boolean podeAvaliar;
+    
     public AgendamentoCompletoDTO(Agendamento agendamento) {
         this.idAgendamento = agendamento.getIdAgendamento();
         this.tipoServico = agendamento.getTipoServico();
         this.descricao = agendamento.getDescricao();
         this.dtInicio = agendamento.getDtInicio();
         this.dtFim = agendamento.getDtFim();
+        this.valor = agendamento.getValor();
         this.status = agendamento.getStatus();
         
         if (agendamento.getProfissional() != null) {
@@ -99,6 +108,14 @@ public class AgendamentoCompletoDTO {
 
     public void setDtFim(LocalDateTime dtFim) {
         this.dtFim = dtFim;
+    }
+
+    public BigDecimal getValor() {
+        return valor;
+    }
+
+    public void setValor(BigDecimal valor) {
+        this.valor = valor;
     }
 
     public StatusAgendamento getStatus() {
@@ -195,5 +212,37 @@ public class AgendamentoCompletoDTO {
 
     public void setComplemento(String complemento) {
         this.complemento = complemento;
+    }
+
+    public Long getIdAvaliacao() {
+        return idAvaliacao;
+    }
+
+    public void setIdAvaliacao(Long idAvaliacao) {
+        this.idAvaliacao = idAvaliacao;
+    }
+
+    public String getDescricaoAvaliacao() {
+        return descricaoAvaliacao;
+    }
+
+    public void setDescricaoAvaliacao(String descricaoAvaliacao) {
+        this.descricaoAvaliacao = descricaoAvaliacao;
+    }
+
+    public Integer getRatingAvaliacao() {
+        return ratingAvaliacao;
+    }
+
+    public void setRatingAvaliacao(Integer ratingAvaliacao) {
+        this.ratingAvaliacao = ratingAvaliacao;
+    }
+
+    public Boolean getPodeAvaliar() {
+        return podeAvaliar;
+    }
+
+    public void setPodeAvaliar(Boolean podeAvaliar) {
+        this.podeAvaliar = podeAvaliar;
     }
 } 

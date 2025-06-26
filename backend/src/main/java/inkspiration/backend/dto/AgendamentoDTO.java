@@ -1,5 +1,6 @@
 package inkspiration.backend.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import inkspiration.backend.entities.Agendamento;
@@ -12,6 +13,7 @@ public class AgendamentoDTO {
     private String descricao;
     private LocalDateTime dtInicio;
     private LocalDateTime dtFim;
+    private BigDecimal valor;
     private Long idProfissional;
     private Long idUsuario;
     private StatusAgendamento status;
@@ -25,18 +27,20 @@ public class AgendamentoDTO {
         this.descricao = agendamento.getDescricao();
         this.dtInicio = agendamento.getDtInicio();
         this.dtFim = agendamento.getDtFim();
+        this.valor = agendamento.getValor();
         this.idProfissional = agendamento.getProfissional().getIdProfissional();
         this.idUsuario = agendamento.getUsuario().getIdUsuario();
         this.status = agendamento.getStatus();
     }
 
     public AgendamentoDTO(Long idAgendamento, TipoServico tipoServico, String descricao, 
-                         LocalDateTime dtInicio, LocalDateTime dtFim, Long idProfissional, Long idUsuario, StatusAgendamento status) {
+                         LocalDateTime dtInicio, LocalDateTime dtFim, BigDecimal valor, Long idProfissional, Long idUsuario, StatusAgendamento status) {
         this.idAgendamento = idAgendamento;
         this.tipoServico = tipoServico;
         this.descricao = descricao;
         this.dtInicio = dtInicio;
         this.dtFim = dtFim;
+        this.valor = valor;
         this.idProfissional = idProfissional;
         this.idUsuario = idUsuario;
         this.status = status;
@@ -80,6 +84,14 @@ public class AgendamentoDTO {
 
     public void setDtFim(LocalDateTime dtFim) {
         this.dtFim = dtFim;
+    }
+
+    public BigDecimal getValor() {
+        return valor;
+    }
+
+    public void setValor(BigDecimal valor) {
+        this.valor = valor;
     }
 
     public Long getIdProfissional() {
