@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Input from '../ui/Input';
+import ImageWithAlt from '../ui/ImageWithAlt';
 import { isMobileView } from '../../utils/responsive';
 
 const PersonalForm = ({ 
@@ -35,10 +36,14 @@ const PersonalForm = ({
               onPress={() => pickImage && pickImage('profile')}
             >
               {profileImage ? (
-                <Image 
+                <ImageWithAlt 
                   source={{ uri: profileImage.uri }}
+                  alt="Foto de perfil do usuário"
                   style={styles.profileImage}
                   resizeMode="cover"
+                  accessibilityLabel="Foto de perfil do usuário"
+                  fallbackIconName="person"
+                  fallbackIconSize={32}
                 />
               ) : (
                 <View style={styles.profileImagePlaceholder}>

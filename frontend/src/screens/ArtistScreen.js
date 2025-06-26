@@ -23,6 +23,7 @@ import { formatCurrency } from '../utils/formatters';
 import { artistMessages } from '../components/common/messages';
 import Pagination from '../components/common/Pagination';
 import DefaultUser from '../../assets/default_user.png'
+import ImageWithAlt from '../components/ui/ImageWithAlt';
 
 const Tabs = ({ tabs, activeTab, onTabChange }) => {
   return (
@@ -89,10 +90,13 @@ const PortfolioItem = ({ image, onPress, isMobile }) => {
       onPress={() => onPress(imageUri)} 
       activeOpacity={0.8}
     >
-      <Image
+      <ImageWithAlt
         source={{ uri: imageUri }}
+        alt="Imagem do portfólio do tatuador"
         style={styles.portfolioImage}
         resizeMode="cover"
+        accessibilityLabel="Imagem do portfólio do tatuador"
+        fallbackIconName="image"
       />
       <View style={styles.portfolioPlaceholder}>
         <Feather name="image" size={24} color="#D1D5DB" />
@@ -487,9 +491,13 @@ const ArtistScreen = ({ route }) => {
                   <View style={styles.reviewCard}>
                     <View style={styles.reviewHeader}>
                       <View style={styles.reviewerInfo}>
-                        <Image
+                        <ImageWithAlt
                           source={{ uri: item.userImage }}
+                          alt={`Foto de perfil de ${item.userName}`}
                           style={styles.reviewerImage}
+                          resizeMode="cover"
+                          accessibilityLabel={`Foto de perfil de ${item.userName}`}
+                          fallbackIconName="person"
                         />
                         <View>
                           <Text style={styles.reviewerName}>{item.userName}</Text>
@@ -578,9 +586,12 @@ const ArtistScreen = ({ route }) => {
       <View style={[styles.pageWrapper, isMobile && styles.pageWrapperMobile]}>
         <View style={[styles.leftColumn, isMobile && styles.leftColumnMobile]}>
           <View style={styles.profileHeader}>
-            <Image 
+            <ImageWithAlt 
               source={{ uri: artist.profileImage }} 
               style={styles.profileImage}
+              alt={`Foto de perfil de ${artist.name}`}
+              accessibilityLabel={`Foto de perfil de ${artist.name}`}
+              fallbackIconName="person"
             />
             
             <View style={styles.profileInfo}>
@@ -707,10 +718,12 @@ const ArtistScreen = ({ route }) => {
               </TouchableOpacity>
               
               {selectedImage && (
-                <Image
+                <ImageWithAlt
                   source={{ uri: selectedImage }}
+                  alt="Imagem ampliada do portfólio"
                   style={styles.expandedImage}
                   resizeMode="contain"
+                  accessibilityLabel="Imagem ampliada do portfólio"
                 />
               )}
             </View>

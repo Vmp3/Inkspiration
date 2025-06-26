@@ -6,7 +6,6 @@ import {
   Modal,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Image,
   ScrollView,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -16,6 +15,7 @@ import DefaultUser from '../../assets/default_user.png';
 import { formatCurrency } from '../utils/formatters';
 import AvaliacaoService from '../services/AvaliacaoService';
 import RatingModal from './RatingModal';
+import ImageWithAlt from './ui/ImageWithAlt';
 
 const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, onRefresh, isProfessional = false }) => {
   const [isRatingModalVisible, setIsRatingModalVisible] = useState(false);
@@ -133,12 +133,13 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, onRef
               <ScrollView style={styles.modalContent}>
                 <View style={styles.artistInfo}>
                   {!isProfessional && (
-                    <Image
-                      source={appointment.imagemPerfilProfissional ? 
-                        { uri: appointment.imagemPerfilProfissional } : 
-                        DefaultUser
-                      }
+                    <ImageWithAlt
+                      source={{ uri: appointment.imagemPerfilProfissional }}
+                      alt={`Foto de perfil do tatuador ${appointment.nomeProfissional}`}
                       style={styles.artistImage}
+                      resizeMode="cover"
+                      accessibilityLabel={`Foto de perfil do tatuador ${appointment.nomeProfissional}`}
+                      fallbackIconName="person"
                     />
                   )}
                   {isProfessional && (

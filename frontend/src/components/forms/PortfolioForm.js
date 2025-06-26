@@ -1,6 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ScrollView, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ScrollView, Dimensions, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import ImageWithAlt from '../ui/ImageWithAlt';
 
 const PortfolioForm = ({ 
   biography, 
@@ -83,10 +84,13 @@ const PortfolioForm = ({
                 style={styles.portfolioImageContainer}
                 onPress={() => pickImage('portfolio', index)}
               >
-                <Image
+                <ImageWithAlt
                   source={{ uri: image.uri }}
+                  alt={`Imagem ${index + 1} do portfólio`}
                   style={styles.portfolioImage}
                   resizeMode="cover"
+                  accessibilityLabel={`Imagem ${index + 1} do portfólio`}
+                  fallbackIconName="image"
                 />
               </TouchableOpacity>
               <TouchableOpacity

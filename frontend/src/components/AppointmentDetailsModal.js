@@ -6,7 +6,6 @@ import {
   Modal,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Image,
   ScrollView,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -18,6 +17,7 @@ import { formatCurrency } from '../utils/formatters';
 import toastConfig from '../config/toastConfig';
 import AvaliacaoService from '../services/AvaliacaoService';
 import RatingModal from './RatingModal';
+import ImageWithAlt from './ui/ImageWithAlt';
 
 
 const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCancel, onRefresh, isProfessional = false, showEditButton = true, showCancelButton = true }) => {
@@ -152,12 +152,13 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
               <ScrollView style={styles.modalContent}>
                 <View style={styles.artistInfo}>
                   {!isProfessional && (
-                    <Image
-                      source={appointment.imagemPerfilProfissional ? 
-                        { uri: appointment.imagemPerfilProfissional } : 
-                        DefaultUser
-                      }
+                    <ImageWithAlt
+                      source={{ uri: appointment.imagemPerfilProfissional }}
+                      alt={`Foto de perfil do tatuador ${appointment.nomeProfissional}`}
                       style={styles.artistImage}
+                      resizeMode="cover"
+                      accessibilityLabel={`Foto de perfil do tatuador ${appointment.nomeProfissional}`}
+                      fallbackIconName="person"
                     />
                   )}
                   {isProfessional && (
