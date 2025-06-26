@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Modal, Image, TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Modal, TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import ImageWithAlt from './ImageWithAlt';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -53,11 +54,13 @@ const CircularImageCropper = ({ visible, imageUri, onCrop, onCancel }) => {
         </View>
 
         <View style={styles.imageContainer}>
-          <Image
+          <ImageWithAlt
             source={{ uri: imageUri }}
+            alt="Imagem para recorte de foto de perfil"
             style={styles.image}
             resizeMode="contain"
             onLayout={handleImageLayout}
+            accessibilityLabel="Imagem para recorte de foto de perfil"
           />
           
           {/* Overlay escuro */}

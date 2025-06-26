@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import SectionTitle from './SectionTitle';
 import ChecklistItem from './ChecklistItem';
+import ImageWithAlt from '../ui/ImageWithAlt';
 import aboutScreen from '../../../assets/aboutScreen.png';
 
 /**
@@ -45,7 +46,12 @@ const MissionSection = ({ isMobile }) => {
         {!isMobile && (
           <View style={styles.imageContainer}>
             <View style={styles.imagePlaceholder}>
-              <Image source={aboutScreen} style={styles.image} />
+              <ImageWithAlt 
+                source={aboutScreen} 
+                alt="Imagem ilustrativa da missão da plataforma Inkspiration, mostrando profissionais de tatuagem trabalhando"
+                style={styles.image}
+                accessibilityLabel="Imagem ilustrativa da missão da plataforma Inkspiration, mostrando profissionais de tatuagem trabalhando"
+              />
             </View>
           </View>
         )}

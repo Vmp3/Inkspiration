@@ -6,7 +6,6 @@ import {
   ScrollView, 
   SafeAreaView, 
   TouchableOpacity, 
-  Image,
   Alert,
   ActivityIndicator
 } from 'react-native';
