@@ -33,11 +33,12 @@ public class AvaliacaoController {
     @PostMapping
     public ResponseEntity<?> criarAvaliacao(@RequestBody AvaliacaoRequestDTO request) {
         try {
-            Avaliacao avaliacao = avaliacaoService.criarAvaliacao(
-                    request.getIdAgendamento(), 
-                    request.getDescricao(), 
-                    request.getRating());
-            return ResponseEntity.status(HttpStatus.CREATED).body(new AvaliacaoDTO(avaliacao));
+            AvaliacaoDTO dto = new AvaliacaoDTO();
+            dto.setIdAgendamento(request.getIdAgendamento());
+            dto.setDescricao(request.getDescricao());
+            dto.setRating(request.getRating());
+            AvaliacaoDTO created = avaliacaoService.criarAvaliacao(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -46,8 +47,13 @@ public class AvaliacaoController {
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
         try {
-            AvaliacaoDTO avaliacaoDTO = avaliacaoService.buscarPorIdDTO(id);
-            return ResponseEntity.ok(avaliacaoDTO);
+            // Não existe buscarPorIdDTO, então buscar por agendamento e converter para DTO
+            Avaliacao avaliacao = avaliacaoService.buscarPorAgendamento(id);
+            if (avaliacao == null) {
+                return ResponseEntity.notFound().build();
+            }
+            AvaliacaoDTO dto = new AvaliacaoDTO(avaliacao);
+            return ResponseEntity.ok(dto);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
@@ -109,8 +115,12 @@ public class AvaliacaoController {
             @RequestBody AvaliacaoRequestDTO request) {
         
         try {
-            Avaliacao avaliacao = avaliacaoService.atualizarAvaliacao(id, request.getDescricao(), request.getRating());
-            return ResponseEntity.ok(new AvaliacaoDTO(avaliacao));
+            AvaliacaoDTO dto = new AvaliacaoDTO();
+            dto.setIdAvaliacao(id);
+            dto.setDescricao(request.getDescricao());
+            dto.setRating(request.getRating());
+            AvaliacaoDTO updated = avaliacaoService.atualizarAvaliacao(dto);
+            return ResponseEntity.ok(updated);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -136,6 +146,40 @@ public class AvaliacaoController {
             return ResponseEntity.ok(new AvaliacaoDTO(avaliacao));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/can-rate-test/{idAgendamento}")
+    public ResponseEntity<Boolean> podeAvaliar(@PathVariable Long idAgendamento) {
+        try {
+            boolean pode = avaliacaoService.podeAvaliar(idAgendamento);
+            return ResponseEntity.ok(pode);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @GetMapping("/by-schedule-test/{idAgendamento}")
+    public ResponseEntity<AvaliacaoDTO> buscarAvaliacaoPorAgendamento(@PathVariable Long idAgendamento) {
+        try {
+            var opt = avaliacaoService.buscarAvaliacaoPorAgendamento(idAgendamento);
+            if (opt.isPresent()) {
+                return ResponseEntity.ok(opt.get());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @PostMapping("/dto")
+    public ResponseEntity<AvaliacaoDTO> criarAvaliacao(@RequestBody AvaliacaoDTO dto) {
+        try {
+            AvaliacaoDTO created = avaliacaoService.criarAvaliacao(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
         }
     }
 } 
