@@ -75,67 +75,69 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
             
             {day.available && (
               <View style={styles.dayHours}>
-                {/* Período da Manhã */}
-                <View style={styles.periodContainer}>
-                  <View style={styles.periodLabelContainer}>
-                    <TouchableOpacity 
-                      style={[styles.checkbox, day.morning.enabled && styles.checkboxChecked]}
-                      onPress={() => handleWorkHourChange(index, 'morning', 'enabled', !day.morning.enabled)}
-                    >
-                      {day.morning.enabled && <Feather name="check" size={16} color="#fff" />}
-                    </TouchableOpacity>
-                    <Text style={styles.checkboxLabel}>Manhã</Text>
+                <View style={styles.periodsContainer}>
+                  {/* Período da Manhã */}
+                  <View style={[styles.periodRow, Platform.OS === 'web' && styles.periodRowWeb]}>
+                    <View style={styles.periodCheckbox}>
+                      <TouchableOpacity 
+                        style={[styles.checkbox, day.morning.enabled && styles.checkboxChecked]}
+                        onPress={() => handleWorkHourChange(index, 'morning', 'enabled', !day.morning.enabled)}
+                      >
+                        {day.morning.enabled && <Feather name="check" size={16} color="#fff" />}
+                      </TouchableOpacity>
+                      <Text style={styles.checkboxLabel}>Manhã</Text>
+                    </View>
+                    
+                    <View style={styles.timeInputContainer}>
+                      <TimeInput
+                        value={day.morning.start}
+                        onChange={(value) => handleTimeChange(index, 'morning', 'start', value)}
+                        disabled={!day.morning.enabled}
+                        period="morning"
+                        type="start"
+                      />
+                      <Text style={styles.timeInputSeparator}>às</Text>
+                      <TimeInput
+                        value={day.morning.end}
+                        onChange={(value) => handleTimeChange(index, 'morning', 'end', value)}
+                        disabled={!day.morning.enabled}
+                        period="morning"
+                        type="end"
+                        startTime={day.morning.start}
+                      />
+                    </View>
                   </View>
                   
-                  <View style={styles.timeInputWrapper}>
-                    <TimeInput
-                      value={day.morning.start}
-                      onChange={(value) => handleTimeChange(index, 'morning', 'start', value)}
-                      disabled={!day.morning.enabled}
-                      period="morning"
-                      type="start"
-                    />
-                    <Text style={styles.timeInputSeparator}>às</Text>
-                    <TimeInput
-                      value={day.morning.end}
-                      onChange={(value) => handleTimeChange(index, 'morning', 'end', value)}
-                      disabled={!day.morning.enabled}
-                      period="morning"
-                      type="end"
-                      startTime={day.morning.start}
-                    />
-                  </View>
-                </View>
-                
-                {/* Período da Tarde */}
-                <View style={styles.periodContainer}>
-                  <View style={styles.periodLabelContainer}>
-                    <TouchableOpacity 
-                      style={[styles.checkbox, day.afternoon.enabled && styles.checkboxChecked]}
-                      onPress={() => handleWorkHourChange(index, 'afternoon', 'enabled', !day.afternoon.enabled)}
-                    >
-                      {day.afternoon.enabled && <Feather name="check" size={16} color="#fff" />}
-                    </TouchableOpacity>
-                    <Text style={styles.checkboxLabel}>Tarde</Text>
-                  </View>
-                  
-                  <View style={styles.timeInputWrapper}>
-                    <TimeInput
-                      value={day.afternoon.start}
-                      onChange={(value) => handleTimeChange(index, 'afternoon', 'start', value)}
-                      disabled={!day.afternoon.enabled}
-                      period="afternoon"
-                      type="start"
-                    />
-                    <Text style={styles.timeInputSeparator}>às</Text>
-                    <TimeInput
-                      value={day.afternoon.end}
-                      onChange={(value) => handleTimeChange(index, 'afternoon', 'end', value)}
-                      disabled={!day.afternoon.enabled}
-                      period="afternoon"
-                      type="end"
-                      startTime={day.afternoon.start}
-                    />
+                  {/* Período da Tarde */}
+                  <View style={[styles.periodRow, Platform.OS === 'web' && styles.periodRowWeb]}>
+                    <View style={styles.periodCheckbox}>
+                      <TouchableOpacity 
+                        style={[styles.checkbox, day.afternoon.enabled && styles.checkboxChecked]}
+                        onPress={() => handleWorkHourChange(index, 'afternoon', 'enabled', !day.afternoon.enabled)}
+                      >
+                        {day.afternoon.enabled && <Feather name="check" size={16} color="#fff" />}
+                      </TouchableOpacity>
+                      <Text style={styles.checkboxLabel}>Tarde</Text>
+                    </View>
+                    
+                    <View style={styles.timeInputContainer}>
+                      <TimeInput
+                        value={day.afternoon.start}
+                        onChange={(value) => handleTimeChange(index, 'afternoon', 'start', value)}
+                        disabled={!day.afternoon.enabled}
+                        period="afternoon"
+                        type="start"
+                      />
+                      <Text style={styles.timeInputSeparator}>às</Text>
+                      <TimeInput
+                        value={day.afternoon.end}
+                        onChange={(value) => handleTimeChange(index, 'afternoon', 'end', value)}
+                        disabled={!day.afternoon.enabled}
+                        period="afternoon"
+                        type="end"
+                        startTime={day.afternoon.start}
+                      />
+                    </View>
                   </View>
                 </View>
               </View>
@@ -188,23 +190,50 @@ const styles = StyleSheet.create({
   dayHours: {
     marginTop: 8,
   },
-  periodContainer: {
-    marginBottom: 12,
+  periodsContainer: {
+    ...(Platform.OS === 'web' ? {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+    } : {
+      flexDirection: 'column',
+    }),
   },
-  periodLabelContainer: {
+  periodRow: {
+    ...(Platform.OS === 'web' ? {
+      flex: 1,
+      marginRight: 16,
+      minWidth: '45%',
+    } : {
+      marginBottom: 12,
+    }),
+  },
+  periodRowWeb: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  timeInputWrapper: {
+  periodCheckbox: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    paddingLeft: Platform.OS === 'web' ? 28 : 20,
+    ...(Platform.OS === 'web' ? {
+      width: 100,
+      marginRight: 8,
+    } : {
+      marginBottom: 8,
+    }),
+  },
+  timeInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...(Platform.OS === 'web' ? {
+      flex: 1,
+    } : {
+      paddingLeft: 28,
+    }),
   },
   timeInputSeparator: {
-    marginHorizontal: 4,
-    minWidth: 20,
+    marginHorizontal: Platform.OS === 'web' ? 8 : 4,
+    minWidth: Platform.OS === 'web' ? 24 : 20,
     textAlign: 'center',
   },
   checkbox: {
