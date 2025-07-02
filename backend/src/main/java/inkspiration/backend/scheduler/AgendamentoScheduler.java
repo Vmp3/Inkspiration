@@ -42,24 +42,23 @@ public class AgendamentoScheduler {
                 logger.info("Iniciando atualização automática de {} agendamentos passados às {}", 
                     agendamentosParaAtualizar.size(), agora);
                 
-                int atualizados = 0;
-                // Atualiza cada agendamento diretamente no banco
-                for (Agendamento agendamento : agendamentosParaAtualizar) {
-                    StatusAgendamento statusAnterior = agendamento.getStatus();
-                    agendamento.setStatus(StatusAgendamento.CONCLUIDO);
-                    agendamentoRepository.save(agendamento);
-                    atualizados++;
-                    
-                    logger.info("Agendamento ID {} atualizado: {} -> CONCLUIDO (Data/Hora fim: {})", 
-                        agendamento.getIdAgendamento(), statusAnterior, agendamento.getDtFim());
-                }
+                // Usa query update para atualizar apenas o status, evitando validações
+                int atualizados = agendamentoRepository.updateStatusToConcluido(
+                    StatusAgendamento.AGENDADO, 
+                    StatusAgendamento.CONCLUIDO, 
+                    agora
+                );
 
-                logger.info("Atualização automática concluída com sucesso - {} de {} agendamentos atualizados", 
-                    atualizados, agendamentosParaAtualizar.size());
+                logger.info("Atualização automática concluída com sucesso - {} agendamentos atualizados", atualizados);
+                
+                // Log individual dos agendamentos atualizados (opcional, para debug)
+                for (Agendamento agendamento : agendamentosParaAtualizar) {
+                    logger.info("Agendamento ID {} atualizado: AGENDADO -> CONCLUIDO (Data/Hora fim: {})", 
+                        agendamento.getIdAgendamento(), agendamento.getDtFim());
+                }
             }
         } catch (Exception e) {
             logger.error("Erro ao atualizar automaticamente o status dos agendamentos: {}", e.getMessage(), e);
-            e.printStackTrace();
         }
     }
 } 

@@ -18,12 +18,18 @@ import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Future;
+import jakarta.validation.groups.Default;
 
 import inkspiration.backend.enums.TipoServico;
 import inkspiration.backend.enums.StatusAgendamento;
 
 @Entity
 public class Agendamento {
+    
+    // Grupos de validação
+    public interface OnCreate extends Default {}
+    public interface OnUpdate {}
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idAgendamento;
@@ -40,7 +46,7 @@ public class Agendamento {
     
     @Column(nullable = false)
     @NotNull(message = "Data de início é obrigatória")
-    @Future(message = "Data de início deve ser no futuro")
+    @Future(message = "Data de início deve ser no futuro", groups = OnCreate.class)
     private LocalDateTime dtInicio;
     
     @Column(nullable = false)
@@ -108,6 +114,14 @@ public class Agendamento {
     }
     
     public void setDtInicio(LocalDateTime dtInicio) {
+        if (dtInicio == null) {
+            throw new IllegalArgumentException("Data de início não pode ser nula");
+        }
+        this.dtInicio = dtInicio;
+    }
+    
+    // Método específico para definir data com validação de futuro (usado na criação)
+    public void setDtInicioWithFutureValidation(LocalDateTime dtInicio) {
         if (dtInicio == null) {
             throw new IllegalArgumentException("Data de início não pode ser nula");
         }
