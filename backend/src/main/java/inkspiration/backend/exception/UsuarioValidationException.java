@@ -81,4 +81,22 @@ public class UsuarioValidationException {
             super("Endereço é obrigatório");
         }
     }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public static class TelefoneObrigatorioException extends RuntimeException {
+        public TelefoneObrigatorioException() {
+            super("Telefone é obrigatório");
+        }
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public static class TelefoneInvalidoException extends RuntimeException {
+        public TelefoneInvalidoException() {
+            super("Telefone inválido. Use o formato (99) 99999-9999.");
+        }
+        
+        public TelefoneInvalidoException(String message) {
+            super(message);
+        }
+    }
 } 

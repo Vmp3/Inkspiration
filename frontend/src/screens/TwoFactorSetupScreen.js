@@ -6,7 +6,6 @@ import {
   ScrollView, 
   SafeAreaView, 
   TouchableOpacity, 
-  Image,
   Alert,
   ActivityIndicator
 } from 'react-native';
@@ -354,9 +353,11 @@ const TwoFactorSetupScreen = () => {
         <View style={styles.content}>
           <StepIndicator currentStep={step} totalSteps={3} />
 
-          {step === 1 && renderStep1()}
-          {step === 2 && renderStep2()}
-          {step === 3 && renderStep3()}
+          <View style={styles.stepContent}>
+            {step === 1 && renderStep1()}
+            {step === 2 && renderStep2()}
+            {step === 3 && renderStep3()}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -371,6 +372,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     paddingHorizontal: 16,
+    paddingBottom: 30,
   },
   header: {
     position: 'absolute',
@@ -387,10 +389,18 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   content: {
+    flex: 1,
     width: '100%',
     maxWidth: 450,
     alignSelf: 'center',
     marginTop: 80,
+    justifyContent: 'space-between',
+    minHeight: 400,
+  },
+  stepContent: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 20,
   },
   stepContainer: {
     alignItems: 'center',

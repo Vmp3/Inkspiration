@@ -34,61 +34,68 @@ const MobileFiltersModal = ({
       transparent={true}
       animationType="slide"
       onRequestClose={onClose}
-      statusBarTranslucent={true}
+      statusBarTranslucent={false}
     >
-      <View style={styles.modalContainer}>
+      <View style={styles.modalOverlay}>
         <Pressable style={styles.overlay} onPress={onClose} />
         
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Filtros</Text>
-            <TouchableOpacity onPress={onClose}>
-              <MaterialIcons name="close" size={24} color="#000000" />
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView style={styles.modalScrollView}>
-            {/* Campo de busca no modal */}
-            <Input
-              icon="search"
-              placeholder="Buscar artistas"
-              value={searchTerm}
-              onChangeText={setSearchTerm}
-            />
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Filtros</Text>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <MaterialIcons name="close" size={24} color="#000000" />
+              </TouchableOpacity>
+            </View>
             
-            {/* Localização */}
-            <FilterSection title="Localização">
+            <ScrollView 
+              style={styles.modalScrollView}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={true}
+              nestedScrollEnabled={true}
+            >
+              {/* Campo de busca no modal */}
               <Input
-                icon="location-on"
-                placeholder="Sua localização"
-                value={locationTerm}
-                onChangeText={setLocationTerm}
+                icon="search"
+                placeholder="Buscar artistas"
+                value={searchTerm}
+                onChangeText={setSearchTerm}
               />
-            </FilterSection>
+              
+              {/* Localização */}
+              <FilterSection title="Localização">
+                <Input
+                  icon="location-on"
+                  placeholder="Sua localização"
+                  value={locationTerm}
+                  onChangeText={setLocationTerm}
+                />
+              </FilterSection>
+              
+              {/* Avaliação mínima */}
+              <RatingFilter minRating={minRating} setMinRating={setMinRating} />
+              
+              {/* Especialidades */}
+              <SpecialtiesFilter 
+                selectedSpecialties={selectedSpecialties} 
+                toggleSpecialty={toggleSpecialty} 
+              />
+            </ScrollView>
             
-            {/* Avaliação mínima */}
-            <RatingFilter minRating={minRating} setMinRating={setMinRating} />
-            
-            {/* Especialidades */}
-            <SpecialtiesFilter 
-              selectedSpecialties={selectedSpecialties} 
-              toggleSpecialty={toggleSpecialty} 
-            />
-          </ScrollView>
-          
-          <View style={styles.modalFooter}>
-            <Button
-              variant="outline"
-              label="Limpar todos"
-              onPress={resetFilters}
-              style={styles.clearButton}
-            />
-            <Button
-              variant="primary"
-              label="Aplicar filtros"
-              onPress={applyAndClose}
-              style={styles.applyButton}
-            />
+            <View style={styles.modalFooter}>
+              <Button
+                variant="outline"
+                label="Limpar todos"
+                onPress={resetFilters}
+                style={styles.clearButton}
+              />
+              <Button
+                variant="primary"
+                label="Aplicar filtros"
+                onPress={applyAndClose}
+                style={styles.applyButton}
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -97,29 +104,31 @@ const MobileFiltersModal = ({
 };
 
 const styles = StyleSheet.create({
-  overlay: {
+  modalOverlay: {
     flex: 1,
+    justifyContent: 'flex-end',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
+  overlay: {
+    flex: 1,
+  },
   modalContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    maxHeight: '80%',
+    maxHeight: '90%',
+    minHeight: '70%',
   },
   modalContent: {
     flex: 1,
+    flexDirection: 'column',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
@@ -128,8 +137,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#111827',
   },
+  closeButton: {
+    padding: 4,
+  },
   modalScrollView: {
-    padding: 16,
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  scrollContent: {
+    paddingTop: 16,
+    paddingBottom: 20,
   },
   modalFooter: {
     flexDirection: 'row',
@@ -137,6 +154,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
+    gap: 12,
   },
   clearButton: {
     flex: 1,
@@ -144,7 +162,6 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     borderRadius: 6,
     paddingVertical: 12,
-    marginRight: 8,
     alignItems: 'center',
   },
   applyButton: {
@@ -152,7 +169,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     borderRadius: 6,
     paddingVertical: 12,
-    marginLeft: 8,
     alignItems: 'center',
   },
 });

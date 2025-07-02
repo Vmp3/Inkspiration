@@ -501,6 +501,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontStyle: 'italic',
   },
+  testSection: undefined,
+  testTitle: undefined,
+  imageTestContainer: undefined,
+  testImage: undefined,
 });
 
 export default HomeScreen; 

@@ -9,14 +9,14 @@ import {
   Platform,
   Animated,
   Pressable,
-  Image
 } from 'react-native';
 import { useNavigation, useNavigationState } from '@react-navigation/native';
-import { MaterialIcons, Feather } from '@expo/vector-icons';
+import { MaterialIcons, Feather, AntDesign } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import toastHelper from '../utils/toastHelper';
 import textUtils from '../utils/textUtils';
 import { headerMessages } from './header/messages';
+import ImageWithAlt from './ui/ImageWithAlt';
 
 const Header = () => {
   const navigation = useNavigation();
@@ -292,9 +292,12 @@ const Header = () => {
                 >
                   <View style={styles.avatar}>
                     {userData?.imagemPerfil ? (
-                      <Image 
+                      <ImageWithAlt 
                         source={{ uri: userData.imagemPerfil }} 
-                        style={styles.avatarImage} 
+                        style={styles.avatarImage}
+                        alt={`Foto de perfil de ${userData.nome}`}
+                        accessibilityLabel={`Foto de perfil de ${userData.nome}`}
+                        fallbackIconName="person"
                       />
                     ) : (
                       <View style={styles.avatarFallback}>

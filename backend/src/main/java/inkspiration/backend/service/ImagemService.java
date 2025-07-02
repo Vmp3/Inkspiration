@@ -86,11 +86,53 @@ public class ImagemService {
 
     public ImagemDTO salvarComValidacao(ImagemDTO dto) {
         try {
+            // Validar tamanho da imagem do portfólio (10MB)
+            validarTamanhoImagemPortfolio(dto.getImagemBase64());
+            
+            // Validar formato da imagem do portfólio
+            validarFormatoImagemPortfolio(dto.getImagemBase64());
+            
             return salvar(dto);
         } catch (PortfolioNaoEncontradoException e) {
             throw new ImagemSalvamentoException("Portfólio não encontrado com ID: " + dto.getIdPortfolio());
         } catch (Exception e) {
             throw new ImagemSalvamentoException("Erro ao salvar imagem: " + e.getMessage());
+        }
+    }
+    
+    private void validarTamanhoImagemPortfolio(String imagemBase64) {
+        if (imagemBase64 == null || imagemBase64.isEmpty()) {
+            throw new ImagemProcessamentoException("Dados da imagem não fornecidos");
+        }
+        
+        String base64Data = imagemBase64;
+        if (base64Data.contains(",")) {
+            base64Data = base64Data.substring(base64Data.indexOf(",") + 1);
+        }
+        
+        long sizeInBytes = (base64Data.length() * 3) / 4;
+        
+        long maxSizeInBytes = 10 * 1024 * 1024;
+        
+        if (sizeInBytes > maxSizeInBytes) {
+            throw new ImagemProcessamentoException("Imagem do portfólio muito grande. Tamanho máximo permitido: 10MB");
+        }
+    }
+    
+
+    private void validarFormatoImagemPortfolio(String imagemBase64) {
+        if (imagemBase64 == null || imagemBase64.isEmpty()) {
+            throw new ImagemProcessamentoException("Dados da imagem não fornecidos");
+        }
+        
+        if (!imagemBase64.startsWith("data:image/")) {
+            throw new ImagemProcessamentoException("Formato de imagem inválido. Apenas PNG, JPG, JPEG e JFIF são permitidos");
+        }
+        
+        String mimeType = imagemBase64.substring(5, imagemBase64.indexOf(";"));
+        
+        if (!mimeType.equals("image/jpeg") && !mimeType.equals("image/png")) {
+            throw new ImagemProcessamentoException("Formato de imagem inválido. Apenas PNG, JPG, JPEG e JFIF são permitidos");
         }
     }
 

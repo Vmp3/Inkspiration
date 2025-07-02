@@ -19,6 +19,7 @@ import inkspiration.backend.entities.Endereco;
 import inkspiration.backend.entities.TokenRevogado;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.entities.UsuarioAutenticar;
+import inkspiration.backend.enums.UserRole;
 import inkspiration.backend.exception.UsuarioException;
 import inkspiration.backend.exception.UsuarioValidationException;
 import inkspiration.backend.repository.TokenRevogadoRepository;
@@ -27,6 +28,7 @@ import inkspiration.backend.security.JwtService;
 import inkspiration.backend.util.CpfValidator;
 import inkspiration.backend.util.DateValidator;
 import inkspiration.backend.util.EmailValidator;
+import inkspiration.backend.util.TelefoneValidator;
 import inkspiration.backend.repository.ProfissionalRepository;
 import inkspiration.backend.exception.usuario.TokenValidationException;
 import inkspiration.backend.exception.usuario.InvalidProfileImageException;
@@ -177,7 +179,7 @@ public class UsuarioService {
             // Obtém o usuário autenticado
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             boolean isAdmin = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                    .anyMatch(a -> a.getAuthority().equals(UserRole.ROLE_ADMIN.getRole()));
             
             if (!isAdmin) {
                 throw new UsuarioException.PermissaoNegadaException("Apenas administradores podem alterar roles");
@@ -274,7 +276,7 @@ public class UsuarioService {
     @Transactional
     public void inativar(Long id) {
         Usuario usuario = buscarPorId(id);
-        usuario.setRole("ROLE_DELETED");
+        usuario.setRole(UserRole.ROLE_DELETED.getRole());
 
         // Revoga o token atual
         if (usuario.getTokenAtual() != null) {
@@ -284,7 +286,7 @@ public class UsuarioService {
         }
 
         if (usuario.getUsuarioAutenticar() != null) {
-            usuario.getUsuarioAutenticar().setRole("ROLE_DELETED");
+            usuario.getUsuarioAutenticar().setRole(UserRole.ROLE_DELETED.getRole());
         }
         
         repository.save(usuario);
@@ -294,7 +296,7 @@ public class UsuarioService {
     public void reativar(Long id) {
         Usuario usuario = buscarPorId(id);
         
-        if (!"ROLE_DELETED".equals(usuario.getRole())) {
+        if (!UserRole.ROLE_DELETED.getRole().equals(usuario.getRole())) {
             throw new UsuarioException.UsuarioNaoEncontradoException("Usuário não está desativado");
         }
         
@@ -316,9 +318,9 @@ public class UsuarioService {
         boolean isProfissional = profissionalRepository.existsByUsuario_IdUsuario(usuario.getIdUsuario());
         
         if (isProfissional) {
-            return "ROLE_PROF";
+            return UserRole.ROLE_PROF.getRole();
         } else {
-            return "ROLE_USER";
+            return UserRole.ROLE_USER.getRole();
         }
     }
 
@@ -368,6 +370,12 @@ public class UsuarioService {
                 throw new UsuarioValidationException.SenhaInvalidaException(PasswordValidator.getPasswordRequirements());
             }
         }
+        if (dto.getTelefone() == null || dto.getTelefone().trim().isEmpty()) {
+            throw new UsuarioValidationException.TelefoneObrigatorioException();
+        }
+        if (!TelefoneValidator.isValid(dto.getTelefone())) {
+            throw new UsuarioValidationException.TelefoneInvalidoException(TelefoneValidator.getValidationMessage(dto.getTelefone()));
+        }
     }
 
     private void validarCamposObrigatorios(UsuarioDTO dto) {
@@ -401,6 +409,12 @@ public class UsuarioService {
         if (!PasswordValidator.isValid(dto.getSenha())) {
             throw new UsuarioValidationException.SenhaInvalidaException(PasswordValidator.getPasswordRequirements());
         }
+        if (dto.getTelefone() == null || dto.getTelefone().trim().isEmpty()) {
+            throw new UsuarioValidationException.TelefoneObrigatorioException();
+        }
+        if (!TelefoneValidator.isValid(dto.getTelefone())) {
+            throw new UsuarioValidationException.TelefoneInvalidoException(TelefoneValidator.getValidationMessage(dto.getTelefone()));
+        }
     }
 
     private void preencherUsuario(Usuario usuario, UsuarioDTO dto) {
@@ -413,6 +427,8 @@ public class UsuarioService {
         
         // Só atualiza a imagem de perfil se ela for fornecida no DTO
         if (dto.getImagemPerfil() != null) {
+            // Validação de tamanho da imagem - limite de 5MB
+            validarTamanhoImagem(dto.getImagemPerfil());
             usuario.setImagemPerfil(dto.getImagemPerfil());
         }
         // Se for null, mantém a imagem existente
@@ -420,15 +436,15 @@ public class UsuarioService {
 
     private String determinarRole(String role) {
         if (role != null) {
-            if (role.equalsIgnoreCase("admin")) {
-                return "ROLE_ADMIN";
-            } else if (role.equalsIgnoreCase("deleted")) {
-                return "ROLE_DELETED";
-            } else if (role.equalsIgnoreCase("prof")) {
-                return "ROLE_PROF";
+            try {
+                UserRole userRole = UserRole.fromString(role);
+                return userRole.getRole();
+            } catch (IllegalArgumentException e) {
+                // Se a role for inválida, retorna ROLE_USER como padrão
+                return UserRole.ROLE_USER.getRole();
             }
         }
-        return "ROLE_USER";
+        return UserRole.ROLE_USER.getRole();
     }
 
     private void atualizarEndereco(Endereco enderecoAtual, Endereco novoEndereco) {
@@ -549,7 +565,52 @@ public class UsuarioService {
             throw new InvalidProfileImageException("Imagem não fornecida");
         }
         
+        // Validação de tamanho da imagem - limite de 5MB
+        validarTamanhoImagem(imagemBase64);
+        
         atualizarFotoPerfil(id, imagemBase64);
+    }
+
+    private void validarTamanhoImagem(String imagemBase64) {
+        if (imagemBase64 == null || imagemBase64.isEmpty()) {
+            return;
+        }
+        
+        // Validar formato da imagem
+        validarFormatoImagem(imagemBase64);
+        
+        // Remove o prefixo data:image/...;base64, se existir
+        String base64Data = imagemBase64;
+        if (imagemBase64.contains(",")) {
+            base64Data = imagemBase64.split(",")[1];
+        }
+        
+        // Calcula o tamanho em bytes da imagem base64
+        // Base64 adiciona ~33% ao tamanho original, então dividimos por 1.33 para obter o tamanho aproximado
+        long imagemTamanhoBytes = (long) (base64Data.length() * 0.75);
+        
+        // Limite de 5MB em bytes (definido no código)
+        long limiteTamanhoBytes = 5 * 1024 * 1024;
+        
+        if (imagemTamanhoBytes > limiteTamanhoBytes) {
+            throw new InvalidProfileImageException("Imagem muito grande. Tamanho máximo permitido: 5MB");
+        }
+    }
+    
+    private void validarFormatoImagem(String imagemBase64) {
+        if (imagemBase64 == null || imagemBase64.isEmpty()) {
+            return;
+        }
+        
+        // Verifica se é um formato válido (PNG ou JPG)
+        if (!imagemBase64.startsWith("data:image/")) {
+            throw new InvalidProfileImageException("Formato de imagem inválido. Apenas PNG e JPG são permitidos");
+        }
+        
+        String mimeType = imagemBase64.substring(5, imagemBase64.indexOf(";"));
+        if (!mimeType.equals("image/jpeg") && !mimeType.equals("image/jpg") && !mimeType.equals("image/png")) {
+            throw new InvalidProfileImageException("Formato de imagem inválido. Apenas PNG e JPG são permitidos");
+        }
     }
 
     public boolean validateTokenComplete(Long id, String token) {

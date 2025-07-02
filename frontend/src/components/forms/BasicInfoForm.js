@@ -1,24 +1,28 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import * as formatters from '../../utils/formatters';
 import ApiService from '../../services/ApiService';
+import toastHelper from '../../utils/toastHelper';
 
 const BasicInfoForm = ({ 
-  experience, 
-  setExperience, 
-  specialties, 
-  handleSpecialtyChange, 
-  socialMedia, 
-  handleSocialMediaChange, 
-  handleNextTab, 
-  experienceDropdownOpen, 
+  experience,
+  setExperience,
+  specialties,
+  handleSpecialtyChange,
+  socialMedia,
+  handleSocialMediaChange,
+  handleNextTab,
+  experienceDropdownOpen,
   setExperienceDropdownOpen,
   tiposServico,
   setTiposServico,
   tipoServicoSelecionados,
   handleTipoServicoChange,
   precosServicos,
-  handlePrecoServicoChange
+  handlePrecoServicoChange,
+  websiteError,
+  setWebsiteError
 }) => {
   const dropdownRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -112,6 +116,17 @@ const BasicInfoForm = ({
     // Converte para número e divide por 100 para ter centavos
     const numero = parseInt(apenasNumeros) / 100;
     
+    // Valor máximo de R$ 100.000,00
+    const VALOR_MAXIMO = 100000;
+    
+    // Limitar valor máximo
+    if (numero > VALOR_MAXIMO) {
+      return VALOR_MAXIMO.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+    
     // Formata com separadores brasileiros
     return numero.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
@@ -120,6 +135,20 @@ const BasicInfoForm = ({
   };
 
   const handlePrecoChange = (tipoNome, valor) => {
+    // Remove tudo que não é número
+    const apenasNumeros = valor.replace(/\D/g, '');
+    
+    if (apenasNumeros) {
+      const numero = parseInt(apenasNumeros) / 100;
+      const VALOR_MAXIMO = 100000;
+      
+      // Verificar se excede o valor máximo e mostrar toast
+      if (numero > VALOR_MAXIMO) {
+        toastHelper.showError('Valor máximo permitido é R$ 100.000,00');
+        return;
+      }
+    }
+    
     const valorFormatado = formatarPreco(valor);
     handlePrecoServicoChange(tipoNome, valorFormatado);
   };
@@ -277,13 +306,33 @@ const BasicInfoForm = ({
         <View style={styles.socialInputRow}>
           <Feather name="globe" size={20} color="#666" />
           <TextInput
-            style={styles.socialInput}
-            placeholder="seusite.com"
+            style={[
+              styles.socialInput,
+              websiteError ? styles.socialInputError : null
+            ]}
+            placeholder="https://seusite.com"
             value={socialMedia.website}
-            onChangeText={(text) => handleSocialMediaChange('website', text)}
+            onChangeText={(text) => {
+              handleSocialMediaChange('website', text);
+              // Validar em tempo real quando há conteúdo
+              if (text.trim()) {
+                const errorMessage = formatters.getWebsiteValidationMessage(text);
+                setWebsiteError(errorMessage || '');
+              } else {
+                setWebsiteError('');
+              }
+            }}
+            onBlur={() => {
+              // Validar quando o campo perde o foco
+              const errorMessage = formatters.getWebsiteValidationMessage(socialMedia.website);
+              setWebsiteError(errorMessage || '');
+            }}
             maxLength={255}
           />
         </View>
+        {websiteError ? (
+          <Text style={styles.errorMessage}>{websiteError}</Text>
+        ) : null}
       </View>
     </View>
   );
@@ -435,6 +484,15 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     padding: 10,
     marginLeft: 10,
+  },
+  socialInputError: {
+    borderColor: '#ff6b6b',
+  },
+  errorMessage: {
+    color: '#ff6b6b',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 30,
   },
   tipoServicoTextContainer: {
     flex: 1,

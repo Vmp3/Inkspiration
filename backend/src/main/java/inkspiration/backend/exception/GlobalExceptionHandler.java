@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+
 import inkspiration.backend.exception.authentication.AuthenticationFailedException;
 import inkspiration.backend.exception.authentication.InvalidTwoFactorCodeException;
 import inkspiration.backend.exception.authentication.TwoFactorRequiredException;
@@ -23,6 +24,7 @@ import inkspiration.backend.exception.authentication.UserNotFoundException;
 import inkspiration.backend.exception.usuario.InvalidProfileImageException;
 import inkspiration.backend.exception.usuario.TokenValidationException;
 import inkspiration.backend.exception.usuario.UserAccessDeniedException;
+import inkspiration.backend.exception.usuario.TelefoneValidationException;
 import inkspiration.backend.exception.agendamento.AgendamentoNaoAutorizadoException;
 import inkspiration.backend.exception.agendamento.AutoAgendamentoException;
 import inkspiration.backend.exception.agendamento.CancelamentoNaoPermitidoException;
@@ -68,6 +70,10 @@ import inkspiration.backend.exception.endereco.EnderecoValidacaoException;
 import inkspiration.backend.exception.endereco.CepInvalidoException;
 import inkspiration.backend.exception.endereco.EstadoInvalidoException;
 import inkspiration.backend.exception.endereco.CidadeInvalidaException;
+import inkspiration.backend.exception.avaliacao.AvaliacaoJaExisteException;
+import inkspiration.backend.exception.avaliacao.AvaliacaoNaoEncontradaException;
+import inkspiration.backend.exception.avaliacao.AvaliacaoNaoPermitidaException;
+import inkspiration.backend.exception.agendamento.AgendamentoNaoEncontradoException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -110,7 +116,9 @@ public class GlobalExceptionHandler {
         UsuarioValidationException.DataInvalidaException.class,
         UsuarioValidationException.SenhaObrigatoriaException.class,
         UsuarioValidationException.IdadeMinimaException.class,
-        UsuarioValidationException.EnderecoObrigatorioException.class
+        UsuarioValidationException.EnderecoObrigatorioException.class,
+        UsuarioValidationException.TelefoneObrigatorioException.class,
+        UsuarioValidationException.TelefoneInvalidoException.class
     })
     public ResponseEntity<Map<String, String>> handleUsuarioValidationExceptions(RuntimeException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -196,6 +204,13 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
         errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(TelefoneValidationException.class)
+    public ResponseEntity<Map<String, String>> handleTelefoneValidationException(TelefoneValidationException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(InvalidProfileImageException.class)
@@ -577,5 +592,34 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
         errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+    // Exceções de Avaliação
+    @ExceptionHandler(AvaliacaoJaExisteException.class)
+    public ResponseEntity<Map<String, String>> handleAvaliacaoJaExisteException(AvaliacaoJaExisteException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(AvaliacaoNaoEncontradaException.class)
+    public ResponseEntity<Map<String, String>> handleAvaliacaoNaoEncontradaException(AvaliacaoNaoEncontradaException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(AvaliacaoNaoPermitidaException.class)
+    public ResponseEntity<Map<String, String>> handleAvaliacaoNaoPermitidaException(AvaliacaoNaoPermitidaException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(AgendamentoNaoEncontradoException.class)
+    public ResponseEntity<Map<String, String>> handleAgendamentoNaoEncontradoException(AgendamentoNaoEncontradoException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.NOT_FOUND);
     }
 }

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import ImageWithAlt from '../ui/ImageWithAlt';
 
 const QRCodeDisplay = ({ qrCode, secretKey, issuer, accountName, otpAuthUrl }) => {
   const [showManualCode, setShowManualCode] = useState(false);
@@ -9,12 +11,12 @@ const QRCodeDisplay = ({ qrCode, secretKey, issuer, accountName, otpAuthUrl }) =
       {qrCode && qrCode.startsWith('data:image/') ? (
         <>
           <Text style={styles.qrCodeTitle}>Escaneie o QR Code:</Text>
-          <Image 
-            source={{ uri: qrCode }} 
+          <ImageWithAlt
+            source={{ uri: qrCode }}
+            alt="QR Code para configuração do autenticador"
             style={styles.qrCodeImage}
             resizeMode="contain"
-            onError={(error) => {}}
-            onLoad={() => {}}
+            accessibilityLabel="QR Code para configuração do autenticador"
           />
           <Text style={styles.qrCodeInstructions}>
             Abra o Google Authenticator e escaneie o código acima, ou adicione manualmente.

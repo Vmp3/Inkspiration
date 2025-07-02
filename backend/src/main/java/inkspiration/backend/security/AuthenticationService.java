@@ -1,7 +1,5 @@
 package inkspiration.backend.security;
 
-import java.util.HashMap;
-import java.util.Map;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -160,11 +158,11 @@ public class AuthenticationService {
     }
 
     public boolean checkTwoFactorRequirement(String cpf) {
+        if (cpf == null || cpf.trim().isEmpty()) {
+            throw new IllegalArgumentException("CPF não pode ser nulo");
+        }
+        
         try {
-            if (cpf == null || cpf.trim().isEmpty()) {
-                throw new IllegalArgumentException("CPF é obrigatório");
-            }
-            
             // Buscar o usuário pelo CPF
             Usuario usuario = usuarioService.buscarPorCpf(cpf);
             if (usuario == null) {

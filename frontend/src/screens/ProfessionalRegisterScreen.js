@@ -56,6 +56,7 @@ const ProfessionalRegisterScreen = () => {
     twitter: '',
     website: ''
   });
+  const [websiteError, setWebsiteError] = useState('');
   
   // Estado para horários de trabalho
   const [workHours, setWorkHours] = useState([
@@ -350,29 +351,74 @@ const ProfessionalRegisterScreen = () => {
       });
       if (!result.canceled) {
         const selectedImage = result.assets[0];
+        
+        const validMimeTypes = ['image/jpeg', 'image/png'];
+        const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
+        
+        if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
+          toastHelper.showError(professionalRegisterMessages.imageUploadErrors.invalidFormat);
+          return;
+        }
+        
+        if (selectedImage.fileName) {
+          const fileExtension = selectedImage.fileName.toLowerCase().slice(selectedImage.fileName.lastIndexOf('.'));
+          if (!validExtensions.includes(fileExtension)) {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.invalidFormat);
+            return;
+          }
+        }
+        
+        // Validação de tamanho - limite diferente para perfil vs portfólio
+        const maxSizeInMB = imageType === 'portfolio' ? 10 : 5;
+        const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+        
+        if (selectedImage.fileSize && selectedImage.fileSize > maxSizeInBytes) {
+          if (imageType === 'portfolio') {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.portfolioFileTooLarge);
+          } else {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.fileTooLarge);
+          }
+          return;
+        }
+        
+        const base64String = selectedImage.base64;
+        const base64SizeInBytes = (base64String.length * 3) / 4;
+        
+        if (base64SizeInBytes > maxSizeInBytes) {
+          if (imageType === 'portfolio') {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.portfolioProcessedImageTooLarge);
+          } else {
+            toastHelper.showError(professionalRegisterMessages.imageUploadErrors.processedImageTooLarge);
+          }
+          return;
+        }
+        
+        const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
+        const mimeType = selectedImage.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
+        
         const imageUri = selectedImage.uri;
-        const imageBase64 = `data:image/jpeg;base64,${selectedImage.base64}`;
+        const imageBase64 = `data:${mimeType};base64,${selectedImage.base64}`;
         if (imageType === 'portfolio') {
           setPortfolioImages(prev => [
             ...prev,
             {
               uri: imageUri,
               base64: imageBase64,
-              type: 'image/jpeg',
-              name: `portfolio_${prev.length}.jpg`
+              type: mimeType,
+              name: `portfolio_${prev.length}.${imageFormat === 'png' ? 'png' : 'jpg'}`
             }
           ]);
         } else if (imageType === 'profile') {
           setProfileImage({
             uri: imageUri,
             base64: imageBase64,
-            type: 'image/jpeg',
-            name: 'profile.jpg'
+            type: mimeType,
+            name: `profile.${imageFormat === 'png' ? 'png' : 'jpg'}`
           });
         }
       }
     } catch (error) {
-              toastHelper.showError(professionalRegisterMessages.errors.imageSelectionFailed);
+              toastHelper.showError(professionalRegisterMessages.imageUploadErrors.selectionFailed);
     }
   };
   
@@ -445,8 +491,12 @@ const ProfessionalRegisterScreen = () => {
     if (!formatters.validateSocialMedia(socialMedia.instagram) ||
         !formatters.validateSocialMedia(socialMedia.tiktok) ||
         !formatters.validateSocialMedia(socialMedia.facebook) ||
-        !formatters.validateSocialMedia(socialMedia.twitter) ||
-        !formatters.validateWebsite(socialMedia.website)) {
+        !formatters.validateSocialMedia(socialMedia.twitter)) {
+      return false;
+    }
+    
+    const websiteError = formatters.getWebsiteValidationMessage(socialMedia.website);
+    if (websiteError) {
       return false;
     }
     
@@ -562,8 +612,9 @@ const ProfessionalRegisterScreen = () => {
         return;
       }
       
-      if (!formatters.validateWebsite(socialMedia.website)) {
-        toastHelper.showError(professionalRegisterMessages.errors.websiteTooLong);
+      const websiteError = formatters.getWebsiteValidationMessage(socialMedia.website);
+      if (websiteError) {
+        toastHelper.showError(websiteError);
         return;
       }
       
@@ -620,8 +671,9 @@ const ProfessionalRegisterScreen = () => {
         return;
       }
       
-      if (!formatters.validateWebsite(socialMedia.website)) {
-        toastHelper.showError(professionalRegisterMessages.errors.websiteTooLong);
+      const websiteError = formatters.getWebsiteValidationMessage(socialMedia.website);
+      if (websiteError) {
+        toastHelper.showError(websiteError);
         setIsLoading(false);
         return;
       }
@@ -816,6 +868,8 @@ const ProfessionalRegisterScreen = () => {
                     handleTipoServicoChange={handleTipoServicoChange}
                     precosServicos={precosServicos}
                     handlePrecoServicoChange={handlePrecoServicoChange}
+                    websiteError={websiteError}
+                    setWebsiteError={setWebsiteError}
                   />
                   <View style={styles.formNavigationWrapper}>
                     <FormNavigation

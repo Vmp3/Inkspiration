@@ -94,5 +94,14 @@ export const authMessages = {
   emailVerificationErrors: {
     verificationCodeRequired: 'Por favor, insira o código de verificação.',
     invalidOrExpiredCode: 'Código de verificação inválido ou expirado.'
+  },
+
+  // Mensagens de erro - Image Upload
+  imageUploadErrors: {
+    fileTooLarge: 'Imagem muito grande. Tamanho máximo permitido: 5MB',
+    processedImageTooLarge: 'Imagem muito grande após processamento. Tamanho máximo permitido: 5MB',
+    invalidFormat: 'Formato de imagem inválido. Apenas PNG, JPG, JPEG e JFIF são permitidos',
+    selectionFailed: 'Erro ao selecionar imagem',
+    uploadFailed: 'Erro ao enviar imagem'
   }
 }; 

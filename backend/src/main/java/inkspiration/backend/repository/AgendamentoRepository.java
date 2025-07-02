@@ -2,11 +2,10 @@ package inkspiration.backend.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -58,4 +57,10 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
 
     @Query("SELECT a FROM Agendamento a WHERE a.profissional.id = :idProfissional AND a.status = :status AND YEAR(a.dtInicio) = :ano AND MONTH(a.dtInicio) = :mes ORDER BY a.dtInicio")
     List<Agendamento> findByProfissionalIdAndStatusAndAnoMes(Long idProfissional, StatusAgendamento status, Integer ano, Integer mes);
+    
+    @Modifying
+    @Query("UPDATE Agendamento a SET a.status = :novoStatus WHERE a.status = :statusAtual AND a.dtFim < :dataAtual")
+    int updateStatusToConcluido(@Param("statusAtual") StatusAgendamento statusAtual, 
+                               @Param("novoStatus") StatusAgendamento novoStatus, 
+                               @Param("dataAtual") LocalDateTime dataAtual);
 } 
