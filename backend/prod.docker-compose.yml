@@ -13,4 +13,3 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - JAVA_OPTS=-Xmx512m -XX:+UseContainerSupport
-    restart: unless-stopped
