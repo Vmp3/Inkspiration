@@ -1,10 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { TimeInput } from '../TimeInput';
 import toastHelper from '../../utils/toastHelper';
+import { isMobileView, isTabletView, isDesktopView, addDimensionsListener } from '../../utils/responsive';
 
 const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleNextTab }) => {
+  const [windowWidth, setWindowWidth] = useState(Dimensions.get('window').width);
+
+  useEffect(() => {
+    const cleanup = addDimensionsListener(({ window }) => {
+      setWindowWidth(window.width);
+    });
+
+    return cleanup;
+  }, []);
+
   const isTimeComplete = (time) => {
     return time && time.length === 5;
   };
@@ -75,10 +86,20 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
             
             {day.available && (
               <View style={styles.dayHours}>
-                <View style={styles.periodsContainer}>
+                <View style={[
+                  styles.periodsContainer,
+                  isDesktopView() && styles.periodsContainerDesktop,
+                  isTabletView() && styles.periodsContainerTablet
+                ]}>
                   {/* Período da Manhã */}
-                  <View style={[styles.periodRow, Platform.OS === 'web' && styles.periodRowWeb]}>
-                    <View style={styles.periodCheckbox}>
+                  <View style={[
+                    styles.periodRow,
+                    (isDesktopView() || isTabletView()) && styles.periodRowDesktop
+                  ]}>
+                    <View style={[
+                      styles.periodCheckbox,
+                      (isDesktopView() || isTabletView()) && styles.periodCheckboxDesktop
+                    ]}>
                       <TouchableOpacity 
                         style={[styles.checkbox, day.morning.enabled && styles.checkboxChecked]}
                         onPress={() => handleWorkHourChange(index, 'morning', 'enabled', !day.morning.enabled)}
@@ -88,7 +109,10 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
                       <Text style={styles.checkboxLabel}>Manhã</Text>
                     </View>
                     
-                    <View style={styles.timeInputContainer}>
+                    <View style={[
+                      styles.timeInputContainer,
+                      (isDesktopView() || isTabletView()) && styles.timeInputContainerDesktop
+                    ]}>
                       <TimeInput
                         value={day.morning.start}
                         onChange={(value) => handleTimeChange(index, 'morning', 'start', value)}
@@ -109,8 +133,14 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
                   </View>
                   
                   {/* Período da Tarde */}
-                  <View style={[styles.periodRow, Platform.OS === 'web' && styles.periodRowWeb]}>
-                    <View style={styles.periodCheckbox}>
+                  <View style={[
+                    styles.periodRow,
+                    (isDesktopView() || isTabletView()) && styles.periodRowDesktop
+                  ]}>
+                    <View style={[
+                      styles.periodCheckbox,
+                      (isDesktopView() || isTabletView()) && styles.periodCheckboxDesktop
+                    ]}>
                       <TouchableOpacity 
                         style={[styles.checkbox, day.afternoon.enabled && styles.checkboxChecked]}
                         onPress={() => handleWorkHourChange(index, 'afternoon', 'enabled', !day.afternoon.enabled)}
@@ -120,7 +150,10 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
                       <Text style={styles.checkboxLabel}>Tarde</Text>
                     </View>
                     
-                    <View style={styles.timeInputContainer}>
+                    <View style={[
+                      styles.timeInputContainer,
+                      (isDesktopView() || isTabletView()) && styles.timeInputContainerDesktop
+                    ]}>
                       <TimeInput
                         value={day.afternoon.start}
                         onChange={(value) => handleTimeChange(index, 'afternoon', 'start', value)}
@@ -151,7 +184,7 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
 
 const styles = StyleSheet.create({
   tabContent: {
-    padding: Platform.OS === 'web' ? 16 : 8,
+    padding: isMobileView() ? 8 : 16,
   },
   workHoursTitle: {
     fontSize: 18,
@@ -170,7 +203,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#eaeaea',
     borderRadius: 4,
-    padding: Platform.OS === 'web' ? 12 : 8,
+    padding: isMobileView() ? 8 : 12,
     marginBottom: 12,
   },
   dayHeader: {
@@ -191,49 +224,54 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   periodsContainer: {
-    ...(Platform.OS === 'web' ? {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      flexWrap: 'wrap',
-    } : {
-      flexDirection: 'column',
-    }),
+    flexDirection: 'column',
+  },
+  periodsContainerDesktop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+  },
+  periodsContainerTablet: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
   },
   periodRow: {
-    ...(Platform.OS === 'web' ? {
-      flex: 1,
-      marginRight: 16,
-      minWidth: '45%',
-    } : {
-      marginBottom: 12,
-    }),
+    marginBottom: 12,
+    width: '100%',
   },
-  periodRowWeb: {
+  periodRowDesktop: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    marginRight: 16,
+    minWidth: '45%',
+    maxWidth: '48%',
   },
   periodCheckbox: {
     flexDirection: 'row',
     alignItems: 'center',
-    ...(Platform.OS === 'web' ? {
-      width: 100,
-      marginRight: 8,
-    } : {
-      marginBottom: 8,
-    }),
+    marginBottom: 8,
+  },
+  periodCheckboxDesktop: {
+    width: 100,
+    marginRight: 8,
+    marginBottom: 0,
   },
   timeInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    ...(Platform.OS === 'web' ? {
-      flex: 1,
-    } : {
-      paddingLeft: 28,
-    }),
+    paddingLeft: 28,
+    flexWrap: 'wrap',
+  },
+  timeInputContainerDesktop: {
+    flex: 1,
+    paddingLeft: 0,
+    flexWrap: 'nowrap',
   },
   timeInputSeparator: {
-    marginHorizontal: Platform.OS === 'web' ? 8 : 4,
-    minWidth: Platform.OS === 'web' ? 24 : 20,
+    marginHorizontal: isMobileView() ? 4 : 8,
+    minWidth: isMobileView() ? 20 : 24,
     textAlign: 'center',
   },
   checkbox: {
