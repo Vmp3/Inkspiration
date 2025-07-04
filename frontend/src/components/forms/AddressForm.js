@@ -12,6 +12,7 @@ const AddressForm = ({
   estadoError,
   cidadeError,
   bairroError,
+  ruaError,
   enderecoValidationError
 }) => {
   const [numeroError, setNumeroError] = useState('');
@@ -95,8 +96,10 @@ const AddressForm = ({
           placeholder="Seu logradouro"
           value={formData.rua}
           onChangeText={(text) => handleChange('rua', text)}
-          style={styles.inputField}
+          onBlur={() => handleBlur && handleBlur('rua')}
+          style={[styles.inputField, ruaError ? styles.inputError : null]}
         />
+        {ruaError ? <Text style={styles.errorText}>{ruaError}</Text> : null}
       </View>
       
       {isMobile ? (
@@ -151,7 +154,6 @@ const AddressForm = ({
       
       {/* Bairro e Cidade */}
       {isMobile ? (
-        // Layout mobile: um campo por linha
         <>
           <View style={styles.formFullWidth}>
             <Text style={styles.formLabel}>Bairro</Text>
@@ -178,7 +180,6 @@ const AddressForm = ({
           </View>
         </>
       ) : (
-        // Layout web/tablet: dois campos por linha
         <View style={styles.formRow}>
           <View style={styles.formGroup}>
             <Text style={styles.formLabel}>Bairro</Text>

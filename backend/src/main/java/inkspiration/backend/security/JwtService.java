@@ -16,7 +16,6 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
-import inkspiration.backend.config.JwtConfig;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.repository.TokenRevogadoRepository;
 import inkspiration.backend.repository.UsuarioRepository;
@@ -29,9 +28,6 @@ public class JwtService {
     private final TokenRevogadoRepository tokenRevogadoRepository;
     private final UsuarioRepository usuarioRepository;
     
-    @Value("${api.security.token.expiration:720}")
-    private int expiration;
-    
     // Configuração da duração do token padrão em minutos (padrão: 720 = 12 horas)
     @Value("${jwt.token.expiration.default:720}")
     private long defaultTokenExpirationMinutes;
@@ -41,7 +37,7 @@ public class JwtService {
     private long rememberMeTokenExpirationMinutes;
 
     @Autowired
-    public JwtService(JwtEncoder encoder, JwtDecoder jwtDecoder, TokenRevogadoRepository tokenRevogadoRepository, JwtConfig jwtConfig, UsuarioRepository usuarioRepository) {
+    public JwtService(JwtEncoder encoder, JwtDecoder jwtDecoder, TokenRevogadoRepository tokenRevogadoRepository, UsuarioRepository usuarioRepository) {
         this.encoder = encoder;
         this.jwtDecoder = jwtDecoder;
         this.tokenRevogadoRepository = tokenRevogadoRepository;

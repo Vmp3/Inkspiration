@@ -45,7 +45,6 @@ const BasicInfoForm = ({
             setTiposServico(response);
           }
         } catch (error) {
-          // console.error('Erro ao carregar tipos de serviço:', error);
         } finally {
           setIsLoading(false);
         }
@@ -108,7 +107,6 @@ const BasicInfoForm = ({
   };
 
   const formatarPreco = (valor) => {
-    // Remove tudo que não é número
     const apenasNumeros = valor.replace(/\D/g, '');
     
     if (!apenasNumeros) return '';
@@ -135,7 +133,6 @@ const BasicInfoForm = ({
   };
 
   const handlePrecoChange = (tipoNome, valor) => {
-    // Remove tudo que não é número
     const apenasNumeros = valor.replace(/\D/g, '');
     
     if (apenasNumeros) {
@@ -323,7 +320,6 @@ const BasicInfoForm = ({
               }
             }}
             onBlur={() => {
-              // Validar quando o campo perde o foco
               const errorMessage = formatters.getWebsiteValidationMessage(socialMedia.website);
               setWebsiteError(errorMessage || '');
             }}

@@ -50,6 +50,7 @@ const RegisterScreen = () => {
   const [estadoError, setEstadoError] = useState('');
   const [cidadeError, setCidadeError] = useState('');
   const [bairroError, setBairroError] = useState('');
+  const [ruaError, setRuaError] = useState('');
   const [enderecoValidationError, setEnderecoValidationError] = useState('');
   const [dadosCep, setDadosCep] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
@@ -118,13 +119,20 @@ const RegisterScreen = () => {
       } else {
         setBairroError('');
       }
+      
+      // Validar logradouro (rua)
+      if (formData.rua.toLowerCase().trim() !== dadosCep.logradouro?.toLowerCase().trim()) {
+        const errorMsg = `Logradouro deve ser ${dadosCep.logradouro} para este CEP`;
+        setRuaError(errorMsg);
+      } else {
+        setRuaError('');
+      }
     }
-  }, [dadosCep, formData.estado, formData.cidade, formData.bairro]);
+  }, [dadosCep, formData.estado, formData.cidade, formData.bairro, formData.rua]);
 
   const handleChange = (field, value) => {
     let formattedValue = value;
     
-    // Apply appropriate formatter based on field type
     switch (field) {
       case 'nome':
         setNomeError('');
@@ -158,7 +166,6 @@ const RegisterScreen = () => {
       case 'telefone':
         formattedValue = formatters.formatPhone(value);
         setPhoneError('');
-        // Validar telefone quando completo (11 dígitos)
         if (value.replace(/\D/g, '').length >= 10) {
           const errorMessage = formatters.getPhoneValidationMessage(formatters.formatPhone(value));
           if (errorMessage) {
@@ -201,6 +208,9 @@ const RegisterScreen = () => {
         setEnderecoValidationError('');
         break;
       case 'rua':
+        setRuaError('');
+        setEnderecoValidationError('');
+        break;
       case 'numero':
       case 'complemento':
         setEnderecoValidationError('');
@@ -271,7 +281,6 @@ const RegisterScreen = () => {
       }
     }
 
-    // Validação de consistência de endereço quando sai do campo estado ou cidade
     if (field === 'estado' && formData.estado && dadosCep) {
       if (formData.estado.toUpperCase().trim() !== dadosCep.uf?.toUpperCase().trim()) {
         const errorMsg = `Estado deve ser ${dadosCep.uf} para este CEP`;
@@ -298,6 +307,15 @@ const RegisterScreen = () => {
         setBairroError('');
       }
     }
+
+    if (field === 'rua' && formData.rua && dadosCep) {
+      if (formData.rua.toLowerCase().trim() !== dadosCep.logradouro?.toLowerCase().trim()) {
+        const errorMsg = `Logradouro deve ser ${dadosCep.logradouro} para este CEP`;
+        setRuaError(errorMsg);
+      } else {
+        setRuaError('');
+      }
+    }
   };
 
   const pickImage = async () => {
@@ -316,13 +334,11 @@ const RegisterScreen = () => {
         const validMimeTypes = ['image/jpeg', 'image/png'];
         const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
         
-        // Verificar MIME type
         if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
           toastHelper.showError(authMessages.imageUploadErrors.invalidFormat);
           return;
         }
         
-        // Verificar extensão do arquivo
         if (selectedImage.fileName) {
           const fileExtension = selectedImage.fileName.toLowerCase().slice(selectedImage.fileName.lastIndexOf('.'));
           if (!validExtensions.includes(fileExtension)) {
@@ -349,7 +365,6 @@ const RegisterScreen = () => {
           return;
         }
         
-        // Determinar formato correto baseado na extensão do arquivo
         const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
         const mimeType = selectedImage.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
         
@@ -367,7 +382,6 @@ const RegisterScreen = () => {
 
   const buscarCep = async (cep) => {
     try {
-      // Remove caracteres não numéricos
       const cepLimpo = cep.replace(/\D/g, '');
       
       if (cepLimpo.length !== 8) {
@@ -382,7 +396,6 @@ const RegisterScreen = () => {
       if (response.data && !response.data.erro) {
         const endereco = response.data;
         
-        // Atualiza os campos do formulário com os dados retornados
         setFormData(prev => ({
           ...prev,
           rua: endereco.logradouro || '',
@@ -393,10 +406,10 @@ const RegisterScreen = () => {
         setDadosCep(endereco);
         setCepError('');
         
-        // Limpar erros de validação quando busca novo CEP
         setEstadoError('');
         setCidadeError('');
         setBairroError('');
+        setRuaError('');
         setEnderecoValidationError('');
       } else {
         setCepError('CEP não encontrado');
@@ -513,8 +526,10 @@ const RegisterScreen = () => {
   };
 
   const isAddressTabValid = () => {
+    const onlyDigitsCep = formData.cep ? formData.cep.replace(/\D/g, '') : '';
     const basicFieldsValid = (
       formData.cep &&
+      onlyDigitsCep.length === 8 &&
       formData.rua &&
       formData.numero &&
       formData.bairro &&
@@ -524,36 +539,42 @@ const RegisterScreen = () => {
       !estadoError &&
       !cidadeError &&
       !bairroError &&
+      !ruaError &&
       !enderecoValidationError
     );
+    if (!basicFieldsValid) {
+      return false;
+    }
     
-          // Se os campos básicos não estão válidos, retornar false
-      if (!basicFieldsValid) {
-        return false;
-      }
+    if (dadosCep) {
+      const estadoConsistente = !formData.estado || !dadosCep.uf || 
+        formData.estado.toUpperCase() === dadosCep.uf.toUpperCase();
       
-      // Verificar se os dados do CEP existem e se há consistência básica
-      if (dadosCep) {
-        // Verificar consistência sem atualizar estados
-        const estadoConsistente = !formData.estado || !dadosCep.uf || 
-          formData.estado.toUpperCase() === dadosCep.uf.toUpperCase();
-        
-        const cidadeConsistente = !formData.cidade || !dadosCep.localidade || 
-          formData.cidade.toLowerCase() === dadosCep.localidade.toLowerCase();
+      const cidadeConsistente = !formData.cidade || !dadosCep.localidade || 
+        formData.cidade.toLowerCase() === dadosCep.localidade.toLowerCase();
 
-        const bairroConsistente = !formData.bairro || !dadosCep.bairro || 
-          formData.bairro.toLowerCase() === dadosCep.bairro.toLowerCase();
-        
-        return estadoConsistente && cidadeConsistente && bairroConsistente;
-      }
-    
-    // Se não tem dados do CEP, só considerar válido se não há erro de CEP
-    return !cepError;
+      const bairroConsistente = !formData.bairro || !dadosCep.bairro || 
+        formData.bairro.toLowerCase() === dadosCep.bairro.toLowerCase();
+      
+      const ruaConsistente = !formData.rua || !dadosCep.logradouro || 
+        formData.rua.toLowerCase() === dadosCep.logradouro.toLowerCase();
+      
+      return estadoConsistente && cidadeConsistente && bairroConsistente && ruaConsistente;
+    }
+  
+  return !cepError;
   };
 
   const validateAddressTab = () => {
     if (!formData.cep) {
       toastHelper.showError(authMessages.registerErrors.requiredFields);
+      return false;
+    }
+
+    const onlyDigitsCep = formData.cep.replace(/\D/g, '');
+    if (onlyDigitsCep.length !== 8) {
+      toastHelper.showError('CEP deve conter exatamente 8 dígitos');
+      setCepError('CEP deve conter exatamente 8 dígitos');
       return false;
     }
     
@@ -592,7 +613,6 @@ const RegisterScreen = () => {
       return false;
     }
     
-    // Validar consistência do endereço
     if (dadosCep) {
       if (formData.estado && dadosCep.uf && formData.estado.toUpperCase() !== dadosCep.uf.toUpperCase()) {
         toastHelper.showError(`Estado deve ser ${dadosCep.uf} para este CEP`);
@@ -606,6 +626,11 @@ const RegisterScreen = () => {
       
       if (formData.bairro && dadosCep.bairro && formData.bairro.toLowerCase() !== dadosCep.bairro.toLowerCase()) {
         toastHelper.showError(`Bairro deve ser ${dadosCep.bairro} para este CEP`);
+        return false;
+      }
+      
+      if (formData.rua && dadosCep.logradouro && formData.rua.toLowerCase() !== dadosCep.logradouro.toLowerCase()) {
+        toastHelper.showError(`Logradouro deve ser ${dadosCep.logradouro} para este CEP`);
         return false;
       }
     }
@@ -729,6 +754,16 @@ const RegisterScreen = () => {
               setBairroError(`Bairro deve ser ${dadosCep.bairro} para este CEP`);
             }
           }
+          
+          // Validar logradouro
+          if (formData.rua && dadosCep.logradouro) {
+            const ruaForm = formData.rua.toLowerCase().trim();
+            const ruaCep = dadosCep.logradouro.toLowerCase().trim();
+            
+            if (ruaForm !== ruaCep) {
+              setRuaError(`Logradouro deve ser ${dadosCep.logradouro} para este CEP`);
+            }
+          }
         }
       }
     }
@@ -748,8 +783,6 @@ const RegisterScreen = () => {
 
   const formatDateToBackend = (dateString) => {
     if (!dateString) return null;
-    
-    // Remove caracteres não numéricos
     const numbers = dateString.replace(/\D/g, '');
     
     // Garantir que a data esteja no formato DD/MM/YYYY
@@ -846,9 +879,7 @@ const RegisterScreen = () => {
       setIsVerifyingEmail(true);
 
       await PublicAuthService.verifyEmail(verificationEmail, verificationCode);
-
-      // Exibe mensagem de sucesso
-              toastHelper.showSuccess(authMessages.success.accountCreated);
+      toastHelper.showSuccess(authMessages.success.accountCreated);
 
       setShowVerificationModal(false);
       setTimeout(() => {
@@ -856,7 +887,7 @@ const RegisterScreen = () => {
       }, 1000);
 
     } catch (error) {
-              toastHelper.showError(error.message || authMessages.emailVerificationErrors.invalidOrExpiredCode);
+      toastHelper.showError(error.message || authMessages.emailVerificationErrors.invalidOrExpiredCode);
     } finally {
       setIsVerifyingEmail(false);
     }
@@ -963,6 +994,7 @@ const RegisterScreen = () => {
                       estadoError={estadoError}
                       cidadeError={cidadeError}
                       bairroError={bairroError}
+                      ruaError={ruaError}
                       enderecoValidationError={enderecoValidationError}
                     />
                     <FormNavigation
@@ -1167,7 +1199,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textDecorationLine: 'underline',
   },
-  // Estilos do Modal de Verificação
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

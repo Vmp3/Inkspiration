@@ -55,19 +55,14 @@ const ExportAttendancesModal = ({ visible, onClose }) => {
   };
 
   const getMonthName = (monthValue) => {
-    // Garantir que monthValue seja um número
     const monthNum = Number(monthValue);
-    
-    // Encontrar o mês correspondente no array
     const month = months.find(m => m.value === monthNum);
     
-    // Nomes dos meses em português
     const nomesMeses = [
       'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
     ];
     
-    // Se encontrou no array, use esse valor, senão use o array de nomes
     if (month) {
       return month.label;
     } else if (monthNum >= 1 && monthNum <= 12) {
@@ -90,7 +85,6 @@ const ExportAttendancesModal = ({ visible, onClose }) => {
     } catch (error) {
       let errorMessage = 'Erro ao gerar o PDF. Tente novamente.';
       
-      // Obtenha o nome do mês usando a função auxiliar
       const monthName = getMonthName(selectedMonth);
       
       if (error.response?.status === 404) {

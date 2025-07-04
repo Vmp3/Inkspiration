@@ -73,7 +73,7 @@ public class TokenRevogado {
     
     public boolean isExpired(int horasExpiracao) {
         if (horasExpiracao <= 0) {
-            return false; // Nunca expira se não especificado
+            return false;
         }
         return LocalDateTime.now().isAfter(dataRevogacao.plusHours(horasExpiracao));
     }

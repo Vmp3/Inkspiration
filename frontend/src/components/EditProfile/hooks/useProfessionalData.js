@@ -114,7 +114,6 @@ const useProfessionalData = (userData) => {
             }
           });
         }
-        // console.log('LOG: Preços carregados do backend:', precosCarregados);
 
         // Transformar especialidades
         const specialties = portfolio?.especialidade ? 
@@ -285,8 +284,6 @@ const useProfessionalData = (userData) => {
           }
         }
       });
-      
-      // console.log('LOG: Preços formatados para envio:', precosFormatados);
 
       const requestData = {
         profissional: {},
@@ -303,7 +300,6 @@ const useProfessionalData = (userData) => {
               toastHelper.showSuccess(editProfileMessages.success.profileUpdated);
       return true;
     } catch (error) {
-      // console.error('Erro ao atualizar dados profissionais:', error);
               toastHelper.showError(editProfileMessages.errors.saveProfile);
       return false;
     }
@@ -373,11 +369,12 @@ const useProfessionalData = (userData) => {
       };
 
       // Para imagem de perfil, usar aspect ratio circular
+      // Para portfólio, formato retangular
       if (imageType === 'profile') {
-        imagePickerOptions.aspect = [1, 1]; // Quadrado para facilitar o crop circular
+        imagePickerOptions.aspect = [1, 1];
         imagePickerOptions.allowsMultipleSelection = false;
       } else {
-        imagePickerOptions.aspect = [4, 3]; // Para portfólio, formato mais livre
+        imagePickerOptions.aspect = [4, 3];
       }
 
       const result = await ImagePicker.launchImageLibraryAsync(imagePickerOptions);
@@ -387,7 +384,6 @@ const useProfessionalData = (userData) => {
         const validMimeTypes = ['image/jpeg', 'image/png'];
         const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
         
-        // Verificar MIME type
         if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
           toastHelper.showError(editProfileMessages.imageUploadErrors.invalidFormat);
           return;
@@ -487,7 +483,6 @@ const useProfessionalData = (userData) => {
   };
   
   const handlePrecoServicoChange = (tipoNome, valor) => {
-    // Limpar caracteres não numéricos exceto vírgula e ponto
     const valorLimpo = valor.replace(/[^\d,.]/, '');
     
     setProfessionalFormData(prev => ({

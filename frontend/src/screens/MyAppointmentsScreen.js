@@ -395,7 +395,7 @@ const MyAppointmentsScreen = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, {justifyContent: 'space-between'}]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#111" />
           <Text style={styles.loadingText}>Carregando agendamentos...</Text>
@@ -465,6 +465,7 @@ const MyAppointmentsScreen = () => {
         <Footer />
       </ScrollView>
 
+      {/* Modais */}
       <AppointmentDetailsModal
         visible={isModalVisible}
         appointment={selectedAppointment}
@@ -512,6 +513,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    minHeight: '100%',
   },
   header: {
     flexDirection: 'row',
@@ -550,6 +552,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 24,
+    flex: 1
   },
   section: {
     marginBottom: 24,

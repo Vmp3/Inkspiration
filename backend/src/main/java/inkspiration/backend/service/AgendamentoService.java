@@ -104,8 +104,9 @@ public class AgendamentoService {
             throw new AutoAgendamentoException("Não é possível agendar consigo mesmo");
         }
         
-        LocalDateTime amanha = LocalDate.now().plusDays(1).atStartOfDay();
-        if (dtInicio.isBefore(amanha)) {
+        ZoneId zonaSaoPaulo = ZoneId.of("America/Sao_Paulo");
+        LocalDate amanha = LocalDate.now(zonaSaoPaulo).plusDays(1);
+        if (dtInicio.atZone(ZoneId.systemDefault()).withZoneSameInstant(zonaSaoPaulo).toLocalDate().isBefore(amanha)) {
             throw new DataInvalidaAgendamentoException("Só é possível fazer agendamentos a partir do dia seguinte");
         }
         
@@ -209,8 +210,9 @@ public class AgendamentoService {
             throw new RuntimeException("Não autorizado: este agendamento não pertence ao usuário logado");
         }
         
-        LocalDateTime amanha = LocalDate.now().plusDays(1).atStartOfDay();
-        if (dtInicio.isBefore(amanha)) {
+        ZoneId zonaSaoPaulo = ZoneId.of("America/Sao_Paulo");
+        LocalDate amanha = LocalDate.now(zonaSaoPaulo).plusDays(1);
+        if (dtInicio.atZone(ZoneId.systemDefault()).withZoneSameInstant(zonaSaoPaulo).toLocalDate().isBefore(amanha)) {
             throw new RuntimeException("Só é possível fazer agendamentos a partir do dia seguinte");
         }
         
@@ -271,7 +273,6 @@ public class AgendamentoService {
         agendamento.setDescricao(descricao);
         agendamento.setDtInicio(dtInicioAjustado);
         agendamento.setDtFim(dtFim);
-        // Valor é preservado - não alterado durante edições
         
         return agendamentoRepository.save(agendamento);
     }
@@ -426,7 +427,7 @@ public class AgendamentoService {
             boolean podeAvaliar = avaliacaoService.podeAvaliar(agendamento.getIdAgendamento());
             dto.setPodeAvaliar(podeAvaliar);
             
-            // Se não pode avaliar, significa que já avaliou - buscar a avaliação
+            // Se não pode avaliar significa que já avaliou
             if (!podeAvaliar) {
                 Optional<AvaliacaoDTO> avaliacao = avaliacaoService.buscarAvaliacaoPorAgendamento(agendamento.getIdAgendamento());
                 if (avaliacao.isPresent()) {
@@ -437,7 +438,7 @@ public class AgendamentoService {
                 }
             }
         } catch (Exception e) {
-            // Em caso de erro, assumir que não pode avaliar
+            // Em caso de erro, não pode avaliar
             dto.setPodeAvaliar(false);
         }
         

@@ -119,7 +119,6 @@ const Header = () => {
       toastHelper.showSuccess(headerMessages.success.logoutSuccess);
       navigation.navigate('Home');
     } catch (error) {
-      // console.error('Erro ao fazer logout:', error);
       toastHelper.showError(headerMessages.errors.logoutError);
     }
   };

@@ -28,7 +28,6 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import inkspiration.backend.config.JwtConfig;
 import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.repository.TokenRevogadoRepository;
 import inkspiration.backend.repository.UsuarioRepository;
@@ -48,9 +47,6 @@ class JwtServiceTest {
 
     @Mock
     private UsuarioRepository usuarioRepository;
-
-    @Mock
-    private JwtConfig jwtConfig;
 
     @Mock
     private Authentication authentication;

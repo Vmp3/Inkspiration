@@ -51,7 +51,6 @@ public class AgendamentoScheduler {
 
                 logger.info("Atualização automática concluída com sucesso - {} agendamentos atualizados", atualizados);
                 
-                // Log individual dos agendamentos atualizados (opcional, para debug)
                 for (Agendamento agendamento : agendamentosParaAtualizar) {
                     logger.info("Agendamento ID {} atualizado: AGENDADO -> CONCLUIDO (Data/Hora fim: {})", 
                         agendamento.getIdAgendamento(), agendamento.getDtFim());

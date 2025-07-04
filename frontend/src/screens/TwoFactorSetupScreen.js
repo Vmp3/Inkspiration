@@ -31,7 +31,7 @@ const TwoFactorSetupScreen = () => {
   const route = useRoute();
   const { action } = route.params;
   
-  const [step, setStep] = useState(1); // 1: instrucoes, 2: qrcode/codigo, 3: verificacao
+  const [step, setStep] = useState(1);
   const [qrCode, setQrCode] = useState(null);
   const [secretKey, setSecretKey] = useState(null);
   const [issuer, setIssuer] = useState(null);
@@ -177,7 +177,6 @@ const TwoFactorSetupScreen = () => {
         }
       );
     } catch (error) {
-      // Erro já tratado pelo hook
     }
   };
 
@@ -207,12 +206,10 @@ const TwoFactorSetupScreen = () => {
     }
   };
 
-  // Função para decodificar base64
   const decodeBase64 = (str) => {
     try {
       return decodeURIComponent(escape(atob(str)));
     } catch (e) {
-      // Se atob não estiver disponível, usa Buffer (Node.js style)
       try {
         return Buffer.from(str, 'base64').toString('utf-8');
       } catch (e2) {

@@ -242,7 +242,7 @@ public class UsuarioService {
             usuarioAuth.setCpf(dto.getCpf());
             usuarioAuth.setRole(usuarioExistente.getRole());
             
-            // Só atualiza a senha se não for o valor especial e se não tiver a flag manterSenhaAtual
+            // Só atualiza a senha se caso for diferente do "SENHA_NAO_ALTERADA" (Quando o usuário não quer alterar a senha)
             if (dto.getSenha() != null && !dto.getSenha().isEmpty() && 
                 !"SENHA_NAO_ALTERADA".equals(dto.getSenha()) && !dto.isManterSenhaAtual()) {
                 
@@ -311,10 +311,6 @@ public class UsuarioService {
     }
 
     private String determinarRoleOriginal(Usuario usuario) {
-        // Verifica se o usuário tem um registro de profissional associado
-        // Se tiver, era um profissional (ROLE_PROF)
-        // Caso contrário, era um usuário comum (ROLE_USER)
-        
         boolean isProfissional = profissionalRepository.existsByUsuario_IdUsuario(usuario.getIdUsuario());
         
         if (isProfissional) {
@@ -427,7 +423,6 @@ public class UsuarioService {
         
         // Só atualiza a imagem de perfil se ela for fornecida no DTO
         if (dto.getImagemPerfil() != null) {
-            // Validação de tamanho da imagem - limite de 5MB
             validarTamanhoImagem(dto.getImagemPerfil());
             usuario.setImagemPerfil(dto.getImagemPerfil());
         }
@@ -565,9 +560,7 @@ public class UsuarioService {
             throw new InvalidProfileImageException("Imagem não fornecida");
         }
         
-        // Validação de tamanho da imagem - limite de 5MB
         validarTamanhoImagem(imagemBase64);
-        
         atualizarFotoPerfil(id, imagemBase64);
     }
 
@@ -575,11 +568,10 @@ public class UsuarioService {
         if (imagemBase64 == null || imagemBase64.isEmpty()) {
             return;
         }
-        
-        // Validar formato da imagem
+
         validarFormatoImagem(imagemBase64);
         
-        // Remove o prefixo data:image/...;base64, se existir
+        // Remove o prefixo data:image/...;base64
         String base64Data = imagemBase64;
         if (imagemBase64.contains(",")) {
             base64Data = imagemBase64.split(",")[1];

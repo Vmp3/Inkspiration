@@ -7,8 +7,8 @@ const useTabNavigation = (isArtist, formData, professionalFormData, addressValid
   const [activeTab, setActiveTab] = useState('personal');
   const validation = useFormValidation();
   
-  // Destructure address validation errors
-  const { cepError, estadoError, cidadeError, bairroError, enderecoValidationError } = addressValidationErrors;
+  // Validação de endereço
+  const { cepError, estadoError, cidadeError, bairroError, ruaError, enderecoValidationError } = addressValidationErrors;
 
   const getAvailableTabs = () => {
     const availableTabs = ['personal'];
@@ -17,7 +17,7 @@ const useTabNavigation = (isArtist, formData, professionalFormData, addressValid
       availableTabs.push('address');
     }
     
-    if (validation.isPersonalTabValid(formData) && validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError)) {
+    if (validation.isPersonalTabValid(formData) && validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, ruaError, enderecoValidationError)) {
       if (isArtist) {
         availableTabs.push('basic-info');
         
@@ -48,16 +48,16 @@ const useTabNavigation = (isArtist, formData, professionalFormData, addressValid
     } else {
       if (tabId === 'address' && !validation.isPersonalTabValid(formData)) {
         toastHelper.showWarning(editProfileMessages.warnings.completePersonalDataFirst);
-      } else if (tabId === 'basic-info' && (!validation.isPersonalTabValid(formData) || !validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError))) {
+      } else if (tabId === 'basic-info' && (!validation.isPersonalTabValid(formData) || !validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, ruaError, enderecoValidationError))) {
         if (!validation.isPersonalTabValid(formData)) {
           toastHelper.showWarning(editProfileMessages.warnings.completePersonalDataFirst);
         } else {
           toastHelper.showWarning(editProfileMessages.warnings.completeAddressDataFirst);
         }
-      } else if (tabId === 'hours' && (!validation.isPersonalTabValid(formData) || !validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError) || !validation.isBasicInfoTabValid(professionalFormData))) {
+      } else if (tabId === 'hours' && (!validation.isPersonalTabValid(formData) || !validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, ruaError, enderecoValidationError) || !validation.isBasicInfoTabValid(professionalFormData))) {
         if (!validation.isPersonalTabValid(formData)) {
           toastHelper.showWarning(editProfileMessages.warnings.completePersonalDataFirst);
-        } else if (!validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError)) {
+        } else if (!validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, ruaError, enderecoValidationError)) {
           toastHelper.showWarning(editProfileMessages.warnings.completeAddressDataFirst);
         } else {
           toastHelper.showWarning(editProfileMessages.warnings.completeBasicInfoFirst);
@@ -70,7 +70,7 @@ const useTabNavigation = (isArtist, formData, professionalFormData, addressValid
             toastHelper.showWarning(editProfileMessages.warnings.completePortfolioFirst);
           }
         } else {
-          if (!validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError)) {
+          if (!validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, ruaError, enderecoValidationError)) {
             toastHelper.showWarning(editProfileMessages.warnings.completeAddressDataFirst);
           }
         }
@@ -133,7 +133,7 @@ const useTabNavigation = (isArtist, formData, professionalFormData, addressValid
             setActiveTab('security');
           }
         } else {
-          // Forçar validação de endereço quando há erro, similar ao RegisterScreen
+          // Forçar validação de endereço quando há erro
           if (addressValidationErrors.forceAddressValidation) {
             addressValidationErrors.forceAddressValidation();
           }

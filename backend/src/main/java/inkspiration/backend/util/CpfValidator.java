@@ -7,15 +7,15 @@ public class CpfValidator {
             return false;
         }
 
-        // Remove non-numeric characters
+        // Remove caracteres não numéricos
         cpf = cpf.replaceAll("[^0-9]", "");
         
-        // Check if length is 11
+        // Verifica se tem 11 caracteres
         if (cpf.length() != 11) {
             return false;
         }
         
-        // Check if all digits are the same
+        // Verifica se todos os dígitos são iguais
         if (cpf.matches("(\\d)\\1{10}")) {
             return false;
         }
@@ -26,7 +26,7 @@ public class CpfValidator {
                 numbers[i] = Character.getNumericValue(cpf.charAt(i));
             }
 
-            // Validate first digit
+            // Valida primeiro dígito
             int sum = 0;
             for (int i = 0; i < 9; i++) {
                 sum += numbers[i] * (10 - i);
@@ -39,7 +39,7 @@ public class CpfValidator {
                 return false;
             }
 
-            // Validate second digit
+            // Valida segundo dígito
             sum = 0;
             for (int i = 0; i < 10; i++) {
                 sum += numbers[i] * (11 - i);
@@ -79,6 +79,6 @@ public class CpfValidator {
             return "CPF inválido";
         }
         
-        return null; // Válido
+        return null;
     }
 } 

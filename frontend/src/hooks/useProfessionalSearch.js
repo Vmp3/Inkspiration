@@ -43,7 +43,6 @@ const useProfessionalSearch = ({
   const isDebouncing = useRef(false);
   const isRequestInProgress = useRef(false);
 
-  // Memoizar os filtros para evitar recriação desnecessária
   const filters = useMemo(() => ({
     searchTerm: searchTerm.trim() || null,
     locationTerm: locationTerm.trim() || null,
@@ -52,7 +51,6 @@ const useProfessionalSearch = ({
     sortBy
   }), [searchTerm, locationTerm, minRating, selectedSpecialties, sortBy]);
 
-  // Atualizar filtros ativos
   const updateActiveFilters = useCallback(() => {
     const filters = [];
     
@@ -67,14 +65,11 @@ const useProfessionalSearch = ({
     setActiveFilters(filters);
   }, [minRating, selectedSpecialties]);
 
-  // Função principal para carregar profissionais
   const loadProfessionals = useCallback(async (forceRefresh = false) => {
-    // Se já houver uma requisição em andamento e não for uma atualização forçada, não fazer nada
     if (isRequestInProgress.current && !forceRefresh) {
       return;
     }
     
-    // Se estivermos no meio de um debounce e não for uma atualização forçada, não fazer nada
     if (isDebouncing.current && !forceRefresh) {
       return;
     }
@@ -84,7 +79,6 @@ const useProfessionalSearch = ({
       setIsLoading(true);
       const startTime = performance.now();
       
-      // Preparar os filtros para o formato que o backend espera
       const currentFilters = {
         searchTerm: searchTerm.trim() || null,
         locationTerm: locationTerm.trim() || null,
@@ -98,9 +92,7 @@ const useProfessionalSearch = ({
       const endTime = performance.now();
       const timeElapsed = (endTime - startTime) / 1000;
       setLoadingTime(timeElapsed.toFixed(2));
-      // console.log(`%c[TEMPO DE RESPOSTA] ${timeElapsed.toFixed(2)} segundos para carregar ${response.content?.length || 0} profissionais`, 'background: #222; color: #bada55; font-size: 14px; padding: 5px;');
       
-      // Se limitResults for true, limitar o número de resultados
       const professionals = response.content || [];
       setDisplayedArtists(limitResults ? professionals.slice(0, resultLimit) : professionals);
       setTotalPages(response.totalPages);
@@ -122,37 +114,28 @@ const useProfessionalSearch = ({
     }
   }, [currentPage, searchTerm, locationTerm, minRating, selectedSpecialties, sortBy, limitResults, resultLimit, updateActiveFilters]);
 
-  // Atualizar a referência quando loadProfessionals mudar
   useEffect(() => {
     loadProfessionalsRef.current = loadProfessionals;
   }, [loadProfessionals]);
 
-  // Função de busca com debounce
   const handleSearch = useCallback(() => {
-    // Limpar qualquer timer existente
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
     
-    // Marcar que estamos no meio de um debounce
     isDebouncing.current = true;
-    
-    // Configurar um novo timer
     debounceTimerRef.current = setTimeout(() => {
       // Sempre resetar para a página 0 quando buscar
       setCurrentPage(0);
       
       // Forçar uma nova busca com os filtros atualizados
       if (loadProfessionalsRef.current) {
-        loadProfessionalsRef.current(true); // Forçar refresh
+        loadProfessionalsRef.current(true);
       }
-      
-      // Marcar que não estamos mais no meio de um debounce
       isDebouncing.current = false;
-    }, 300); // 300ms de debounce
+    }, 300);
   }, []);
 
-  // Alternar seleção de especialidade
   const toggleSpecialty = useCallback((specialty) => {
     setSelectedSpecialties(prev =>
       prev.includes(specialty) ? prev.filter(s => s !== specialty) : [...prev, specialty]
@@ -174,17 +157,14 @@ const useProfessionalSearch = ({
     } else if (filter.type === 'specialty') {
       setSelectedSpecialties(prev => prev.filter(s => s !== filter.value));
     }
-    // Fazer busca após remover filtro
     handleSearch();
   }, [handleSearch]);
 
-  // Carregar dados iniciais apenas uma vez
   useEffect(() => {
     if (!hasLoadedInitialData.current) {
       if (loadProfessionalsRef.current) {
-        loadProfessionalsRef.current(true); // Forçar carregamento inicial
+        loadProfessionalsRef.current(true);
       } else {
-        // Fallback para caso a referência ainda não esteja definida
         setTimeout(() => {
           if (loadProfessionalsRef.current) {
             loadProfessionalsRef.current(true);
@@ -193,12 +173,9 @@ const useProfessionalSearch = ({
       }
       hasLoadedInitialData.current = true;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Unificar os useEffect para evitar requisições duplicadas
   useEffect(() => {
-    // Se estivermos no meio de um debounce, não fazer nada
     if (isDebouncing.current) {
       return;
     }
@@ -208,20 +185,16 @@ const useProfessionalSearch = ({
       lastDependencies.current.currentPage !== currentPage || 
       lastDependencies.current.sortBy !== sortBy;
     
-    // Atualizar as dependências atuais
     lastDependencies.current = { currentPage, sortBy };
     
-    // Carregar dados apenas se for a carga inicial ou se as dependências mudaram
     if (shouldLoadInitialData || (hasLoadedInitialData.current && hasDependencyChanged)) {
       if (loadProfessionalsRef.current) {
-        // Pequeno timeout para garantir que o estado foi atualizado
         setTimeout(() => {
           if (loadProfessionalsRef.current) {
             loadProfessionalsRef.current();
           }
         }, 0);
       } else {
-        // Fallback para caso a referência ainda não esteja definida
         setTimeout(() => {
           if (loadProfessionalsRef.current) {
             loadProfessionalsRef.current();
@@ -229,22 +202,17 @@ const useProfessionalSearch = ({
         }, 0);
       }
       
-      // Marcar como carregado após a primeira carga
       if (!hasLoadedInitialData.current) {
         hasLoadedInitialData.current = true;
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, sortBy]);
 
-  // Efeito para lidar com mudanças nos filtros
   useEffect(() => {
-    // Ignorar a primeira renderização ou se estivermos no meio de um debounce
     if (!hasLoadedInitialData.current || isDebouncing.current) {
       return;
     }
     
-    // Usar debounce para evitar múltiplas chamadas
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
@@ -253,30 +221,24 @@ const useProfessionalSearch = ({
     
     debounceTimerRef.current = setTimeout(() => {
       if (currentPage === 0) {
-        // Se a página já for 0, chamar loadProfessionals diretamente
         if (loadProfessionalsRef.current) {
           loadProfessionalsRef.current();
         }
       } else {
-        // Se a página não for 0, resetar para 0
-        // Isso vai disparar o outro useEffect
         setCurrentPage(0);
       }
       
       isDebouncing.current = false;
     }, 300);
     
-    // Limpar o timeout quando o componente for desmontado
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, locationTerm, minRating, selectedSpecialties, sortBy]);
 
   return {
-    // Estados
     searchTerm,
     setSearchTerm,
     locationTerm,

@@ -27,7 +27,6 @@ public enum UserRole {
 
         String roleNormalizada = role.toUpperCase().trim();
         
-        // Remove o prefixo ROLE_ se existir
         if (!roleNormalizada.startsWith("ROLE_")) {
             roleNormalizada = "ROLE_" + roleNormalizada;
         }

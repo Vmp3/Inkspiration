@@ -278,7 +278,6 @@ const ProfessionalRegisterScreen = () => {
   };
   
   const handlePrecoServicoChange = (tipoNome, valor) => {
-    // Limpar caracteres não numéricos exceto vírgula e ponto
     const valorLimpo = valor.replace(/[^\d,.]/, '');
     
     setPrecosServicos(prev => ({
@@ -422,10 +421,8 @@ const ProfessionalRegisterScreen = () => {
     }
   };
   
-  // Upload de imagens para o servidor
   const uploadImages = async (portfolioId) => {
     try {
-      // Upload da imagem de perfil
       if (profileImage && profileImage.base64) {
         try {
           await ApiService.put(`/usuario/${userData.idUsuario}/foto-perfil`, { imagemBase64: profileImage.base64 });
@@ -452,7 +449,7 @@ const ProfessionalRegisterScreen = () => {
               await ApiService.post('/imagens', imagemDTO);
             } catch (error) {
               // console.error('Falha ao enviar imagem do portfólio:', error);
-              throw error; // Re-throw para que o erro seja capturado no nível superior
+              throw error;
             }
           }
         }
@@ -785,7 +782,7 @@ const ProfessionalRegisterScreen = () => {
           }
         }
         
-                  toastHelper.showSuccess(professionalRegisterMessages.success.professionalRegistered);
+          toastHelper.showSuccess(professionalRegisterMessages.success.professionalRegistered);
         
         // Atualizar o token para refletir a nova role (ROLE_PROF)
         try {
@@ -1082,7 +1079,6 @@ const styles = StyleSheet.create({
     padding: 10,
     marginLeft: 10,
   },
-  // Estilos para a aba de horários
   workHoursTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -1136,7 +1132,6 @@ const styles = StyleSheet.create({
   timeInputSeparator: {
     marginHorizontal: 8,
   },
-  // Estilos para a aba de portfólio
   biographyInput: {
     borderWidth: 1,
     borderColor: '#ddd',

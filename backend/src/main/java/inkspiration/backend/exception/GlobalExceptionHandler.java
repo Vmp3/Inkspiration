@@ -591,6 +591,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleEnderecoValidacaoExceptions(RuntimeException ex) {
         Map<String, String> errors = new HashMap<>();
         errors.put("error", ex.getMessage());
+        errors.put("message", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 

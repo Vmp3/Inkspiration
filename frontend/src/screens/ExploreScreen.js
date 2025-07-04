@@ -28,7 +28,6 @@ import MobileFiltersModal from '../components/common/MobileFiltersModal';
 import FilterDropdown from '../components/common/FilterDropdown';
 
 const ExploreScreen = ({ navigation }) => {
-  // Usar o hook personalizado com configurações para a tela Explore
   const {
     searchTerm,
     setSearchTerm,
@@ -84,8 +83,7 @@ const ExploreScreen = ({ navigation }) => {
   }, []);
 
   const isMobile = screenWidth < 768;
-  
-  // Memoizar o número de colunas para evitar recálculos desnecessários
+
   const numColumns = useMemo(() => {
     if (screenWidth < 768) {
       return 1;
@@ -93,7 +91,6 @@ const ExploreScreen = ({ navigation }) => {
     return 3;
   }, [screenWidth]);
 
-  // Função para lidar com o clique no botão de filtros
   const handleFilterPress = useCallback(() => {
     if (isMobile) {
       setShowFiltersModal(true);
@@ -324,8 +321,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#111827',
   },
-  
-  // Cabeçalho da página
   pageHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -338,7 +333,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   
-  // Layout principal
   mainContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -347,7 +341,6 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   
-  // Coluna de artistas
   artistsColumn: {
     width: '75%',
     paddingLeft: 16,
@@ -357,14 +350,12 @@ const styles = StyleSheet.create({
     paddingLeft: 0,
   },
   
-  // Separador
   separator: {
     height: 1,
     backgroundColor: '#E5E7EB',
     marginBottom: 16,
   },
   
-  // Filtros móveis
   mobileFiltersButton: {
     backgroundColor: '#000000',
     flexDirection: 'row',
@@ -380,7 +371,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   
-  // Adicionar inputs de busca para dispositivos móveis
   mobileSearchContainer: {
     flexDirection: 'column',
     width: '100%',
@@ -396,7 +386,6 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   
-  // Filtros e dropdown de relevância
   filtersAndRelevanceRow: {
     flexDirection: 'column',
     width: '100%',

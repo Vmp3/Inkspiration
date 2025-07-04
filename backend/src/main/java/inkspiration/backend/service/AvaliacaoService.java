@@ -8,7 +8,6 @@ import inkspiration.backend.entities.Usuario;
 import inkspiration.backend.enums.StatusAgendamento;
 import inkspiration.backend.exception.agendamento.AgendamentoNaoEncontradoException;
 import inkspiration.backend.exception.avaliacao.AvaliacaoJaExisteException;
-import inkspiration.backend.exception.avaliacao.AvaliacaoNaoEncontradaException;
 import inkspiration.backend.exception.avaliacao.AvaliacaoNaoPermitidaException;
 import inkspiration.backend.repository.AgendamentoRepository;
 import inkspiration.backend.repository.AvaliacaoRepository;
@@ -21,9 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class AvaliacaoService {
@@ -62,7 +59,6 @@ public class AvaliacaoService {
             throw new AvaliacaoJaExisteException("Já existe uma avaliação para este agendamento");
         }
 
-        // Criar a avaliação
         Avaliacao avaliacao = new Avaliacao();
         avaliacao.setDescricao(avaliacaoDTO.getDescricao());
         avaliacao.setRating(avaliacaoDTO.getRating());
@@ -91,7 +87,7 @@ public class AvaliacaoService {
 
     @Transactional(readOnly = true)
     public Optional<AvaliacaoDTO> buscarAvaliacaoPorAgendamento(Long idAgendamento) {
-        // Buscar o agendamento
+
         Agendamento agendamento = agendamentoRepository.findById(idAgendamento)
                 .orElseThrow(() -> new AgendamentoNaoEncontradoException("Agendamento não encontrado"));
 
@@ -155,13 +151,11 @@ public class AvaliacaoService {
                 avaliacao.getAgendamento().getIdAgendamento()
         );
         
-        // Adicionar informações do cliente que fez a avaliação (apenas nome)
         if (avaliacao.getAgendamento() != null && avaliacao.getAgendamento().getUsuario() != null) {
             dto.setNomeCliente(avaliacao.getAgendamento().getUsuario().getNome());
             dto.setImagemCliente(avaliacao.getAgendamento().getUsuario().getImagemPerfil());
         }
         
-        // Adicionar tipo de serviço
         if (avaliacao.getAgendamento() != null) {
             dto.setTipoServico(avaliacao.getAgendamento().getTipoServico().name());
         }
