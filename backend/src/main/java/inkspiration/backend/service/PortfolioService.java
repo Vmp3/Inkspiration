@@ -44,7 +44,6 @@ public class PortfolioService {
         Portfolio portfolio = new Portfolio();
         preencherPortfolio(portfolio, dto);
         
-        // Salvar o portfólio
         portfolio = portfolioRepository.save(portfolio);
         
         // Se fornecido, associar ao profissional
@@ -65,9 +64,7 @@ public class PortfolioService {
         Portfolio portfolio = buscarPorId(id);
         preencherPortfolio(portfolio, dto);
         
-        // Se fornecido um novo ID de profissional, atualizar a associação
         if (dto.getIdProfissional() != null) {
-            // Se já estava associado a outro profissional, remover a associação anterior
             if (portfolio.getProfissional() != null && 
                 !portfolio.getProfissional().getIdProfissional().equals(dto.getIdProfissional())) {
                 
@@ -77,7 +74,6 @@ public class PortfolioService {
                 profissionalRepository.save(antigoProfissional);
             }
             
-            // Associar ao novo profissional
             Profissional novoProfissional = profissionalRepository.findById(dto.getIdProfissional())
                 .orElseThrow(() -> new ProfissionalNaoEncontradoException("Profissional não encontrado com ID: " + dto.getIdProfissional()));
             
@@ -98,7 +94,6 @@ public class PortfolioService {
     public void deletar(Long id) {
         Portfolio portfolio = buscarPorId(id);
         
-        // Remover a associação com profissional antes de deletar
         if (portfolio.getProfissional() != null) {
             Profissional profissional = portfolio.getProfissional();
             profissional.setPortfolio(null);
@@ -123,7 +118,6 @@ public class PortfolioService {
     public PortfolioDTO converterParaDto(Portfolio portfolio) {
         if (portfolio == null) return null;
         
-        // Buscar o ID do profissional associado, se houver
         Long idProfissional = null;
         if (portfolio.getProfissional() != null) {
             idProfissional = portfolio.getProfissional().getIdProfissional();
@@ -143,7 +137,6 @@ public class PortfolioService {
         );
     }
 
-    // Novos métodos movidos do controller
     public List<PortfolioDTO> listarComAutorizacao(Pageable pageable) {
         authorizationService.requireAdmin();
         

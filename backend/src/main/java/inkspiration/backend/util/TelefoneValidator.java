@@ -53,7 +53,7 @@ public class TelefoneValidator {
                 numeros.substring(6));
         }
         
-        return telefone; // Retorna original se não conseguir formatar
+        return telefone;
     }
     
     public static String getFormatExample() {

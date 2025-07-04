@@ -1,10 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { TimeInput } from '../TimeInput';
 import toastHelper from '../../utils/toastHelper';
+import { isMobileView, isTabletView, isDesktopView, addDimensionsListener } from '../../utils/responsive';
 
 const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleNextTab }) => {
+  const [windowWidth, setWindowWidth] = useState(Dimensions.get('window').width);
+
+  useEffect(() => {
+    const cleanup = addDimensionsListener(({ window }) => {
+      setWindowWidth(window.width);
+    });
+
+    return cleanup;
+  }, []);
+
   const isTimeComplete = (time) => {
     return time && time.length === 5;
   };
@@ -75,65 +86,91 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
             
             {day.available && (
               <View style={styles.dayHours}>
-                <View style={styles.periodRow}>
-                  <View style={styles.periodCheckbox}>
-                    <TouchableOpacity 
-                      style={[styles.checkbox, day.morning.enabled && styles.checkboxChecked]}
-                      onPress={() => handleWorkHourChange(index, 'morning', 'enabled', !day.morning.enabled)}
-                    >
-                      {day.morning.enabled && <Feather name="check" size={16} color="#fff" />}
-                    </TouchableOpacity>
-                    <Text style={styles.checkboxLabel}>Manhã:</Text>
+                <View style={[
+                  styles.periodsContainer,
+                  isDesktopView() && styles.periodsContainerDesktop,
+                  isTabletView() && styles.periodsContainerTablet
+                ]}>
+                  {/* Período da Manhã */}
+                  <View style={[
+                    styles.periodRow,
+                    (isDesktopView() || isTabletView()) && styles.periodRowDesktop
+                  ]}>
+                    <View style={[
+                      styles.periodCheckbox,
+                      (isDesktopView() || isTabletView()) && styles.periodCheckboxDesktop
+                    ]}>
+                      <TouchableOpacity 
+                        style={[styles.checkbox, day.morning.enabled && styles.checkboxChecked]}
+                        onPress={() => handleWorkHourChange(index, 'morning', 'enabled', !day.morning.enabled)}
+                      >
+                        {day.morning.enabled && <Feather name="check" size={16} color="#fff" />}
+                      </TouchableOpacity>
+                      <Text style={styles.checkboxLabel}>Manhã</Text>
+                    </View>
+                    
+                    <View style={[
+                      styles.timeInputContainer,
+                      (isDesktopView() || isTabletView()) && styles.timeInputContainerDesktop
+                    ]}>
+                      <TimeInput
+                        value={day.morning.start}
+                        onChange={(value) => handleTimeChange(index, 'morning', 'start', value)}
+                        disabled={!day.morning.enabled}
+                        period="morning"
+                        type="start"
+                      />
+                      <Text style={styles.timeInputSeparator}>às</Text>
+                      <TimeInput
+                        value={day.morning.end}
+                        onChange={(value) => handleTimeChange(index, 'morning', 'end', value)}
+                        disabled={!day.morning.enabled}
+                        period="morning"
+                        type="end"
+                        startTime={day.morning.start}
+                      />
+                    </View>
                   </View>
                   
-                  <View style={styles.timeInputContainer}>
-                    <TimeInput
-                      value={day.morning.start}
-                      onChange={(value) => handleTimeChange(index, 'morning', 'start', value)}
-                      disabled={!day.morning.enabled}
-                      period="morning"
-                      type="start"
-                    />
-                    <Text style={styles.timeInputSeparator}>às</Text>
-                    <TimeInput
-                      value={day.morning.end}
-                      onChange={(value) => handleTimeChange(index, 'morning', 'end', value)}
-                      disabled={!day.morning.enabled}
-                      period="morning"
-                      type="end"
-                      startTime={day.morning.start}
-                    />
-                  </View>
-                </View>
-                
-                <View style={styles.periodRow}>
-                  <View style={styles.periodCheckbox}>
-                    <TouchableOpacity 
-                      style={[styles.checkbox, day.afternoon.enabled && styles.checkboxChecked]}
-                      onPress={() => handleWorkHourChange(index, 'afternoon', 'enabled', !day.afternoon.enabled)}
-                    >
-                      {day.afternoon.enabled && <Feather name="check" size={16} color="#fff" />}
-                    </TouchableOpacity>
-                    <Text style={styles.checkboxLabel}>Tarde:</Text>
-                  </View>
-                  
-                  <View style={styles.timeInputContainer}>
-                    <TimeInput
-                      value={day.afternoon.start}
-                      onChange={(value) => handleTimeChange(index, 'afternoon', 'start', value)}
-                      disabled={!day.afternoon.enabled}
-                      period="afternoon"
-                      type="start"
-                    />
-                    <Text style={styles.timeInputSeparator}>às</Text>
-                    <TimeInput
-                      value={day.afternoon.end}
-                      onChange={(value) => handleTimeChange(index, 'afternoon', 'end', value)}
-                      disabled={!day.afternoon.enabled}
-                      period="afternoon"
-                      type="end"
-                      startTime={day.afternoon.start}
-                    />
+                  {/* Período da Tarde */}
+                  <View style={[
+                    styles.periodRow,
+                    (isDesktopView() || isTabletView()) && styles.periodRowDesktop
+                  ]}>
+                    <View style={[
+                      styles.periodCheckbox,
+                      (isDesktopView() || isTabletView()) && styles.periodCheckboxDesktop
+                    ]}>
+                      <TouchableOpacity 
+                        style={[styles.checkbox, day.afternoon.enabled && styles.checkboxChecked]}
+                        onPress={() => handleWorkHourChange(index, 'afternoon', 'enabled', !day.afternoon.enabled)}
+                      >
+                        {day.afternoon.enabled && <Feather name="check" size={16} color="#fff" />}
+                      </TouchableOpacity>
+                      <Text style={styles.checkboxLabel}>Tarde</Text>
+                    </View>
+                    
+                    <View style={[
+                      styles.timeInputContainer,
+                      (isDesktopView() || isTabletView()) && styles.timeInputContainerDesktop
+                    ]}>
+                      <TimeInput
+                        value={day.afternoon.start}
+                        onChange={(value) => handleTimeChange(index, 'afternoon', 'start', value)}
+                        disabled={!day.afternoon.enabled}
+                        period="afternoon"
+                        type="start"
+                      />
+                      <Text style={styles.timeInputSeparator}>às</Text>
+                      <TimeInput
+                        value={day.afternoon.end}
+                        onChange={(value) => handleTimeChange(index, 'afternoon', 'end', value)}
+                        disabled={!day.afternoon.enabled}
+                        period="afternoon"
+                        type="end"
+                        startTime={day.afternoon.start}
+                      />
+                    </View>
                   </View>
                 </View>
               </View>
@@ -147,7 +184,7 @@ const WorkHoursForm = ({ workHours, handleWorkHourChange, handlePrevTab, handleN
 
 const styles = StyleSheet.create({
   tabContent: {
-    padding: 16,
+    padding: isMobileView() ? 8 : 16,
   },
   workHoursTitle: {
     fontSize: 18,
@@ -166,13 +203,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#eaeaea',
     borderRadius: 4,
-    padding: 12,
+    padding: isMobileView() ? 8 : 12,
     marginBottom: 12,
   },
   dayHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 8,
   },
   dayName: {
     fontSize: 16,
@@ -183,24 +221,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dayHours: {
-    marginTop: 12,
+    marginTop: 8,
+  },
+  periodsContainer: {
+    flexDirection: 'column',
+  },
+  periodsContainerDesktop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+  },
+  periodsContainerTablet: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
   },
   periodRow: {
+    marginBottom: 12,
+    width: '100%',
+  },
+  periodRowDesktop: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    flex: 1,
+    marginRight: 16,
+    minWidth: '45%',
+    maxWidth: '48%',
   },
   periodCheckbox: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: 80,
+    marginBottom: 8,
+  },
+  periodCheckboxDesktop: {
+    width: 100,
+    marginRight: 8,
+    marginBottom: 0,
   },
   timeInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingLeft: 28,
+    flexWrap: 'wrap',
+  },
+  timeInputContainerDesktop: {
+    flex: 1,
+    paddingLeft: 0,
+    flexWrap: 'nowrap',
   },
   timeInputSeparator: {
-    marginHorizontal: 8,
+    marginHorizontal: isMobileView() ? 4 : 8,
+    minWidth: isMobileView() ? 20 : 24,
+    textAlign: 'center',
   },
   checkbox: {
     width: 20,

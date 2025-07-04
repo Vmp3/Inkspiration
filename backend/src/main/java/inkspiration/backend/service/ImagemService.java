@@ -71,7 +71,6 @@ public class ImagemService {
         );
     }
 
-    // Novos métodos movidos do controller
     public List<ImagemDTO> listarPorPortfolioComValidacao(Long idPortfolio) {
         try {
             return listarPorPortfolio(idPortfolio);

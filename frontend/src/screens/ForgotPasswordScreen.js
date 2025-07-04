@@ -34,10 +34,8 @@ const ForgotPasswordScreen = () => {
   const handleChange = (field, value) => {
     let formattedValue = value;
     
-    // Apply CPF formatter
     if (field === 'cpf') {
       formattedValue = formatters.formatCPF(value);
-      // Clear error when typing
       setCpfError('');
     }
 
@@ -78,7 +76,6 @@ const ForgotPasswordScreen = () => {
         }
       );
     } catch (error) {
-      // Erro já tratado pelo hook
     }
   };
 

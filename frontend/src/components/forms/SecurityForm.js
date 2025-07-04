@@ -34,7 +34,6 @@ const SecurityForm = ({
     <View style={styles.tabContent}>
       {/* Senha e Confirmar Senha */}
       {isMobile ? (
-        // Layout mobile: um campo por linha
         <>
           <View style={styles.formFullWidth}>
             <Text style={styles.formLabel}>Senha</Text>
@@ -69,7 +68,6 @@ const SecurityForm = ({
           </View>
         </>
       ) : (
-        // Layout web/tablet: dois campos por linha
         <View style={styles.formRow}>
           <View style={styles.formGroup}>
             <Text style={styles.formLabel}>Senha</Text>

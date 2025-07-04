@@ -11,13 +11,11 @@ export const AuthProvider = ({ children }) => {
 
   // Callback para quando o token for inválido
   const handleTokenInvalid = useCallback(async () => {
-    // console.log('Token inválido detectado, fazendo logout automático');
     setIsAuthenticated(false);
     setUserData(null);
     try {
       await AuthService.logout();
     } catch (error) {
-      // console.error('Erro ao fazer logout automático:', error);
     }
   }, []);
 
@@ -54,12 +52,11 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Verificar autenticação ao montar o componente
   useEffect(() => {
     checkAuthStatus();
   }, [checkAuthStatus]);
 
-  // Verificar periodicamente a integridade do token (a cada 30 segundos)
+  // Verificar o token (a cada 30 segundos)
   useEffect(() => {
     if (!isAuthenticated) return;
     
@@ -175,7 +172,6 @@ export const AuthProvider = ({ children }) => {
                   setUserData(refreshedUserInfo);
                 }
               } else {
-                // Forçar logout em caso de falha
                 await logout();
                 return;
               }

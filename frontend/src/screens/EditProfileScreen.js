@@ -49,6 +49,7 @@ const EditProfileScreen = () => {
   const [estadoError, setEstadoError] = useState('');
   const [cidadeError, setCidadeError] = useState('');
   const [bairroError, setBairroError] = useState('');
+  const [ruaError, setRuaError] = useState('');
   const [enderecoValidationError, setEnderecoValidationError] = useState('');
   const [dadosCep, setDadosCep] = useState(null);
   
@@ -90,10 +91,10 @@ const EditProfileScreen = () => {
     estadoError,
     cidadeError,
     bairroError,
+    ruaError,
     enderecoValidationError,
     forceAddressValidation: () => {
       if (dadosCep) {
-        // Forçar validação igual ao RegisterScreen
         if (formData.estado && dadosCep.uf) {
           const estadoForm = formData.estado.toUpperCase().trim();
           const estadoCep = dadosCep.uf.toUpperCase().trim();
@@ -118,6 +119,15 @@ const EditProfileScreen = () => {
           
           if (bairroForm !== bairroCep) {
             setBairroError(`Bairro deve ser ${dadosCep.bairro} para este CEP`);
+          }
+        }
+        
+        if (formData.rua && dadosCep.logradouro) {
+          const ruaForm = formData.rua.toLowerCase().trim();
+          const ruaCep = dadosCep.logradouro.toLowerCase().trim();
+          
+          if (ruaForm !== ruaCep) {
+            setRuaError(`Logradouro deve ser ${dadosCep.logradouro} para este CEP`);
           }
         }
       }
@@ -177,7 +187,7 @@ const EditProfileScreen = () => {
       if (userData.endereco?.cep) {
         setTimeout(() => {
           buscarCep(userData.endereco.cep);
-        }, 500); // Pequeno delay para garantir que o estado foi atualizado
+        }, 500);
       }
     }
   }, [userData]);
@@ -208,8 +218,16 @@ const EditProfileScreen = () => {
       } else {
         setBairroError('');
       }
+      
+      // Validar logradouro (rua)
+      if (formData.rua.toLowerCase().trim() !== dadosCep.logradouro?.toLowerCase().trim()) {
+        const errorMsg = `Logradouro deve ser ${dadosCep.logradouro} para este CEP`;
+        setRuaError(errorMsg);
+      } else {
+        setRuaError('');
+      }
     }
-  }, [dadosCep, formData.estado, formData.cidade, formData.bairro]);
+  }, [dadosCep, formData.estado, formData.cidade, formData.bairro, formData.rua]);
 
   const validateBio = (text) => {
     if (!text || text.trim().length === 0) {
@@ -237,17 +255,14 @@ const EditProfileScreen = () => {
       if (!result.canceled) {
         const selectedImage = result.assets[0];
         
-        // Validação DUPLA de formato - MIME type e extensão
         const validMimeTypes = ['image/jpeg', 'image/png'];
         const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
         
-        // Verificar MIME type
         if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
           toastHelper.showError(editProfileMessages.imageUploadErrors.invalidFormat);
           return;
         }
         
-        // Verificar extensão do arquivo
         if (selectedImage.fileName) {
           const fileExtension = selectedImage.fileName.toLowerCase().slice(selectedImage.fileName.lastIndexOf('.'));
           if (!validExtensions.includes(fileExtension)) {
@@ -256,7 +271,6 @@ const EditProfileScreen = () => {
           }
         }
         
-        // Validação de tamanho - limite de 5MB
         const maxSizeInMB = 5;
         const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
         
@@ -265,7 +279,6 @@ const EditProfileScreen = () => {
           return;
         }
         
-        // Validação adicional do base64 (que é ~33% maior que o arquivo original)
         const base64String = selectedImage.base64;
         const base64SizeInBytes = (base64String.length * 3) / 4;
         
@@ -274,7 +287,7 @@ const EditProfileScreen = () => {
           return;
         }
         
-                  const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
+          const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
           const mimeType = selectedImage.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
         
         setProfileImage({
@@ -320,7 +333,7 @@ const EditProfileScreen = () => {
         }
         break;
       case 'cpf':
-        return; // CPF is read-only in edit mode
+        return;
       case 'cep':
         formattedValue = formatters.formatCEP(value);
         setCepError('');
@@ -377,6 +390,9 @@ const EditProfileScreen = () => {
         setEnderecoValidationError('');
         break;
       case 'rua':
+        setRuaError('');
+        setEnderecoValidationError('');
+        break;
       case 'numero':
       case 'complemento':
         setEnderecoValidationError('');
@@ -507,11 +523,19 @@ const EditProfileScreen = () => {
         setBairroError('');
       }
     }
+
+    if (field === 'rua' && formData.rua && dadosCep) {
+      if (formData.rua.toLowerCase().trim() !== dadosCep.logradouro?.toLowerCase().trim()) {
+        const errorMsg = `Logradouro deve ser ${dadosCep.logradouro} para este CEP`;
+        setRuaError(errorMsg);
+      } else {
+        setRuaError('');
+      }
+    }
   };
 
   const buscarCep = async (cep) => {
     try {
-      // Remove caracteres não numéricos
       const cepLimpo = cep.replace(/\D/g, '');
       
       if (cepLimpo.length !== 8) {
@@ -519,8 +543,7 @@ const EditProfileScreen = () => {
         setDadosCep(null);
         return;
       }
-      
-      // URL da API ViaCEP
+ 
       const response = await axios.get(`https://viacep.com.br/ws/${cepLimpo}/json/`);
       
       if (response.data && !response.data.erro) {
@@ -537,10 +560,10 @@ const EditProfileScreen = () => {
         setDadosCep(endereco);
         setCepError('');
         
-        // Limpar erros de validação quando busca novo CEP
         setEstadoError('');
         setCidadeError('');
         setBairroError('');
+        setRuaError('');
         setEnderecoValidationError('');
       } else {
         setCepError('CEP não encontrado');
@@ -551,6 +574,25 @@ const EditProfileScreen = () => {
       setDadosCep(null);
     }
   };
+
+  function isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, ruaError, enderecoValidationError) {
+    const onlyDigitsCep = formData.cep ? formData.cep.replace(/\D/g, '') : '';
+    return (
+      formData.cep &&
+      onlyDigitsCep.length === 8 &&
+      formData.rua &&
+      formData.numero &&
+      formData.bairro &&
+      formData.cidade &&
+      formData.estado &&
+      !cepError &&
+      !estadoError &&
+      !cidadeError &&
+      !bairroError &&
+      !ruaError &&
+      !enderecoValidationError
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -570,7 +612,7 @@ const EditProfileScreen = () => {
           >
             {tabNavigation.activeTab === 'personal' && (
                   <>
-                                    <PersonalForm
+                  <PersonalForm
                   formData={formData}
                   handleChange={handleChange}
                   handleBlur={handleBlur}
@@ -605,12 +647,21 @@ const EditProfileScreen = () => {
                       estadoError={estadoError}
                       cidadeError={cidadeError}
                       bairroError={bairroError}
+                      ruaError={ruaError}
                       enderecoValidationError={enderecoValidationError}
                     />
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
-                  onNext={tabNavigation.handleNextTab}
-                      nextDisabled={!validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError)}
+                  onNext={() => {
+                    const onlyDigitsCep = formData.cep.replace(/\D/g, '');
+                    if (!formData.cep || onlyDigitsCep.length !== 8) {
+                      setCepError('CEP deve conter exatamente 8 dígitos');
+                      toastHelper.showError('CEP deve conter exatamente 8 dígitos');
+                      return;
+                    }
+                    tabNavigation.handleNextTab();
+                  }}
+                      nextDisabled={!isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, ruaError, enderecoValidationError)}
                     />
                   </>
                 )}
@@ -662,7 +713,7 @@ const EditProfileScreen = () => {
                 
             {isArtist && tabNavigation.activeTab === 'portfolio' && (
                   <>
-                                    <PortfolioForm 
+                  <PortfolioForm 
                   biography={professionalData.professionalFormData.biography}
                   setBiography={professionalData.setBiography}
                   biographyError={biographyError}

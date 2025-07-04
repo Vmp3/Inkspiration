@@ -119,7 +119,6 @@ public class ProfissionalService {
 
     @Transactional
     private Profissional criar(ProfissionalDTO dto) {
-        // Verifica se o usuário existe
         Usuario usuario = usuarioRepository.findById(dto.getIdUsuario())
             .orElseThrow(() -> new UsuarioException.UsuarioNaoEncontradoException("Usuário não encontrado"));
         
@@ -147,19 +146,14 @@ public class ProfissionalService {
         profissional.setUsuario(usuario);
         profissional.setEndereco(endereco);
         
-        // Define nota inicial como 0 para novos profissionais
         if (dto.getNota() == null) {
             profissional.setNota(new BigDecimal("0.0"));
         } else {
             profissional.setNota(dto.getNota());
         }
         
-        // Processar tipos de serviço com preços no service - primeira criação sem preços ainda
         processarTiposServicoComPrecos(profissional, dto.getTiposServico(), null);
-        
-        // Salvar preços no JSON antes de persistir
         salvarTiposServicoPrecos(profissional);
-        
         return profissionalRepository.save(profissional);
     }
 
@@ -167,7 +161,6 @@ public class ProfissionalService {
     public Profissional atualizar(Long id, ProfissionalDTO dto) {
         Profissional profissional = buscarPorId(id);
         
-        // Atualiza o endereço se o ID for fornecido
         if (dto.getIdEndereco() != null) {
             Endereco endereco = enderecoRepository.findById(dto.getIdEndereco())
                 .orElseThrow(() -> new EnderecoNaoEncontradoException("Endereço não encontrado com ID: " + dto.getIdEndereco()));
@@ -184,14 +177,12 @@ public class ProfissionalService {
         }
         
         if (dto.getTiposServico() != null) {
-            // Criar Map com preços padrão (se não fornecidos)
             Map<String, BigDecimal> tiposComPrecos = new HashMap<>();
             for (TipoServico tipo : dto.getTiposServico()) {
                 tiposComPrecos.put(tipo.name(), BigDecimal.ZERO);
             }
                     profissional.setTiposServicoPrecos(tiposComPrecos);
         
-        // Salvar no JSON para persistência
         salvarTiposServicoPrecos(profissional);
         }
         
@@ -210,7 +201,6 @@ public class ProfissionalService {
      */
     @Transactional
     public Profissional criarProfissionalCompleto(ProfissionalCriacaoDTO dto) throws JsonProcessingException {
-        // Verificar se já existe um profissional para este usuário
         if (profissionalRepository.existsByUsuario_IdUsuario(dto.getIdUsuario())) {
             throw new ProfissionalJaExisteException("Já existe um profissional cadastrado para este usuário");
         }
@@ -219,7 +209,7 @@ public class ProfissionalService {
         ProfissionalDTO profissionalDTO = new ProfissionalDTO();
         profissionalDTO.setIdUsuario(dto.getIdUsuario());
         profissionalDTO.setIdEndereco(dto.getIdEndereco());
-        profissionalDTO.setNota(new BigDecimal("0.0")); // Nota inicial sempre zero
+        profissionalDTO.setNota(new BigDecimal("0.0"));
         
         Profissional profissional = criar(profissionalDTO);
         
@@ -341,8 +331,6 @@ public class ProfissionalService {
     public Profissional buscarPorId(Long id) {
         Profissional profissional = profissionalRepository.findById(id)
                 .orElseThrow(() -> new ProfissionalNaoEncontradoException("Profissional não encontrado com ID: " + id));
-        
-        // Carregar preços do JSON para o Map transiente
         carregarTiposServicoPrecos(profissional);
         
         return profissional;
@@ -351,8 +339,6 @@ public class ProfissionalService {
     public Profissional buscarPorUsuario(Long idUsuario) {
         Profissional profissional = profissionalRepository.findByUsuario_IdUsuario(idUsuario)
                 .orElseThrow(() -> new ProfissionalNaoEncontradoException("Perfil profissional não encontrado para o usuário com ID: " + idUsuario));
-        
-        // Carregar preços do JSON para o Map transiente
         carregarTiposServicoPrecos(profissional);
         
         return profissional;
@@ -370,10 +356,7 @@ public class ProfissionalService {
 
     public Page<Profissional> listarComFiltros(Pageable pageable, String searchTerm, String locationTerm, 
                                              double minRating, String[] selectedSpecialties, String sortBy) {
-        // Buscar TODOS os profissionais primeiro (sem paginação)
         List<Profissional> allProfissionais = profissionalRepository.findAll();
-        
-        // Carregar preços para todos os profissionais
         allProfissionais.forEach(this::carregarTiposServicoPrecos);
         
         // Aplicar filtros manualmente
@@ -526,7 +509,6 @@ public class ProfissionalService {
         profissional.setTiposServicoPrecos(tiposComPrecos);
     }
 
-    // Novos métodos movidos do controller
     public List<ProfissionalDTO> listarComAutorizacao(Pageable pageable) {
         authorizationService.requireAdmin();
         
@@ -880,8 +862,6 @@ public class ProfissionalService {
         
         // Buscar avaliações com paginação
         Page<Avaliacao> avaliacoesPage = avaliacaoRepository.findByProfissionalId(profissional.getIdProfissional(), avaliacoesPageable);
-        
-        // Converter avaliações para DTO público
         List<AvaliacaoDTO> avaliacoesDTO = avaliacoesPage.getContent().stream()
                 .map(this::convertAvaliacaoToPublicDTO)
                 .collect(Collectors.toList());
@@ -913,7 +893,6 @@ public class ProfissionalService {
                 avaliacao.getAgendamento().getIdAgendamento()
         );
         
-        // Adicionar informações do cliente que fez a avaliação (apenas nome)
         if (avaliacao.getAgendamento() != null && avaliacao.getAgendamento().getUsuario() != null) {
             dto.setNomeCliente(avaliacao.getAgendamento().getUsuario().getNome());
             dto.setImagemCliente(avaliacao.getAgendamento().getUsuario().getImagemPerfil());

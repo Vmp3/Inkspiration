@@ -52,9 +52,10 @@ const TabHeader = ({ tabs, activeTab, setActiveTab, onTabPress, availableTabs })
                     styles.tabText,
                     isMobile && styles.tabTextMobile,
                     isActive && styles.activeTabText,
-                    !isAvailable && styles.disabledTabText
+                    !isAvailable && styles.disabledTabText,
+                    styles.ellipsisText
                   ]}
-                  numberOfLines={isMobile ? 2 : 1}
+                  numberOfLines={1}
                   ellipsizeMode="tail"
                 >
                   {tab.label}
@@ -91,14 +92,14 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     paddingVertical: 16,
-    paddingHorizontal: 12,
+    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
     minHeight: 50,
   },
   tabItemMobile: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     minHeight: 60,
     marginHorizontal: 2,
@@ -130,6 +131,12 @@ const styles = StyleSheet.create({
   disabledTabText: {
     color: '#ccc',
     fontWeight: '400',
+  },
+  ellipsisText: {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    maxWidth: 120,
   },
 });
 

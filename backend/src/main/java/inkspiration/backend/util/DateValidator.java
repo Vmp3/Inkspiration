@@ -14,18 +14,18 @@ public class DateValidator {
         }
 
         try {
-            // First check if the string matches the expected format
+            // Verifica se a string corresponde ao formato esperado
             if (!dateStr.matches("\\d{2}/\\d{2}/\\d{4}")) {
                 return false;
             }
 
-            // Parse the date to validate day and month values
+            // Converte a data para validar os valores de dia e mês
             String[] parts = dateStr.split("/");
             int day = Integer.parseInt(parts[0]);
             int month = Integer.parseInt(parts[1]);
             int year = Integer.parseInt(parts[2]);
 
-            // Validate day and month ranges
+            // Valida os valores de dia e mês
             if (day < 1 || day > 31) {
                 return false;
             }
@@ -33,12 +33,12 @@ public class DateValidator {
                 return false;
             }
 
-            // Additional validation for specific months
+            // Validação adicional para meses específicos
             if ((month == 4 || month == 6 || month == 9 || month == 11) && day > 30) {
                 return false;
             }
             if (month == 2) {
-                // February validation
+                // Validação para fevereiro
                 if (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) {
                     if (day > 29) return false;
                 } else {
@@ -46,7 +46,7 @@ public class DateValidator {
                 }
             }
 
-            // Try to parse the date to ensure it's valid
+            // Tenta converter a data para validar se é válida
             LocalDate.parse(dateStr, FORMATTER);
             return true;
         } catch (Exception e) {

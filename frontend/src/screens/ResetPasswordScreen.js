@@ -39,7 +39,6 @@ const ResetPasswordScreen = () => {
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Clear errors when typing
     if (field === 'code') setCodeError('');
     if (field === 'newPassword') setPasswordError('');
     if (field === 'confirmPassword') setConfirmPasswordError('');
@@ -134,7 +133,6 @@ const ResetPasswordScreen = () => {
         }
       );
     } catch (error) {
-      // Erro já tratado pelo hook
     }
   };
 

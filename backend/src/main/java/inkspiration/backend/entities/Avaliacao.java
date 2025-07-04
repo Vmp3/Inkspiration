@@ -13,7 +13,7 @@ public class Avaliacao {
     private String descricao;
     
     @Column(nullable = false)
-    private Integer rating; // Avaliação de 1 a 5 estrelas
+    private Integer rating;
     
     @OneToOne
     @JoinColumn(name = "agendamento_id", nullable = false)

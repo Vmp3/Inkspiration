@@ -33,8 +33,6 @@ import inkspiration.backend.repository.ProfissionalRepository;
 /**
  * Serviço para gerenciar a disponibilidade de trabalho dos profissionais.
  * 
- * Este serviço armazena e verifica os horários regulares de trabalho dos profissionais,
- * ou seja, os períodos em que eles estão disponíveis para atendimento ao público.
  * 
  * A disponibilidade é armazenada como um JSON na forma:
  * {
@@ -45,7 +43,6 @@ import inkspiration.backend.repository.ProfissionalRepository;
  *   "Terça": [
  *     {"inicio": "09:00", "fim": "19:00"}
  *   ],
- *   ...
  * }
  * 
  * Este serviço NÃO verifica conflitos com agendamentos existentes - isso é
@@ -183,7 +180,6 @@ public class DisponibilidadeService {
                 .findByProfissional(profissional)
                 .orElseThrow(() -> new RuntimeException("Disponibilidade não cadastrada"));
                 
-        // Converter JSON para Map usando TypeReference
         TypeReference<Map<String, List<Map<String, String>>>> typeRef = 
                 new TypeReference<Map<String, List<Map<String, String>>>>() {};
         return objectMapper.readValue(disponibilidade.getHrAtendimento(), typeRef);
@@ -217,7 +213,6 @@ public class DisponibilidadeService {
         // Obter a disponibilidade do profissional
         Map<String, List<Map<String, String>>> disponibilidade = obterDisponibilidade(idProfissional);
         
-        // Nome do dia em português
         String nomeDia = obterNomeDiaSemana(diaSemana);
         
         // Verificar se o profissional trabalha nesse dia
@@ -250,7 +245,7 @@ public class DisponibilidadeService {
     }
     
     /**
-     * Converte o dia da semana do enum Java para o nome em português.
+     * Converte o dia da semana do enum.
      */
     private String obterNomeDiaSemana(DayOfWeek diaSemana) {
         switch (diaSemana) {
@@ -403,7 +398,6 @@ public class DisponibilidadeService {
     // Métodos com validação para uso pelos controllers
     public DisponibilidadeDTO cadastrarDisponibilidadeDTOComValidacao(Long idProfissional, Map<String, List<Map<String, String>>> horarios, Long idUsuario) {
         try {
-            // Verificar acesso
             authorizationService.requireUserAccessOrAdmin(idUsuario);
             
             return cadastrarDisponibilidadeDTO(idProfissional, horarios);
@@ -431,7 +425,6 @@ public class DisponibilidadeService {
 
     public DisponibilidadeDTO buscarPorProfissionalDTOComValidacao(Long idProfissional, Long idUsuario) {
         try {
-            // Verificar acesso
             authorizationService.requireUserAccessOrAdmin(idUsuario);
             
             return buscarPorProfissionalDTO(idProfissional);

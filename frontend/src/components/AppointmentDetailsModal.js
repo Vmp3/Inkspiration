@@ -23,7 +23,6 @@ import ImageWithAlt from './ui/ImageWithAlt';
 const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCancel, onRefresh, isProfessional = false, showEditButton = true, showCancelButton = true }) => {
   const [isRatingModalVisible, setIsRatingModalVisible] = useState(false);
 
-  // Usar as informações que já vêm do backend
   const canRate = appointment?.podeAvaliar === true;
   const hasRated = appointment?.podeAvaliar === false;
   const isCompleted = appointment?.status?.toUpperCase() === 'CONCLUIDO';
@@ -38,7 +37,6 @@ const AppointmentDetailsModal = ({ visible, appointment, onClose, onEdit, onCanc
   };
 
   const handleRatingSuccess = () => {
-    // Fechar modal e atualizar a lista
     setIsRatingModalVisible(false);
     onClose();
     if (onRefresh) {

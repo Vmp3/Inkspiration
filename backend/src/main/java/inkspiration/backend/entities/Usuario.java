@@ -174,10 +174,9 @@ public class Usuario {
     }
 
     public void setRole(String role) {
-        // Valida e normaliza a role usando o enum
         if (role != null) {
-            UserRole validatedRole = UserRole.fromString(role); // Valida se é uma role válida
-            this.role = validatedRole.getRole(); // Usa a versão normalizada
+            UserRole validatedRole = UserRole.fromString(role);
+            this.role = validatedRole.getRole();
         } else {
             throw new IllegalArgumentException("Role não pode ser nula");
         }
