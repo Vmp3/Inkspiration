@@ -104,8 +104,9 @@ public class AgendamentoService {
             throw new AutoAgendamentoException("Não é possível agendar consigo mesmo");
         }
         
-        LocalDateTime amanha = LocalDate.now().plusDays(1).atStartOfDay();
-        if (dtInicio.isBefore(amanha)) {
+        ZoneId zonaSaoPaulo = ZoneId.of("America/Sao_Paulo");
+        LocalDate amanha = LocalDate.now(zonaSaoPaulo).plusDays(1);
+        if (dtInicio.atZone(ZoneId.systemDefault()).withZoneSameInstant(zonaSaoPaulo).toLocalDate().isBefore(amanha)) {
             throw new DataInvalidaAgendamentoException("Só é possível fazer agendamentos a partir do dia seguinte");
         }
         
@@ -209,8 +210,9 @@ public class AgendamentoService {
             throw new RuntimeException("Não autorizado: este agendamento não pertence ao usuário logado");
         }
         
-        LocalDateTime amanha = LocalDate.now().plusDays(1).atStartOfDay();
-        if (dtInicio.isBefore(amanha)) {
+        ZoneId zonaSaoPaulo = ZoneId.of("America/Sao_Paulo");
+        LocalDate amanha = LocalDate.now(zonaSaoPaulo).plusDays(1);
+        if (dtInicio.atZone(ZoneId.systemDefault()).withZoneSameInstant(zonaSaoPaulo).toLocalDate().isBefore(amanha)) {
             throw new RuntimeException("Só é possível fazer agendamentos a partir do dia seguinte");
         }
         
