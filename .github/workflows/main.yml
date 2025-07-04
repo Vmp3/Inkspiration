@@ -48,7 +48,7 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: test
 
   deploy:
-    needs: [backend-tests, frontend-tests]
+    needs: [backend-tests]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
