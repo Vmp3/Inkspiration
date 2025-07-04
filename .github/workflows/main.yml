@@ -53,18 +53,18 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - name: Deploy to EC2 via SSH
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.SSH_HOST }}
           username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
           script: |
             cd /home/ubuntu/Inkspiration/backend
             git pull origin main
             docker-compose -f prod.docker-compose.yml down
             docker-compose -f prod.docker-compose.yml up -d --build
-
             cd /home/ubuntu/Inkspiration/frontend
             git pull origin main
             docker-compose down
