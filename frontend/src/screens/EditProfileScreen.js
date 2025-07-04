@@ -49,6 +49,7 @@ const EditProfileScreen = () => {
   const [estadoError, setEstadoError] = useState('');
   const [cidadeError, setCidadeError] = useState('');
   const [bairroError, setBairroError] = useState('');
+  const [ruaError, setRuaError] = useState('');
   const [enderecoValidationError, setEnderecoValidationError] = useState('');
   const [dadosCep, setDadosCep] = useState(null);
   
@@ -90,6 +91,7 @@ const EditProfileScreen = () => {
     estadoError,
     cidadeError,
     bairroError,
+    ruaError,
     enderecoValidationError,
     forceAddressValidation: () => {
       if (dadosCep) {
@@ -118,6 +120,15 @@ const EditProfileScreen = () => {
           
           if (bairroForm !== bairroCep) {
             setBairroError(`Bairro deve ser ${dadosCep.bairro} para este CEP`);
+          }
+        }
+        
+        if (formData.rua && dadosCep.logradouro) {
+          const ruaForm = formData.rua.toLowerCase().trim();
+          const ruaCep = dadosCep.logradouro.toLowerCase().trim();
+          
+          if (ruaForm !== ruaCep) {
+            setRuaError(`Logradouro deve ser ${dadosCep.logradouro} para este CEP`);
           }
         }
       }
@@ -208,8 +219,16 @@ const EditProfileScreen = () => {
       } else {
         setBairroError('');
       }
+      
+      // Validar logradouro (rua)
+      if (formData.rua.toLowerCase().trim() !== dadosCep.logradouro?.toLowerCase().trim()) {
+        const errorMsg = `Logradouro deve ser ${dadosCep.logradouro} para este CEP`;
+        setRuaError(errorMsg);
+      } else {
+        setRuaError('');
+      }
     }
-  }, [dadosCep, formData.estado, formData.cidade, formData.bairro]);
+  }, [dadosCep, formData.estado, formData.cidade, formData.bairro, formData.rua]);
 
   const validateBio = (text) => {
     if (!text || text.trim().length === 0) {
@@ -377,6 +396,9 @@ const EditProfileScreen = () => {
         setEnderecoValidationError('');
         break;
       case 'rua':
+        setRuaError('');
+        setEnderecoValidationError('');
+        break;
       case 'numero':
       case 'complemento':
         setEnderecoValidationError('');
@@ -507,6 +529,15 @@ const EditProfileScreen = () => {
         setBairroError('');
       }
     }
+
+    if (field === 'rua' && formData.rua && dadosCep) {
+      if (formData.rua.toLowerCase().trim() !== dadosCep.logradouro?.toLowerCase().trim()) {
+        const errorMsg = `Logradouro deve ser ${dadosCep.logradouro} para este CEP`;
+        setRuaError(errorMsg);
+      } else {
+        setRuaError('');
+      }
+    }
   };
 
   const buscarCep = async (cep) => {
@@ -541,6 +572,7 @@ const EditProfileScreen = () => {
         setEstadoError('');
         setCidadeError('');
         setBairroError('');
+        setRuaError('');
         setEnderecoValidationError('');
       } else {
         setCepError('CEP não encontrado');
@@ -551,6 +583,25 @@ const EditProfileScreen = () => {
       setDadosCep(null);
     }
   };
+
+  function isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, ruaError, enderecoValidationError) {
+    const onlyDigitsCep = formData.cep ? formData.cep.replace(/\D/g, '') : '';
+    return (
+      formData.cep &&
+      onlyDigitsCep.length === 8 &&
+      formData.rua &&
+      formData.numero &&
+      formData.bairro &&
+      formData.cidade &&
+      formData.estado &&
+      !cepError &&
+      !estadoError &&
+      !cidadeError &&
+      !bairroError &&
+      !ruaError &&
+      !enderecoValidationError
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -605,12 +656,22 @@ const EditProfileScreen = () => {
                       estadoError={estadoError}
                       cidadeError={cidadeError}
                       bairroError={bairroError}
+                      ruaError={ruaError}
                       enderecoValidationError={enderecoValidationError}
                     />
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
-                  onNext={tabNavigation.handleNextTab}
-                      nextDisabled={!validation.isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError)}
+                  onNext={() => {
+                    // NOVA VALIDAÇÃO: CEP deve ter 8 dígitos
+                    const onlyDigitsCep = formData.cep.replace(/\D/g, '');
+                    if (!formData.cep || onlyDigitsCep.length !== 8) {
+                      setCepError('CEP deve conter exatamente 8 dígitos');
+                      toastHelper.showError('CEP deve conter exatamente 8 dígitos');
+                      return;
+                    }
+                    tabNavigation.handleNextTab();
+                  }}
+                      nextDisabled={!isAddressTabValid(formData, cepError, estadoError, cidadeError, bairroError, ruaError, enderecoValidationError)}
                     />
                   </>
                 )}

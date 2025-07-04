@@ -395,7 +395,7 @@ const MyAppointmentsScreen = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, {justifyContent: 'space-between'}]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#111" />
           <Text style={styles.loadingText}>Carregando agendamentos...</Text>
@@ -406,98 +406,100 @@ const MyAppointmentsScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={["#111"]}
-            tintColor="#111"
-          />
-        }
-      >
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity 
-              style={styles.backButton}
-              onPress={handleGoBack}
-            >
-              <MaterialIcons name="arrow-back" size={24} color="#111" />
-            </TouchableOpacity>
-            <Text style={styles.pageTitle}>Meus Agendamentos</Text>
-          </View>
-          
-          <TouchableOpacity 
-            style={styles.exportButton}
-            onPress={() => setIsExportModalVisible(true)}
-          >
-            <MaterialIcons name="file-download" size={20} color="#111" />
-            <Text style={styles.exportButtonText}>Exportar</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.content}>
-          {futureAppointments.length === 0 && pastAppointments.length === 0 ? (
-            <View style={styles.emptyState}>
-              <MaterialIcons name="event" size={48} color="#64748b" />
-              <Text style={styles.emptyStateTitle}>Nenhum agendamento encontrado</Text>
-              <Text style={styles.emptyStateText}>
-                Você ainda não realizou nenhum agendamento com nossos artistas.
-              </Text>
-              <TouchableOpacity
-                style={styles.exploreButton}
-                onPress={() => navigation.navigate('Explore')}
+    <SafeAreaView style={[styles.container, {justifyContent: 'space-between'}]}>
+      <View style={{flex: 1}}>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={["#111"]}
+              tintColor="#111"
+            />
+          }
+        >
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <TouchableOpacity 
+                style={styles.backButton}
+                onPress={handleGoBack}
               >
-                <Text style={styles.exploreButtonText}>Explorar Artistas</Text>
+                <MaterialIcons name="arrow-back" size={24} color="#111" />
               </TouchableOpacity>
+              <Text style={styles.pageTitle}>Meus Agendamentos</Text>
             </View>
-          ) : (
-            <>
-              {renderFutureAppointments()}
-              {renderPastAppointments()}
-            </>
-          )}
-        </View>
+            
+            <TouchableOpacity 
+              style={styles.exportButton}
+              onPress={() => setIsExportModalVisible(true)}
+            >
+              <MaterialIcons name="file-download" size={20} color="#111" />
+              <Text style={styles.exportButtonText}>Exportar</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.content}>
+            {futureAppointments.length === 0 && pastAppointments.length === 0 ? (
+              <View style={styles.emptyState}>
+                <MaterialIcons name="event" size={48} color="#64748b" />
+                <Text style={styles.emptyStateTitle}>Nenhum agendamento encontrado</Text>
+                <Text style={styles.emptyStateText}>
+                  Você ainda não realizou nenhum agendamento com nossos artistas.
+                </Text>
+                <TouchableOpacity
+                  style={styles.exploreButton}
+                  onPress={() => navigation.navigate('Explore')}
+                >
+                  <Text style={styles.exploreButtonText}>Explorar Artistas</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                {renderFutureAppointments()}
+                {renderPastAppointments()}
+              </>
+            )}
+          </View>
+        </ScrollView>
+
+        {/* Modais */}
+        <AppointmentDetailsModal
+          visible={isModalVisible}
+          appointment={selectedAppointment}
+          onClose={handleCloseModal}
+          onEdit={handleEditAppointment}
+          onCancel={handleCancelAppointment}
+          onRefresh={loadAppointments}
+        />
         
-        <Footer />
-      </ScrollView>
+        <CompletedAppointmentDetailsModal
+          visible={isCompletedModalVisible}
+          appointment={selectedAppointment}
+          onClose={handleCloseCompletedModal}
+          onRefresh={loadAppointments}
+        />
 
-      <AppointmentDetailsModal
-        visible={isModalVisible}
-        appointment={selectedAppointment}
-        onClose={handleCloseModal}
-        onEdit={handleEditAppointment}
-        onCancel={handleCancelAppointment}
-        onRefresh={loadAppointments}
-      />
-      
-      <CompletedAppointmentDetailsModal
-        visible={isCompletedModalVisible}
-        appointment={selectedAppointment}
-        onClose={handleCloseCompletedModal}
-        onRefresh={loadAppointments}
-      />
+        <CancelAppointmentModal
+          visible={isCancelModalVisible}
+          onClose={handleCloseCancelModal}
+          onConfirm={handleConfirmCancel}
+        />
 
-      <CancelAppointmentModal
-        visible={isCancelModalVisible}
-        onClose={handleCloseCancelModal}
-        onConfirm={handleConfirmCancel}
-      />
-
-      <EditAppointmentModal
-        visible={isEditModalVisible}
-        appointment={selectedAppointment}
-        onClose={handleCloseEditModal}
-        onSuccess={handleEditSuccess}
-      />
-      
-      <ExportAppointmentsModal
-        visible={isExportModalVisible}
-        onClose={() => setIsExportModalVisible(false)}
-      />
+        <EditAppointmentModal
+          visible={isEditModalVisible}
+          appointment={selectedAppointment}
+          onClose={handleCloseEditModal}
+          onSuccess={handleEditSuccess}
+        />
+        
+        <ExportAppointmentsModal
+          visible={isExportModalVisible}
+          onClose={() => setIsExportModalVisible(false)}
+        />
+      </View>
+      <Footer />
     </SafeAreaView>
   );
 };

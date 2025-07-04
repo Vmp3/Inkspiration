@@ -17,7 +17,7 @@ export const useFormValidation = () => {
     );
   };
 
-  const isAddressTabValid = (formData, cepError, estadoError, cidadeError, bairroError, enderecoValidationError) => {
+  const isAddressTabValid = (formData, cepError, estadoError, cidadeError, bairroError, ruaError, enderecoValidationError) => {
     return (
       formData.cep &&
       formData.rua &&
@@ -29,6 +29,7 @@ export const useFormValidation = () => {
       !estadoError &&
       !cidadeError &&
       !bairroError &&
+      !ruaError &&
       !enderecoValidationError
     );
   };

@@ -12,6 +12,7 @@ const AddressForm = ({
   estadoError,
   cidadeError,
   bairroError,
+  ruaError,
   enderecoValidationError
 }) => {
   const [numeroError, setNumeroError] = useState('');
@@ -95,8 +96,10 @@ const AddressForm = ({
           placeholder="Seu logradouro"
           value={formData.rua}
           onChangeText={(text) => handleChange('rua', text)}
-          style={styles.inputField}
+          onBlur={() => handleBlur && handleBlur('rua')}
+          style={[styles.inputField, ruaError ? styles.inputError : null]}
         />
+        {ruaError ? <Text style={styles.errorText}>{ruaError}</Text> : null}
       </View>
       
       {isMobile ? (
