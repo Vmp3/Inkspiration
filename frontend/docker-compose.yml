@@ -1,7 +1,8 @@
 version: '3.8'
 
 services:
-  frontend:
+  app:
+    container_name: front-prod
     build: .
     ports:
       - "8081:8081"   # Metro bundler
