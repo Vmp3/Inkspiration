@@ -406,99 +406,98 @@ const MyAttendancesScreen = () => {
   }
 
   return (
-    <SafeAreaView style={[styles.container, {justifyContent: 'space-between'}]}>
-      <View style={{flex: 1}}>
-        <ScrollView 
-          style={styles.scrollContainer}
-          contentContainerStyle={styles.scrollContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              colors={["#111"]}
-              tintColor="#111"
-            />
-          }
-        >
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={handleGoBack}
-              >
-                <MaterialIcons name="arrow-back" size={24} color="#111" />
-              </TouchableOpacity>
-              <Text style={styles.title}>Meus Atendimentos</Text>
-            </View>
-            
-            <TouchableOpacity 
-              style={styles.exportButton}
-              onPress={() => setIsExportModalVisible(true)}
+    <SafeAreaView style={styles.container}>
+      <ScrollView 
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={["#111"]}
+            tintColor="#111"
+          />
+        }
+      >
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleGoBack}
             >
-              <MaterialIcons name="file-download" size={20} color="#111" />
-              <Text style={styles.exportButtonText}>Exportar</Text>
+              <MaterialIcons name="arrow-back" size={24} color="#111" />
             </TouchableOpacity>
+            <Text style={styles.title}>Meus Atendimentos</Text>
           </View>
+          
+          <TouchableOpacity 
+            style={styles.exportButton}
+            onPress={() => setIsExportModalVisible(true)}
+          >
+            <MaterialIcons name="file-download" size={20} color="#111" />
+            <Text style={styles.exportButtonText}>Exportar</Text>
+          </TouchableOpacity>
+        </View>
 
-          <View style={styles.content}>
-            {futureAttendances.length === 0 && pastAttendances.length === 0 ? (
-              <View style={styles.emptyState}>
-                <MaterialIcons name="event" size={48} color="#64748b" />
-                <Text style={styles.emptyStateTitle}>Nenhum atendimento encontrado</Text>
-                <Text style={styles.emptyStateText}>
-                  Você ainda não possui agendamentos de clientes.
-                </Text>
-              </View>
-            ) : (
-              <>
-                {renderFutureAttendances()}
-                {renderPastAttendances()}
-              </>
-            )}
-          </View>
-        </ScrollView>
+        <View style={styles.content}>
+          {futureAttendances.length === 0 && pastAttendances.length === 0 ? (
+            <View style={styles.emptyState}>
+              <MaterialIcons name="event" size={48} color="#64748b" />
+              <Text style={styles.emptyStateTitle}>Nenhum atendimento encontrado</Text>
+              <Text style={styles.emptyStateText}>
+                Você ainda não possui agendamentos de clientes.
+              </Text>
+            </View>
+          ) : (
+            <>
+              {renderFutureAttendances()}
+              {renderPastAttendances()}
+            </>
+          )}
+        </View>
 
-        {selectedAttendance && (
-          <>
-            <AppointmentDetailsModal
-              visible={isModalVisible}
-              appointment={selectedAttendance}
-              onClose={handleCloseModal}
-              onCancel={selectedAttendance?.status?.toUpperCase() === 'AGENDADO' ? handleCancelAppointment : undefined}
-              onRefresh={loadAttendances}
-              showEditButton={false}
-              showCancelButton={selectedAttendance?.status?.toUpperCase() === 'AGENDADO'}
-              isProfessional={true}
-            />
+        <Footer />
+      </ScrollView>
 
-            <CompletedAppointmentDetailsModal
-              visible={isCompletedModalVisible}
-              appointment={selectedAttendance}
-              onClose={handleCloseCompletedModal}
-              onRefresh={loadAttendances}
-              isProfessional={true}
-            />
+      {selectedAttendance && (
+        <>
+          <AppointmentDetailsModal
+            visible={isModalVisible}
+            appointment={selectedAttendance}
+            onClose={handleCloseModal}
+            onCancel={selectedAttendance?.status?.toUpperCase() === 'AGENDADO' ? handleCancelAppointment : undefined}
+            onRefresh={loadAttendances}
+            showEditButton={false}
+            showCancelButton={selectedAttendance?.status?.toUpperCase() === 'AGENDADO'}
+            isProfessional={true}
+          />
 
-            <CancelAppointmentModal
-              visible={isCancelModalVisible}
-              onClose={handleCloseCancelModal}
-              onConfirm={handleConfirmCancel}
-              isProfessional={true}
-              appointmentDetails={{
-                date: selectedAttendance?.dtInicio,
-                service: selectedAttendance?.tipoServico,
-                clientName: selectedAttendance?.nomeUsuario
-              }}
-            />
-          </>
-        )}
+          <CompletedAppointmentDetailsModal
+            visible={isCompletedModalVisible}
+            appointment={selectedAttendance}
+            onClose={handleCloseCompletedModal}
+            onRefresh={loadAttendances}
+            isProfessional={true}
+          />
 
-        <ExportAttendancesModal
-          visible={isExportModalVisible}
-          onClose={() => setIsExportModalVisible(false)}
-        />
-      </View>
-      <Footer />
+          <CancelAppointmentModal
+            visible={isCancelModalVisible}
+            onClose={handleCloseCancelModal}
+            onConfirm={handleConfirmCancel}
+            isProfessional={true}
+            appointmentDetails={{
+              date: selectedAttendance?.dtInicio,
+              service: selectedAttendance?.tipoServico,
+              clientName: selectedAttendance?.nomeUsuario
+            }}
+          />
+        </>
+      )}
+
+      <ExportAttendancesModal
+        visible={isExportModalVisible}
+        onClose={() => setIsExportModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -513,6 +512,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    minHeight: '100%',
   },
   header: {
     flexDirection: 'row',
@@ -552,6 +552,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 24,
+    flex: 1
   },
   section: {
     marginBottom: 24,
