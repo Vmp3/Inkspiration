@@ -95,7 +95,6 @@ const EditProfileScreen = () => {
     enderecoValidationError,
     forceAddressValidation: () => {
       if (dadosCep) {
-        // Forçar validação igual ao RegisterScreen
         if (formData.estado && dadosCep.uf) {
           const estadoForm = formData.estado.toUpperCase().trim();
           const estadoCep = dadosCep.uf.toUpperCase().trim();
@@ -188,7 +187,7 @@ const EditProfileScreen = () => {
       if (userData.endereco?.cep) {
         setTimeout(() => {
           buscarCep(userData.endereco.cep);
-        }, 500); // Pequeno delay para garantir que o estado foi atualizado
+        }, 500);
       }
     }
   }, [userData]);
@@ -256,17 +255,14 @@ const EditProfileScreen = () => {
       if (!result.canceled) {
         const selectedImage = result.assets[0];
         
-        // Validação DUPLA de formato - MIME type e extensão
         const validMimeTypes = ['image/jpeg', 'image/png'];
         const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
         
-        // Verificar MIME type
         if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
           toastHelper.showError(editProfileMessages.imageUploadErrors.invalidFormat);
           return;
         }
         
-        // Verificar extensão do arquivo
         if (selectedImage.fileName) {
           const fileExtension = selectedImage.fileName.toLowerCase().slice(selectedImage.fileName.lastIndexOf('.'));
           if (!validExtensions.includes(fileExtension)) {
@@ -275,7 +271,6 @@ const EditProfileScreen = () => {
           }
         }
         
-        // Validação de tamanho - limite de 5MB
         const maxSizeInMB = 5;
         const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
         
@@ -284,7 +279,6 @@ const EditProfileScreen = () => {
           return;
         }
         
-        // Validação adicional do base64 (que é ~33% maior que o arquivo original)
         const base64String = selectedImage.base64;
         const base64SizeInBytes = (base64String.length * 3) / 4;
         
@@ -293,7 +287,7 @@ const EditProfileScreen = () => {
           return;
         }
         
-                  const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
+          const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
           const mimeType = selectedImage.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
         
         setProfileImage({
@@ -339,7 +333,7 @@ const EditProfileScreen = () => {
         }
         break;
       case 'cpf':
-        return; // CPF is read-only in edit mode
+        return;
       case 'cep':
         formattedValue = formatters.formatCEP(value);
         setCepError('');
@@ -542,7 +536,6 @@ const EditProfileScreen = () => {
 
   const buscarCep = async (cep) => {
     try {
-      // Remove caracteres não numéricos
       const cepLimpo = cep.replace(/\D/g, '');
       
       if (cepLimpo.length !== 8) {
@@ -550,8 +543,7 @@ const EditProfileScreen = () => {
         setDadosCep(null);
         return;
       }
-      
-      // URL da API ViaCEP
+ 
       const response = await axios.get(`https://viacep.com.br/ws/${cepLimpo}/json/`);
       
       if (response.data && !response.data.erro) {
@@ -568,7 +560,6 @@ const EditProfileScreen = () => {
         setDadosCep(endereco);
         setCepError('');
         
-        // Limpar erros de validação quando busca novo CEP
         setEstadoError('');
         setCidadeError('');
         setBairroError('');
@@ -621,7 +612,7 @@ const EditProfileScreen = () => {
           >
             {tabNavigation.activeTab === 'personal' && (
                   <>
-                                    <PersonalForm
+                  <PersonalForm
                   formData={formData}
                   handleChange={handleChange}
                   handleBlur={handleBlur}
@@ -662,7 +653,6 @@ const EditProfileScreen = () => {
                     <FormNavigation
                   onPrev={tabNavigation.handlePrevTab}
                   onNext={() => {
-                    // NOVA VALIDAÇÃO: CEP deve ter 8 dígitos
                     const onlyDigitsCep = formData.cep.replace(/\D/g, '');
                     if (!formData.cep || onlyDigitsCep.length !== 8) {
                       setCepError('CEP deve conter exatamente 8 dígitos');
@@ -723,7 +713,7 @@ const EditProfileScreen = () => {
                 
             {isArtist && tabNavigation.activeTab === 'portfolio' && (
                   <>
-                                    <PortfolioForm 
+                  <PortfolioForm 
                   biography={professionalData.professionalFormData.biography}
                   setBiography={professionalData.setBiography}
                   biographyError={biographyError}

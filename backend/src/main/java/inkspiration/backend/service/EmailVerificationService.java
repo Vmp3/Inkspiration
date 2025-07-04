@@ -53,7 +53,7 @@ public class EmailVerificationService {
         // Gerar código de verificação único
         String verificationCode = generateVerificationCode();
         
-        // Armazenar dados temporários
+        // Armazenar dados temporários por 15 minutos
         PendingRegistration pendingReg = new PendingRegistration(
             usuarioDTO, 
             verificationCode, 
@@ -99,7 +99,6 @@ public class EmailVerificationService {
         }
         
         if (pendingReg.isExpired()) {
-            // Remover registro expirado
             pendingRegistrations.remove(email);
             throw new RuntimeException("Código de verificação expirado");
         }

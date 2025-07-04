@@ -92,9 +92,6 @@ public class TwoFactorAuthService {
         return result;
     }
 
-    /**
-     * Método legacy para compatibilidade
-     */
     public String generateQRCode(Long userId) throws Exception {
         Map<String, String> result = generateQRCodeAndSecret(userId);
         return result.get("qrCode");
@@ -244,8 +241,7 @@ public class TwoFactorAuthService {
         if (recoveryCode.isExpired()) {
             return false;
         }
-        
-        // Marca como usado
+
         recoveryCode.setUsed(true);
         twoFactorRecoveryCodeRepository.save(recoveryCode);
         

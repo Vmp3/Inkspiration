@@ -23,7 +23,6 @@ import Button from '../components/ui/Button';
 import useProfessionalSearch from '../hooks/useProfessionalSearch';
 
 const HomeScreen = ({ navigation }) => {
-  // Usar o hook personalizado com configurações para a Home
   const {
     searchTerm,
     setSearchTerm,
@@ -72,7 +71,6 @@ const HomeScreen = ({ navigation }) => {
     return 1;
   }, [screenWidth]);
   
-  // Key única para o FlatList quando numColumns muda
   const flatListKey = useMemo(() => `flatlist-${numColumns}-columns`, [numColumns]);
   
   useEffect(() => {
@@ -81,7 +79,6 @@ const HomeScreen = ({ navigation }) => {
     const dimensionsHandler = Dimensions.addEventListener('change', updateLayout);
     
     return () => {
-      // Cleanup listener
       if (dimensionsHandler?.remove) {
         dimensionsHandler.remove();
       }

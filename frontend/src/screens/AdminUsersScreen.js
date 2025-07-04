@@ -62,7 +62,7 @@ const AdminUsersScreen = () => {
     if (currentPage === 0) {
       loadUsers();
     } else {
-      setCurrentPage(0); // Resetar para primeira página ao buscar
+      setCurrentPage(0);
     }
   };
 
@@ -70,7 +70,6 @@ const AdminUsersScreen = () => {
   const handleClearSearch = async () => {
     setSearchTerm('');
     setCurrentPage(0);
-    // Pequeno delay para garantir que o estado foi atualizado
     setTimeout(() => {
       loadUsers();
     }, 100);
@@ -100,7 +99,6 @@ const AdminUsersScreen = () => {
         setTotalPages(response.totalPages || 1);
         setTotalElements(response.totalElements || 0);
       } else {
-        // Fallback para resposta no formato antigo
         setUsers(response);
         setTotalPages(1);
         setTotalElements(response.length);

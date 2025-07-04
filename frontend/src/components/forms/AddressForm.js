@@ -154,7 +154,6 @@ const AddressForm = ({
       
       {/* Bairro e Cidade */}
       {isMobile ? (
-        // Layout mobile: um campo por linha
         <>
           <View style={styles.formFullWidth}>
             <Text style={styles.formLabel}>Bairro</Text>
@@ -181,7 +180,6 @@ const AddressForm = ({
           </View>
         </>
       ) : (
-        // Layout web/tablet: dois campos por linha
         <View style={styles.formRow}>
           <View style={styles.formGroup}>
             <Text style={styles.formLabel}>Bairro</Text>

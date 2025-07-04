@@ -133,7 +133,6 @@ const RegisterScreen = () => {
   const handleChange = (field, value) => {
     let formattedValue = value;
     
-    // Apply appropriate formatter based on field type
     switch (field) {
       case 'nome':
         setNomeError('');
@@ -167,7 +166,6 @@ const RegisterScreen = () => {
       case 'telefone':
         formattedValue = formatters.formatPhone(value);
         setPhoneError('');
-        // Validar telefone quando completo (11 dígitos)
         if (value.replace(/\D/g, '').length >= 10) {
           const errorMessage = formatters.getPhoneValidationMessage(formatters.formatPhone(value));
           if (errorMessage) {
@@ -283,7 +281,6 @@ const RegisterScreen = () => {
       }
     }
 
-    // Validação de consistência de endereço quando sai do campo estado ou cidade
     if (field === 'estado' && formData.estado && dadosCep) {
       if (formData.estado.toUpperCase().trim() !== dadosCep.uf?.toUpperCase().trim()) {
         const errorMsg = `Estado deve ser ${dadosCep.uf} para este CEP`;
@@ -337,13 +334,11 @@ const RegisterScreen = () => {
         const validMimeTypes = ['image/jpeg', 'image/png'];
         const validExtensions = ['.png', '.jpg', '.jpeg', '.jfif'];
         
-        // Verificar MIME type
         if (!selectedImage.mimeType || !validMimeTypes.includes(selectedImage.mimeType)) {
           toastHelper.showError(authMessages.imageUploadErrors.invalidFormat);
           return;
         }
         
-        // Verificar extensão do arquivo
         if (selectedImage.fileName) {
           const fileExtension = selectedImage.fileName.toLowerCase().slice(selectedImage.fileName.lastIndexOf('.'));
           if (!validExtensions.includes(fileExtension)) {
@@ -370,7 +365,6 @@ const RegisterScreen = () => {
           return;
         }
         
-        // Determinar formato correto baseado na extensão do arquivo
         const imageFormat = selectedImage.mimeType === 'image/png' ? 'png' : 'jpeg';
         const mimeType = selectedImage.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
         
@@ -388,7 +382,6 @@ const RegisterScreen = () => {
 
   const buscarCep = async (cep) => {
     try {
-      // Remove caracteres não numéricos
       const cepLimpo = cep.replace(/\D/g, '');
       
       if (cepLimpo.length !== 8) {
@@ -403,7 +396,6 @@ const RegisterScreen = () => {
       if (response.data && !response.data.erro) {
         const endereco = response.data;
         
-        // Atualiza os campos do formulário com os dados retornados
         setFormData(prev => ({
           ...prev,
           rua: endereco.logradouro || '',
@@ -414,7 +406,6 @@ const RegisterScreen = () => {
         setDadosCep(endereco);
         setCepError('');
         
-        // Limpar erros de validação quando busca novo CEP
         setEstadoError('');
         setCidadeError('');
         setBairroError('');
@@ -555,9 +546,7 @@ const RegisterScreen = () => {
       return false;
     }
     
-    // Verificar se os dados do CEP existem e se há consistência básica
     if (dadosCep) {
-      // Verificar consistência sem atualizar estados
       const estadoConsistente = !formData.estado || !dadosCep.uf || 
         formData.estado.toUpperCase() === dadosCep.uf.toUpperCase();
       
@@ -573,7 +562,6 @@ const RegisterScreen = () => {
       return estadoConsistente && cidadeConsistente && bairroConsistente && ruaConsistente;
     }
   
-  // Se não tem dados do CEP, só considerar válido se não há erro de CEP
   return !cepError;
   };
 
@@ -582,7 +570,7 @@ const RegisterScreen = () => {
       toastHelper.showError(authMessages.registerErrors.requiredFields);
       return false;
     }
-    
+
     const onlyDigitsCep = formData.cep.replace(/\D/g, '');
     if (onlyDigitsCep.length !== 8) {
       toastHelper.showError('CEP deve conter exatamente 8 dígitos');
@@ -625,7 +613,6 @@ const RegisterScreen = () => {
       return false;
     }
     
-    // Validar consistência do endereço
     if (dadosCep) {
       if (formData.estado && dadosCep.uf && formData.estado.toUpperCase() !== dadosCep.uf.toUpperCase()) {
         toastHelper.showError(`Estado deve ser ${dadosCep.uf} para este CEP`);
@@ -796,8 +783,6 @@ const RegisterScreen = () => {
 
   const formatDateToBackend = (dateString) => {
     if (!dateString) return null;
-    
-    // Remove caracteres não numéricos
     const numbers = dateString.replace(/\D/g, '');
     
     // Garantir que a data esteja no formato DD/MM/YYYY
@@ -894,9 +879,7 @@ const RegisterScreen = () => {
       setIsVerifyingEmail(true);
 
       await PublicAuthService.verifyEmail(verificationEmail, verificationCode);
-
-      // Exibe mensagem de sucesso
-              toastHelper.showSuccess(authMessages.success.accountCreated);
+      toastHelper.showSuccess(authMessages.success.accountCreated);
 
       setShowVerificationModal(false);
       setTimeout(() => {
@@ -904,7 +887,7 @@ const RegisterScreen = () => {
       }, 1000);
 
     } catch (error) {
-              toastHelper.showError(error.message || authMessages.emailVerificationErrors.invalidOrExpiredCode);
+      toastHelper.showError(error.message || authMessages.emailVerificationErrors.invalidOrExpiredCode);
     } finally {
       setIsVerifyingEmail(false);
     }
@@ -1216,7 +1199,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textDecorationLine: 'underline',
   },
-  // Estilos do Modal de Verificação
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

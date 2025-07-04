@@ -57,7 +57,7 @@ public class AuthorizationService {
             return null;
         }
         
-        return auth.getName(); // O subject do JWT é o CPF
+        return auth.getName();
     }
 
     /**

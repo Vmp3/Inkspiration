@@ -110,11 +110,8 @@ class ProfessionalService {
     }
   }
 
-  // Método para transformar dados do backend para o formato esperado pelo frontend
   transformProfessionalData(data) {
-    // Verificar se é a nova estrutura (com objetos separados) ou a estrutura antiga
     if (data.endereco && data.portfolio && data.usuario && data.profissional) {
-      // Nova estrutura
       const { endereco, portfolio, usuario, profissional } = data;
       
       return {
@@ -128,7 +125,7 @@ class ProfessionalService {
           ? `${endereco.cidade}, ${endereco.estado}`
           : 'Localização não informada',
         coverImage: usuario?.imagemPerfil || 
-                   'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png',
+        'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png',
         // Dados adicionais do backend
         experience: portfolio?.experiencia,
         description: portfolio?.descricao,
@@ -156,7 +153,7 @@ class ProfessionalService {
           ? `${professional.usuario.endereco.cidade}, ${professional.usuario.endereco.estado}`
           : 'Localização não informada',
         coverImage: professional.usuario?.imagemPerfil || 
-                   'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png',
+        'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png',
         // Dados adicionais do backend
         experience: professional.portfolio?.experiencia,
         description: professional.portfolio?.descricao,
@@ -171,11 +168,7 @@ class ProfessionalService {
     }
   }
 
-
-
-  // Método para transformar dados completos do backend para o formato esperado pelo frontend
   transformCompleteProfessionalData(data) {
-    // Nova estrutura da API tem os dados organizados em objetos separados
     const { endereco, portfolio, usuario, profissional } = data;
     
     return {
@@ -189,7 +182,7 @@ class ProfessionalService {
         ? `${endereco.cidade}, ${endereco.estado}`
         : 'Localização não informada',
       coverImage: usuario?.imagemPerfil || 
-                 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png',
+      'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-VEjAdaIDHE3fmR3mSKry3Fh8WoF0J3.png',
       // Dados adicionais do backend
       experience: portfolio?.experiencia || 'Não informado',
       description: portfolio?.descricao || 'Descrição não disponível',
@@ -215,7 +208,6 @@ class ProfessionalService {
     };
   }
 
-  // Método para buscar e transformar todos os profissionais completos
   async getTransformedCompleteProfessionals(page = 0, filters = {}) {
     try {
       const response = await this.getAllProfessionalsComplete(page, filters);

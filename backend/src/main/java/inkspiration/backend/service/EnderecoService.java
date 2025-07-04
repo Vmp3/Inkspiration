@@ -112,7 +112,7 @@ public class EnderecoService {
             
             JsonNode jsonNode = objectMapper.readTree(response);
             
-            // Verificar se o CEP foi encontrado (ViaCEP retorna erro: true quando não encontra)
+            // Verificar se o CEP foi encontrado
             if (jsonNode.has("erro") && jsonNode.get("erro").asBoolean()) {
                 throw new CepInvalidoException("CEP não encontrado");
             }

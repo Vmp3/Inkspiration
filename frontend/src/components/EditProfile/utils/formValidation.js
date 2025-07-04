@@ -53,7 +53,6 @@ export const useFormValidation = () => {
           return false;
         }
         
-        // Se for string, verificar se não está vazia
         if (typeof preco === 'string' && preco.trim() === '') {
           return false;
         }

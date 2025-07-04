@@ -8,12 +8,11 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CircularImageCropper = ({ visible, imageUri, onCrop, onCancel }) => {
   const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 });
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
-  const cropSize = 200; // Tamanho do círculo de crop
+  const cropSize = 200;
 
   const handleImageLayout = (event) => {
     const { width, height } = event.nativeEvent.layout;
     setImageSize({ width, height });
-    // Centralizar o crop inicialmente
     setCropPosition({
       x: (width - cropSize) / 2,
       y: (height - cropSize) / 2
@@ -23,7 +22,6 @@ const CircularImageCropper = ({ visible, imageUri, onCrop, onCancel }) => {
   const handlePanGesture = (event) => {
     const { locationX, locationY } = event.nativeEvent;
     
-    // Limitar o movimento do crop dentro dos limites da imagem
     const newX = Math.max(0, Math.min(locationX - cropSize / 2, imageSize.width - cropSize));
     const newY = Math.max(0, Math.min(locationY - cropSize / 2, imageSize.height - cropSize));
     
@@ -31,7 +29,6 @@ const CircularImageCropper = ({ visible, imageUri, onCrop, onCancel }) => {
   };
 
   const handleCrop = () => {
-    // Calcular as coordenadas relativas para o crop
     const cropData = {
       x: cropPosition.x / imageSize.width,
       y: cropPosition.y / imageSize.height,

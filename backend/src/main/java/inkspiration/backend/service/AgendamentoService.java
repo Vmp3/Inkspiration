@@ -271,7 +271,6 @@ public class AgendamentoService {
         agendamento.setDescricao(descricao);
         agendamento.setDtInicio(dtInicioAjustado);
         agendamento.setDtFim(dtFim);
-        // Valor é preservado - não alterado durante edições
         
         return agendamentoRepository.save(agendamento);
     }
@@ -426,7 +425,7 @@ public class AgendamentoService {
             boolean podeAvaliar = avaliacaoService.podeAvaliar(agendamento.getIdAgendamento());
             dto.setPodeAvaliar(podeAvaliar);
             
-            // Se não pode avaliar, significa que já avaliou - buscar a avaliação
+            // Se não pode avaliar significa que já avaliou
             if (!podeAvaliar) {
                 Optional<AvaliacaoDTO> avaliacao = avaliacaoService.buscarAvaliacaoPorAgendamento(agendamento.getIdAgendamento());
                 if (avaliacao.isPresent()) {
@@ -437,7 +436,7 @@ public class AgendamentoService {
                 }
             }
         } catch (Exception e) {
-            // Em caso de erro, assumir que não pode avaliar
+            // Em caso de erro, não pode avaliar
             dto.setPodeAvaliar(false);
         }
         

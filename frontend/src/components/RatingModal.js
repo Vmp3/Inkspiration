@@ -27,7 +27,6 @@ const RatingModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Reset form quando modal abre
     if (visible) {
       setRating(0);
       setComment('');
@@ -70,7 +69,7 @@ const RatingModal = ({
       onSuccess?.();
       onClose();
       
-      // Mostrar toast após fechar o modal para garantir visibilidade
+      // Mostrar toast de sucesso após fechar o modal
       setTimeout(() => {
         toastHelper.showSuccess('Avaliação enviada com sucesso!');
       }, 100);

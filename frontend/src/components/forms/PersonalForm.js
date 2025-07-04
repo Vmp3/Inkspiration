@@ -65,7 +65,6 @@ const PersonalForm = ({
 
       {/* Nome e Sobrenome */}
       {isMobile ? (
-        // Layout mobile: um campo por linha
         <>
           <View style={styles.formFullWidth}>
             <Text style={styles.formLabel}>Nome</Text>
@@ -92,7 +91,6 @@ const PersonalForm = ({
           </View>
         </>
       ) : (
-        // Layout web/tablet: dois campos por linha
         <View style={styles.formRow}>
           <View style={styles.formGroup}>
             <Text style={styles.formLabel}>Nome</Text>
@@ -151,7 +149,6 @@ const PersonalForm = ({
       
       {/* Email e Telefone */}
       {isMobile ? (
-        // Layout mobile: um campo por linha
         <>
           <View style={styles.formFullWidth}>
             <Text style={styles.formLabel}>Email</Text>
@@ -181,7 +178,6 @@ const PersonalForm = ({
           </View>
         </>
       ) : (
-        // Layout web/tablet: dois campos por linha
         <View style={styles.formRow}>
           <View style={styles.formGroup}>
             <Text style={styles.formLabel}>Email</Text>

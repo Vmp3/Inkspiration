@@ -151,34 +151,27 @@ Ao utilizar a Inkspiration, você declara estar ciente e concorda com os termos 
 
   // Função para processar o texto e manter a formatação adequada
   const processText = (text) => {
-    // Adiciona título específico para cada tipo
     const titleText = type === 'terms' 
       ? "<strong>TERMOS DE USO – INKSPIRATION LTDA.</strong><br><br>"
       : "<strong>POLÍTICA DE PRIVACIDADE – INKSPIRATION LTDA.</strong><br><br>";
-    
-    // Texto completo com título
+
     const fullText = titleText + text;
     
     // Divide o texto em partes baseadas na tag <br>
     const paragraphs = fullText.split('<br>');
     
     return paragraphs.map((paragraph, paragraphIndex) => {
-      // Se o parágrafo estiver vazio, renderiza um espaço em branco
       if (!paragraph.trim()) {
         return <View key={`space-${paragraphIndex}`} style={styles.emptySpace} />;
       }
       
-      // Processa o parágrafo
-      // Verifica se o parágrafo contém tags <strong>
       if (paragraph.includes('<strong>') || paragraph.includes('</strong>')) {
-        // Divide o parágrafo em partes: texto normal e texto em negrito
         const parts = paragraph.split(/<\/?strong>/);
         
         return (
           <View key={`para-${paragraphIndex}`} style={styles.paragraph}>
             <Text style={styles.lineContainer}>
               {parts.map((part, partIndex) => {
-                // Alternando entre texto normal e texto em negrito
                 const isStrong = partIndex % 2 === 1;
                 
                 if (part.trim() === '') return null;
@@ -199,22 +192,17 @@ Ao utilizar a Inkspiration, você declara estar ciente e concorda com os termos 
           </View>
         );
       } 
-      // Verifica se o parágrafo contém linhas com marcadores
       else if (paragraph.includes('●')) {
-        // Divide em linhas
         const lines = paragraph.split('\n');
         
         return (
           <View key={`para-${paragraphIndex}`} style={styles.paragraph}>
             {lines.map((line, lineIndex) => {
-              // Se é uma linha com marcador ●
               if (line.trim().startsWith('●')) {
-                // Extrai o texto após o marcador
                 const bulletText = line.trim().substring(1).trim();
                 
-                // Processa o texto do marcador para identificar quebras de linha
                 const processedBulletText = bulletText
-                  .replace(/\s{2,}/g, ' ') // Remove espaços extras
+                  .replace(/\s{2,}/g, ' ')
                   .trim();
                 
                 return (
@@ -224,7 +212,6 @@ Ao utilizar a Inkspiration, você declara estar ciente e concorda com os termos 
                   </View>
                 );
               } 
-              // Se é uma linha com indentação
               else if (line.trim() && (line.startsWith('    ') || line.startsWith('\t'))) {
                 return (
                   <Text key={`indent-${paragraphIndex}-${lineIndex}`} style={styles.indentedText}>
@@ -232,7 +219,6 @@ Ao utilizar a Inkspiration, você declara estar ciente e concorda com os termos 
                   </Text>
                 );
               } 
-              // Linha normal
               else if (line.trim()) {
                 return (
                   <Text key={`normal-${paragraphIndex}-${lineIndex}`} style={styles.text}>
@@ -246,7 +232,6 @@ Ao utilizar a Inkspiration, você declara estar ciente e concorda com os termos 
           </View>
         );
       } 
-      // Parágrafo normal
       else {
         return (
           <View key={`para-${paragraphIndex}`} style={styles.paragraph}>

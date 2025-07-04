@@ -20,7 +20,6 @@ import ImageWithAlt from './ui/ImageWithAlt';
 const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, onRefresh, isProfessional = false }) => {
   const [isRatingModalVisible, setIsRatingModalVisible] = useState(false);
 
-  // Usar as informações que já vêm do backend
   const canRate = appointment?.podeAvaliar === true;
   const hasRated = appointment?.podeAvaliar === false;
   const existingRating = hasRated ? {
@@ -28,8 +27,6 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, onRef
     rating: appointment?.ratingAvaliacao,
     descricao: appointment?.descricaoAvaliacao
   } : null;
-
-
 
   if (!appointment) return null;
 
@@ -106,7 +103,6 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, onRef
   };
 
   const handleRatingSuccess = () => {
-    // Fechar modal e atualizar a lista
     setIsRatingModalVisible(false);
     onClose();
     if (onRefresh) {
@@ -260,7 +256,6 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, onRef
                   </View>
                 </View>
 
-                {/* TODO: Implementar avaliação para agendamentos concluídos no contexto de profissional */}
                 {isProfessional && appointment.status?.toUpperCase() === 'CONCLUIDO' && (
                   <View style={styles.todoSection}>
                     <Text style={styles.todoText}>
@@ -270,14 +265,14 @@ const CompletedAppointmentDetailsModal = ({ visible, appointment, onClose, onRef
                 )}
               </ScrollView>
 
-                              {!isProfessional && canRate && (
+                {!isProfessional && canRate && (
                 <View style={styles.buttonRow}>
                   <TouchableOpacity 
                     style={styles.rateButton} 
                     onPress={handleRateAppointment}
                   >
                     <MaterialIcons 
-                                              name="star" 
+                        name="star" 
                         size={20} 
                         color="#FFD700" 
                       />

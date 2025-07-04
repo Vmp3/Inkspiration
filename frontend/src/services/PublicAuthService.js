@@ -59,7 +59,6 @@ class PublicAuthService {
       if (error.response) {
         const data = error.response.data;
         
-        // Verificar se há erros específicos por campo
         if (typeof data === 'object') {
           const errorMessages = [];
           Object.entries(data).forEach(([field, message]) => {

@@ -68,14 +68,10 @@ const Card = ({ children, style }) => {
 };
 
 const PortfolioItem = ({ image, onPress, isMobile }) => {
-  // Função para processar a imagem base64
   const processBase64Image = (base64String) => {    
-    // Se já tem o prefixo data:image, usar diretamente
     if (base64String.startsWith('data:image/')) {
       return base64String;
     }
-    
-    // Se não tem o prefixo, adicionar
     return `data:image/jpeg;base64,${base64String}`;
   };
 
@@ -190,7 +186,6 @@ const ArtistScreen = ({ route }) => {
   }, []);
 
   useEffect(() => {
-    // Verifica se o usuário tem permissão de admin
     if (userData?.role === 'ROLE_ADMIN') {
       setIsAdmin(true);
     }
@@ -201,7 +196,6 @@ const ArtistScreen = ({ route }) => {
       return;
     }
 
-    // Carregar dados do profissional
     loadArtistData();
   }, [artistId, userData, navigation]);
 
@@ -272,7 +266,7 @@ const ArtistScreen = ({ route }) => {
         userImage: avaliacao.imagemCliente || 'https://via.placeholder.com/40',
         rating: avaliacao.rating || 5,
         comment: avaliacao.descricao || '',
-        date: new Date().toLocaleDateString('pt-BR'), // Você pode melhorar isso adicionando data real
+        date: new Date().toLocaleDateString('pt-BR'),
         tattooType: avaliacao.tipoServico || 'TATUAGEM_PEQUENA'
       }));
 
@@ -334,7 +328,7 @@ const ArtistScreen = ({ route }) => {
         userImage: avaliacao.imagemCliente || 'https://via.placeholder.com/40',
         rating: avaliacao.rating || 5,
         comment: avaliacao.descricao || '',
-        date: new Date().toLocaleDateString('pt-BR'), // Você pode melhorar isso adicionando data real
+        date: new Date().toLocaleDateString('pt-BR'),
         tattooType: avaliacao.tipoServico || 'TATUAGEM_PEQUENA'
       }));
 
@@ -360,7 +354,6 @@ const ArtistScreen = ({ route }) => {
 
   const openSocialLink = async (url) => {
     try {
-      // Para website, garantir que tenha protocolo
       let finalUrl = url;
       if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
         finalUrl = `https://${url}`;
@@ -401,7 +394,6 @@ const ArtistScreen = ({ route }) => {
     return renderLoading;
   }
 
-  // Se não encontrou o artista
   if (!artist) {
     return (
       <View style={styles.loadingContainer}>

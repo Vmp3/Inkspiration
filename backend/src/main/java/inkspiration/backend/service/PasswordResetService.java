@@ -65,7 +65,6 @@ public class PasswordResetService {
         PasswordResetCode resetCode = new PasswordResetCode(cleanCpf, code, now, expiresAt);
         passwordResetCodeRepository.save(resetCode);
 
-        // Imprimir no console para desenvolvimento
         System.out.println("=== CÓDIGO DE RECUPERAÇÃO ===");
         System.out.println("CPF: " + cleanCpf);
         System.out.println("Código: " + code);
@@ -102,7 +101,6 @@ public class PasswordResetService {
             throw new PasswordResetValidacaoException("Código expirado");
         }
 
-        // Buscar usuário
         Usuario usuario = usuarioRepository.findByCpf(cleanCpf)
             .orElseThrow(() -> new PasswordResetValidacaoException("Usuário não encontrado"));
 
@@ -113,11 +111,8 @@ public class PasswordResetService {
             usuario.setUsuarioAutenticar(usuarioAuth);
         }
 
-        // Marcar código como usado
         resetCode.setUsed(true);
         passwordResetCodeRepository.save(resetCode);
-
-        // Salvar usuário com nova senha
         usuarioRepository.save(usuario);
 
         // Enviar email de confirmação

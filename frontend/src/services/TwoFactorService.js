@@ -1,12 +1,9 @@
 import ApiService from './ApiService';
 
 class TwoFactorService {
-  // Método para lidar com erros de forma consistente
   handleError(error, defaultMessage) {
     // console.error('Erro no TwoFactorService:', error);
-    
     if (error.response) {
-      // Erro de resposta do servidor
       const status = error.response.status;
       const data = error.response.data;
       

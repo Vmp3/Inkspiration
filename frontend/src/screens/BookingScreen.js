@@ -44,7 +44,6 @@ const BookingScreen = () => {
 
   const isMobile = screenData.width < 768;
 
-  // Gerar meses disponíveis (apenas meses futuros do ano atual)
   const getAvailableMonths = () => {
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();

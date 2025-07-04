@@ -16,7 +16,6 @@ const Button = ({
 }) => {
   const isDisabled = disabled || loading;
   
-  // Determine button style based on variant and size
   const buttonStyles = [
     styles.button,
     variant === 'primary' ? styles.primaryButton : styles.secondaryButton,
@@ -28,7 +27,6 @@ const Button = ({
     style
   ];
 
-  // Determine label style based on variant and size
   const textStyles = [
     styles.buttonText,
     variant === 'primary' ? styles.primaryText : styles.secondaryText,
@@ -70,10 +68,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   primaryButton: {
-    backgroundColor: '#111827', // Black
+    backgroundColor: '#111827',
   },
   secondaryButton: {
-    backgroundColor: '#FFFFFF', // White
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -114,7 +112,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   secondaryText: {
-    color: '#111827', // Changed from #6B7280 (gray) to #111827 (black)
+    color: '#111827',
   },
   smallText: {
     fontSize: 14,
@@ -126,7 +124,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   searchText: {
-    fontSize: 14, // Smaller text for search buttons
+    fontSize: 14,
   },
   primaryDisabled: {
     backgroundColor: '#9CA3AF', 

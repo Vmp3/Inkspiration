@@ -35,6 +35,7 @@ const Pagination = ({ currentPage, setCurrentPage, totalPages = 1 }) => {
   const showFirstPage = pageNumbers[0] > 1;
   const showLastPage = pageNumbers[pageNumbers.length - 1] < totalPages;
 
+  // A paginação é exibida somente se tiver mais de uma página
   return (
     <View style={styles.paginationContainer}>
       {/* Botão Anterior */}

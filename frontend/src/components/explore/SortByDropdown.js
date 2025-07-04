@@ -37,7 +37,6 @@ const SortByDropdown = ({
   }, [isOpen]);
 
   const handleSelect = (value) => {
-    // console.log('Selecionando ordenação:', value);
     setSortBy(value);
     setIsOpen(false);
   };

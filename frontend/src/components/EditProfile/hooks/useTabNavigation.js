@@ -7,7 +7,7 @@ const useTabNavigation = (isArtist, formData, professionalFormData, addressValid
   const [activeTab, setActiveTab] = useState('personal');
   const validation = useFormValidation();
   
-  // Destructure address validation errors
+  // Validação de endereço
   const { cepError, estadoError, cidadeError, bairroError, ruaError, enderecoValidationError } = addressValidationErrors;
 
   const getAvailableTabs = () => {
@@ -133,7 +133,7 @@ const useTabNavigation = (isArtist, formData, professionalFormData, addressValid
             setActiveTab('security');
           }
         } else {
-          // Forçar validação de endereço quando há erro, similar ao RegisterScreen
+          // Forçar validação de endereço quando há erro
           if (addressValidationErrors.forceAddressValidation) {
             addressValidationErrors.forceAddressValidation();
           }

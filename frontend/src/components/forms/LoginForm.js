@@ -20,7 +20,6 @@ const LoginForm = ({
   const navigation = useNavigation();
   
   const handleKeyPress = (event) => {
-    // Suporte para React Native Web e React Native
     const key = event.nativeEvent?.key || event.key;
     if (key === 'Enter' && !loading) {
       handleSubmit();

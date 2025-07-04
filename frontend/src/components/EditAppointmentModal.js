@@ -242,8 +242,6 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       onSuccess();
       onClose();
     } catch (error) {
-      // console.error('Erro ao atualizar agendamento:', error);
-      
       let errorMessage = editAppointmentMessages.errors.updateFailed;
       if (error.response?.data) {
         if (typeof error.response.data === 'object' && !Array.isArray(error.response.data)) {

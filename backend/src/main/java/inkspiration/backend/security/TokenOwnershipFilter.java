@@ -19,7 +19,6 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class TokenOwnershipFilter extends OncePerRequestFilter {
 
-
     // Padrões de URLs que contêm IDs de usuário que precisam ser validados
     private static final Pattern[] USER_ID_PATTERNS = {
         Pattern.compile("/usuario/(\\d+)(?:/.*)?"),
@@ -81,7 +80,6 @@ public class TokenOwnershipFilter extends OncePerRequestFilter {
                 try {
                     return Long.parseLong(matcher.group(1));
                 } catch (NumberFormatException e) {
-                    // Ignora se não conseguir converter para Long
                 }
             }
         }

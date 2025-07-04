@@ -127,7 +127,6 @@ public class Profissional {
         this.tiposServicoPrecos = tiposServicoPrecos != null ? tiposServicoPrecos : new HashMap<>();
     }
     
-    // Métodos de compatibilidade para obter tipos de serviço como lista
     public List<TipoServico> getTiposServico() {
         if (tiposServicoPrecos == null || tiposServicoPrecos.isEmpty()) {
             return new ArrayList<>();
@@ -137,7 +136,6 @@ public class Profissional {
                 .collect(Collectors.toList());
     }
     
-    // Método para obter apenas os preços
     public Map<String, BigDecimal> getPrecosServicos() {
         return new HashMap<>(tiposServicoPrecos != null ? tiposServicoPrecos : new HashMap<>());
     }
