@@ -37,6 +37,21 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
   const [dates, setDates] = useState([]);
 
+  const orderServices = (services) => {
+    const orderMap = {
+      'TATUAGEM_PEQUENA': 1,
+      'TATUAGEM_MEDIA': 2,
+      'TATUAGEM_GRANDE': 3,
+      'SESSAO': 4
+    };
+
+    return services.sort((a, b) => {
+      const orderA = orderMap[a.tipo] || Number.MAX_VALUE;
+      const orderB = orderMap[b.tipo] || Number.MAX_VALUE;
+      return orderA - orderB;
+    });
+  };
+
   const isMobile = screenData.width < 768;
 
   useEffect(() => {
@@ -122,7 +137,7 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       setSelectedService('');
       
       const servicesData = await AgendamentoService.buscarTiposServicoPorProfissional(appointment.idProfissional);
-      setServices(servicesData);
+      setServices(orderServices(servicesData));
       
       const tipoOriginal = appointment.tipoServico;
       
@@ -134,9 +149,12 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       setDescription(currentDescription);
       setDescriptionError(validateDescription(currentDescription));
       
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowDate = tomorrow.toISOString().split('T')[0];
+      const now = new Date();
+      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      const tomorrowDate = tomorrow.getFullYear() + '-' + 
+        String(tomorrow.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(tomorrow.getDate()).padStart(2, '0');
+      
       setSelectedDate(tomorrowDate);
       setSelectedMonth(tomorrow.getMonth());
       
