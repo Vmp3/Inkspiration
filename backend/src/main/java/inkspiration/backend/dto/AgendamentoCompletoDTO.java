@@ -19,6 +19,7 @@ public class AgendamentoCompletoDTO {
     // Informações do profissional
     private Long idProfissional;
     private String nomeProfissional;
+    private String imagemPerfilProfissional;
     
     private Long idUsuario;
     private String nomeUsuario;
@@ -51,6 +52,7 @@ public class AgendamentoCompletoDTO {
             this.idProfissional = agendamento.getProfissional().getIdProfissional();
             if (agendamento.getProfissional().getUsuario() != null) {
                 this.nomeProfissional = agendamento.getProfissional().getUsuario().getNome();
+                this.imagemPerfilProfissional = agendamento.getProfissional().getUsuario().getImagemPerfil();
             }
             if (agendamento.getProfissional().getEndereco() != null) {
                 this.rua = agendamento.getProfissional().getEndereco().getRua();
@@ -244,5 +246,13 @@ public class AgendamentoCompletoDTO {
 
     public void setPodeAvaliar(Boolean podeAvaliar) {
         this.podeAvaliar = podeAvaliar;
+    }
+
+    public String getImagemPerfilProfissional() {
+        return imagemPerfilProfissional;
+    }
+
+    public void setImagemPerfilProfissional(String imagemPerfilProfissional) {
+        this.imagemPerfilProfissional = imagemPerfilProfissional;
     }
 } 
