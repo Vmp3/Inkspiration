@@ -35,6 +35,7 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
   const [isLoadingTimes, setIsLoadingTimes] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
+  const [dates, setDates] = useState([]);
 
   const isMobile = screenData.width < 768;
 
@@ -58,6 +59,10 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       loadAvailableTimeSlots();
     }
   }, [selectedDate, selectedService]);
+
+  useEffect(() => {
+    setDates(generateDates());
+  }, [selectedMonth]);
 
   const canEdit = () => {
     if (!appointment) return false;
@@ -90,7 +95,7 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
     const lastDay = new Date(year, selectedMonth + 1, 0);
     
     const startDay = selectedMonth === currentDate.getMonth() 
-      ? currentDate.getDate() 
+      ? currentDate.getDate() + 1 
       : 1;
     
     for (let i = startDay; i <= lastDay.getDate(); i++) {
@@ -105,7 +110,6 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
     return dates;
   };
 
-  const dates = generateDates();
   const availableMonths = getAvailableMonths();
   
   const loadInitialData = async () => {
@@ -120,8 +124,6 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       const servicesData = await AgendamentoService.buscarTiposServicoPorProfissional(appointment.idProfissional);
       setServices(servicesData);
       
-      const currentDate = new Date(appointment.dtInicio);
-      
       const tipoOriginal = appointment.tipoServico;
       
       setTimeout(() => {
@@ -132,11 +134,13 @@ const EditAppointmentModal = ({ visible, appointment, onClose, onSuccess }) => {
       setDescription(currentDescription);
       setDescriptionError(validateDescription(currentDescription));
       
-      setSelectedMonth(currentDate.getMonth());
-      setSelectedDate(appointment.dtInicio.split('T')[0]);
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowDate = tomorrow.toISOString().split('T')[0];
+      setSelectedDate(tomorrowDate);
+      setSelectedMonth(tomorrow.getMonth());
       
-      const timeString = currentDate.toTimeString().substring(0, 5);
-      setSelectedTime(timeString);
+      setSelectedTime(null);
       
       setIsLoading(false);
     } catch (error) {
