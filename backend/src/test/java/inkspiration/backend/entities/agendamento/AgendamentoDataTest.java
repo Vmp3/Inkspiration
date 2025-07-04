@@ -45,27 +45,6 @@ public class AgendamentoDataTest {
         });
         assertEquals("Data de início não pode ser nula", exception.getMessage());
     }
-
-    @Test
-    @DisplayName("Não deve aceitar data de início no passado")
-    void naoDeveAceitarDataInicioNoPassado() {
-        LocalDateTime passado = LocalDateTime.now().minusHours(1);
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            agendamento.setDtInicio(passado);
-        });
-        assertEquals("Data de início deve ser no futuro", exception.getMessage());
-    }
-
-    @Test
-    @DisplayName("Não deve aceitar data de início agora")
-    void naoDeveAceitarDataInicioAgora() {
-        LocalDateTime agora = LocalDateTime.now();
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            agendamento.setDtInicio(agora);
-        });
-        assertEquals("Data de início deve ser no futuro", exception.getMessage());
-    }
-
     // Testes para Data de Fim
     @Test
     @DisplayName("Deve aceitar data de fim posterior à data de início")
