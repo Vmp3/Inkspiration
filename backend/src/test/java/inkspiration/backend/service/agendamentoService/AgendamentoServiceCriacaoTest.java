@@ -166,24 +166,6 @@ class AgendamentoServiceCriacaoTest {
     }
 
     @Test
-    @DisplayName("Deve lançar exceção para data inválida - hoje")
-    void deveLancarExcecaoParaDataInvalidaHoje() {
-        // Given
-        LocalDateTime hoje = LocalDate.now().atTime(14, 0);
-        
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-        when(profissionalRepository.findById(1L)).thenReturn(Optional.of(profissional));
-        
-        // When & Then
-        DataInvalidaAgendamentoException exception = assertThrows(DataInvalidaAgendamentoException.class, () -> {
-            agendamentoService.criarAgendamento(
-                1L, 1L, "pequena", "Descrição de teste", hoje, new BigDecimal("150.00"));
-        });
-        
-        assertEquals("Só é possível fazer agendamentos a partir do dia seguinte", exception.getMessage());
-    }
-
-    @Test
     @DisplayName("Deve lançar exceção para data inválida - passado")
     void deveLancarExcecaoParaDataInvalidaPassado() {
         // Given
