@@ -61,8 +61,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            docker volume prune -f
-            docker image prune -af
+            sudo docker volume prune -f
+            sudo docker image prune -af
             cd /home/ubuntu/Inkspiration/backend
             git pull origin main
             sudo docker-compose -f prod.docker-compose.yml down --remove-orphans
