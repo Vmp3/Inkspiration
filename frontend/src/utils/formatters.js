@@ -122,9 +122,30 @@ const validateBirthDate = (birthDate) => {
 const validateFirstName = (firstName) => {
   if (!firstName) return false;
   
-  if (firstName.trim().length < 2) return false;
+  const trimmedName = firstName.trim();
   
-  if (firstName.trim().includes(' ')) return false;
+  // Verificar se tem pelo menos 2 caracteres
+  if (trimmedName.length < 2) return false;
+  
+  // Verificar se há espaços no início ou fim
+  if (firstName !== trimmedName) return false;
+  
+  // Verificar se há múltiplos espaços seguidos
+  if (firstName.includes('  ')) return false;
+  
+  // Contar espaços - máximo 1 espaço permitido
+  const spaceCount = (firstName.match(/ /g) || []).length;
+  if (spaceCount > 1) return false;
+  
+  // Verificar se tem apenas letras e espaços
+  if (!/^[a-zA-ZáàâãéèêíìîóòôõúùûüçÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÜÇ ]+$/.test(firstName)) return false;
+  
+  // Se há espaço, verificar se cada parte tem pelo menos 2 caracteres
+  if (spaceCount === 1) {
+    const parts = firstName.split(' ');
+    if (parts.length !== 2) return false;
+    if (parts[0].length < 2 || parts[1].length < 2) return false;
+  }
   
   return true;
 };
