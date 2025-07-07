@@ -11,6 +11,16 @@ class PortfolioService {
     }
   }
 
+  async deletePortfolioByUserId(idUsuario) {
+    try {
+      const response = await ApiService.delete(`/portfolio/deletar/usuario/${idUsuario}`);
+      return response;
+    } catch (error) {
+      // console.error('Erro ao deletar portfólio por ID do usuário:', error);
+      throw error;
+    }
+  }
+
   async getPortfolio(id) {
     try {
       const response = await ApiService.get(`/portfolio/${id}`);

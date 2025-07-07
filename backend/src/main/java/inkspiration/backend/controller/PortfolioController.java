@@ -55,4 +55,10 @@ public class PortfolioController {
         portfolioService.deletarComValidacao(id);
         return ResponseEntity.noContent().build();
     }
+    
+    @DeleteMapping("/portfolio/deletar/usuario/{idUsuario}")
+    public ResponseEntity<Void> deletarPorUsuario(@PathVariable Long idUsuario) {
+        portfolioService.deletarPorUsuarioIdComValidacao(idUsuario);
+        return ResponseEntity.noContent().build();
+    }
 } 
