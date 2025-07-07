@@ -268,7 +268,7 @@ class AgendamentoControllerCoreTest {
             .thenReturn(pdfBytes);
 
         // Act
-        ResponseEntity<byte[]> response = agendamentoController.exportarAgendamentosPDF(ano, authentication);
+        ResponseEntity<?> response = agendamentoController.exportarAgendamentosPDF(ano, authentication);
 
         // Assert
         assertNotNull(response);
@@ -332,7 +332,7 @@ class AgendamentoControllerCoreTest {
             .thenReturn(pdfBytes);
 
         // Act
-        ResponseEntity<byte[]> response = agendamentoController.exportarAtendimentosPDF(ano, mes, authentication);
+        ResponseEntity<?> response = agendamentoController.exportarAtendimentosPDF(ano, mes, authentication);
 
         // Assert
         assertNotNull(response);

@@ -251,8 +251,8 @@ class AgendamentoControllerIntegracaoTest {
             .thenReturn(pdfAtendimentos);
 
         // Act
-        ResponseEntity<byte[]> responseAgendamentos = agendamentoController.exportarAgendamentosPDF(ano, authentication);
-        ResponseEntity<byte[]> responseAtendimentos = agendamentoController.exportarAtendimentosPDF(ano, mes, authentication);
+        ResponseEntity<?> responseAgendamentos = agendamentoController.exportarAgendamentosPDF(ano, authentication);
+        ResponseEntity<?> responseAtendimentos = agendamentoController.exportarAtendimentosPDF(ano, mes, authentication);
 
         // Assert
         assertEquals(HttpStatus.OK, responseAgendamentos.getStatusCode());
