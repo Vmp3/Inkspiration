@@ -1,5 +1,6 @@
 package inkspiration.backend.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -17,4 +18,8 @@ public interface ProfissionalRepository extends JpaRepository<Profissional, Long
     Page<Profissional> findAll(Pageable pageable);
     boolean existsByUsuario(Usuario usuario);
     boolean existsByUsuario_IdUsuario(Long idUsuario);
+    
+    // Consultas que excluem usuários com role DELETED
+    List<Profissional> findByUsuarioRoleNot(String role);
+    Page<Profissional> findByUsuarioRoleNot(String role, Pageable pageable);
 } 
