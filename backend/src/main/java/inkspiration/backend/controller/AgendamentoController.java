@@ -133,11 +133,12 @@ public class AgendamentoController {
     }
 
     @GetMapping("/relatorios/exportar-pdf")
-    public ResponseEntity<byte[]> exportarAgendamentosPDF(
+    public ResponseEntity<?> exportarAgendamentosPDF(
             @RequestParam(required = true) Integer ano,
             Authentication authentication) {
         
-        byte[] pdfBytes = agendamentoService.exportarAgendamentosPDFComAutenticacao(ano, authentication);
+        try {
+            byte[] pdfBytes = agendamentoService.exportarAgendamentosPDFComAutenticacao(ano, authentication);
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
@@ -145,6 +146,15 @@ public class AgendamentoController {
             headers.add("Content-Length", String.valueOf(pdfBytes.length));
             
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            // Tratamento específico para mensagens de PDF sem dados
+            if (e.getMessage() != null && e.getMessage().contains("Nenhum agendamento concluído encontrado")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body("{\"error\":\"" + e.getMessage() + "\"}");
+            }
+            throw e;
+        }
     }
 
     @GetMapping("/profissional/meus-atendimentos/futuros")
@@ -170,12 +180,13 @@ public class AgendamentoController {
     }
 
     @GetMapping("/profissional/relatorios/exportar-pdf")
-    public ResponseEntity<byte[]> exportarAtendimentosPDF(
+    public ResponseEntity<?> exportarAtendimentosPDF(
             @RequestParam(required = true) Integer ano,
             @RequestParam(required = true) Integer mes,
             Authentication authentication) {
         
-        byte[] pdfBytes = agendamentoService.exportarAtendimentosPDFComAutenticacao(ano, mes, authentication);
+        try {
+            byte[] pdfBytes = agendamentoService.exportarAtendimentosPDFComAutenticacao(ano, mes, authentication);
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
@@ -183,5 +194,14 @@ public class AgendamentoController {
             headers.add("Content-Length", String.valueOf(pdfBytes.length));
             
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            // Tratamento específico para mensagens de PDF sem dados
+            if (e.getMessage() != null && e.getMessage().contains("Nenhum atendimento concluído encontrado")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body("{\"error\":\"" + e.getMessage() + "\"}");
+            }
+            throw e;
+        }
     }
 } 

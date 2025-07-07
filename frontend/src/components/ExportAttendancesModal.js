@@ -94,6 +94,9 @@ const ExportAttendancesModal = ({ visible, onClose }) => {
           typeof error.response.data === 'string' && 
           error.response.data.includes('Nenhum atendimento concluído encontrado')) {
         errorMessage = `Nenhum atendimento concluído foi encontrado para ${monthName}/${selectedYear}. Selecione um período diferente.`;
+      } else if (error.response?.data?.error && 
+          error.response.data.error.includes('Nenhum atendimento concluído encontrado')) {
+        errorMessage = `Nenhum atendimento concluído foi encontrado para ${monthName}/${selectedYear}. Selecione um período diferente.`;
       } else if (error.message && error.message.includes('Nenhum atendimento concluído encontrado')) {
         errorMessage = `Nenhum atendimento concluído foi encontrado para ${monthName}/${selectedYear}. Selecione um período diferente.`;
       } else if (error.response?.status === 401) {

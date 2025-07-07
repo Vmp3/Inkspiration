@@ -57,6 +57,9 @@ const ExportAppointmentsModal = ({ visible, onClose }) => {
           typeof error.response.data === 'string' && 
           error.response.data.includes('Nenhum agendamento concluído encontrado')) {
         errorMessage = `Nenhum agendamento concluído foi encontrado para o ano ${selectedYear}. Selecione um ano diferente.`;
+      } else if (error.response?.data?.error && 
+          error.response.data.error.includes('Nenhum agendamento concluído encontrado')) {
+        errorMessage = `Nenhum agendamento concluído foi encontrado para o ano ${selectedYear}. Selecione um ano diferente.`;
       } else if (error.message && error.message.includes('Nenhum agendamento concluído encontrado')) {
         errorMessage = `Nenhum agendamento concluído foi encontrado para o ano ${selectedYear}. Selecione um ano diferente.`;
       } else if (error.response?.status === 401) {
