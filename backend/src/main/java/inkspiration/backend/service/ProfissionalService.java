@@ -47,7 +47,7 @@ import inkspiration.backend.dto.AvaliacaoDTO;
 
 @Service
 public class ProfissionalService {
-
+    
     private final ProfissionalRepository profissionalRepository;
     private final UsuarioRepository usuarioRepository;
     private final EnderecoRepository enderecoRepository;
@@ -351,17 +351,22 @@ public class ProfissionalService {
     }
 
     public Page<Profissional> listar(Pageable pageable) {
-        return profissionalRepository.findAll(pageable);
+        return profissionalRepository.findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole(), pageable);
     }
 
     public Page<Profissional> listarComFiltros(Pageable pageable, String searchTerm, String locationTerm, 
                                              double minRating, String[] selectedSpecialties, String sortBy) {
-        List<Profissional> allProfissionais = profissionalRepository.findAll();
+        List<Profissional> allProfissionais = profissionalRepository.findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole());
         allProfissionais.forEach(this::carregarTiposServicoPrecos);
         
         // Aplicar filtros manualmente
         List<Profissional> filteredProfissionais = allProfissionais.stream()
             .filter(profissional -> {
+                // Filtro para excluir usuários com role DELETED (segurança extra)
+                if (profissional.getUsuario() != null && UserRole.ROLE_DELETED.getRole().equals(profissional.getUsuario().getRole())) {
+                    return false;
+                }
+                
                 // Filtro por nome (searchTerm)
                 if (searchTerm != null && !searchTerm.trim().isEmpty()) {
                     String nome = profissional.getUsuario() != null ? profissional.getUsuario().getNome() : "";

@@ -172,4 +172,33 @@ public class PortfolioService {
             throw new PortfolioRemocaoException(e.getMessage());
         }
     }
+    
+    public Portfolio buscarPorUsuarioId(Long idUsuario) {
+        return portfolioRepository.findByUsuarioId(idUsuario)
+                .orElseThrow(() -> new PortfolioNaoEncontradoException("Portfolio não encontrado para o usuário com ID: " + idUsuario));
+    }
+    
+    @Transactional
+    public void deletarPorUsuarioId(Long idUsuario) {
+        Portfolio portfolio = buscarPorUsuarioId(idUsuario);
+        
+        if (portfolio.getProfissional() != null) {
+            Profissional profissional = portfolio.getProfissional();
+            profissional.setPortfolio(null);
+            portfolio.setProfissional(null);
+            profissionalRepository.save(profissional);
+        }
+        
+        portfolioRepository.delete(portfolio);
+    }
+    
+    public void deletarPorUsuarioIdComValidacao(Long idUsuario) {
+        try {
+            deletarPorUsuarioId(idUsuario);
+        } catch (PortfolioNaoEncontradoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PortfolioRemocaoException(e.getMessage());
+        }
+    }
 } 
