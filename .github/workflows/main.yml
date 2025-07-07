@@ -61,6 +61,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            sudo docker system prune -f
             sudo docker volume prune -f
             sudo docker image prune -af
             cd /home/ubuntu/Inkspiration/backend
