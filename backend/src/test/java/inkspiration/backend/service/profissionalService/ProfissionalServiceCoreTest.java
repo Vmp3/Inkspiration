@@ -235,7 +235,7 @@ class ProfissionalServiceCoreTest {
         );
         Page<Profissional> pageProfissionais = new PageImpl<>(profissionais, pageable, profissionais.size());
         
-        when(profissionalRepository.findAll(pageable))
+        when(profissionalRepository.findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole(), pageable))
             .thenReturn(pageProfissionais);
 
         
@@ -245,7 +245,7 @@ class ProfissionalServiceCoreTest {
         assertNotNull(resultado);
         assertEquals(3, resultado.getContent().size());
         assertEquals(3, resultado.getTotalElements());
-        verify(profissionalRepository).findAll(pageable);
+        verify(profissionalRepository).findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole(), pageable);
     }
 
     @Test
@@ -396,7 +396,7 @@ class ProfissionalServiceCoreTest {
         );
         Page<Profissional> pageProfissionais = new PageImpl<>(profissionais, pageable, profissionais.size());
         
-        when(profissionalRepository.findAll(pageable))
+        when(profissionalRepository.findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole(), pageable))
             .thenReturn(pageProfissionais);
 
         
@@ -405,7 +405,7 @@ class ProfissionalServiceCoreTest {
         
         assertNotNull(resultado);
         assertEquals(2, resultado.size());
-        verify(profissionalRepository).findAll(pageable);
+        verify(profissionalRepository).findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole(), pageable);
     }
 
     @Test
@@ -419,7 +419,7 @@ class ProfissionalServiceCoreTest {
         );
         Page<Profissional> profissionaisPage = new PageImpl<>(profissionais, pageable, profissionais.size());
         
-        when(profissionalRepository.findAll(pageable))
+        when(profissionalRepository.findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole(), pageable))
             .thenReturn(profissionaisPage);
 
         // Act
@@ -429,7 +429,7 @@ class ProfissionalServiceCoreTest {
         assertNotNull(resultado);
         assertEquals(2, resultado.size());
         verify(authorizationService).requireAdmin();
-        verify(profissionalRepository).findAll(pageable);
+        verify(profissionalRepository).findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole(), pageable);
     }
 
     @Test

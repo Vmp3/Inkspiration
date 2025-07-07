@@ -232,7 +232,7 @@ class ProfissionalServiceCoberturaTotalComplementarTest {
         profissional.setPortfolio(portfolio);
 
         List<Profissional> profissionais = Arrays.asList(profissional);
-        when(profissionalRepository.findAll()).thenReturn(profissionais);
+        when(profissionalRepository.findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole())).thenReturn(profissionais);
 
         Pageable pageable = PageRequest.of(0, 10);
         String searchTerm = "João";
@@ -249,7 +249,7 @@ class ProfissionalServiceCoberturaTotalComplementarTest {
         assertNotNull(resultado);
         assertEquals(1, resultado.getContent().size());
         assertEquals("João", resultado.getContent().get(0).getUsuario().getNome());
-        verify(profissionalRepository).findAll();
+        verify(profissionalRepository).findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole());
     }
 
     @Test
@@ -333,7 +333,7 @@ class ProfissionalServiceCoberturaTotalComplementarTest {
         
         profissionais.addAll(Arrays.asList(profissional1, profissional2, profissional3));
         
-        when(profissionalRepository.findAll()).thenReturn(profissionais);
+        when(profissionalRepository.findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole())).thenReturn(profissionais);
         
         Pageable pageable = PageRequest.of(0, 10);
         String sortBy = "melhorAvaliacao";

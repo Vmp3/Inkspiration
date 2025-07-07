@@ -261,14 +261,14 @@ class ProfissionalServiceMockTest {
     void deveVerificarQueNaoHaInteracoesDesnecessarias() {
         
         Pageable pageable = PageRequest.of(0, 10);
-        when(profissionalRepository.findAll(pageable))
+        when(profissionalRepository.findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole(), pageable))
             .thenReturn(new PageImpl<>(Arrays.asList()));
 
         
         profissionalService.listar(pageable);
 
         
-        verify(profissionalRepository, only()).findAll(pageable);
+        verify(profissionalRepository, only()).findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole(), pageable);
         verifyNoInteractions(usuarioRepository);
         verifyNoInteractions(enderecoRepository);
     }
@@ -313,14 +313,14 @@ class ProfissionalServiceMockTest {
     void deveVerificarInvocacaoMetodosComTimeout() {
         
         Pageable pageable = PageRequest.of(0, 10);
-        when(profissionalRepository.findAll(pageable))
+        when(profissionalRepository.findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole(), pageable))
             .thenReturn(new PageImpl<>(Arrays.asList()));
 
         
         profissionalService.listar(pageable);
 
         
-        verify(profissionalRepository, timeout(1000)).findAll(pageable);
+        verify(profissionalRepository, timeout(1000)).findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole(), pageable);
     }
 
     @Test
@@ -349,7 +349,7 @@ class ProfissionalServiceMockTest {
     void deveVerificarAutorizacaoAntesDeListarProfissionais() {
         
         Pageable pageable = PageRequest.of(0, 10);
-        when(profissionalRepository.findAll(pageable))
+        when(profissionalRepository.findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole(), pageable))
             .thenReturn(new PageImpl<>(Arrays.asList()));
 
         
@@ -358,7 +358,7 @@ class ProfissionalServiceMockTest {
         
         InOrder inOrder = inOrder(authorizationService, profissionalRepository);
         inOrder.verify(authorizationService).requireAdmin();
-        inOrder.verify(profissionalRepository).findAll(pageable);
+        inOrder.verify(profissionalRepository).findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole(), pageable);
     }
 
     @Test
