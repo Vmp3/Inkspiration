@@ -2,7 +2,6 @@ package inkspiration.backend.entities;
 
 import inkspiration.backend.dto.UsuarioAutenticarDTO;
 import inkspiration.backend.enums.UserRole;
-import inkspiration.backend.util.Hashing;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

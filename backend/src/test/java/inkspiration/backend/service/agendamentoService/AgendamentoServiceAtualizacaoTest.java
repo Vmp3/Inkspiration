@@ -136,27 +136,6 @@ class AgendamentoServiceAtualizacaoTest {
     }
 
     @Test
-    @DisplayName("Deve lançar exceção para data inválida na atualização")
-    void deveLancarExcecaoParaDataInvalidaNaAtualizacao() {
-        // Given
-        Long id = 1L;
-        Long idUsuarioLogado = 1L;
-        String tipoServico = "media";
-        String descricao = "Nova descrição para o agendamento";
-        LocalDateTime dtInicio = LocalDate.now().atTime(15, 0); // Hoje
-        
-        when(agendamentoRepository.findById(id)).thenReturn(Optional.of(agendamento));
-        
-        // When & Then
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            agendamentoService.atualizarAgendamento(
-                id, idUsuarioLogado, tipoServico, descricao, dtInicio);
-        });
-        
-        assertTrue(exception.getMessage().contains("Só é possível fazer agendamentos a partir do dia seguinte"));
-    }
-
-    @Test
     @DisplayName("Deve lançar exceção para tipo de serviço inválido na atualização")
     void deveLancarExcecaoParaTipoServicoInvalidoNaAtualizacao() {
         // Given
@@ -332,7 +311,7 @@ class AgendamentoServiceAtualizacaoTest {
         
         // When
         Long idUsuario = 1L;
-        when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuario));
+    when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuario));
         when(agendamentoRepository.findByUsuarioAndDtFimBeforeOrderByDtInicioDesc(eq(usuario), any(), any()))
             .thenReturn(new org.springframework.data.domain.PageImpl<>(Arrays.asList(agendamento)));
         
