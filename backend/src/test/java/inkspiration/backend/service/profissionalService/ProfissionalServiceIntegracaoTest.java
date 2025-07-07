@@ -158,7 +158,7 @@ class ProfissionalServiceIntegracaoTest {
         profissionais.get(1).getUsuario().setNome("Maria Santos");
         profissionais.get(2).getUsuario().setNome("Pedro Oliveira");
         
-        when(profissionalRepository.findAll())
+        when(profissionalRepository.findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole()))
             .thenReturn(profissionais);
 
         
@@ -173,7 +173,7 @@ class ProfissionalServiceIntegracaoTest {
 
         
         assertNotNull(resultado);
-        verify(profissionalRepository).findAll();
+        verify(profissionalRepository).findByUsuarioRoleNot(UserRole.ROLE_DELETED.getRole());
     }
 
     @Test
