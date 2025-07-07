@@ -726,8 +726,8 @@ const ProfessionalRegisterScreen = () => {
         // Preparar preços formatados para o backend
         const precosFormatados = {};
         Object.entries(precosServicos).forEach(([tipo, preco]) => {
-          // Converter vírgula para ponto e garantir formato decimal
-          const precoLimpo = preco.replace(',', '.');
+          // Remover pontos (separadores de milhares) e converter vírgula para ponto decimal
+          const precoLimpo = preco.replace(/\./g, '').replace(',', '.');
           precosFormatados[tipo] = parseFloat(precoLimpo) || 0;
         });
         

@@ -276,8 +276,8 @@ const useProfessionalData = (userData) => {
       const precosFormatados = {};
       Object.entries(professionalFormData.precosServicos || {}).forEach(([tipo, preco]) => {
         if (preco) {
-          // Converter vírgula para ponto e garantir formato decimal
-          const precoLimpo = typeof preco === 'string' ? preco.replace(',', '.') : preco.toString();
+          // Remover pontos (separadores de milhares) e converter vírgula para ponto decimal
+          const precoLimpo = typeof preco === 'string' ? preco.replace(/\./g, '').replace(',', '.') : preco.toString();
           const precoNumerico = parseFloat(precoLimpo);
           if (!isNaN(precoNumerico) && precoNumerico > 0) {
             precosFormatados[tipo] = precoNumerico;
