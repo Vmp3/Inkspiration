@@ -71,8 +71,6 @@ const HomeScreen = ({ navigation }) => {
     return 1;
   }, [screenWidth]);
   
-  const flatListKey = useMemo(() => `flatlist-${numColumns}-columns`, [numColumns]);
-  
   useEffect(() => {
     updateLayout();
     // Listener para mudanças no tamanho da tela
@@ -85,22 +83,23 @@ const HomeScreen = ({ navigation }) => {
     };
   }, []);
 
-  // Renderização dos itens de artista
-  const renderArtistItem = ({ item }) => {
-    const cardStyle = [
-      styles.artistCard,
-      numColumns === 3 ? styles.artistCardThreeCol : 
-      numColumns === 2 ? styles.artistCardTwoCol : 
-      styles.artistCardOneCol
-    ];
-    
+  const renderArtistsGrid = () => {
     return (
-      <TouchableOpacity 
-        style={cardStyle}
-        onPress={() => navigation.navigate('Artist', { artistId: item.id })}
-      >
-        <ArtistCard artist={item} />
-      </TouchableOpacity>
+      <View style={styles.artistsGrid}>
+        {displayedArtists.map((artist) => (
+          <View 
+            key={artist.id}
+            style={[
+              styles.artistCard,
+              numColumns === 3 ? styles.artistCardThreeCol : 
+              numColumns === 2 ? styles.artistCardTwoCol : 
+              styles.artistCardOneCol
+            ]}
+          >
+            <ArtistCard artist={artist} />
+          </View>
+        ))}
+      </View>
     );
   };
 
@@ -263,16 +262,7 @@ const HomeScreen = ({ navigation }) => {
                   </Text>
                 )}
 
-                <FlatList
-                  key={flatListKey}
-                  data={displayedArtists}
-                  renderItem={renderArtistItem}
-                  keyExtractor={item => item.id}
-                  numColumns={numColumns}
-                  scrollEnabled={false}
-                  columnWrapperStyle={numColumns > 1 ? styles.artistRow : null}
-                  contentContainerStyle={styles.artistGrid}
-                />
+                {renderArtistsGrid()}
               </View>
             ) : (
               <View style={styles.noResultsContainer}>
@@ -416,27 +406,26 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontWeight: '500',
   },
-  artistRow: {
+  artistsGrid: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
     flexWrap: 'wrap',
-    gap: 16,
-  },
-  artistGrid: {
+    justifyContent: 'flex-start',
+    width: '100%',
     paddingBottom: 24,
   },
   artistCard: {
-    flex: 1,
     marginBottom: 24,
   },
   artistCardThreeCol: {
-    maxWidth: '32%',
+    width: '32%',
+    marginHorizontal: '0.66%',
   },
   artistCardTwoCol: {
-    maxWidth: '48%',
+    width: '48%',
+    marginHorizontal: '1%',
   },
   artistCardOneCol: {
-    maxWidth: '100%',
+    width: '100%',
   },
   noResultsContainer: {
     padding: 48,
