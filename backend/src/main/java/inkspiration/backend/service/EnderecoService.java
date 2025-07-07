@@ -127,9 +127,17 @@ public class EnderecoService {
             return dados;
             
         } catch (RestClientException e) {
-            throw new CepInvalidoException("Erro de conexão ao consultar CEP: " + e.getMessage());
+            // Log do erro para debug (apenas para desenvolvedores)
+            System.err.println("Erro REST ao consultar CEP " + cep + ": " + e.getMessage());
+            
+            // Mensagem amigável para o usuário final
+            throw new CepInvalidoException("Erro ao consultar CEP na API do ViaCEP, tente novamente");
         } catch (Exception e) {
-            throw new CepInvalidoException("Erro ao processar resposta da API ViaCEP: " + e.getMessage());
+            // Log do erro para debug (apenas para desenvolvedores)
+            System.err.println("Erro ao processar resposta da API ViaCEP: " + e.getMessage());
+            
+            // Mensagem amigável para o usuário final
+            throw new CepInvalidoException("Erro ao consultar CEP na API do ViaCEP, tente novamente");
         }
     }
     
