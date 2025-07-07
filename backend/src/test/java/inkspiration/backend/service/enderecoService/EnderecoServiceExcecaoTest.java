@@ -97,7 +97,7 @@ class EnderecoServiceExcecaoTest {
             () -> enderecoService.validarEndereco(endereco)
         );
         
-        assertEquals("Erro de conexão ao consultar CEP: Read timeout", exception.getMessage());
+        assertEquals("Erro ao consultar CEP na API do ViaCEP, tente novamente", exception.getMessage());
     }
 
     @Test
@@ -116,7 +116,7 @@ class EnderecoServiceExcecaoTest {
             () -> enderecoService.validarEndereco(endereco)
         );
         
-        assertTrue(exception.getMessage().startsWith("Erro ao processar resposta da API ViaCEP"));
+        assertEquals("Erro ao consultar CEP na API do ViaCEP, tente novamente", exception.getMessage());
     }
 
     @Test
@@ -139,7 +139,7 @@ class EnderecoServiceExcecaoTest {
             () -> enderecoService.validarEndereco(endereco)
         );
         
-        assertTrue(exception.getMessage().startsWith("Erro ao processar resposta da API ViaCEP"));
+        assertEquals("Erro ao consultar CEP na API do ViaCEP, tente novamente", exception.getMessage());
     }
 
     
@@ -327,7 +327,7 @@ class EnderecoServiceExcecaoTest {
             () -> enderecoService.validarEndereco(endereco)
         );
         
-        assertEquals("Erro de conexão ao consultar CEP: UnknownHostException: viacep.com.br", exception.getMessage());
+        assertEquals("Erro ao consultar CEP na API do ViaCEP, tente novamente", exception.getMessage());
     }
 
     @Test
@@ -345,7 +345,7 @@ class EnderecoServiceExcecaoTest {
             () -> enderecoService.validarEndereco(endereco)
         );
         
-        assertEquals("Erro de conexão ao consultar CEP: 500 Internal Server Error", exception.getMessage());
+        assertEquals("Erro ao consultar CEP na API do ViaCEP, tente novamente", exception.getMessage());
     }
 
     @Test
@@ -363,7 +363,7 @@ class EnderecoServiceExcecaoTest {
             () -> enderecoService.validarEndereco(endereco)
         );
         
-        assertTrue(exception.getMessage().startsWith("Erro ao processar resposta da API ViaCEP"));
+        assertEquals("Erro ao consultar CEP na API do ViaCEP, tente novamente", exception.getMessage());
     }
 
     

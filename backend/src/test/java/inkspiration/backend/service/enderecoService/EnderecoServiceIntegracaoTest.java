@@ -302,7 +302,7 @@ class EnderecoServiceIntegracaoTest {
             () -> enderecoService.validarEndereco(endereco)
         );
         
-        assertEquals("Erro ao processar resposta da API ViaCEP: CEP não encontrado", exception.getMessage());
+        assertEquals("Erro ao consultar CEP na API do ViaCEP, tente novamente", exception.getMessage());
     }
 
     @Test
@@ -320,7 +320,7 @@ class EnderecoServiceIntegracaoTest {
             () -> enderecoService.validarEndereco(endereco)
         );
         
-        assertEquals("Erro de conexão ao consultar CEP: Erro de conexão", exception.getMessage());
+        assertEquals("Erro ao consultar CEP na API do ViaCEP, tente novamente", exception.getMessage());
     }
 
     @Test
@@ -338,7 +338,7 @@ class EnderecoServiceIntegracaoTest {
             () -> enderecoService.validarEndereco(endereco)
         );
         
-        assertEquals("Erro ao processar resposta da API ViaCEP: Erro ao consultar CEP na API ViaCEP", exception.getMessage());
+        assertEquals("Erro ao consultar CEP na API do ViaCEP, tente novamente", exception.getMessage());
     }
 
     @Test

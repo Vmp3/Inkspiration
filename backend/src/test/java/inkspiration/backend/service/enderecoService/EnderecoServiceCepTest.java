@@ -279,7 +279,7 @@ class EnderecoServiceCepTest {
             () -> enderecoService.validarEndereco(endereco)
         );
         
-        assertEquals("Erro ao processar resposta da API ViaCEP: CEP não encontrado", exception.getMessage());
+        assertEquals("Erro ao consultar CEP na API do ViaCEP, tente novamente", exception.getMessage());
         
         ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
         verify(restTemplate).getForObject(urlCaptor.capture(), eq(String.class));
