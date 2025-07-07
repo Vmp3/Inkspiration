@@ -208,6 +208,21 @@ const useProfessionalSearch = ({
     }
   }, [currentPage, sortBy]);
 
+  // useEffect específico para mudanças no sortBy - aplica filtro automaticamente
+  useEffect(() => {
+    if (hasLoadedInitialData.current) {
+      // Resetar para página 0 quando sortBy muda
+      if (currentPage !== 0) {
+        setCurrentPage(0);
+      } else {
+        // Se já está na página 0, forçar reload
+        if (loadProfessionalsRef.current) {
+          loadProfessionalsRef.current(true);
+        }
+      }
+    }
+  }, [sortBy]);
+
   useEffect(() => {
     if (!hasLoadedInitialData.current || isDebouncing.current) {
       return;
