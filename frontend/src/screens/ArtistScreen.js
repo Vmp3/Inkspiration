@@ -175,6 +175,21 @@ const ArtistScreen = ({ route }) => {
     return serviceTypeMap[serviceType] || serviceType;
   };
 
+  const orderServices = (services) => {
+    const orderMap = {
+      'TATUAGEM_PEQUENA': 1,
+      'TATUAGEM_MEDIA': 2,
+      'TATUAGEM_GRANDE': 3,
+      'SESSAO': 4
+    };
+
+    return services.sort((a, b) => {
+      const orderA = orderMap[a.tipo] || Number.MAX_VALUE;
+      const orderB = orderMap[b.tipo] || Number.MAX_VALUE;
+      return orderA - orderB;
+    });
+  };
+
   useEffect(() => {
     const onChange = (result) => {
       setScreenData(result.window);
@@ -247,14 +262,17 @@ const ArtistScreen = ({ route }) => {
       const servicesWithPrices = await AgendamentoService.buscarTiposServicoPorProfissional(artistId);
       
       const mappedServices = servicesWithPrices.length > 0 
-        ? servicesWithPrices.map(service => ({
+        ? orderServices(servicesWithPrices).map(service => ({
             name: mapServiceType(service.tipo),
             price: service.preco || 0
           }))
         : professionalData.profissional.tiposServico 
-          ? professionalData.profissional.tiposServico.map(serviceType => ({
-              name: mapServiceType(serviceType),
-              price: 0
+          ? orderServices(professionalData.profissional.tiposServico.map(serviceType => ({
+              tipo: serviceType,
+              preco: 0
+            }))).map(service => ({
+              name: mapServiceType(service.tipo),
+              price: service.preco || 0
             }))
           : [];
 
