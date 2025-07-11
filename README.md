@@ -117,4 +117,4 @@ Se você ama tatuagem, quer encontrar o artista perfeito ou deseja profissionali
 5. Abra um Pull Request
 ---
 
-**Inkspiration** — Conectando pessoas e arte na pele! 
+**Inkspiration** — Conectando pessoas e arte na pele 
